@@ -20,6 +20,8 @@ def parse_packet_head(line):
     data = data.split(' ')
 
     # Only generate a key if this packet contains IP information
+    if len(data) < 2:
+        return None
     if data[2] != 'IP':
         return None
 

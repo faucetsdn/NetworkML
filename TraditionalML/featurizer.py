@@ -1,6 +1,48 @@
 import numpy as np
 from collections import defaultdict
 
+def get_source(sessions):
+    '''
+    Gets the source IP address from a session dictionary.
+    Also computes the number of sessions to and from this source.
+    The source is defined to be the IP address with the most outgoing
+    sessions associated with it.
+    Inputs:
+        sessions: A dictionary of hex sessions from the sessionizer
+    Returns:
+        capture_source: Address of the capture source
+        num_incoming: # of incoming sessions to the capture source
+        num_outgoing: # of outgoing sessions from the capture source
+    '''
+
+    # Incoming sessions have the address as the destination
+    incoming_sessions = defaultdict(int)
+    # Outgoing sessions have the address as the source
+    outgoing_sessions = defaultdict(int)
+
+    # Count the incoming/outgoing sessions for all addresses
+    for key in sessions:
+        incoming_address = key[1].split(':')[0]
+        outgoing_address = key[0].split(':')[0]
+
+        incoming_sessions[incoming_address] += 1
+        outgoing_sessions[outgoing_address] += 1
+
+    # The address with the most outgoing sessions is the capture source
+    if len(sessions) == 0:
+        return None, 0, 0
+
+    capture_source = max(
+                          outgoing_sessions.keys(),
+                          key=(lambda k: outgoing_sessions[k])
+                        )
+
+    # Get the incoming/outgoing sessions for the capture source
+    num_incoming = incoming_sessions[capture_source]
+    num_outgoing = outgoing_sessions[capture_source]
+
+    return capture_source
+
 def packet_size(packet):
     '''
     Extracts the size of a packet in bytes from the hex header.
@@ -43,7 +85,7 @@ def extract_protocol(session):
     protocol = session[0][1][46:48]
     return protocol
 
-def extract_features(session_dict, capture_source, max_port=1024):
+def extract_features(session_dict, capture_source=None, max_port=1024):
     '''
     Extracts netflow level features from packet capture. Features are:
         - Number of incoming sessions
@@ -77,6 +119,10 @@ def extract_features(session_dict, capture_source, max_port=1024):
                                 m = 7: # of UDP sessions on port
                                 m = 8: # of ICMP sessions on port
     '''
+
+    # If the capture source isn't specified, default to the most used address
+    if capture_source is None:
+        capture_source = get_source(session_dict)
 
     # Compute port specific features for the capture source 
     source_ports, sent_packets, sent_bytes = [
