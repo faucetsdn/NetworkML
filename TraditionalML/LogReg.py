@@ -1,3 +1,5 @@
+import pickle
+
 import numpy as np
 from reader import sessionizer
 from featurizer import extract_features
@@ -68,7 +70,7 @@ class LogRegModel:
         '''
         print("Reading data")
         # First read the data directory for the features and labels
-        X_all, y_all, labels = read_data(data_dir, duration=self.duration)
+        X_all, y_all, self.labels = read_data(data_dir, duration=self.duration)
 
         print("Making data splits")
         # Split the data into training, validation, and testing sets
@@ -153,3 +155,46 @@ class LogRegModel:
                      ]
 
         return prediction
+
+    def save(self, save_path):
+        '''
+        Saves the model attributes to the specified path
+
+        Args:
+            save_path: Path to save the model attributes to
+        '''
+
+        # Create data structure to save
+        model_attributes = {
+                            'duration': self.duration,
+                            'means': self.means,
+                            'stds': self.stds,
+                            'feature_list': self.feature_list,
+                            'whitening': self.whitening,
+                            'model': self.model,
+                            'labels': self.labels,
+                            }
+
+        # Sve the attributes
+
+        with open(save_path, 'wb') as handle:
+            pickle.dump(model_attributes, handle)
+
+    def load(self, load_path):
+        '''
+        Loads model attributes from the specified path
+
+        Args:
+            load_path: Path to load the attributes from
+        '''
+
+        with open(load_path, 'rb') as handle:
+            model_attributes = pickle.load(handle)
+
+        self.duration = model_attributes['duration']
+        self.means = model_attributes['means']
+        self.stds = model_attributes['stds']
+        self.feature_list = model_attributes['feature_list']
+        self.whitening = model_attributes['whitening']
+        self.model = model_attributes['model']
+        self.labels = model_attributes['labels']
