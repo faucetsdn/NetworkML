@@ -35,6 +35,7 @@ def read_data(data_dir, duration=None):
 
     # Go through all the files in the directory
     for filename in os.listdir(data_dir):
+        print("Reading", filename)
         # Extract the label from the filename
         label = filename.split('_')[0]
         # Add the label to the label list if it is a new one

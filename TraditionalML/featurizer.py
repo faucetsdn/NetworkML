@@ -55,7 +55,12 @@ def packet_size(packet):
     '''
 
     size = packet[1][32:36]
-    return int(size, 16)
+    try:
+        size = int(size, 16)
+    except:
+        size = 0
+
+    return size
 
 def extract_session_size(session):
     '''
