@@ -153,7 +153,7 @@ class LogRegModel:
                       (self.labels[i], prob)
                       for i, prob in enumerate(mean_predictions)
                      ]
-
+        prediction = sorted(prediction, key=lambda x: x[1], reverse=True)
         return prediction
 
     def save(self, save_path):
