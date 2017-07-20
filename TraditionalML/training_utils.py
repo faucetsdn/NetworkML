@@ -69,7 +69,7 @@ def select_features(X, y):
     '''
 
     # Get the selection model (stability selection)
-    selection_model = RandomizedLogisticRegression()
+    selection_model = RandomizedLogisticRegression(random_state=0)
     selection_model.fit(X, y)
 
     # Use a cross validated logistic regression to choose the importance
@@ -88,7 +88,9 @@ def select_features(X, y):
             model = LogisticRegression(
                                        multi_class='multinomial',
                                        class_weight='balanced',
-                                       solver='newton-cg'
+                                       solver='newton-cg',
+                                       random_state=0,
+                                       max_iter=1000
                                       )
             scores = cross_val_score(model, X_reduced, y, cv=5)
             score = scores.mean()
@@ -141,7 +143,9 @@ def choose_regularization(X, y):
                                     C=trial,
                                     multi_class='multinomial',
                                     solver='newton-cg',
-                                    class_weight='balanced'
+                                    class_weight='balanced',
+                                    random_state=0,
+                                    max_iter=1000
                                   )
         scores = cross_val_score(model, X, y, cv=10)
         score = scores.mean()

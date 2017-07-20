@@ -119,7 +119,9 @@ class LogRegModel:
                                     C=C,
                                     multi_class='multinomial',
                                     solver='newton-cg',
-                                    class_weight='balanced'
+                                    class_weight='balanced',
+                                    random_state=0,
+                                    max_iter=1000
                                   )
         self.model.fit(X_input, y_train)
 
