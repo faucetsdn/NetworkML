@@ -92,7 +92,7 @@ class LogRegModel:
         self.means = X_train.mean(axis=0)
         self.stds = X_train.std(axis=0)
         # Set the zero standard deviations to 1
-        zero_stds = self.stds == 0
+        zero_stds = self.stds <= 1
         self.stds[zero_stds] = 1
         # Apply the mean normalization transformation to the training dataj
         X_normed = X_train - np.expand_dims(self.means, 0)

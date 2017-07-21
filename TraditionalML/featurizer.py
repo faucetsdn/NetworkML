@@ -201,16 +201,28 @@ def extract_features(session_dict, capture_source=None, max_port=1024):
         io_ratio = num_incoming/num_outgoing
 
     feature_vector = np.zeros(num_features)
-    feature_vector[0] = num_incoming
-    feature_vector[1] = num_outgoing
+    feature_vector[0] = num_incoming/(num_incoming + num_outgoing)
+    feature_vector[1] = num_outgoing/(num_incoming + num_outgoing)
     feature_vector[2] = io_ratio
-    feature_vector[3] = len(other_ips)
-    feature_vector[4] = len(source_ports)
-    feature_vector[5] = len(destination_ports)
+    feature_vector[3] = len(other_ips)/(num_incoming + num_outgoing)
+    feature_vector[4] = len(source_ports)/(num_incoming + num_outgoing)
+    feature_vector[5] = len(destination_ports)/(num_incoming + num_outgoing)
 
     for m, aspect in enumerate(port_aspects):
         for port in aspect:
-            feature_vector[len(port_aspects)*int(port) + m + 6] = aspect[port]
+            denom = 1
+            if m == 0: denom = num_outgoing
+            if m == 1: denom = num_incoming
+            if m == 2: denom = source_ports[port]
+            if m == 3: denom = destination_ports[port]
+            if m == 4: denom = source_ports[port]
+            if m == 5: denom = destination_ports[port]
+            if m == 6: denom = num_incoming + num_outgoing
+            if m == 7: denom = num_incoming + num_outgoing
+            if m == 8: denom = num_incoming + num_outgoing
+            if denom == 0: denom = 1
+            feature_vector[len(port_aspects)*int(port) + m + 6] = \
+                                                             aspect[port]/denom
 
     return feature_vector
 
