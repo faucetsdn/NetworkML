@@ -195,10 +195,7 @@ def extract_features(session_dict, capture_source=None, max_port=1024):
                    ]
 
     num_features = 6 + (max_port+1)*len(port_aspects)
-    if num_outgoing == 0:
-        io_ratio = 1
-    else:
-        io_ratio = num_incoming/num_outgoing
+    io_ratio = num_incoming/(num_incoming + num_outgoing)
 
     feature_vector = np.zeros(num_features)
     feature_vector[0] = num_incoming/(num_incoming + num_outgoing)
