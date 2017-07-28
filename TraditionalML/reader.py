@@ -1,3 +1,4 @@
+import os
 import sys
 import subprocess
 from collections import OrderedDict
@@ -73,10 +74,12 @@ def packetizer(path):
     '''
 
     # Read get the pcap info with tcpdump
+    FNULL = open(os.devnull, 'w')
     proc = subprocess.Popen(
                             'tcpdump -nn -tttt -xx -r' + path,
                             shell=True,
-                            stdout=subprocess.PIPE
+                            stdout=subprocess.PIPE,
+                            stderr=FNULL
                            )
     head = None
     packet_dict = OrderedDict()
