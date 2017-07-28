@@ -117,6 +117,7 @@ def sessionizer(path, duration=None):
     sessions = []
     start_time = None
     working_dict = None
+
     for head, packet in packet_dict.items():
         time = head[0]
 
@@ -138,6 +139,9 @@ def sessionizer(path, duration=None):
             working_dict[key] = []
         working_dict[key].append((head[0],packet))
 
+    if duration is not None and working_dict is not None:
+        if len(working_dict) > 0:
+            sessions.append(working_dict)
     if duration is None:
         sessions.append(working_dict)
 
