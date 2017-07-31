@@ -76,7 +76,7 @@ class OneLayerModel:
         timestamps = []
         binned_sessions = sessionizer(filepath, duration=self.duration)
         for session_dict in binned_sessions:
-            feature_list = extract_features(session_dict)
+            feature_list, source_ip = extract_features(session_dict)
             X.append(feature_list)
             last_packet = list(session_dict.items())[-1]
             timestamps.append(last_packet[1][0][0])
@@ -89,7 +89,6 @@ class OneLayerModel:
 
         last_packet = list(binned_sessions[-1].items())[-1]
         timestamp = last_packet[1][0][0]
-        source_ip = last_packet[0][0].split(':')[0]
 
         return features, source_ip, timestamps
 
