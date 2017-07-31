@@ -68,6 +68,7 @@ class OneLayerModel:
 
         Returns:
             features: Numpy 2D array containing features for each time bin
+            timestamp: datetime of the last observed packet
         '''
 
         # Read the capture into a feature array
@@ -83,7 +84,11 @@ class OneLayerModel:
         full_features /= np.expand_dims(self.stds, 0)
         features = full_features[:, self.feature_list]
 
-        return features
+        last_packet = list(binned_sessions[-1].items())[-1]
+        timestamp = last_packet[1][0][0]
+        source_ip = last_packet[0][0].split(':')[0]
+
+        return features, source_ip, timestamp
 
 
     def train(self, data_dir):
@@ -160,7 +165,7 @@ class OneLayerModel:
             prediction: list of tuples formatted as (source, probability)
         '''
 
-        features = self.get_features(filepath)
+        features, _, _ = self.get_features(filepath)
 
         predictions = self.model.predict_proba(features)
         mean_predictions = np.mean(predictions, axis=0)
@@ -184,7 +189,7 @@ class OneLayerModel:
             representation:  representation vector of the input file
         '''
 
-        features = self.get_features(filepath)
+        features, source_ip, timestamp = self.get_features(filepath)
         L1_weights = self.model.coefs_[0]
         L1_biases = self.model.intercepts_[0]
         representation = np.maximum(
@@ -194,7 +199,7 @@ class OneLayerModel:
         if mean:
             representation = np.mean(representation, axis=0)
 
-        return representation
+        return representation, source_ip, timestamp
 
     def save(self, save_path):
         '''
