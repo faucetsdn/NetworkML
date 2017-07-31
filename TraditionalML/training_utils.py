@@ -114,7 +114,7 @@ def whiten_features(X):
     '''
 
     # Use PCA to create a whitening transformation fit to the training set
-    whitening_transformation = PCA(whiten=True)
+    whitening_transformation = PCA(whiten=False)
     whitening_transformation.fit(X)
 
     return whitening_transformation

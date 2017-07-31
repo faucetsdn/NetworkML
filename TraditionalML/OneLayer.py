@@ -1,4 +1,5 @@
 import numpy as np
+import pickle as pickle
 from reader import sessionizer
 from featurizer import extract_features
 
@@ -45,13 +46,13 @@ class OneLayerModel:
         '''
 
         # Randomly permute the inputs, and label the permutations Unknown
-        X_permed = [
-                    np.random.permutation(X[i])
-                    for i in range(X.shape[0])
-                   ]
-        np.random.shuffle(X_permed)
-        y_permed = [self.labels.index("Unknown")]*len(X_permed)
-        X_permed, y_permed = np.stack(X_permed), np.stack(y_permed)
+        X_permed = np.copy(X)
+        for i in range(X_permed.shape[1]):
+            np.random.shuffle(X_permed[:,i])
+
+        y_permed = [self.labels.index("Unknown")]*X_permed.shape[0]
+        y_permed = np.stack(y_permed)
+
         X_aug = np.concatenate((X, X_permed), axis=0)
         y_aug = np.concatenate((y, y_permed), axis=0)
 
@@ -114,7 +115,7 @@ class OneLayerModel:
         self.means = X_train.mean(axis=0)
         self.stds = X_train.std(axis=0)
         # Set the zero standard deviations to 1
-        zero_stds = self.stds == 0
+        zero_stds = self.stds <= 1
         self.stds[zero_stds] = 1
         # Apply the mean normalization transformation to the training dataj
         X_normed = X_train - np.expand_dims(self.means, 0)
@@ -132,7 +133,8 @@ class OneLayerModel:
         X_input = X_aug[:, self.feature_list]
         self.model = MLPClassifier(
                                     (self.hidden_size),
-                                    activation='tanh',
+                                    alpha=0.1,
+                                    activation='relu',
                                     max_iter=1000
                                   )
 
@@ -170,12 +172,13 @@ class OneLayerModel:
         prediction = sorted(prediction, key=lambda x: x[1], reverse=True)
         return prediction
 
-    def get_representation(self, filepath):
+    def get_representation(self, filepath, mean=True):
         '''
         Computes the mean hidden representation of the input file.
 
         Args:
             filepath: Path of capture file to represent
+            mean: If true(default), averages all the representations into one
 
         Returns:
             representation:  representation vector of the input file
@@ -184,7 +187,51 @@ class OneLayerModel:
         features = self.get_features(filepath)
         L1_weights = self.model.coefs_[0]
         L1_biases = self.model.intercepts_[0]
-        representation = np.tanh(np.matmul(features, L1_weights) + L1_biases)
-        representation = np.mean(representation, axis=0)
+        representation = np.maximum(
+                                     np.matmul(features, L1_weights)+L1_biases,
+                                     0
+                                    )
+        if mean:
+            representation = np.mean(representation, axis=0)
 
         return representation
+
+    def save(self, save_path):
+        '''
+        Saves the model to the specified file path
+
+        Args:
+            save_path: Path to store the saved model at.
+        '''
+
+        model_attributes = {
+                            'duration': self.duration,
+                            'hidden_size': self.hidden_size,
+                            'means': self.means,
+                            'stds': self.stds,
+                            'feature_list': self.feature_list,
+                            'model': self.model,
+                            'labels': self.labels
+                           }
+
+        with open(save_path, 'wb') as handle:
+            pickle.dump(model_attributes, handle)
+
+    def load(self, load_path):
+        '''
+        Load the model parameters from the specified path.
+
+        Args:
+            load_path: Path to load the model parameters from
+        '''
+
+        with open(load_path, 'rb') as handle:
+            model_attributes = pickle.load(handle)
+
+        self.duration = model_attributes['duration']
+        self.hidden_size = model_attributes['hidden_size']
+        self.means = model_attributes['means']
+        self.stds = model_attributes['stds']
+        self.feature_list = model_attributes['feature_list']
+        self.model = model_attributes['model']
+        self.labels = model_attributes['labels']
