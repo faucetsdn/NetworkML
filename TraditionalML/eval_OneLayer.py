@@ -37,7 +37,6 @@ def update_representation(source_ip, representations, timestamps):
         elif time > prev_time:
             time_diff = time - prev_time
             alpha = 1 - np.exp(-time_diff/time_const)
-            print(alpha)
             representation += alpha*(rep - representation)
             prev_time = time
 
