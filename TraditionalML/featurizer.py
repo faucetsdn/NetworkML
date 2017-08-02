@@ -5,8 +5,9 @@ def get_source(sessions):
     '''
     Gets the source IP address from a session dictionary.
     Also computes the number of sessions to and from this source.
-    The source is defined to be the IP address with the most outgoing
-    sessions associated with it.
+    The source is defined to be the IP address with the most sessions
+    associated with it.
+
     Inputs:
         sessions: A dictionary of hex sessions from the sessionizer
     Returns:
@@ -15,6 +16,8 @@ def get_source(sessions):
         num_outgoing: # of outgoing sessions from the capture source
     '''
 
+    # Number of sessions involving the address
+    all_sessions = defaultdict(int)
     # Incoming sessions have the address as the destination
     incoming_sessions = defaultdict(int)
     # Outgoing sessions have the address as the source
@@ -25,16 +28,18 @@ def get_source(sessions):
         incoming_address = key[1].split(':')[0]
         outgoing_address = key[0].split(':')[0]
 
+        all_sessions[incoming_address] += 1
+        all_sessions[outgoing_address] += 1
         incoming_sessions[incoming_address] += 1
         outgoing_sessions[outgoing_address] += 1
 
-    # The address with the most outgoing sessions is the capture source
+    # The address with the most sessions is the capture source
     if len(sessions) == 0:
         return None, 0, 0
 
     capture_source = max(
-                          outgoing_sessions.keys(),
-                          key=(lambda k: outgoing_sessions[k])
+                            outgoing_sessions.keys(),
+                            key=(lambda k: outgoing_sessions[k])
                         )
 
     # Get the incoming/outgoing sessions for the capture source
@@ -179,4 +184,4 @@ def extract_features(session_dict, capture_source=None, max_port=1024):
     extra_features[3] = num_icmp_sess/num_sessions
 
     feature_vector = np.concatenate((num_port_sess, extra_features), axis=0)
-    return feature_vector
+    return feature_vector, capture_source

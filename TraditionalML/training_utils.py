@@ -48,7 +48,7 @@ def read_data(data_dir, duration=None):
 
         # For each of the session bins, compute the  full feature vectors
         for session_dict in binned_sessions:
-            features = extract_features(session_dict)
+            features, _ = extract_features(session_dict)
             # Store the feature vector and the labels
             X.append(features)
             y.append(labels.index(label))

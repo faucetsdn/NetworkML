@@ -47,7 +47,7 @@ class LogRegModel:
         X = []
         binned_sessions = sessionizer(filepath, duration=self.duration)
         for session_dict in binned_sessions:
-            feature_list = extract_features(session_dict)
+            feature_list, _ = extract_features(session_dict)
             X.append(feature_list)
         full_features = np.stack(X)
 
