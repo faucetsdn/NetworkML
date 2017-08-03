@@ -3,8 +3,11 @@ Reads a pcap and updates the stored representation of the source using
 the one layer feedforward model.
 '''
 
+import json
 import sys
 import numpy as np
+
+from redis import StrictRedis
 from OneLayer import OneLayerModel
 
 def update_representation(source_ip, representations, timestamps):
@@ -20,10 +23,15 @@ def update_representation(source_ip, representations, timestamps):
     # Set the information decay rate to 1 day
     time_const = 60*60*24
 
-    # TODO: Read the old representation from storage. The key should be
-    # The IP address string source_ip and the value should contain the 
+    r = StrictRedis(host='redis', port=6379, db=0)
+    # Read the old representation from storage. The key should be
+    # The IP address string source_ip and the value should contain the
     # Timestamp of the last update and the previous representation vector
+    state = r.hgetall(source_ip)
     representation = None
+    if state:
+        representation = json.loads(state[b'representation'].decode('ascii'))
+        prev_time = float(state[b'time'])
 
     if representation is None:
         prev_time = None
@@ -40,16 +48,18 @@ def update_representation(source_ip, representations, timestamps):
             representation += alpha*(rep - representation)
             prev_time = time
 
-    # TODO: instead of printing, save this info 
-    print('IP address', source_ip,
-          '\nLast update', time,
-          '\nRepresentation:', representation)
+    state = {"time": time, "representation": list(representation)}
+    r.hmset(source_ip, state)
 
 if __name__ == '__main__':
     # path to the pcap to get the update from
     pcap_path = sys.argv[1]
     # Initialize and load the model
-    load_path = sys.argv[2]
+    if len(sys.argv) > 2:
+        load_path = sys.argv[2]
+    else:
+        load_path = "/models/model.pickle"
+
     model = OneLayerModel(duration=None, hidden_size=None)
     model.load(load_path)
     # Get representations from the model
