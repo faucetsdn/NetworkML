@@ -23,11 +23,15 @@ def update_representation(source_ip, representations, timestamps):
     # Set the information decay rate to 1 day
     time_const = 60*60*24
 
-    r = StrictRedis(host='redis', port=6379, db=0)
     # Read the old representation from storage. The key should be
     # The IP address string source_ip and the value should contain the
     # Timestamp of the last update and the previous representation vector
-    state = r.hgetall(source_ip)
+    try:
+        r = StrictRedis(host='redis', port=6379, db=0)
+        state = r.hgetall(source_ip)
+    except Exception as e:
+        state = None
+
     representation = None
     if state:
         representation = json.loads(state[b'representation'].decode('ascii'))
@@ -49,7 +53,11 @@ def update_representation(source_ip, representations, timestamps):
             prev_time = time
 
     state = {"time": time, "representation": list(representation)}
-    r.hmset(source_ip, state)
+    try:
+        r.hmset(source_ip, state)
+    except Exception as e:
+        print(source_ip)
+        print(state)
 
 if __name__ == '__main__':
     # path to the pcap to get the update from
