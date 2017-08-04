@@ -4,9 +4,9 @@ MAINTAINER Charlie Lewis <clewis@iqt.org>
 RUN apt-get update && apt-get install -y \
     tcpdump
 
-RUN pip install numpy scikit-learn scipy
+RUN pip install numpy redis scikit-learn scipy
 COPY . /TraditionalML
 WORKDIR /TraditionalML
 
-ENTRYPOINT ["python3.5", "eval_LogReg.py"]
+ENTRYPOINT ["python3.5", "eval_OneLayer.py"]
 CMD [""]
