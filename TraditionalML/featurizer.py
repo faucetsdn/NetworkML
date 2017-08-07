@@ -38,8 +38,8 @@ def get_source(sessions):
         return None, 0, 0
 
     capture_source = max(
-                            outgoing_sessions.keys(),
-                            key=(lambda k: outgoing_sessions[k])
+                          all_sessions.keys(),
+                          key=(lambda k: all_sessions[k])
                         )
 
     # Get the incoming/outgoing sessions for the capture source
@@ -184,4 +184,4 @@ def extract_features(session_dict, capture_source=None, max_port=1024):
     extra_features[3] = num_icmp_sess/num_sessions
 
     feature_vector = np.concatenate((num_port_sess, extra_features), axis=0)
-    return feature_vector, capture_source
+    return feature_vector
