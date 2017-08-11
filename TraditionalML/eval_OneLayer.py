@@ -62,24 +62,34 @@ def update_representation(source_ip, representations, timestamps):
 if __name__ == '__main__':
     # path to the pcap to get the update from
     pcap_path = sys.argv[1]
-    # Initialize and load the model
-    if len(sys.argv) > 2:
-        load_path = sys.argv[2]
+    # parse the filename to get IP address
+    split_path = pcap_path.split('.')
+    split_path = split_path[0].split('-')
+    if len(split_path) == 6:
+        source_ip = '.'.join(split_path[2:]
     else:
-        load_path = "/models/model.pickle"
-    model = OneLayerModel(duration=None, hidden_size=None)
-    model.load(load_path)
+        source_ip = None
 
-    # Print the prediction if feeding in a test model
-    if len(sys.argv) > 2:
-        prediction = model.predict(pcap_path)
-        for p in prediction:
-            print(p)
+    if split_pcap[-1] != 'miscellaneous':
+        # Initialize and load the model
+        if len(sys.argv) > 2:
+            load_path = sys.argv[2]
+        else:
+            load_path = "/models/model.pickle"
+        model = OneLayerModel(duration=None, hidden_size=None)
+        model.load(load_path)
 
-    # Get representations from the model
-    reps, source_ip, timestamps = model.get_representation(
-                                                            pcap_path,
-                                                            mean=False
+        # Print the prediction if feeding in a test model
+        if len(sys.argv) > 2:
+            prediction = model.predict(pcap_path, source_ip=source_ip)
+            for p in prediction:
+                print(p)
+
+        # Get representations from the model
+        reps, source_ip, timestamps = model.get_representation(
+                                                           pcap_path,
+                                                           source_ip=source_ip,
+                                                           mean=False
                                                           )
-    # Update the stored representation
-    update_representation(source_ip, reps, timestamps)
+        # Update the stored representation
+        update_representation(source_ip, reps, timestamps)

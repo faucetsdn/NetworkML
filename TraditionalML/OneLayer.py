@@ -11,7 +11,7 @@ from training_utils import read_data
 from training_utils import select_features
 
 class OneLayerModel:
-    def __init__(self, duration, hidden_size):
+    def __init__(self, duration, hidden_size=None):
         '''
         Initializes a model with a single hidden layer.  Features are
         aggregated over the time specified by the duration and the hidden
@@ -19,7 +19,6 @@ class OneLayerModel:
 
         Args:
             duration: Time duration to aggregate features for
-            hidden_size: size of hidden layer
         '''
 
         self.duration = duration
@@ -58,7 +57,7 @@ class OneLayerModel:
 
         return X_aug, y_aug
 
-    def get_features(self, filepath):
+    def get_features(self, filepath, source_ip=None):
         '''
         Reads a pcap specified by the file path and returns an array of the
         computed model inputs
@@ -76,7 +75,13 @@ class OneLayerModel:
         timestamps = []
         binned_sessions = sessionizer(filepath, duration=self.duration)
         for session_dict in binned_sessions:
-            feature_list, source_ip = extract_features(session_dict)
+            if source_ip is None:
+                feature_list, source_ip = extract_features(session_dict)
+            else:
+                feature_list, _ = extract_features(
+                                                    session_dict,
+                                                    capture_source=source_ip
+                                                  )
             X.append(feature_list)
             last_packet = list(session_dict.items())[-1]
             timestamps.append(last_packet[1][0][0])
@@ -107,6 +112,9 @@ class OneLayerModel:
         # First read the data directory for the features and labels
         X_all, y_all, self.labels = read_data(data_dir, duration=self.duration)
         self.labels.append("Unknown")
+        # If hidden size wasn't specified, default to 2x the number of labels
+        if self.hidden_size is None:
+            self.hidden_size = 2*len(self.labels)
 
         print("Making data splits")
         # Split the data into training, validation, and testing sets
@@ -155,7 +163,7 @@ class OneLayerModel:
         print("F1 score:",
                 f1_score(y_test_aug, predictions, average='weighted'))
 
-    def predict(self, filepath):
+    def predict(self, filepath, source_ip=None):
         '''
         Read a capture file from the specified path and make a prediction
         of the source.
@@ -167,7 +175,7 @@ class OneLayerModel:
             prediction: list of tuples formatted as (source, probability)
         '''
 
-        features, _, _ = self.get_features(filepath)
+        features, _, _ = self.get_features(filepath, source_ip=source_ip)
 
         predictions = self.model.predict_proba(features)
         mean_predictions = np.mean(predictions, axis=0)
@@ -179,7 +187,7 @@ class OneLayerModel:
         prediction = sorted(prediction, key=lambda x: x[1], reverse=True)
         return prediction
 
-    def get_representation(self, filepath, mean=True):
+    def get_representation(self, filepath, mean=True, source_ip=None):
         '''
         Computes the mean hidden representation of the input file.
 
@@ -191,13 +199,16 @@ class OneLayerModel:
             representation:  representation vector of the input file
         '''
 
-        features, source_ip, timestamp = self.get_features(filepath)
+        features, source_ip, timestamp = self.get_features(
+                                                           filepath,
+                                                           source_ip=source_ip,
+                                                          )
         L1_weights = self.model.coefs_[0]
         L1_biases = self.model.intercepts_[0]
         representation = np.maximum(
                                      np.matmul(features, L1_weights)+L1_biases,
                                      0
-                                    )
+                                   )
         if mean:
             representation = np.mean(representation, axis=0)
             timestamp = timestamp[-1]
