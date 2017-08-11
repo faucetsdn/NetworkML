@@ -67,9 +67,15 @@ if __name__ == '__main__':
         load_path = sys.argv[2]
     else:
         load_path = "/models/model.pickle"
-
     model = OneLayerModel(duration=None, hidden_size=None)
     model.load(load_path)
+
+    # Print the prediction if feeding in a test model
+    if len(sys.argv) > 2:
+        prediction = model.predict(pcap_path)
+        for p in prediction:
+            print(p)
+
     # Get representations from the model
     reps, source_ip, timestamps = model.get_representation(
                                                             pcap_path,

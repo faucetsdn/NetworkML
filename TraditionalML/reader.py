@@ -32,14 +32,25 @@ def parse_packet_head(line):
 
     # Parse out the source and destination addresses and ports
     source_data = data[3].split('.')
-    cutoff = len(source_data) - 1
-    source_str = '.'.join(source_data[0:cutoff]) + ':' + source_data[-1]
+    if len(source_data) < 5:
+        source_port = '0'
+    else:
+        source_port = source_data[4]
+
+    source_str = '.'.join(source_data[0:4]) + ':' + source_port
 
     destination_data = data[5].split('.')
-    cutoff = len(destination_data) - 1
-    destination_str = '.'.join(destination_data[0:cutoff]) \
-                      + ':' \
-                      + destination_data[-1][0:-1]
+    if len(destination_data) < 5:
+        destination_port = '0'
+        destination_str = '.'.join(destination_data[0:4])[0:-1] \
+                          + ':' \
+                          + destination_port
+
+    else:
+        destination_port = destination_data[4][0:-1]
+        destination_str = '.'.join(destination_data[0:4]) \
+                          + ':' \
+                          + destination_port
 
     return (date, source_str, destination_str)
 

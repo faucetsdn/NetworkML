@@ -37,10 +37,20 @@ def get_source(sessions):
     if len(sessions) == 0:
         return None, 0, 0
 
-    capture_source = max(
-                          all_sessions.keys(),
-                          key=(lambda k: all_sessions[k])
-                        )
+    sorted_sources = sorted(
+                            all_sessions.keys(),
+                            key=(lambda k: all_sessions[k]),
+                            reverse=True
+                           )
+    for source in sorted_sources:
+        pairs = source.split('.')
+        private = False
+        if pairs[0] == '10': private = True
+        if pairs[0] == '192' and pairs[1] == '168': private = True
+        if pairs[0] == '172' and 16 <= int(pairs[1]) <= 31: private = True
+        if private == True:
+            capture_source = source
+            break
 
     # Get the incoming/outgoing sessions for the capture source
     num_incoming = incoming_sessions[capture_source]
@@ -160,7 +170,6 @@ def extract_features(session_dict, capture_source=None, max_port=1024):
     for key, session in session_dict.items():
         address_1, port_1 = key[0].split(':')
         address_2, port_2 = key[1].split(':')
-
         if address_1 == capture_source:
             num_sessions += 1
             num_external += is_external(address_1, address_2)
@@ -176,6 +185,7 @@ def extract_features(session_dict, capture_source=None, max_port=1024):
                                    (num_source_sess, num_destination_sess),
                                     axis=0
                                   )
+    if num_sessions == 0: num_sessions += 1
     num_port_sess = np.asarray(num_port_sess)/num_sessions
     extra_features = [0]*4
     extra_features[0] = num_external/num_sessions
