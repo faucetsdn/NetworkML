@@ -5,6 +5,7 @@ the one layer feedforward model.
 
 import json
 import sys
+import os
 import numpy as np
 
 from redis import StrictRedis
@@ -63,7 +64,8 @@ if __name__ == '__main__':
     # path to the pcap to get the update from
     pcap_path = sys.argv[1]
     # parse the filename to get IP address
-    split_path = pcap_path.split('.')
+    split_path = os.path.split(pcap_path)[-1]
+    split_path = split_path.split('.')
     split_path = split_path[0].split('-')
     if len(split_path) == 6:
         source_ip = '.'.join(split_path[2:])
