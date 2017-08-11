@@ -66,11 +66,11 @@ if __name__ == '__main__':
     split_path = pcap_path.split('.')
     split_path = split_path[0].split('-')
     if len(split_path) == 6:
-        source_ip = '.'.join(split_path[2:]
+        source_ip = '.'.join(split_path[2:])
     else:
         source_ip = None
 
-    if split_pcap[-1] != 'miscellaneous':
+    if split_path[-1] != 'miscellaneous':
         # Initialize and load the model
         if len(sys.argv) > 2:
             load_path = sys.argv[2]
