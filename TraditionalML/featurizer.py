@@ -42,6 +42,7 @@ def get_source(sessions):
                             key=(lambda k: all_sessions[k]),
                             reverse=True
                            )
+    capture_source = '0.0.0.0'
     for source in sorted_sources:
         pairs = source.split('.')
         private = False
