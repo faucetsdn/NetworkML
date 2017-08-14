@@ -67,12 +67,12 @@ if __name__ == '__main__':
     split_path = os.path.split(pcap_path)[-1]
     split_path = split_path.split('.')
     split_path = split_path[0].split('-')
-    if len(split_path) == 6:
-        source_ip = '.'.join(split_path[2:])
+    if len(split_path) == 8:
+        source_ip = '.'.join(split_path[-4:])
     else:
         source_ip = None
 
-    if split_path[-1] != 'miscellaneous':
+    if split_path[-1] != 'miscellaneous' and source_ip != '255.255.255.255':
         # Initialize and load the model
         if len(sys.argv) > 2:
             load_path = sys.argv[2]
@@ -94,4 +94,5 @@ if __name__ == '__main__':
                                                            mean=False
                                                           )
         # Update the stored representation
-        update_representation(source_ip, reps, timestamps)
+        if source_ip != '0.0.0.0':
+            update_representation(source_ip, reps, timestamps)
