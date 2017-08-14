@@ -74,6 +74,9 @@ class OneLayerModel:
         X = []
         timestamps = []
         binned_sessions = sessionizer(filepath, duration=self.duration)
+        if len(binned_sessions) is 0:
+            return None, None, None
+
         for session_dict in binned_sessions:
             if source_ip is None:
                 feature_list, source_ip = extract_features(session_dict)
@@ -184,6 +187,8 @@ class OneLayerModel:
 
         features, _, _ = self.get_features(filepath, source_ip=source_ip)
 
+        if features is None:
+            return None
         predictions = self.model.predict_proba(features)
         mean_predictions = np.mean(predictions, axis=0)
 
@@ -210,6 +215,9 @@ class OneLayerModel:
                                                            filepath,
                                                            source_ip=source_ip,
                                                           )
+        if features is None:
+            return None, None, None
+
         L1_weights = self.model.coefs_[0]
         L1_biases = self.model.intercepts_[0]
         representation = np.maximum(

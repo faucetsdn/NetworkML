@@ -84,8 +84,11 @@ if __name__ == '__main__':
         # Print the prediction if feeding in a test model
         if len(sys.argv) > 2:
             prediction = model.predict(pcap_path, source_ip=source_ip)
-            for p in prediction:
-                print(p)
+            if prediction is None:
+                print(None)
+            else:
+                for p in prediction:
+                    print(p)
 
         # Get representations from the model
         reps, source_ip, timestamps = model.get_representation(
@@ -94,5 +97,5 @@ if __name__ == '__main__':
                                                            mean=False
                                                           )
         # Update the stored representation
-        if source_ip != '0.0.0.0':
+        if reps is not None and source_ip != '0.0.0.0':
             update_representation(source_ip, reps, timestamps)
