@@ -11,7 +11,7 @@ if __name__ == '__main__':
     # Get the data directory
     data_dir = sys.argv[1]
     # Initialize the model
-    model = OneLayerModel(duration=15*60, hidden_size=20)
+    model = OneLayerModel(duration=15*60)
     # Train the model
     model.train(data_dir)
     # Save the model to the specified path

@@ -85,6 +85,7 @@ class OneLayerModel:
             X.append(feature_list)
             last_packet = list(session_dict.items())[-1]
             timestamps.append(last_packet[1][0][0])
+
         full_features = np.stack(X)
 
         # Mean normalize the features
@@ -112,9 +113,6 @@ class OneLayerModel:
         # First read the data directory for the features and labels
         X_all, y_all, self.labels = read_data(data_dir, duration=self.duration)
         self.labels.append("Unknown")
-        # If hidden size wasn't specified, default to 2x the number of labels
-        if self.hidden_size is None:
-            self.hidden_size = 2*len(self.labels)
 
         print("Making data splits")
         # Split the data into training, validation, and testing sets
@@ -140,6 +138,15 @@ class OneLayerModel:
         # Select the relevant features from the training set
         self.feature_list = select_features(X_normed, y_train)
         print(self.feature_list)
+
+        # If hidden size wasn't specified, default to the mean of the number
+        # of features and the size of the label space
+        if self.hidden_size is None:
+            self.hidden_size = int(1/2*(
+                                        len(self.labels) + \
+                                        len(self.feature_list)
+                                       )
+                                  )
 
         # Augment the data with randomly permuted samples
         X_aug, y_aug = self._augment_data(X_normed, y_train)
