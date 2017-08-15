@@ -1,6 +1,28 @@
 import numpy as np
 from collections import defaultdict
 
+def is_private(address):
+    '''
+    Checks if an address is private and if so returns True.  Otherwise returns
+    False.
+
+    Args:
+        address: Address to check. Can be list or string
+    Returns:
+        True or False
+    '''
+    if len(address) > 4:
+        pairs = address.split('.')
+    elif len(address) == 4:
+        pairs = address
+
+    private = False
+    if pairs[0] == '10': private = True
+    if pairs[0] == '192' and pairs[1] == '168': private = True
+    if pairs[0] == '172' and 16 <= int(pairs[1]) <= 31: private = True
+
+    return private
+
 def get_source(sessions):
     '''
     Gets the source IP address from a session dictionary.
@@ -45,11 +67,7 @@ def get_source(sessions):
     capture_source = '0.0.0.0'
     for source in sorted_sources:
         pairs = source.split('.')
-        private = False
-        if pairs[0] == '10': private = True
-        if pairs[0] == '192' and pairs[1] == '168': private = True
-        if pairs[0] == '172' and 16 <= int(pairs[1]) <= 31: private = True
-        if private == True:
+        if is_private(pairs):
             capture_source = source
             break
 
@@ -168,10 +186,13 @@ def extract_features(session_dict, capture_source=None, max_port=1024):
     num_icmp_sess = 0
 
     # Iterate over all sessions and aggregate the info
+    other_ips = defaultdict(int)
     for key, session in session_dict.items():
         address_1, port_1 = key[0].split(':')
         address_2, port_2 = key[1].split(':')
         if address_1 == capture_source:
+            if is_private(address_2):
+                other_ips[address_2] += 1
             num_sessions += 1
             num_external += is_external(address_1, address_2)
             num_tcp_sess += is_protocol(session, '06')
@@ -181,6 +202,10 @@ def extract_features(session_dict, capture_source=None, max_port=1024):
                 num_source_sess[int(port_1)] += 1
             if int(port_2) < max_port:
                 num_destination_sess[int(port_2)] += 1
+
+        if address_2 == capture_source:
+            if is_private(address_1):
+                other_ips[address_1] += 1
 
     num_port_sess = np.concatenate(
                                    (num_source_sess, num_destination_sess),
@@ -195,4 +220,4 @@ def extract_features(session_dict, capture_source=None, max_port=1024):
     extra_features[3] = num_icmp_sess/num_sessions
 
     feature_vector = np.concatenate((num_port_sess, extra_features), axis=0)
-    return feature_vector, capture_source
+    return feature_vector, capture_source, list(other_ips.keys())

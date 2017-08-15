@@ -10,6 +10,7 @@ import numpy as np
 
 from redis import StrictRedis
 from OneLayer import OneLayerModel
+from featurizer import is_private
 
 def update_representation(source_ip, representations, timestamps):
     '''
@@ -81,21 +82,17 @@ if __name__ == '__main__':
         model = OneLayerModel(duration=None, hidden_size=None)
         model.load(load_path)
 
-        # Print the prediction if feeding in a test model
-        if len(sys.argv) > 2:
-            prediction = model.predict(pcap_path, source_ip=source_ip)
-            if prediction is None:
-                print(None)
-            else:
-                for p in prediction:
-                    print(p)
-
         # Get representations from the model
-        reps, source_ip, timestamps = model.get_representation(
+        reps, source_ip, timestamps, preds, others = model.get_representation(
                                                            pcap_path,
                                                            source_ip=source_ip,
                                                            mean=False
-                                                          )
+                                                                             )
+        if len(sys.argv) > 2:
+            for p in preds:
+                print(p)
+            print(others)
+
         # Update the stored representation
-        if reps is not None and source_ip != '0.0.0.0':
+        if reps is not None and is_private(source_ip):
             update_representation(source_ip, reps, timestamps)

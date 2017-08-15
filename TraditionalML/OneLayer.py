@@ -79,12 +79,14 @@ class OneLayerModel:
 
         for session_dict in binned_sessions:
             if source_ip is None:
-                feature_list, source_ip = extract_features(session_dict)
+                feature_list, source_ip, other_ips = extract_features(
+                                                                   session_dict
+                                                                     )
             else:
-                feature_list, _ = extract_features(
-                                                    session_dict,
-                                                    capture_source=source_ip
-                                                  )
+                feature_list, _, other_ips = extract_features(
+                                                      session_dict,
+                                                      capture_source=source_ip
+                                                             )
             X.append(feature_list)
             last_packet = list(session_dict.items())[-1]
             timestamps.append(last_packet[1][0][0])
@@ -99,7 +101,7 @@ class OneLayerModel:
         last_packet = list(binned_sessions[-1].items())[-1]
         timestamp = last_packet[1][0][0]
 
-        return features, source_ip, timestamps
+        return features, source_ip, timestamps, other_ips
 
 
     def train(self, data_dir):
@@ -185,7 +187,7 @@ class OneLayerModel:
             prediction: list of tuples formatted as (source, probability)
         '''
 
-        features, _, _ = self.get_features(filepath, source_ip=source_ip)
+        features, _, _, _ = self.get_features(filepath, source_ip=source_ip)
 
         if features is None:
             return None
@@ -211,12 +213,12 @@ class OneLayerModel:
             representation:  representation vector of the input file
         '''
 
-        features, source_ip, timestamp = self.get_features(
+        features, source_ip, timestamp, other_ips = self.get_features(
                                                            filepath,
                                                            source_ip=source_ip,
-                                                          )
+                                                                     )
         if features is None:
-            return None, None, None
+            return None, None, None, None
 
         L1_weights = self.model.coefs_[0]
         L1_biases = self.model.intercepts_[0]
@@ -224,11 +226,26 @@ class OneLayerModel:
                                      np.matmul(features, L1_weights)+L1_biases,
                                      0
                                    )
+
+        mean_rep = np.mean(representation, axis=0)
+
+        L2_weights = self.model.coefs_[1]
+        L2_biases = self.model.intercepts_[1]
+        probabilities = np.matmul(representation, L2_weights) + L2_biases
+        probabilities = np.exp(probabilities)
+        probabilities /= np.expand_dims(np.sum(probabilities, axis=1), axis=1)
+        probabilities = np.mean(probabilities, axis=0)
+        prediction = [
+                        (self.labels[i], prob)
+                        for i, prob in enumerate(probabilities)
+                     ]
+        prediction = sorted(prediction, key=lambda x: x[1], reverse=True)
+
         if mean:
-            representation = np.mean(representation, axis=0)
+            representation = mean_rep
             timestamp = timestamp[-1]
 
-        return representation, source_ip, timestamp
+        return representation, source_ip, timestamp, prediction, other_ips
 
     def save(self, save_path):
         '''
