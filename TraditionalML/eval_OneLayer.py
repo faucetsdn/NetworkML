@@ -153,7 +153,7 @@ def update_data(
                 "current_representation": list(current_rep),
                 "labels": labels,
                 "confidences": confidences,
-                "other_ips": other_ips,
+                "other_ips": sorted(other_ips),
                 "model_hash": model_hash
             }
     try:
@@ -161,6 +161,17 @@ def update_data(
     except Exception as e:
         print(key)
         print(state)
+
+    # Add this update time to the list of updates
+    try:
+        updates = r.hgetall(source_ip)
+        update_list = json.loads(updates[b'timestamps'].decode('ascii'))
+        update_list.append(time)
+        times = { 'timestamps': update_list }
+        r.hmset(source_ip, times)
+    except Exception as e:
+        print(source_ip)
+        print(time)
 
 if __name__ == '__main__':
     # path to the pcap to get the update from
