@@ -6,6 +6,7 @@ the one layer feedforward model.
 import json
 import sys
 import os
+import hashlib
 import numpy as np
 
 from redis import StrictRedis
@@ -108,7 +109,8 @@ def update_data(
                  representations,
                  timestamps,
                  predictions,
-                 other_ips
+                 other_ips,
+                 model_hash
                ):
     '''
     Updates the stored data with the new information
@@ -119,6 +121,7 @@ def update_data(
         timestamps: Time at which each representation was observed
         predictions: Model predictions along with confidences
         other_ips: Other IP addresses the source has communicated with
+        model_hash: Hash of the model used to compute this information
     '''
 
     try:
@@ -150,7 +153,8 @@ def update_data(
                 "current_representation": list(current_rep),
                 "labels": labels,
                 "confidences": confidences,
-                "other_ips": other_ips
+                "other_ips": other_ips,
+                "model_hash": model_hash
             }
     try:
         r.hmset(key, state)
@@ -176,6 +180,11 @@ if __name__ == '__main__':
             load_path = sys.argv[2]
         else:
             load_path = "/models/model.pickle"
+
+        # Compute model hash
+        with open(load_path, 'rb') as handle:
+            model_hash = hashlib.md5(handle.read()).hexdigest()
+
         model = OneLayerModel(duration=None, hidden_size=None)
         model.load(load_path)
 
@@ -192,4 +201,4 @@ if __name__ == '__main__':
 
         # Update the stored representation
         if reps is not None and is_private(source_ip):
-            update_data(source_ip, reps, timestamps, preds, others)
+            update_data(source_ip, reps, timestamps, preds, others, model_hash)
