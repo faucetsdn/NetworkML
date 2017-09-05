@@ -209,7 +209,10 @@ if __name__ == '__main__':
             for p in preds:
                 print(p)
             print(others)
-
+            _, mean_rep = average_representation(reps, timestamps)
+            mean_preds = model.classify_representation(mean_rep)
+            for p in mean_preds:
+                print(p)
         # Update the stored representation
         if reps is not None and is_private(source_ip):
             update_data(source_ip, reps, timestamps, preds, others, model_hash)
