@@ -6,6 +6,7 @@ the one layer feedforward model.
 import json
 import sys
 import os
+import logging
 import hashlib
 import numpy as np
 
@@ -123,6 +124,8 @@ def update_data(
         other_ips: Other IP addresses the source has communicated with
         model_hash: Hash of the model used to compute this information
     '''
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
 
     try:
         r = StrictRedis(host='redis', port=6379, db=0)
@@ -159,8 +162,8 @@ def update_data(
     try:
         r.hmset(key, state)
     except Exception as e:
-        print(key)
-        print(state)
+        logger.info("created key %s", key)
+        logger.info(state)
 
     # Add this update time to the list of updates
     try:
@@ -170,11 +173,13 @@ def update_data(
         times = { 'timestamps': update_list }
         r.hmset(source_ip, times)
     except Exception as e:
-        print(source_ip)
-        print(time)
+        pass
 
 if __name__ == '__main__':
-    # path to the pcap to get the update from
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+
+   # path to the pcap to get the update from
     pcap_path = sys.argv[1]
     # parse the filename to get IP address
     split_path = os.path.split(pcap_path)[-1]
@@ -183,6 +188,7 @@ if __name__ == '__main__':
     if len(split_path) >= 7:
         source_ip = '.'.join(split_path[-4:])
     else:
+        logger.info("Defaulting to inferring IP address")
         source_ip = None
 
     if split_path[-1] != 'miscellaneous' and source_ip != '255.255.255.255':
@@ -198,6 +204,7 @@ if __name__ == '__main__':
 
         model = OneLayerModel(duration=None, hidden_size=None)
         model.load(load_path)
+        logger.info("Loaded model from %s", load_path)
 
         # Get representations from the model
         reps, source_ip, timestamps, preds, others = model.get_representation(
@@ -205,14 +212,14 @@ if __name__ == '__main__':
                                                            source_ip=source_ip,
                                                            mean=False
                                                                              )
+
         if len(sys.argv) > 2:
-            for p in preds:
-                print(p)
-            print(others)
+            logger.info("Generating predictions")
             _, mean_rep = average_representation(reps, timestamps)
             mean_preds = model.classify_representation(mean_rep)
             for p in mean_preds:
-                print(p)
+                logger.info(p)
         # Update the stored representation
         if reps is not None and is_private(source_ip):
+            logger.info("Updating stored data")
             update_data(source_ip, reps, timestamps, preds, others, model_hash)
