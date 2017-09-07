@@ -181,6 +181,7 @@ def update_data(
         update_list = []
 
     update_list.append(time)
+    update_list = sorted(update_list)
     times = { 'timestamps': update_list }
     logger.info("Updating %s", source_ip)
     logger.info(times)
