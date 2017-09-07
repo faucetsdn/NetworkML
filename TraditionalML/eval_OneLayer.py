@@ -162,12 +162,15 @@ def update_data(
                 "other_ips": sorted(other_ips),
                 "model_hash": model_hash
             }
+
+    logger.info("Storing data")
     try:
         r.hmset(key, state)
     except Exception as e:
         logger.info("created key %s", key)
         logger.info(state)
 
+    logger.info("Storing update time")
     # Add this update time to the list of updates
     try:
         updates = r.hgetall(source_ip)
@@ -224,10 +227,16 @@ if __name__ == '__main__':
                                                            mean=False
                                                                              )
 
+        logger.info("Generating predictions")
+        last_update, prev_rep = get_previous_state(source_ip, timestamps[0])
+        _, mean_rep = average_representation(
+                                                reps,
+                                                timestamps,
+                                                prev_representation=prev_rep,
+                                                last_update=last_update
+                                            )
+        mean_preds = model.classify_representation(mean_rep)
         if len(sys.argv) > 2:
-            logger.info("Generating predictions")
-            _, mean_rep = average_representation(reps, timestamps)
-            mean_preds = model.classify_representation(mean_rep)
             for p in mean_preds:
                 logger.info(p)
         # Update the stored representation
