@@ -153,7 +153,7 @@ def update_data(
     confidences = [confidence for label, confidence in predictions]
 
     # Create the information to store
-    key = source_ip + '__' + str(time)
+    key = source_ip + '_' + str(time)
     state = {
                 "representation": list(avg_rep),
                 "current_representation": list(current_rep),
@@ -202,7 +202,7 @@ if __name__ == '__main__':
     if len(split_path) >= 7:
         source_ip = '.'.join(split_path[-4:])
     else:
-        logger.info("Defaulting to inferring IP address")
+        logger.info("Defaulting to inferring IP address from %s", pcap_path)
         source_ip = None
 
     if split_path[-1] != 'miscellaneous' and source_ip != '255.255.255.255':
