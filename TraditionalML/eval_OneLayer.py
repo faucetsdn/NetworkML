@@ -153,7 +153,7 @@ def update_data(
     confidences = [confidence for label, confidence in predictions]
 
     # Create the information to store
-    key = source_ip + '_' + str(time)
+    key = source_ip + '__' + str(time)
     state = {
                 "representation": list(avg_rep),
                 "current_representation": list(current_rep),
