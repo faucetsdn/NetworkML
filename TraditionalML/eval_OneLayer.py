@@ -42,7 +42,7 @@ def get_previous_state(source_ip, timestamp):
         update_list = []
     last_update = None
     for update in update_list:
-        if update < timestamp:
+        if update < timestamp.timestamp():
             last_update = update
 
     # Return Nones if there is no earlier update
