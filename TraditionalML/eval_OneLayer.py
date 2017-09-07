@@ -52,7 +52,7 @@ def get_previous_state(source_ip, timestamp):
     # Read the last updated entry to get the previous representation
     key = source_ip + '_' + str(last_update)
     try:
-        previous_state = r.hgetall(key)
+        state = r.hgetall(key)
     except Exception as e:
         return None, None
     previous_representation = json.loads(
