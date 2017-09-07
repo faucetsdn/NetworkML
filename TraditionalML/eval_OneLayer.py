@@ -172,12 +172,19 @@ def update_data(
     try:
         updates = r.hgetall(source_ip)
         update_list = json.loads(updates[b'timestamps'].decode('ascii'))
+        logger.info("Got previous updates from %s", source_ip)
     except Exception as e:
+        logger.info("No previous updates found for %s", source_ip)
         update_list = []
 
     update_list.append(time)
     times = { 'timestamps': update_list }
-    r.hmset(source_ip, times)
+    logger.info("Updating %s", source_ip)
+    logger.info(times)
+    try:
+        r.hmset(source_ip, times)
+    except Exception as e:
+        logger.info("Could not store update time")
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
