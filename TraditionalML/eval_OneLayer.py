@@ -172,11 +172,12 @@ def update_data(
     try:
         updates = r.hgetall(source_ip)
         update_list = json.loads(updates[b'timestamps'].decode('ascii'))
-        update_list.append(time)
-        times = { 'timestamps': update_list }
-        r.hmset(source_ip, times)
     except Exception as e:
-        pass
+        update_list = []
+
+    update_list.append(time)
+    times = { 'timestamps': update_list }
+    r.hmset(source_ip, times)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
