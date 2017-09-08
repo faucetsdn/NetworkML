@@ -5,6 +5,7 @@ either normal or abnormal using the specified model
 
 import sys
 import os
+import logging
 from redis import StrictRedis
 import numpy as np
 
@@ -16,6 +17,8 @@ from classifier import Classifier
 state_size = 32
 duration = 900
 look_time = 24*68*60
+
+logging.basicConfig(level=logging.INFO)
 
 def get_address_info(address, timestamp):
     '''
@@ -66,6 +69,7 @@ def basic_decision(address, current_rep, mean_rep, prev_time, timestamp):
     return decisions
 
 if __name__ == '__main__':
+    logger = logging.getLogger(__name__)
     # Get the pcap path from the first argument
     pcap_path = sys.argv[1]
     # Determine the source IP address from filename
@@ -140,5 +144,5 @@ if __name__ == '__main__':
 
     # Here is where the decision dictionary should be passed to poseidon
     for key, item in decisions.items():
-        print(key, item)
-    print(decisions)
+        logger.info("Made decision for %s", key)
+        logger.info(item)
