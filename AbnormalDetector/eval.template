@@ -1,0 +1,11 @@
+[info]
+name = AbnormalDetector Evaluate
+groups = pcap
+
+[settings]
+ext_types = pcap
+process_base = no
+process_from_tool = pcap node splitter
+
+[docker]
+links = {"Redis":"redis"}
