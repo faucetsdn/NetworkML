@@ -14,6 +14,8 @@ from redis import StrictRedis
 from OneLayer import OneLayerModel
 from featurizer import is_private
 
+logging.basicConfig(level=logging.INFO)
+
 def get_previous_state(source_ip, timestamp):
     '''
     Gets the average representation vector from the most recent update
@@ -127,7 +129,6 @@ def update_data(
         other_ips: Other IP addresses the source has communicated with
         model_hash: Hash of the model used to compute this information
     '''
-    logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
 
     try:
@@ -191,7 +192,6 @@ def update_data(
         logger.info("Could not store update time")
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
 
    # path to the pcap to get the update from
