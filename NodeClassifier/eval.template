@@ -1,5 +1,5 @@
 [info]
-name = TradionalML Evaluate
+name = NodeClassifier Evaluate
 groups = pcap
 
 [settings]
