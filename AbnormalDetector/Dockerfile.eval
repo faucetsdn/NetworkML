@@ -1,0 +1,12 @@
+FROM python:3.5
+MAINTAINER Cory Stephenson <cstephenson@iqt.org>
+
+RUN apt-get update && apt-get install -y \
+    tcpdump
+
+RUN pip install numpy tensorflow 
+COPY . /AbnormalDetector
+WORKDIR /AbnormalDetector
+
+ENTRYPOINT ["python3.5", "eval_classifier.py"]
+CMD [""]
