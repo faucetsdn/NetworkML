@@ -31,24 +31,30 @@ def read_data(data_dir, duration=None):
     X = []
     y = []
 
+    # Get all the files in the directory
+    files = []
+    for dirpath, dirnames, filenames in os.walk(data_dir):
+        for file in filenames:
+            files.append(os.path.join(dirpath,file))
     # Go through all the files in the directory
-    for filename in os.listdir(data_dir):
+    for filename in files:
         print("Reading", filename)
         # Extract the label from the filename
-        label = filename.split('_')[0]
+        name = os.path.split(filename)[1]
+        label = name.split('-')[0]
         # Add the label to the label list if it is a new one
         if label not in labels:
             labels.append(label)
 
         # Bin the sessions with the specified time window
         binned_sessions = sessionizer(
-                                       os.path.join(data_dir, filename),
+                                       filename,
                                        duration=duration
                                      )
 
         # For each of the session bins, compute the  full feature vectors
         for session_dict in binned_sessions:
-            features, _ = extract_features(session_dict)
+            features, _, _ = extract_features(session_dict)
             # Store the feature vector and the labels
             X.append(features)
             y.append(labels.index(label))

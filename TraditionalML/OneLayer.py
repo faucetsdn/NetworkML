@@ -247,6 +247,22 @@ class OneLayerModel:
 
         return representation, source_ip, timestamp, prediction, other_ips
 
+    def classify_representation(self, representation):
+        '''
+        Takes in a representation and produces a classification
+        '''
+        L2_weights = self.model.coefs_[1]
+        L2_biases = self.model.intercepts_[1]
+        probabilities = np.matmul(representation, L2_weights) + L2_biases
+        probabilities = np.exp(probabilities)
+        probabilities /= np.sum(probabilities)
+        prediction = [
+                        (self.labels[i], prob)
+                        for i, prob in enumerate(probabilities)
+                     ]
+        prediction = sorted(prediction, key=lambda x: x[1], reverse=True)
+        return prediction
+
     def save(self, save_path):
         '''
         Saves the model to the specified file path
