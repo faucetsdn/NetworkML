@@ -6,6 +6,6 @@ either normal or abnormal using the specified model
 import sys
 from reader import sessionizer
 
-class RNNClassifier:
+class Classifier:
     def __init__(self):
         pass

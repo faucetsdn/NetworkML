@@ -10,7 +10,7 @@ import numpy as np
 
 from reader import sessionizer
 from model_utils import clean_session_dict
-from RNNClassifier import RNNClassifier
+from classifier import Classifier
 
 # HYPERPARAMETERS 
 state_size = 32
