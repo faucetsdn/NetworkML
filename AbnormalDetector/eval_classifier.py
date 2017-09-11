@@ -86,6 +86,7 @@ if __name__ == '__main__':
 
     # Clean the sessions
     cleaned_sessions = []
+    inferred_ip = None
     for session_dict in sessions:
         cleaned_sessions, inferred_ip = \
                         clean_session_dict(session_dict, source_ip=source_ip)
