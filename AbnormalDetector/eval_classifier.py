@@ -10,6 +10,7 @@ from redis import StrictRedis
 import numpy as np
 
 from reader import sessionizer
+from featurizer import is_private
 from model_utils import clean_session_dict
 from classifier import Classifier
 
@@ -94,57 +95,58 @@ if __name__ == '__main__':
     if source_ip is None:
         source_ip = inferred_ip
 
-    # Laad the model 
-    if len(sys.argv) > 2:
-        model_path = sys.argv[2]
-    else:
-        model_path = 'models/RNNmodel.h5'
-    #model = RNNClassifier()
-    #model.load(model_path)
+    if is_private(source_ip):
+        # Laad the model 
+        if len(sys.argv) > 2:
+            model_path = sys.argv[2]
+        else:
+            model_path = 'models/RNNmodel.h5'
+        #model = RNNClassifier()
+        #model.load(model_path)
 
-    # Run each session through the model
-    other_ips = []
-    for key, packets in cleaned_sessions.items():
-        address_1 = key[0].split(':')[0]
-        address_2 = key[1].split(':')[0]
-        if address_1 != source_ip and address_1 not in other_ips:
-            other_ips.append(address_1)
-        if address_2 != source_ip and address_2 not in other_ips:
-            other_ips.append(address_2)
+        # Run each session through the model
+        other_ips = []
+        for key, packets in cleaned_sessions.items():
+            address_1 = key[0].split(':')[0]
+            address_2 = key[1].split(':')[0]
+            if address_1 != source_ip and address_1 not in other_ips:
+                other_ips.append(address_1)
+            if address_2 != source_ip and address_2 not in other_ips:
+                other_ips.append(address_2)
 
-        # Get timestamp of first packet
-        timestamp = packets[0][0].timestamp()
-        # Get the representation vectors for each address
-        repr_1, m_repr_1, _, prev_1 = get_address_info(address_1, timestamp)
-        repr_2, m_repr_2, _, prev_2 = get_address_info(address_2, timestamp)
-        # Encode packets
-        #X_in = create_inputs(packets)
-        # Feed inputs through the model to get classification
-        #classification = model.predict(X_in, repr_1, repr_2)
-        #classifications.append([address_1,address_2,classification])
+            # Get timestamp of first packet
+            timestamp = packets[0][0].timestamp()
+            # Get the representation vectors for each address
+            repr_1, m_repr_1, _, prev_1 = get_address_info(address_1, timestamp)
+            repr_2, m_repr_2, _, prev_2 = get_address_info(address_2, timestamp)
+            # Encode packets
+            #X_in = create_inputs(packets)
+            # Feed inputs through the model to get classification
+            #classification = model.predict(X_in, repr_1, repr_2)
+            #classifications.append([address_1,address_2,classification])
 
-    # Make simple decisions based on vector differences and update times
-    decisions = {}
-    repr_s, m_repr_s, _ , prev_s = get_address_info(source_ip, timestamp)
-    decisions[source_ip] = basic_decision(
-                                            source_ip,
-                                            repr_s,
-                                            m_repr_s,
-                                            prev_s,
-                                            timestamp
-                                         )
-    for other_ip in other_ips:
-        repr_o, m_repr_o, _, prev_o = get_address_info(other_ip, timestamp)
-        decisions[other_ip] = basic_decision(
-                                              other_ip,
-                                              repr_o,
-                                              m_repr_o,
-                                              prev_o,
-                                              timestamp
-                                            )
+        # Make simple decisions based on vector differences and update times
+        decisions = {}
+        repr_s, m_repr_s, _ , prev_s = get_address_info(source_ip, timestamp)
+        decisions[source_ip] = basic_decision(
+                                                source_ip,
+                                                repr_s,
+                                                m_repr_s,
+                                                prev_s,
+                                                timestamp
+                                             )
+        for other_ip in other_ips:
+            repr_o, m_repr_o, _, prev_o = get_address_info(other_ip, timestamp)
+            decisions[other_ip] = basic_decision(
+                                                  other_ip,
+                                                  repr_o,
+                                                  m_repr_o,
+                                                  prev_o,
+                                                  timestamp
+                                                )
 
 
-    # Here is where the decision dictionary should be passed to poseidon
-    for key, item in decisions.items():
-        logger.info("Made decision for %s", key)
-        logger.info(item)
+        # Here is where the decision dictionary should be passed to poseidon
+        for key, item in decisions.items():
+            logger.info("Made decision for %s", key)
+            logger.info(item)
