@@ -27,7 +27,8 @@ def get_address_info(address, timestamp):
     # Get the timestamps of the past updates for this address
     try:
         r = StrictRedis(host='redis', port=6379, db=0)
-        timestamps = r.hgetall(address)
+        updates = r.hgetall(address)
+        timestamps = json.loads(updates[b'timestamps'].decode('ascii'))
     except Exception as e:
         timestamps = None
 

@@ -100,7 +100,7 @@ def packetizer(path):
     for line in proc.stdout:
         if not line.startswith(b'\t'):
             head = parse_packet_head(line)
-            if timestamp is None:
+            if timestamp is None and head is not None:
                 timestamp = head[0].timestamp()
             if head is not None:
                 packet_dict[head] = ''
