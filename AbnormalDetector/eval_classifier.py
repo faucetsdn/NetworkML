@@ -14,6 +14,9 @@ from featurizer import is_private
 from model_utils import clean_session_dict
 from classifier import Classifier
 
+import json
+import pika
+
 # HYPERPARAMETERS 
 state_size = 32
 duration = 900
@@ -58,17 +61,51 @@ def get_address_info(address, timestamp):
                             state[b'current_representation'].decode('ascii')
                                   )
         average_state = json.loads(state[b'representation'].decode('ascii'))
+        labels = json.loads(state[b'labels']).decode('ascii')
+        confs = json.loads(state[b'confidences']).decode('ascii')
         other_ips = json.loads(state[b'other_ips'].decode('ascii'))
+    else:
+        labels = None
+        confs = None
 
-    return current_state, average_state, other_ips, last_update
+    return current_state, average_state, other_ips, last_update, labels, confs
 
-def basic_decision(address, current_rep, mean_rep, prev_time, timestamp):
-    decisions = {'Abnormal': False, 'Investigate': False}
+def basic_decision(
+                    key,
+                    address,
+                    current_rep,
+                    mean_rep,
+                    prev_time,
+                    timestamp,
+                    labels,
+                    confs
+                  ):
+
+    if key is None:
+        key = address
+
+    if labels is None:
+        labels = ['Unknown']*3
+        confs = [1,0,0]
+
+    investigate = False
     if prev_time is None or timestamp - prev_time > look_time:
-        decisions['Investigate'] = True
+        investigate = True
+
+    behavior = 'normal'
     if np.dot(current_rep, mean_rep) < 0:
-        decisions['Abnormal'] = True
-    return decisions
+        behavior = 'abnormal'
+
+    output = {}
+    decisions = {'behavior': 'normal', 'investigate': False}
+    classifications = {'labels': labels[0:3], 'confidences': confs[0:3]}
+    id_dict = {
+                'decisions': decisions,
+                'classification': classifications,
+                'timestamp': timestamp
+              }
+    output[key] = id_dict
+    return output
 
 if __name__ == '__main__':
     logger = logging.getLogger(__name__)
@@ -104,49 +141,45 @@ if __name__ == '__main__':
         #model = RNNClassifier()
         #model.load(model_path)
 
-        # Run each session through the model
-        other_ips = []
-        for key, packets in cleaned_sessions.items():
-            address_1 = key[0].split(':')[0]
-            address_2 = key[1].split(':')[0]
-            if address_1 != source_ip and address_1 not in other_ips:
-                other_ips.append(address_1)
-            if address_2 != source_ip and address_2 not in other_ips:
-                other_ips.append(address_2)
-
-            # Get timestamp of first packet
-            timestamp = packets[0][0].timestamp()
-            # Get the representation vectors for each address
-            repr_1, m_repr_1, _, prev_1 = get_address_info(address_1, timestamp)
-            repr_2, m_repr_2, _, prev_2 = get_address_info(address_2, timestamp)
-            # Encode packets
-            #X_in = create_inputs(packets)
-            # Feed inputs through the model to get classification
-            #classification = model.predict(X_in, repr_1, repr_2)
-            #classifications.append([address_1,address_2,classification])
-
         # Make simple decisions based on vector differences and update times
         decisions = {}
-        repr_s, m_repr_s, _ , prev_s = get_address_info(source_ip, timestamp)
-        decisions[source_ip] = basic_decision(
-                                                source_ip,
-                                                repr_s,
-                                                m_repr_s,
-                                                prev_s,
-                                                timestamp
-                                             )
-        for other_ip in other_ips:
-            repr_o, m_repr_o, _, prev_o = get_address_info(other_ip, timestamp)
-            decisions[other_ip] = basic_decision(
-                                                  other_ip,
-                                                  repr_o,
-                                                  m_repr_o,
-                                                  prev_o,
-                                                  timestamp
-                                                )
+        repr_s, m_repr_s, _ , prev_s, labels, confs = get_address_info(
+                                                                     source_ip,
+                                                                     timestamp
+                                                                      )
+        decision = basic_decision(
+                                   None,
+                                   source_ip,
+                                   repr_s,
+                                   m_repr_s,
+                                   prev_s,
+                                   timestamp,
+                                   labels,
+                                   confs
+                                 )
+        message = json.dumps(decision)
+        logger.info("Created message")
+        logger.info(decision)
 
+        # Create connection to rabbitmq
+        try:
+            rabbit_connection = pika.BlockingConnection(
+                               pika.ConnectionParameters(host=host, port=port))
+            rabbit_channel = rabbit_connection.channel()
+            rabbit_channel.queue_declare(queue='poseidon_AI')
+            logger.info("Connection created")
+        except Exception as e:
+            logger.info("Could not create connection")
 
-        # Here is where the decision dictionary should be passed to poseidon
-        for key, item in decisions.items():
-            logger.info("Made decision for %s", key)
-            logger.info(item)
+        # Send message to poseion AI channel
+        try:
+            rabbit_channel.basic_publish(
+                                       exchange='topic-poseidon-internal',
+                                       routing_key='poseidon.algos.ML.results',
+                                       body=message
+                                        )
+            logger.info("Sent message")
+            rabbit_connection.close()
+        except Exception as e:
+            logger.info("Could not send message")
+
