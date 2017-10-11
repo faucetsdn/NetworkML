@@ -115,6 +115,7 @@ if __name__ == '__main__':
     split_path = os.path.split(pcap_path)[-1]
     split_path = split_path.split('.')
     split_path = split_path[0].split('-')
+    key = split_path.split('_')[0]
     if len(split_path) >= 7:
         source_ip = '.'.join(split_path[-4:])
     else:
@@ -148,7 +149,7 @@ if __name__ == '__main__':
                                                                      timestamp
                                                                       )
         decision = basic_decision(
-                                   None,
+                                   key,
                                    source_ip,
                                    repr_s,
                                    m_repr_s,
@@ -170,6 +171,7 @@ if __name__ == '__main__':
             logger.info("Connection created")
         except Exception as e:
             logger.info("Could not create connection")
+            logger.info(e)
 
         # Send message to poseion AI channel
         try:
@@ -182,4 +184,5 @@ if __name__ == '__main__':
             rabbit_connection.close()
         except Exception as e:
             logger.info("Could not send message")
+            logger.info(e)
 
