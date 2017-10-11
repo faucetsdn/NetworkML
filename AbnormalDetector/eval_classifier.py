@@ -164,6 +164,8 @@ if __name__ == '__main__':
 
         # Create connection to rabbitmq
         try:
+            host = sys.argv[2]
+            port = sys.argv[3]
             rabbit_connection = pika.BlockingConnection(
                                pika.ConnectionParameters(host=host, port=port))
             rabbit_channel = rabbit_connection.channel()
