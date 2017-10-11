@@ -115,7 +115,7 @@ if __name__ == '__main__':
     split_path = os.path.split(pcap_path)[-1]
     split_path = split_path.split('.')
     split_path = split_path[0].split('-')
-    key = split_path.split('_')[0]
+    key = split_path[0].split('_')[0]
     if len(split_path) >= 7:
         source_ip = '.'.join(split_path[-4:])
     else:
