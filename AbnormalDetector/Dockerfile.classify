@@ -4,7 +4,7 @@ MAINTAINER Cory Stephenson <cstephenson@iqt.org>
 RUN apt-get update && apt-get install -y \
     tcpdump
 
-RUN pip install numpy redis tensorflow 
+RUN pip install numpy redis pika
 COPY . /AbnormalDetector
 WORKDIR /AbnormalDetector
 

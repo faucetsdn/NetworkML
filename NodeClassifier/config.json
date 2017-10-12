@@ -1,0 +1,25 @@
+{
+    "labels":
+    [
+        "Business workstation",
+        "Developer workstation",
+        "Smartphone",
+        "Printer",
+        "Mail server",
+        "File server",
+        "Internal web server",
+        "Database server",
+        "Code repository",
+        "DNS server",
+        "DHCP server",
+        "Active Directory controller",
+        "SSH server",
+        "VOIP phone",
+        "PBX",
+        "Unknown"
+    ],
+
+    "duration": 900,
+    "hidden size": 32,
+    "time constant": 86400
+}

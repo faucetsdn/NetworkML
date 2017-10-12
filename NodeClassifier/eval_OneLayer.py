@@ -16,6 +16,11 @@ from featurizer import is_private
 
 logging.basicConfig(level=logging.INFO)
 
+# Get time constant from config
+with open('config.json') as config_file:
+    config = json.load(config_file)
+    time_const = config['time constant']
+
 def get_previous_state(source_ip, timestamp):
     '''
     Gets the average representation vector from the most recent update
@@ -82,9 +87,6 @@ def average_representation(
         new_timestamp: Timestamp of the new representations
         new_representation: Newly computed representations
     '''
-
-    # Set the time constant to one day
-    time_const = 60*60*24
 
     # If there is no previous representation, default to zeros
     if prev_representation is None:
