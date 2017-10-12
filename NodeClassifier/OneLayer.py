@@ -11,7 +11,7 @@ from training_utils import read_data
 from training_utils import select_features
 
 class OneLayerModel:
-    def __init__(self, duration, hidden_size=None):
+    def __init__(self, duration, hidden_size=None, labels=None):
         '''
         Initializes a model with a single hidden layer.  Features are
         aggregated over the time specified by the duration and the hidden
@@ -28,7 +28,7 @@ class OneLayerModel:
         self.stds = None
         self.feature_list = None
         self.model = None
-        self.labels = None
+        self.labels = labels
 
     def _augment_data(self, X, y):
         '''
@@ -116,8 +116,12 @@ class OneLayerModel:
 
         print("Reading data")
         # First read the data directory for the features and labels
-        X_all, y_all, self.labels = read_data(data_dir, duration=self.duration)
-        self.labels.append("Unknown")
+        X_all, y_all, new_labels = read_data(
+                                              data_dir,
+                                              duration=self.duration,
+                                              labels=self.labels
+                                            )
+        self.labels = new_labels
 
         print("Making data splits")
         # Split the data into training, validation, and testing sets

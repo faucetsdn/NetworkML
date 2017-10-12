@@ -2,6 +2,7 @@
 Contains utilities required for parsing pcaps into model training features
 '''
 import os
+import json
 import numpy as np
 
 from sklearn.model_selection import cross_val_score
@@ -13,7 +14,7 @@ from sklearn.linear_model import LogisticRegression
 from reader import sessionizer
 from featurizer import extract_features
 
-def read_data(data_dir, duration=None):
+def read_data(data_dir, duration=None, labels=None):
     '''
     Reads all the data in the specified directory and parses it into
     a feature array and a label array.
@@ -21,18 +22,22 @@ def read_data(data_dir, duration=None):
     Args:
         data_dir: path to the directory that contains the training data
         duration: Time window to compute feature information
+        labels: List containing labels to use
 
     Returns:
         X: numpy 2D array that contains the (high dimensional) features
         y: numpy 1D array that contains the labels for the features in X
-        labels: Ordered list containing the labels used
+        new_labels: Reordered labels used in training
     '''
-    labels = []
     X = []
     y = []
+    assigned_labels = []
 
     # Get all the files in the directory
     files = []
+    with open(os.path.join(data_dir,'label_assignments.json')) as handle:
+        label_assignments = json.load(handle)
+
     for dirpath, dirnames, filenames in os.walk(data_dir):
         for file in filenames:
             files.append(os.path.join(dirpath,file))
@@ -41,10 +46,13 @@ def read_data(data_dir, duration=None):
         print("Reading", filename)
         # Extract the label from the filename
         name = os.path.split(filename)[1]
-        label = name.split('-')[0]
-        # Add the label to the label list if it is a new one
-        if label not in labels:
-            labels.append(label)
+        name = name.split('-')[0]
+        if name in label_assignments:
+            label = label_assignments[name]
+        else:
+            label = 'Unknown'
+        if label not in assigned_labels:
+            assigned_labels.append(label)
 
         # Bin the sessions with the specified time window
         binned_sessions = sessionizer(
@@ -57,9 +65,13 @@ def read_data(data_dir, duration=None):
             features, _, _ = extract_features(session_dict)
             # Store the feature vector and the labels
             X.append(features)
-            y.append(labels.index(label))
+            y.append(assigned_labels.index(label))
 
-    return np.stack(X), np.stack(y), labels
+        # Update the labels to reflect the new assignments
+        new_labels = assigned_labels + \
+                     [l for l in labels if l not in assigned_labels]
+
+    return np.stack(X), np.stack(y), new_labels
 
 def select_features(X, y):
     '''
