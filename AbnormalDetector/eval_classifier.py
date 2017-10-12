@@ -17,10 +17,13 @@ from classifier import Classifier
 import json
 import pika
 
-# HYPERPARAMETERS 
-state_size = 32
-duration = 900
-look_time = 24*68*60
+# Load parameters from config
+with open('config.json') as config_file:
+    config = json.load(config_file)
+state_size = config['state size']
+duration = config['duration']
+look_time = config['look time']
+threshold = config['threshold']
 
 logging.basicConfig(level=logging.INFO)
 
@@ -93,7 +96,7 @@ def basic_decision(
         investigate = True
 
     behavior = 'normal'
-    if np.dot(current_rep, mean_rep) < 0:
+    if np.dot(current_rep, mean_rep) < threshold:
         behavior = 'abnormal'
 
     output = {}
@@ -164,8 +167,6 @@ if __name__ == '__main__':
 
         # Create connection to rabbitmq
         try:
-            host = sys.argv[2]
-            port = sys.argv[3]
             rabbit_connection = pika.BlockingConnection(
                                pika.ConnectionParameters(host=host, port=port))
             rabbit_channel = rabbit_connection.channel()
