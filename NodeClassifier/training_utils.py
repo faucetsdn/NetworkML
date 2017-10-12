@@ -49,6 +49,7 @@ def read_data(data_dir, duration=None, labels=None):
         name = name.split('-')[0]
         if name in label_assignments:
             label = label_assignments[name]
+            if label not in labels: label = 'Unknown'
         else:
             label = 'Unknown'
         if label not in assigned_labels:
