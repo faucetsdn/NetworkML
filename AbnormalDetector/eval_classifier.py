@@ -167,6 +167,8 @@ if __name__ == '__main__':
         logger.info("Created message")
         logger.info(decision)
 
+        print(decision)
+'''
         # Create connection to rabbitmq
         try:
             host = None
@@ -192,3 +194,4 @@ if __name__ == '__main__':
         except Exception as e:
             logger.info("Could not send message")
             logger.info(e)
+'''
