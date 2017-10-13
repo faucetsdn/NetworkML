@@ -94,6 +94,8 @@ def basic_decision(
     investigate = False
     if prev_time is None or timestamp - prev_time > look_time:
         investigate = True
+    if labels[0] == 'Unknown':
+        investigate = True
 
     behavior = 'normal'
     if np.dot(current_rep, mean_rep) < threshold:
