@@ -116,11 +116,13 @@ if __name__ == '__main__':
     logger = logging.getLogger(__name__)
     # Get the pcap path from the first argument
     pcap_path = sys.argv[1]
-    # Determine the source IP address from filename
+    # Determine the source key from filename
     split_path = os.path.split(pcap_path)[-1]
     split_path = split_path.split('.')
     split_path = split_path[0].split('-')
     key = split_path[0].split('_')[1]
+
+    # Get the source IP address
     if len(split_path) >= 7:
         source_ip = '.'.join(split_path[-4:])
     else:
@@ -139,14 +141,6 @@ if __name__ == '__main__':
         source_ip = inferred_ip
 
     if is_private(source_ip):
-        # Laad the model 
-        if len(sys.argv) > 2:
-            model_path = sys.argv[2]
-        else:
-            model_path = 'models/RNNmodel.h5'
-        #model = RNNClassifier()
-        #model.load(model_path)
-
         # Make simple decisions based on vector differences and update times
         decisions = {}
         repr_s, m_repr_s, _ , prev_s, labels, confs = get_address_info(
@@ -167,31 +161,5 @@ if __name__ == '__main__':
         logger.info("Created message")
         logger.info(decision)
 
+        # Send decidion to stdout
         print(decision)
-'''
-        # Create connection to rabbitmq
-        try:
-            host = None
-            port = None
-            rabbit_connection = pika.BlockingConnection(
-                               pika.ConnectionParameters(host=host, port=port))
-            rabbit_channel = rabbit_connection.channel()
-            rabbit_channel.queue_declare(queue='poseidon_AI')
-            logger.info("Connection created")
-        except Exception as e:
-            logger.info("Could not create connection")
-            logger.info(e)
-
-        # Send message to poseion AI channel
-        try:
-            rabbit_channel.basic_publish(
-                                       exchange='topic-poseidon-internal',
-                                       routing_key='poseidon.algos.ML.results',
-                                       body=message
-                                        )
-            logger.info("Sent message")
-            rabbit_connection.close()
-        except Exception as e:
-            logger.info("Could not send message")
-            logger.info(e)
-'''
