@@ -118,7 +118,7 @@ if __name__ == '__main__':
     split_path = os.path.split(pcap_path)[-1]
     split_path = split_path.split('.')
     split_path = split_path[0].split('-')
-    key = split_path[0].split('_')[0]
+    key = split_path[0].split('_')[1]
     if len(split_path) >= 7:
         source_ip = '.'.join(split_path[-4:])
     else:
@@ -167,6 +167,8 @@ if __name__ == '__main__':
 
         # Create connection to rabbitmq
         try:
+            host = None
+            port = None
             rabbit_connection = pika.BlockingConnection(
                                pika.ConnectionParameters(host=host, port=port))
             rabbit_channel = rabbit_connection.channel()
@@ -188,4 +190,3 @@ if __name__ == '__main__':
         except Exception as e:
             logger.info("Could not send message")
             logger.info(e)
-
