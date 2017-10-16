@@ -27,6 +27,21 @@ threshold = config['threshold']
 
 logging.basicConfig(level=logging.INFO)
 
+def lookup_key(key):
+    '''
+    Look up a key from the input filename
+    '''
+    try:
+        r = StrictRedis(host='redis', port=6379, db=0)
+        key_info = r.hgetall(key)
+        metadata = json.loads(key_info[b'metadata'].decode('ascii'))
+        endpoint = metadata['endpoint']
+        address = endpoint['ip-address']
+    except Exception as e:
+        address = None
+
+    return address
+
 def get_address_info(address, timestamp):
     '''
     Look up address information prior to the timestamp
@@ -121,6 +136,7 @@ if __name__ == '__main__':
     split_path = split_path.split('.')
     split_path = split_path[0].split('-')
     key = split_path[0].split('_')[1]
+    key_address = lookup_key(key)
 
     # Get the source IP address
     if len(split_path) >= 7:
@@ -128,19 +144,19 @@ if __name__ == '__main__':
     else:
         source_ip = None
 
-    # Parse the pcap into sessions
-    sessions, timestamp = sessionizer(pcap_path, duration=duration)
+    if key_address == source_ip:
+        # Parse the pcap into sessions
+        sessions, timestamp = sessionizer(pcap_path, duration=duration)
 
-    # Clean the sessions
-    cleaned_sessions = []
-    inferred_ip = None
-    for session_dict in sessions:
-        cleaned_sessions, inferred_ip = \
+        # Clean the sessions
+        cleaned_sessions = []
+        inferred_ip = None
+        for session_dict in sessions:
+            cleaned_sessions, inferred_ip = \
                         clean_session_dict(session_dict, source_ip=source_ip)
-    if source_ip is None:
-        source_ip = inferred_ip
+        if source_ip is None:
+            source_ip = inferred_ip
 
-    if is_private(source_ip):
         # Make simple decisions based on vector differences and update times
         decisions = {}
         repr_s, m_repr_s, _ , prev_s, labels, confs = get_address_info(
