@@ -39,8 +39,9 @@ def lookup_key(key):
         address = endpoint['ip-address']
     except Exception as e:
         address = None
+        return address, e
 
-    return address
+    return address, None
 
 def get_address_info(address, timestamp):
     '''
@@ -142,9 +143,10 @@ if __name__ == '__main__':
     split_path = split_path[0].split('-')
     key = split_path[0].split('_')[1]
     logger.info("looking up key address")
-    key_address = lookup_key(key)
+    key_address, e = lookup_key(key)
     logger.info("Looked up key address")
     logger.info(key_address)
+    logger.info(e)
 
     # Get the source IP address
     if len(split_path) >= 7:
