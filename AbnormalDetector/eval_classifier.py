@@ -99,12 +99,16 @@ def basic_decision(
                     confs
                   ):
 
+    valid = True
+
     if key is None:
         key = address
+        valid = False
 
     if labels is None:
         labels = ['Unknown']*3
         confs = [1,0,0]
+        valid = False
 
     investigate = False
     if prev_time is None or timestamp - prev_time > look_time:
@@ -122,7 +126,8 @@ def basic_decision(
     id_dict = {
                 'decisions': decisions,
                 'classification': classifications,
-                'timestamp': timestamp
+                'timestamp': timestamp,
+                'valid': valid
               }
     output[key] = id_dict
     return output
@@ -136,7 +141,10 @@ if __name__ == '__main__':
     split_path = split_path.split('.')
     split_path = split_path[0].split('-')
     key = split_path[0].split('_')[1]
+    logger.info("looking up key address")
     key_address = lookup_key(key)
+    logger.info("Looked up key address")
+    logger.info(key_address)
 
     # Get the source IP address
     if len(split_path) >= 7:
