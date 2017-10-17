@@ -185,9 +185,22 @@ if __name__ == '__main__':
                                    labels,
                                    confs
                                  )
-        message = json.dumps(decision)
         logger.info("Created message")
         logger.info(decision)
 
-        # Send decidion to stdout
-        print(decision)
+        exchange = 'topic-poseidon-internal'
+        exchange_type = 'topic'
+        connection = pika.BlockingConnection(pika.ConnectionParameters(
+                         host='rabbit'))
+        channel = connection.channel()
+        channel.exchange_declare(exchange=exchange,
+                                 exchange_type=exchange_type)
+
+        routing_key = 'poseidon.algos.decider'
+        message = json.dumps(decision)
+        channel.basic_publish(exchange=exchange,
+                              routing_key=routing_key,
+                              body=message)
+        print("Routing key: " + routing_key)
+        print("Exchange: " + exchange)
+        connection.close()
