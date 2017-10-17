@@ -99,12 +99,16 @@ def basic_decision(
                     confs
                   ):
 
+    valid = True
+
     if key is None:
         key = address
+        valid = False
 
     if labels is None:
         labels = ['Unknown']*3
         confs = [1,0,0]
+        valid = False
 
     investigate = False
     if prev_time is None or timestamp - prev_time > look_time:
@@ -122,7 +126,8 @@ def basic_decision(
     id_dict = {
                 'decisions': decisions,
                 'classification': classifications,
-                'timestamp': timestamp
+                'timestamp': timestamp,
+                'valid': valid
               }
     output[key] = id_dict
     return output
