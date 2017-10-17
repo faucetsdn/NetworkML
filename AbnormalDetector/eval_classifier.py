@@ -141,7 +141,10 @@ if __name__ == '__main__':
     split_path = split_path.split('.')
     split_path = split_path[0].split('-')
     key = split_path[0].split('_')[1]
+    logger.info("looking up key address")
     key_address = lookup_key(key)
+    logger.info("Looked up key address")
+    logger.info(key_address)
 
     # Get the source IP address
     if len(split_path) >= 7:
