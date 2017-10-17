@@ -164,7 +164,7 @@ if __name__ == '__main__':
                          host='rabbit'))
         channel = connection.channel()
         channel.exchange_declare(exchange='topic-poseidon-internal',
-                                 type='topic')
+                                 exchange_type='topic')
 
         routing_key = 'poseidon.algos.decider'
         message = json.dumps(decision)
