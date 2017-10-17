@@ -5,6 +5,7 @@ either normal or abnormal using the specified model
 
 import sys
 import os
+import ast
 import logging
 from redis import StrictRedis
 import numpy as np
@@ -34,10 +35,9 @@ def lookup_key(key):
     try:
         r = StrictRedis(host='redis', port=6379, db=0)
         key_info = r.hgetall(key)
-        endpoint = json.loads(key_info[b'endpoint'].decode('utf-8'))
-        print(endpoint)
+        key_info = ast.literal_eval(key_info)
+        endpoint = key_info['endpoint']
         address = endpoint['ip-address']
-        print(address)
     except Exception as e:
         address = None
         return address, e
