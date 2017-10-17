@@ -8,5 +8,5 @@ process_base = no
 process_from_tool = pcap node splitter
 
 [docker]
-links = {"Redis":"redis", "RabbitMQ":"rabbit"}
+links = {"Redis":"redis"}
 volumes = {"/tmp/model.pickle": {"bind": "/models/model.pickle", "mode": "ro"}}
