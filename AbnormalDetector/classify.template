@@ -8,4 +8,5 @@ process_base = no
 process_from_tool = pcap node splitter
 
 [docker]
+environment = ["PYTHONUNBUFFERED=0"]
 links = {"Redis":"redis"}
