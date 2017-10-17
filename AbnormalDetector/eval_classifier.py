@@ -34,8 +34,7 @@ def lookup_key(key):
     try:
         r = StrictRedis(host='redis', port=6379, db=0)
         key_info = r.hgetall(key)
-        metadata = json.loads(key_info[b'metadata'].decode('ascii'))
-        endpoint = metadata['endpoint']
+        endpoint = json.loads(key_info[b'endpoint'].decode('ascii'))
         address = endpoint['ip-address']
     except Exception as e:
         address = None
@@ -146,7 +145,8 @@ if __name__ == '__main__':
     key_address, e = lookup_key(key)
     logger.info("Looked up key address")
     logger.info(key_address)
-    logger.info(e)
+    if e is not None:
+        logger.info(e)
 
     # Get the source IP address
     if len(split_path) >= 7:
