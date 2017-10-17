@@ -37,6 +37,7 @@ def lookup_key(key):
         key_info = r.hgetall(key)
         key_info = ast.literal_eval(key_info)
         endpoint = key_info['endpoint']
+        endpoint = ast.literal_eval(endpoint)
         address = endpoint['ip-address']
     except Exception as e:
         address = None
