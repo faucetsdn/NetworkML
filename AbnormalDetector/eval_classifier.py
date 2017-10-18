@@ -35,10 +35,10 @@ def lookup_key(key):
     try:
         r = StrictRedis(host='redis', port=6379, db=0)
         key_info = r.hgetall(key)
-        key_info = ast.literal_eval(key_info)
-        endpoint = key_info['endpoint']
-        endpoint = ast.literal_eval(endpoint)
-        address = endpoint['ip-address']
+        endpoint = key_info[b'endpoint']
+        endpoint = endpoint.decode('utf-8')
+        end_dict = ast.literal_eval(endpoint)
+        address = end_dict['ip-address']
     except Exception as e:
         address = None
         return address, e
