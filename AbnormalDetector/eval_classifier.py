@@ -121,7 +121,7 @@ def basic_decision(
         behavior = 'abnormal'
 
     output = {}
-    decisions = {'behavior': behavior, 'investigate': False}
+    decisions = {'behavior': behavior, 'investigate': investigate}
     classifications = {'labels': labels[0:3], 'confidences': confs[0:3]}
     id_dict = {
                 'decisions': decisions,
@@ -173,6 +173,8 @@ if __name__ == '__main__':
                                                                      source_ip,
                                                                      timestamp
                                                                       )
+        logger.info("Logging prev time")
+        logger.info(prev_s)
         decision = basic_decision(
                                    key,
                                    source_ip,
