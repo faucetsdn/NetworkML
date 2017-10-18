@@ -73,18 +73,15 @@ def get_address_info(address, timestamp):
     # Read the state of the most recent update if there was one
     if last_update is not None:
         key = address + '_' + str(last_update)
-        try:
-            state = r.hgetall(key)
-        except Exception as e:
-            return current_state, average_state, other_ips, last_update
+        state = r.hgetall(key)
 
         current_state = json.loads(
                             state[b'current_representation'].decode('ascii')
                                   )
         average_state = json.loads(state[b'representation'].decode('ascii'))
-        labels = json.loads(state[b'labels']).decode('ascii')
-        confs = json.loads(state[b'confidences']).decode('ascii')
-        other_ips = json.loads(state[b'other_ips'].decode('ascii'))
+        labels = ast.literal_eval(state[b'labels'].decode('utf-8'))
+        confs = ast.literal_eval(state[b'confidences'].decode('utf-8'))
+        other_ips = ast.literal_eval(state[b'other_ips'].decode('utf-8'))
     else:
         labels = None
         confs = None
@@ -104,13 +101,13 @@ def basic_decision(
 
     valid = True
 
-    if key is None:
-        key = address
-        valid = False
-
     if labels is None:
         labels = ['Unknown']*3
         confs = [1,0,0]
+        valid = False
+
+    if key is None:
+        key = address
         valid = False
 
     investigate = False
@@ -124,7 +121,7 @@ def basic_decision(
         behavior = 'abnormal'
 
     output = {}
-    decisions = {'behavior': 'normal', 'investigate': False}
+    decisions = {'behavior': behavior, 'investigate': False}
     classifications = {'labels': labels[0:3], 'confidences': confs[0:3]}
     id_dict = {
                 'decisions': decisions,
