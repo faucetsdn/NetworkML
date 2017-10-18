@@ -72,7 +72,7 @@ def get_address_info(address, timestamp):
 
     # Read the state of the most recent update if there was one
     if last_update is not None:
-        key = address + '_' + str(timestamp)
+        key = address + '_' + str(last_update)
         try:
             state = r.hgetall(key)
         except Exception as e:
