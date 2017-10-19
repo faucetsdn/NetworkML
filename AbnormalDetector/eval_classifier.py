@@ -188,19 +188,41 @@ if __name__ == '__main__':
         logger.info("Created message")
         logger.info(decision)
 
-        exchange = 'topic-poseidon-internal'
-        exchange_type = 'topic'
-        connection = pika.BlockingConnection(pika.ConnectionParameters(
-                         host='rabbit'))
-        channel = connection.channel()
-        channel.exchange_declare(exchange=exchange,
-                                 exchange_type=exchange_type)
 
-        routing_key = 'poseidon.algos.decider'
+        # Get json message
         message = json.dumps(decision)
-        channel.basic_publish(exchange=exchange,
-                              routing_key=routing_key,
-                              body=message)
-        print("Routing key: " + routing_key)
-        print("Exchange: " + exchange)
-        connection.close()
+    
+        # Get our "SKIP_RABBIT" environment variable with a default value of
+        # false
+        skip_rabbit = os.getenv("SKIP_RABBIT", False)
+
+        # Convert our string into a boolean
+        skip_rabbit = skip_rabbit.lower() in ["true", "t", "y", "1"]
+
+        logger.debug("SKIP_RABBIT set to: " + skip_rabbit)
+    
+        if skip_rabbit:
+            # Rabbit settings
+            exchange = 'topic-poseidon-internal'
+            exchange_type = 'topic'
+    
+            # Starting rabbit connection
+            connection = pika.BlockingConnection(
+                pika.ConnectionParameters(host='rabbit')
+            )
+    
+            channel = connection.channel()
+            channel.exchange_declare(
+                exchange=exchange, exchange_type=exchange_type
+            )
+        
+            routing_key = 'poseidon.algos.decider'
+            channel.basic_publish(exchange=exchange,
+                                  routing_key=routing_key,
+                                  body=message)
+            logger.debug("Routing key: " + routing_key)
+            logger.debug("Exchange: " + exchange)
+            connection.close()
+        else:
+            # Skipping rabbit. Printing to STDOUT
+            logger.info("Message: " + message)
