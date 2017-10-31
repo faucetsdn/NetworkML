@@ -43,7 +43,6 @@ def read_data(data_dir, duration=None, labels=None):
             files.append(os.path.join(dirpath,file))
     # Go through all the files in the directory
     for filename in files:
-        print("Reading", filename)
         # Extract the label from the filename
         name = os.path.split(filename)[1]
         name = name.split('-')[0]
@@ -55,6 +54,7 @@ def read_data(data_dir, duration=None, labels=None):
         if label not in assigned_labels:
             assigned_labels.append(label)
 
+        print("Reading", filename,"as",label)
         # Bin the sessions with the specified time window
         binned_sessions = sessionizer(
                                        filename,

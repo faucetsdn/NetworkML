@@ -21,6 +21,23 @@ with open('config.json') as config_file:
     config = json.load(config_file)
     time_const = config['time constant']
 
+def lookup_key(key):
+    '''
+    Look up a key from the input filename
+    '''
+    try:
+        r = StrictRedis(host='redis', port=6379, db=0)
+        key_info = r.hgetall(key)
+        endpoint = key_info[b'endpoint']
+        endpoint = endpoint.decode('utf-8')
+        end_dict = ast.literal_eval(endpoint)
+        address = end_dict['ip-address']
+    except Exception as e:
+        address = None
+        return address, e
+
+    return address, None
+
 def get_previous_state(source_ip, timestamp):
     '''
     Gets the average representation vector from the most recent update
@@ -202,13 +219,15 @@ if __name__ == '__main__':
     split_path = os.path.split(pcap_path)[-1]
     split_path = split_path.split('.')
     split_path = split_path[0].split('-')
+    key = split_path[0].split('_')[1]
+    key_address, _ = lookup_key(key)
     if len(split_path) >= 7:
         source_ip = '.'.join(split_path[-4:])
     else:
         logger.info("Defaulting to inferring IP address from %s", pcap_path)
         source_ip = None
 
-    if split_path[-1] != 'miscellaneous' and source_ip != '255.255.255.255':
+    if split_path[-1] != 'miscellaneous' and key_address == source_ip:
         # Initialize and load the model
         if len(sys.argv) > 2:
             load_path = sys.argv[2]
