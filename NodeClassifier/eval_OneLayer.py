@@ -239,7 +239,7 @@ def update_data(
         r.hmset(key, state)
     except Exception as e:
         logger.info("created key %s", key)
-        logger.info(state)
+        logger.debug(state)
 
     logger.info("Storing update time")
     # Add this update time to the list of updates
@@ -255,7 +255,7 @@ def update_data(
     update_list = sorted(update_list)
     times = { 'timestamps': update_list }
     logger.info("Updating %s", source_ip)
-    logger.info(times)
+    logger.debug(times)
     try:
         r.hmset(source_ip, times)
     except Exception as e:
