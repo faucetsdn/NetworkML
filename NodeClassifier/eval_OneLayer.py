@@ -216,16 +216,21 @@ if __name__ == '__main__':
    # path to the pcap to get the update from
     pcap_path = sys.argv[1]
     # parse the filename to get IP address
-    split_path = os.path.split(pcap_path)[-1]
-    split_path = split_path.split('.')
-    split_path = split_path[0].split('-')
-    key = split_path[0].split('_')[1]
-    key_address, _ = lookup_key(key)
-    if len(split_path) >= 7:
-        source_ip = '.'.join(split_path[-4:])
-    else:
+    try:
+        split_path = os.path.split(pcap_path)[-1]
+        split_path = split_path.split('.')
+        split_path = split_path[0].split('-')
+        key = split_path[0].split('_')[1]
+        key_address, _ = lookup_key(key)
+        if len(split_path) >= 7:
+            source_ip = '.'.join(split_path[-4:])
+        else:
+            source_ip = None
+    except Exception as e:
+        logger.info("Could not get address info beacuse %s", e)
         logger.info("Defaulting to inferring IP address from %s", pcap_path)
         source_ip = None
+        key_address = None
 
     if split_path[-1] != 'miscellaneous' and key_address == source_ip:
         # Initialize and load the model
@@ -260,7 +265,7 @@ if __name__ == '__main__':
         mean_preds = model.classify_representation(mean_rep)
         if len(sys.argv) > 2:
             for p in mean_preds:
-                logger.info(p)
+                logger.debug(p)
         # Update the stored representation
         if reps is not None and is_private(source_ip):
             logger.info("Updating stored data")
