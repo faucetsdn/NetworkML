@@ -22,6 +22,6 @@
     "state size": 32,
     "duration": 900,
     "look time": 86400,
-    "time constant": 86400
+    "time constant": 86400,
     "threshold": 0
 }
