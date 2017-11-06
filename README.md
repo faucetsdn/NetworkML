@@ -8,7 +8,4 @@ machine learning models on network data as part of the
 ## Plugins
 The current supported plugins are:
 ### NodeClassifier
-Plugin for traffic classification to determine device types.
-### AbnormalDetector
-Plugin for detecting if a device is not acting normally.
-
+Plugin for traffic classification to determine device types and their behavior.
