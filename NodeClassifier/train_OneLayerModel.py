@@ -13,7 +13,7 @@ if __name__ == '__main__':
     with open('config.json') as config_file:
         config = json.load(config_file)
         duration = config['duration']
-        hidden_size = config['hidden size']
+        hidden_size = config['state size']
         labels = config['labels']
 
     # Get the data directory
