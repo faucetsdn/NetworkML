@@ -29,7 +29,11 @@ class BatchIterator:
         self.load_data()
 
         keys = sorted(list(self.data.keys()))
-        self.train_keys, self.vala_keys = train_test_split(keys, test_size=0.2)
+        self.train_keys, self.vala_keys = train_test_split(
+                                                           keys,
+                                                           test_size=0.2,
+                                                           random_state=seed
+                                                          )
 
         self.seq_len = seq_len
         self.num_chars = num_chars
