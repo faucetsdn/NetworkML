@@ -4,9 +4,14 @@ LABEL maintainer="Charlie Lewis <clewis@iqt.org>"
 RUN apt-get update && apt-get install -y \
     tcpdump
 
-RUN pip install numpy redis scikit-learn==0.18.2 scipy
-COPY . /TraditionalML
-WORKDIR /TraditionalML
+RUN pip install numpy==1.13.3 \
+                redis==2.10.6 \
+                scikit-learn==0.18.2 \
+                scipy==1.0.0 \
+                pika==0.11.0
+
+COPY . /NodeClassifier
+WORKDIR /NodeClassifier
 
 ENTRYPOINT ["python3.5", "eval_OneLayer.py"]
 CMD [""]

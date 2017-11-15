@@ -1,6 +1,7 @@
 {
     "labels":
     [
+        "Administrator workstation",
         "Business workstation",
         "Developer workstation",
         "Smartphone",
@@ -19,7 +20,9 @@
         "Unknown"
     ],
 
+    "state size": 32,
     "duration": 900,
-    "hidden size": 32,
-    "time constant": 86400
+    "look time": 86400,
+    "time constant": 86400,
+    "threshold": 0
 }
