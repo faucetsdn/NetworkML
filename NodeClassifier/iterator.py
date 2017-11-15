@@ -13,7 +13,7 @@ class BatchIterator:
                  batch_size=64,
                  seq_len=116,
                  num_chars=16,
-                 representation_length=32,
+                 perturb_types="all",
                  seed=0
                 ):
         """
@@ -23,6 +23,7 @@ class BatchIterator:
 
         self.rng = np.random.RandomState(seed)
 
+        self.classification_length = None
         self.data_path = data_path
         self.data = None
         self.sessions_by_length = None
@@ -37,8 +38,7 @@ class BatchIterator:
 
         self.seq_len = seq_len
         self.num_chars = num_chars
-        self.representation_length = representation_length
-
+        self.perturb_types = perturb_types
     def load_data(self):
         """
         Handles loading the data into the correct format
@@ -51,6 +51,10 @@ class BatchIterator:
         for key, value in data.items():
             for session in value:
                 session_length = len(session["packets"])
+                if self.classification_length is None:
+                    model_output = session['model outputs']
+                    classification = model_output['classification']
+                    self.classification_length = len(classification)
                 session_dict = sessions_by_length[session_length]
                 if key not in session_dict:
                     session_dict[key] = []
@@ -62,16 +66,19 @@ class BatchIterator:
         Generates perturbed or unperturbed batches
         """
         X = np.zeros((batch_size,length,self.seq_len,self.num_chars))
-        R = np.zeros((batch_size,self.representation_length))
+        R = np.zeros((batch_size,self.classification_length))
         Y = np.zeros((batch_size,1))
+        chosen_mods = []
         if perturb is True:
             Y = np.ones((batch_size,1))
 
         hex_str = '0123456789abcdef'
-        if length > 1:
-            mod_types = ['rep_swap', 'packet_swap', 'duplicate']
-        else:
-            mod_types = ['rep_swap']
+        mod_types = ['label_swap', 'packet_swap', 'duplicate']
+        if self.perturb_types != "all":
+            mod_types = self.perturb_types
+        if length <= 1:
+            mod_types = ['label_swap']
+
         all_keys = list(self.sessions_by_length[length].keys())
         key_subset = [key for key in keys if key in all_keys]
         chosen_keys = np.random.choice(
@@ -85,20 +92,18 @@ class BatchIterator:
                 mod_type = np.random.choice(mod_types)
             else:
                 mod_type = None
+            chosen_mods.append(mod_type)
             sessions = self.sessions_by_length[length]
             session_id = np.random.choice(len(sessions[key]))
             session = sessions[key][session_id]
-            if mod_type == 'rep_swap':
-                new_key = np.random.choice(key_subset)
-                new_id = np.random.choice(len(sessions[new_key]))
-                new_session = sessions[new_key][new_id]
-                model_outputs = new_session["model outputs"]
-            else:
-                model_outputs = session["model outputs"]
+            model_outputs = session["model outputs"]
 
-            rep_choice = np.random.choice([0,1])
-            representation = list(model_outputs.values())[rep_choice]
-            R[i] = representation
+            classification = model_outputs['classification']
+            classification = sorted(classification, key=lambda x: x[0])
+            class_array = [p for c,p in classification]
+            if mod_type == 'label_swap':
+                np.random.shuffle(class_array)
+            R[i] = np.asarray(class_array)
 
             packets = session["packets"]
             for j, packet in enumerate(packets):
@@ -113,16 +118,17 @@ class BatchIterator:
                 id_2 = id_1 + 1
                 X[i,id_2,:,:] = X[i,id_1,:,:]
 
-        return X, R, Y
+        return X, R, Y, chosen_mods
 
     def gen_batch(self, keys, length=8, batch_size=64):
         """
         Generate mixed batches of perturbed and unperturbed data
         """
-        X_g, R_g, Y_g = self.gen_data(keys, length, batch_size//2)
-        X_b, R_b, Y_b = self.gen_data(keys, length, batch_size//2, perturb=True)
+        X_g, R_g, Y_g, c_g = self.gen_data(keys, length, batch_size//2)
+        X_b, R_b, Y_b, c_b = self.gen_data(keys, length, batch_size//2,
+                                                                  perturb=True)
         X = np.concatenate((X_g,X_b), axis=0)
         R = np.concatenate((R_g,R_b), axis=0)
         Y = np.concatenate((Y_g,Y_b), axis=0)
-
-        return X, R, Y
+        c = c_g + c_b
+        return X, R, Y, c

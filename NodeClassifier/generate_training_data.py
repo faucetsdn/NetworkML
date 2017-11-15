@@ -86,7 +86,9 @@ if __name__ == '__main__':
                                                    prev_rep,
                                                    prev_time
                                                   )
+            preds = model.classify_representation(new_rep)
             model_outputs[timestamp] = {
+                                        "classification": list(preds),
                                         "representation": list(rep),
                                         "mean representation": list(new_rep)
                                        }
