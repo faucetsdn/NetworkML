@@ -234,32 +234,32 @@ def update_data(
                 "model_hash": model_hash
             }
 
-    logger.info("Storing data")
+    logger.debug("Storing data")
     try:
         r.hmset(key, state)
     except Exception as e:
-        logger.info("created key %s", key)
+        logger.debug("created key %s", key)
         logger.debug(state)
 
-    logger.info("Storing update time")
+    logger.debug("Storing update time")
     # Add this update time to the list of updates
     try:
         updates = r.hgetall(source_ip)
         update_list = json.loads(updates[b'timestamps'].decode('ascii'))
-        logger.info("Got previous updates from %s", source_ip)
+        logger.debug("Got previous updates from %s", source_ip)
     except Exception as e:
-        logger.info("No previous updates found for %s", source_ip)
+        logger.debug("No previous updates found for %s", source_ip)
         update_list = []
 
     update_list.append(time)
     update_list = sorted(update_list)
     times = { 'timestamps': update_list }
-    logger.info("Updating %s", source_ip)
+    logger.debug("Updating %s", source_ip)
     logger.debug(times)
     try:
         r.hmset(source_ip, times)
     except Exception as e:
-        logger.info("Could not store update time")
+        logger.debug("Could not store update time")
 
     return current_rep, avg_rep
 
@@ -325,8 +325,8 @@ if __name__ == '__main__':
         else:
             source_ip = None
     except Exception as e:
-        logger.info("Could not get address info beacuse %s", e)
-        logger.info("Defaulting to inferring IP address from %s", pcap_path)
+        logger.debug("Could not get address info beacuse %s", e)
+        logger.debug("Defaulting to inferring IP address from %s", pcap_path)
         source_ip = None
         key_address = None
     if key_address is None:
@@ -345,7 +345,7 @@ if __name__ == '__main__':
 
         model = OneLayerModel(duration=None, hidden_size=None)
         model.load(load_path)
-        logger.info("Loaded model from %s", load_path)
+        logger.debug("Loaded model from %s", load_path)
 
         # Get representations from the model
         reps, source_ip, timestamps, preds, others = model.get_representation(
@@ -354,7 +354,7 @@ if __name__ == '__main__':
                                                            mean=False
                                                                              )
 
-        logger.info("Generating predictions")
+        logger.debug("Generating predictions")
         last_update, prev_rep = get_previous_state(source_ip, timestamps[0])
         _, mean_rep = average_representation(
                                                 reps,
@@ -369,7 +369,7 @@ if __name__ == '__main__':
         # Update the stored representation
         current_rep, avg_rep = None, None
         if reps is not None and is_private(source_ip):
-            logger.info("Updating stored data")
+            logger.debug("Updating stored data")
             current_rep, avg_rep = update_data(
                                                 source_ip,
                                                 reps,
@@ -408,8 +408,9 @@ if __name__ == '__main__':
                                    labels,
                                    confs
                                  )
-        logger.info("Created message")
-
+        logger.debug("Created message")
+        for i in range(3):
+            logger.debug(labels[i] + ' : ' + str(round(confs[i],3)))
         # Get json message
         message = json.dumps(decision)
 
