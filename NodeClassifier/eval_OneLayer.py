@@ -271,12 +271,11 @@ def update_data(
 def basic_decision(
                     key,
                     address,
-                    current_rep,
-                    mean_rep,
                     prev_time,
                     timestamp,
                     labels,
-                    confs
+                    confs,
+                    abnormality
                   ):
 
     valid = True
@@ -297,7 +296,7 @@ def basic_decision(
         investigate = True
 
     behavior = 'normal'
-    if np.dot(current_rep, mean_rep) < threshold:
+    if abnormality > threshold:
         behavior = 'abnormal'
 
     output = {}
@@ -441,8 +440,7 @@ if __name__ == '__main__':
                     scores.append(model_out[:,0])
 
         scores = np.concatenate(scores, axis=0)
-        max_score = np.max(scores)
-        print(np.mean(scores), np.std(scores), np.max(scores))
+        abnormality = np.max(scores)
 
         # Make simple decisions based on vector differences and update times
         decisions = {}
@@ -455,12 +453,11 @@ if __name__ == '__main__':
         decision = basic_decision(
                                    key,
                                    source_ip,
-                                   current_rep,
-                                   avg_rep,
                                    prev_s,
                                    timestamp,
                                    labels,
-                                   confs
+                                   confs,
+                                   abnormality
                                  )
         logger.debug("Created message")
         for i in range(3):
