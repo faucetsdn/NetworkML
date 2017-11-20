@@ -404,6 +404,12 @@ if __name__ == '__main__':
                                  num_labels=len(mean_preds)
                                 )
         rnnpath = sys.argv[3]
+        # Initialize and load the model
+        if len(sys.argv) > 3:
+            rnnpath= sys.argv[3]
+        else:
+            rnnpath = "/models/rnnmodel.ckpt"
+
         rnnmodel.load(rnnpath)
         scores = []
         max_key = None
