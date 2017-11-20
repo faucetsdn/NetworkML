@@ -11,14 +11,19 @@ import ast
 import logging
 import hashlib
 import numpy as np
+import tensorflow as tf
 
 from redis import StrictRedis
 from OneLayer import OneLayerModel
 from featurizer import is_private
 from reader import sessionizer
 from model_utils import clean_session_dict
+from model_utils import create_inputs
+from rnnclassifier import AbnormalDetector
 
 logging.basicConfig(level=logging.INFO)
+tf.logging.set_verbosity(tf.logging.ERROR)
+os.environ['TF_CPP_MIN_LOG_LEVEL'] ='3'
 
 # Get time constant from config
 with open('config.json') as config_file:
@@ -382,13 +387,62 @@ if __name__ == '__main__':
         # Get the sessions that the model looked at
         sessions = model.sessions
         # Clean the sessions
-        cleaned_sessions = []
+        clean_sessions = []
         inferred_ip = None
         for session_dict in sessions:
             cleaned_sessions, inferred_ip = \
                         clean_session_dict(session_dict, source_ip=source_ip)
+            clean_sessions.append(cleaned_sessions)
+
         if source_ip is None:
             source_ip = inferred_ip
+
+        # Use the RNN model to compute abnormality scores
+        rnnmodel = AbnormalDetector(
+                                 packet_embedding_size=128,
+                                 session_embedding_size=128,
+                                 hidden_size=64,
+                                 num_labels=len(mean_preds)
+                                )
+        rnnpath = sys.argv[3]
+        rnnmodel.load(rnnpath)
+        scores = []
+        max_key = None
+        max_score = 0
+        # Group input sessions by number of packets
+        inputs_by_length = [[] for i in range(8)]
+        labels_by_length = [[] for i in range(8)]
+        for session_dict in clean_sessions:
+            for k, session in session_dict.items():
+                X, L = create_inputs(mean_preds, session, 116)
+                length = X.shape[1]
+                if length <= 8:
+                    inputs_by_length[length-1].append(X)
+                    labels_by_length[length-1].append(L)
+        # Evaluate sessions by length and by batch
+        batch_size = 512
+        for i, sessions in enumerate(inputs_by_length):
+                labels = labels_by_length[i]
+                num_sessions = len(sessions)
+                num_batches = num_sessions//batch_size
+                for j in range(num_batches):
+                    batch_sessions = sessions[j*batch_size:(j+1)*batch_size]
+                    batch_labels = labels[j*batch_size:(j+1)*batch_size]
+                    X = np.concatenate(batch_sessions, axis=0)
+                    L = np.concatenate(batch_labels, axis=0)
+                    model_out = rnnmodel.get_output(X,L)
+                    scores.append(model_out[:,0])
+                if len(sessions[num_batches*batch_size:]) > 0:
+                    batch_sessions = sessions[num_batches*batch_size:]
+                    batch_labels = labels[num_batches*batch_size:]
+                    X = np.concatenate(batch_sessions, axis=0)
+                    L = np.concatenate(batch_labels, axis=0)
+                    model_out = rnnmodel.get_output(X, L)
+                    scores.append(model_out[:,0])
+
+        scores = np.concatenate(scores, axis=0)
+        max_score = np.max(scores)
+        print(np.mean(scores), np.std(scores), np.max(scores))
 
         # Make simple decisions based on vector differences and update times
         decisions = {}
