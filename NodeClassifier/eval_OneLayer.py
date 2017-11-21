@@ -33,6 +33,8 @@ with open('config.json') as config_file:
     duration = config['duration']
     look_time = config['look time']
     threshold = config['threshold']
+    batch_size = config['batch size']
+    rnn_size = config['rnn size']
 
 def lookup_key(key):
     '''
@@ -398,12 +400,11 @@ if __name__ == '__main__':
 
         # Use the RNN model to compute abnormality scores
         rnnmodel = AbnormalDetector(
-                                 packet_embedding_size=128,
-                                 session_embedding_size=128,
-                                 hidden_size=64,
+                                 packet_embedding_size=rnn_size,
+                                 session_embedding_size=rnn_size,
+                                 hidden_size=rnn_size//2,
                                  num_labels=len(mean_preds)
                                 )
-        rnnpath = sys.argv[3]
         # Initialize and load the model
         if len(sys.argv) > 3:
             rnnpath= sys.argv[3]
@@ -425,7 +426,6 @@ if __name__ == '__main__':
                     inputs_by_length[length-1].append(X)
                     labels_by_length[length-1].append(L)
         # Evaluate sessions by length and by batch
-        batch_size = 512
         for i, sessions in enumerate(inputs_by_length):
                 labels = labels_by_length[i]
                 num_sessions = len(sessions)
