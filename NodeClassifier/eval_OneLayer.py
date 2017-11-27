@@ -21,7 +21,7 @@ from model_utils import clean_session_dict
 from model_utils import create_inputs
 from rnnclassifier import AbnormalDetector
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 tf.logging.set_verbosity(tf.logging.ERROR)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] ='3'
 
