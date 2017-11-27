@@ -30,6 +30,8 @@ class OneLayerModel:
         self.model = None
         self.labels = labels
 
+        self.sessions = None
+
     def _augment_data(self, X, y):
         '''
         Augments the data with randomly permuted samples. Added samples are
@@ -74,6 +76,8 @@ class OneLayerModel:
         X = []
         timestamps = []
         binned_sessions = sessionizer(filepath, duration=self.duration)
+        self.sessions = binned_sessions
+
         if len(binned_sessions) is 0:
             return None, None, None
 

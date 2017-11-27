@@ -40,7 +40,9 @@ def read_data(data_dir, duration=None, labels=None):
 
     for dirpath, dirnames, filenames in os.walk(data_dir):
         for file in filenames:
-            files.append(os.path.join(dirpath,file))
+            _, ext = os.path.splitext(file)
+            if ext == '.pcap':
+                files.append(os.path.join(dirpath,file))
     # Go through all the files in the directory
     for filename in files:
         # Extract the label from the filename
