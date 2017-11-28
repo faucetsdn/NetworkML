@@ -292,7 +292,7 @@ def basic_decision(
         valid = False
 
     investigate = False
-    if prev_time is None or timestamp - prev_time > look_time:
+    if prev_time is not None and timestamp - prev_time > look_time:
         investigate = True
     if labels[0] == 'Unknown':
         investigate = True
@@ -446,8 +446,11 @@ if __name__ == '__main__':
                     L = np.concatenate(batch_labels, axis=0)
                     model_out = rnnmodel.get_output(X, L)
                     scores.append(model_out[:,0])
+        try:
+            scores = np.concatenate(scores, axis=0)
+        except:
+            scores = np.asarray([0])
 
-        scores = np.concatenate(scores, axis=0)
         abnormality = np.max(scores)
 
         # Make simple decisions based on vector differences and update times
