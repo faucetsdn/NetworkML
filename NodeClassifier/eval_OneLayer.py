@@ -338,7 +338,9 @@ if __name__ == '__main__':
     if key_address is None:
         key = None
 
-    if split_path[-1] != 'miscellaneous' and key_address == source_ip:
+    # extra check in case running the first time
+    if ((split_path[-1] != 'miscellaneous' and key_address == source_ip) or
+        (split_path[-1] != 'miscellaneous' and key_address == None)):
         # Initialize and load the model
         if len(sys.argv) > 2:
             load_path = sys.argv[2]
