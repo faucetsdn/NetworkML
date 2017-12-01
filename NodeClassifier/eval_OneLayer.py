@@ -413,45 +413,52 @@ if __name__ == '__main__':
         else:
             rnnpath = "/models/rnnmodel.ckpt"
 
-        rnnmodel.load(rnnpath)
+        try:
+            rnnmodel.load(rnnpath)
+            abnormal_model = True
+        except:
+            abnormal_model = False
+            abnormality = 0
+
         scores = []
         max_key = None
         max_score = 0
-        # Group input sessions by number of packets
-        inputs_by_length = [[] for i in range(8)]
-        labels_by_length = [[] for i in range(8)]
-        for session_dict in clean_sessions:
-            for k, session in session_dict.items():
-                X, L = create_inputs(mean_preds, session, 116)
-                length = X.shape[1]
-                if length <= 8:
-                    inputs_by_length[length-1].append(X)
-                    labels_by_length[length-1].append(L)
-        # Evaluate sessions by length and by batch
-        for i, sessions in enumerate(inputs_by_length):
-                labels = labels_by_length[i]
-                num_sessions = len(sessions)
-                num_batches = num_sessions//batch_size
-                for j in range(num_batches):
-                    batch_sessions = sessions[j*batch_size:(j+1)*batch_size]
-                    batch_labels = labels[j*batch_size:(j+1)*batch_size]
-                    X = np.concatenate(batch_sessions, axis=0)
-                    L = np.concatenate(batch_labels, axis=0)
-                    model_out = rnnmodel.get_output(X,L)
-                    scores.append(model_out[:,0])
-                if len(sessions[num_batches*batch_size:]) > 0:
-                    batch_sessions = sessions[num_batches*batch_size:]
-                    batch_labels = labels[num_batches*batch_size:]
-                    X = np.concatenate(batch_sessions, axis=0)
-                    L = np.concatenate(batch_labels, axis=0)
-                    model_out = rnnmodel.get_output(X, L)
-                    scores.append(model_out[:,0])
-        try:
-            scores = np.concatenate(scores, axis=0)
-        except:
-            scores = np.asarray([0])
+        if abnormal_model is True:
+            # Group input sessions by number of packets
+            inputs_by_length = [[] for i in range(8)]
+            labels_by_length = [[] for i in range(8)]
+            for session_dict in clean_sessions:
+                for k, session in session_dict.items():
+                    X, L = create_inputs(mean_preds, session, 116)
+                    length = X.shape[1]
+                    if length <= 8:
+                        inputs_by_length[length-1].append(X)
+                        labels_by_length[length-1].append(L)
+            # Evaluate sessions by length and by batch
+            for i, sessions in enumerate(inputs_by_length):
+                    labels = labels_by_length[i]
+                    num_sessions = len(sessions)
+                    num_batches = num_sessions//batch_size
+                    for j in range(num_batches):
+                        batch_sessions = sessions[j*batch_size:(j+1)*batch_size]
+                        batch_labels = labels[j*batch_size:(j+1)*batch_size]
+                        X = np.concatenate(batch_sessions, axis=0)
+                        L = np.concatenate(batch_labels, axis=0)
+                        model_out = rnnmodel.get_output(X,L)
+                        scores.append(model_out[:,0])
+                    if len(sessions[num_batches*batch_size:]) > 0:
+                        batch_sessions = sessions[num_batches*batch_size:]
+                        batch_labels = labels[num_batches*batch_size:]
+                        X = np.concatenate(batch_sessions, axis=0)
+                        L = np.concatenate(batch_labels, axis=0)
+                        model_out = rnnmodel.get_output(X, L)
+                        scores.append(model_out[:,0])
+            try:
+                scores = np.concatenate(scores, axis=0)
+            except:
+                scores = np.asarray([0])
 
-        abnormality = np.max(scores)
+            abnormality = np.max(scores)
 
         # Make simple decisions based on vector differences and update times
         decisions = {}
