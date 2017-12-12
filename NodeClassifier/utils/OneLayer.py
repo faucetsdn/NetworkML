@@ -1,14 +1,15 @@
 import numpy as np
 import pickle as pickle
-from reader import sessionizer
-from featurizer import extract_features
+from .reader import sessionizer
+from .featurizer import extract_features
 
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import f1_score
 
-from training_utils import read_data
-from training_utils import select_features
+from .training_utils import read_data
+from .training_utils import select_features
+
 
 class OneLayerModel:
     def __init__(self, duration, hidden_size=None, labels=None):
@@ -252,7 +253,7 @@ class OneLayerModel:
         if mean:
             representation = mean_rep
             timestamp = timestamp[-1]
-
+    
         return representation, source_ip, timestamp, prediction, other_ips
 
     def classify_representation(self, representation):
@@ -269,6 +270,7 @@ class OneLayerModel:
                         for i, prob in enumerate(probabilities)
                      ]
         prediction = sorted(prediction, key=lambda x: x[1], reverse=True)
+
         return prediction
 
     def save(self, save_path):
