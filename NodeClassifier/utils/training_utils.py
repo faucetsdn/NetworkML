@@ -11,8 +11,8 @@ from sklearn.decomposition import PCA
 from sklearn.linear_model import RandomizedLogisticRegression
 from sklearn.linear_model import LogisticRegression
 
-from reader import sessionizer
-from featurizer import extract_features
+from .reader import sessionizer
+from .featurizer import extract_features
 
 def read_data(data_dir, duration=None, labels=None):
     '''

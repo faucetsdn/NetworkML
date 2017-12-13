@@ -104,7 +104,6 @@ def packetizer(path):
             data = parse_packet_data(line)
             if head is not None:
                 packet_dict[head] += data
-
     return packet_dict
 
 def sessionizer(path, duration=None):
@@ -158,5 +157,4 @@ def sessionizer(path, duration=None):
             sessions.append(working_dict)
     if duration is None:
         sessions.append(working_dict)
-
     return sessions
