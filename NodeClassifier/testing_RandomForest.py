@@ -8,19 +8,63 @@ import sys
 import os
 import json
 import logging
+import numpy as np
 from utils.RandomForestModel import RandomForestModel
 
 logging.basicConfig(level=logging.INFO)
 
-if __name__ == '__main__':
+def calc_f1(results):
+    logger = logging.getLogger(__name__)
+    results_by_label = {}
+    for file, file_results in results.items():
+        if file != 'labels':
+            indiv_results = file_results['individual']
+            true_label = file_results['label']
+            if true_label not in results_by_label:
+                results_by_label[true_label]  = {'tp':0, 'fp':0, 'fn':0}
+            for i, classification in indiv_results.items():
+                class_label = classification[0][0]
+                if class_label not in results_by_label:
+                    results_by_label[class_label]  = {'tp':0, 'fp':0, 'fn':0}
+                if class_label == true_label:
+                    results_by_label[true_label]['tp'] += 1
+                if class_label != true_label:
+                    results_by_label[true_label]['fn'] += 1
+                    results_by_label[class_label]['fp'] += 1
+    f1s = []
+    for label in results_by_label:
+        tp = results_by_label[label]['tp']
+        fp = results_by_label[label]['fp']
+        fn = results_by_label[label]['fn']
+
+        try:
+            precision = tp/(tp + fp)
+            recall = tp/(tp + fn)
+        except:
+            precision = 0
+            recall = 0
+
+        if precision == 0 or recall == 0:
+            f1 = 0
+        else:
+            f1 = 2/(1/precision + 1/recall)
+        f1s.append(f1)
+
+        if f1 is not 'NaN':
+            logger.info("F1 of {} for {}".format(f1, label))
+
+    logger.info("Mean F1: {}".format(np.mean(f1s)))
+
+if __name__ =='__main__':
     logger = logging.getLogger(__name__)
 
     data_dir = sys.argv[1]
     # Load model from specified path
     logger.info("Loading model")
     model_path = sys.argv[2]
-    save_path = sys.argv[3]
-    model = RandomForestModel(duration=None)
+    if len(sys.argv) >= 4:
+        save_path = sys.argv[3]
+    model = RandomForestModel(duration=None, hidden_size=None)
     model.load(model_path)
 
     # Initialize results dictionary
@@ -67,5 +111,8 @@ if __name__ == '__main__':
         results[pcap] = single_result
 
     # Save results to path specified by third argument
-    with open(save_path, 'w') as output_file:
-        json.dump(results, output_file)
+    if len(sys.argv) >= 4:
+        with open(save_path, 'w') as output_file:
+            json.dump(results, output_file)
+    print("calculating results")
+    calc_f1(results)
