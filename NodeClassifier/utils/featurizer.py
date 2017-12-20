@@ -1,6 +1,8 @@
 import numpy as np
 from collections import defaultdict
 from collections import Counter
+import json
+
 def extract_macs(packet):
     '''
     Takes in hex representation of a packet header and extracts the
@@ -261,7 +263,15 @@ def extract_features(session_dict, capture_source=None, max_port=1024):
 
     # If the capture source isn't specified, default to the most used address
     if capture_source is None:
-        capture_source = get_source(session_dict)
+        # check for what type of address to use from config
+        try:
+            with open('config.json', 'r') as config_file:
+                config = json.load(config_file)
+                address_type = config['source identifier']
+        except:
+            address_type = 'MAC'
+            
+        capture_source = get_source(session_dict, address_type=address_type)
 
     # Initialize some counter variables
     num_source_sess = [0]*max_port
