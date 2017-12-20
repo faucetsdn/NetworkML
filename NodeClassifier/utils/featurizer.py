@@ -1,6 +1,6 @@
 import numpy as np
 from collections import defaultdict
-
+from collections import Counter
 def extract_macs(packet):
     '''
     Takes in hex representation of a packet header and extracts the
@@ -45,9 +45,9 @@ def is_private(address):
 
     return private
 
-def get_source(sessions):
+def get_indiv_source(sessions):
     '''
-    Gets the source MAC address from a session dictionary.
+    Gets the source MAC address from an individual session dictionary.
     Also computes the number of sessions to and from this source.
     The source is defined to be the IP address with the most sessions
     associated with it.
@@ -80,7 +80,7 @@ def get_source(sessions):
         source_mac, destination_mac = extract_macs(first_packet)
 
         # Only look at internal <-> internal sessions
-        if is_private(incoming_address) and is_private(outgoing_address):
+        if is_private(incoming_address) or is_private(outgoing_address):
             # Store the data
             all_ips[incoming_address] += 1
             all_ips[outgoing_address] += 1
@@ -99,7 +99,7 @@ def get_source(sessions):
 
     sorted_sources = sorted(
                             all_macs.keys(),
-                            key=(lambda k: all_macs[k]),
+                            key=(lambda k: incoming_macs[k]),
                             reverse=True
                            )
     capture_source = '00:00:00:00:00:00'
@@ -109,6 +109,58 @@ def get_source(sessions):
     # Get the incoming/outgoing sessions for the capture source
     num_incoming = incoming_macs[capture_source]
     num_outgoing = outgoing_macs[capture_source]
+
+    return capture_source, all_macs, all_ips
+
+def get_source(sessions, address_type='MAC'):
+    '''
+    Gets the source MAC for all the session dicts given.  This is the majority
+    vote across all session dicts if sessions is a list.
+
+    Args:
+        sessions: either a single session dict or a list of session dicts
+    Returns
+        capture_source: Majority MAC address across all sessions in input
+    '''
+
+    if type(sessions) is list:
+        all_addresses = Counter({})
+        # Aggregate counts from all binned sessions
+        for session_dict in sessions:
+            if address_type == 'MAC':
+                capture_source = '00:00:00:00:00:00'
+                _, indiv_addresses, _ = get_indiv_source(session_dict)
+            else:
+                _, _, indiv_addresses = get_indiv_source(session_dict)
+                capture_source = '0.0.0.0'
+            # Combine with previous stats
+            all_addresses = all_addresses + Counter(indiv_addresses)
+
+        # Find the most common address
+        sorted_sources = sorted(
+                                all_addresses.keys(),
+                                key=(lambda k: all_addresses[k]),
+                                reverse=True
+                               )
+        if len(sorted_sources) > 0:
+            capture_source = sorted_sources[0]
+
+    else:
+        if address_type == 'MAC':
+            capture_source = '00:00:00:00:00:00'
+            _, indiv_addresses, _ = get_indiv_source(sessions)
+        else:
+            _, _, indiv_addresses = get_indiv_source(sessions)
+            capture_source = '0.0.0.0'
+
+        # Find the most common address
+        sorted_sources = sorted(
+                                indiv_addresses.keys(),
+                                key=(lambda k: indiv_addresses[k]),
+                                reverse=True
+                               )
+        if len(sorted_sources) > 0:
+            capture_source = sorted_sources[0]
 
     return capture_source
 
@@ -231,7 +283,9 @@ def extract_features(session_dict, capture_source=None, max_port=1024):
         source_mac, destination_mac = extract_macs(first_packet)
 
         # If the source is the cpature source
-        if source_mac == capture_source:
+        if (source_mac == capture_source
+            or address_1 == capture_source):
+
             if is_private(address_2):
                 other_ips[address_2] += 1
             num_sessions += 1
@@ -245,7 +299,8 @@ def extract_features(session_dict, capture_source=None, max_port=1024):
                 num_destination_sess[int(port_2)] += 1
 
         # If the destination is the capture source
-        if destination_mac == capture_source:
+        if (destination_mac == capture_source
+            or address_2 == capture_source):
             if is_private(address_1):
                 other_ips[address_1] += 1
 

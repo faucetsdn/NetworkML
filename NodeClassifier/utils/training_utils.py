@@ -13,6 +13,7 @@ from sklearn.linear_model import LogisticRegression
 
 from .reader import sessionizer
 from .featurizer import extract_features
+from .featurizer import get_source
 
 def read_data(data_dir, duration=None, labels=None):
     '''
@@ -62,10 +63,16 @@ def read_data(data_dir, duration=None, labels=None):
                                        filename,
                                        duration=duration
                                      )
+        # Get the capture source from the binned sessions
+        capture_source = get_source(binned_sessions)
 
         # For each of the session bins, compute the  full feature vectors
         for session_dict in binned_sessions:
-            features, _, _ = extract_features(session_dict)
+            features, _, _ = extract_features(
+                                            session_dict,
+                                            capture_source=capture_source
+                                             )
+
             # Store the feature vector and the labels
             X.append(features)
             y.append(assigned_labels.index(label))
