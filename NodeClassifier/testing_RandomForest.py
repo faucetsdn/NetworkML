@@ -9,7 +9,7 @@ import os
 import json
 import logging
 import numpy as np
-from utils.OneLayer import OneLayerModel
+from utils.RandomForestModel import RandomForestModel
 
 logging.basicConfig(level=logging.INFO)
 
@@ -63,8 +63,8 @@ if __name__ =='__main__':
     logger.info("Loading model")
     model_path = sys.argv[2]
     if len(sys.argv) >= 4:
-        save_path = sys.argv[30]
-    model = OneLayerModel(duration=None, hidden_size=None)
+        save_path = sys.argv[3]
+    model = RandomForestModel(duration=None, hidden_size=None)
     model.load(model_path)
 
     # Initialize results dictionary
@@ -111,7 +111,7 @@ if __name__ =='__main__':
         results[pcap] = single_result
 
     # Save results to path specified by third argument
-    if len(sys.argv) > 4:
+    if len(sys.argv) >= 4:
         with open(save_path, 'w') as output_file:
             json.dump(results, output_file)
     print("calculating results")

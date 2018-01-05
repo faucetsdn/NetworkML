@@ -14,7 +14,7 @@ import numpy as np
 import tensorflow as tf
 
 from redis import StrictRedis
-from utils.OneLayer import OneLayerModel
+from utils.RandomForestModel import RandomForestModel
 from utils.featurizer import is_private
 from utils.reader import sessionizer
 from utils.model_utils import clean_session_dict
@@ -351,7 +351,7 @@ if __name__ == '__main__':
         with open(load_path, 'rb') as handle:
             model_hash = hashlib.md5(handle.read()).hexdigest()
 
-        model = OneLayerModel(duration=None, hidden_size=None)
+        model = RandomForestModel(duration=None)
         model.load(load_path)
         logger.debug("Loaded model from %s", load_path)
 

@@ -13,8 +13,8 @@ import logging
 from tqdm import tqdm
 
 import numpy as np
-from OneLayer import OneLayerModel
-from model_utils import clean_session_dict
+from .OneLayer import OneLayerModel
+from .model_utils import clean_session_dict
 
 logging.basicConfig(level=logging.INFO)
 
