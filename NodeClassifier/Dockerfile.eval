@@ -14,5 +14,5 @@ RUN pip install numpy==1.13.3 \
 COPY . /NodeClassifier
 WORKDIR /NodeClassifier
 
-ENTRYPOINT ["python3.5", "eval_OneLayer.py"]
+ENTRYPOINT ["python3.5", "eval_RandomForest.py"]
 CMD [""]
