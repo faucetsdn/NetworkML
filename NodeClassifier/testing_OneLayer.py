@@ -79,12 +79,15 @@ if __name__ =='__main__':
 
     data_dir = sys.argv[1]
     # Load model from specified path
-    logger.info("Loading model")
-    model_path = sys.argv[2]
+    if len(sys.argv) > 2:
+        load_path = sys.argv[2]
+    else:
+        load_path = os.path.join('models','OneLayerModel.pkl')
     if len(sys.argv) >= 4:
         save_path = sys.argv[3]
     model = OneLayerModel(duration=None, hidden_size=None)
-    model.load(model_path)
+    logger.info("Loading model from %s", load_path)
+    model.load(load_path)
 
     # Initialize results dictionary
     results = {}
