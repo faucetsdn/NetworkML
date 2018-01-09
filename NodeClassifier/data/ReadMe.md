@@ -13,4 +13,4 @@ Also configure config.json file by adding "Smartphone" and "File server" labels 
 
 
 ### NOTE: 
-The "-" i the filename is mandatory.
+The "-" in the filename is mandatory.
