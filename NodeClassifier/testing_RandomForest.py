@@ -77,7 +77,10 @@ def calc_f1(results, ignore_unknown=False):
 if __name__ =='__main__':
     logger = logging.getLogger(__name__)
 
-    data_dir = sys.argv[1]
+    if len(sys.argv) < 2:
+        data_dir = "/pcaps"
+    else:
+        data_dir = sys.argv[1]
     # Load model from specified path
     if len(sys.argv) > 2:
         load_path = sys.argv[2]

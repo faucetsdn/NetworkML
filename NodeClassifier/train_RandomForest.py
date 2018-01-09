@@ -16,7 +16,10 @@ if __name__ == '__main__':
         labels = config['labels']
 
     # Get the data directory
-    data_dir = sys.argv[1]
+    if len(sys.argv) < 2:
+        data_dir = "/pcaps"
+    else:
+        data_dir = sys.argv[1]
     # Initialize the model
     model = RandomForestModel(
                         duration=duration,
