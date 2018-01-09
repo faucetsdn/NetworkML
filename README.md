@@ -23,8 +23,10 @@ Plugin for traffic classification to determine device types and their behavior.
 3. Collect your training pcaps and put them into a directory (tcpdump is what we usually use)
 4. Launch the docker container: "docker run -it -v /home/<user>/PoseidonML:/app poseidonml bash"
 5. create config file called “label_assignments.json” in pcaps dir
-
-6. To train a model: python train_OneLayerModel.py <pcapdir> <filename>.picklefile
-7. Once trained, to evaluate using that model: python eval_OneLayer.py <pcapdir> <filename>.picklefile
+    - It maps pcap files to class name, similar to [label_assignments.json sample](https://github.com/Lab41/PoseidonML/blob/master/NodeClassifier/data/label_assignments.json).
+    - Classes should be defined in the config.json file label list [config.json](https://github.com/Lab41/PoseidonML/blob/master/NodeClassifier/config.json)
+6. To train a model: python train_OneLayerModel.py &lt;pcapdir&gt; &lt;filename&gt;.pickle
+7. Once trained, to evaluate using that model: python eval_OneLayer.py &lt;pcapdir&gt; &lt;filename&gt;.pickle
+8. If model to be used with Poseidon, then put the model.picke in /tmp/models/ directory. 
 
 Output is currently JSON to STDOUT

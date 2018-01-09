@@ -131,8 +131,23 @@ def sessionizer(path, duration=None):
     start_time = None
     working_dict = None
 
+    first_packet_time = None
+    session_starts = OrderedDict()
+
+    # Get threshold time from config
+    try:
+        with open('config.json', 'r') as config_file:
+            config = json.load(config_file)
+            threshold_time  = config['session threshold']
+    except Exception as e:
+        threshold_time = 120
+
     for head, packet in packet_dict.items():
         time = head[0]
+
+        # Get the time of the first observed packet
+        if first_packet_time is None:
+            first_packet_time = time
 
         # Start off the first bin when the first packet is seen
         if start_time is None:
@@ -146,11 +161,33 @@ def sessionizer(path, duration=None):
                 working_dict = OrderedDict()
                 start_time = time
 
-        # Add the packet to the appropriate section
-        key = (head[1], head[2])
-        if key not in working_dict:
-            working_dict[key] = []
-        working_dict[key].append((head[0],packet))
+        # Add the key to the session dict if it doesn't exist
+        key_1 = (head[1], head[2])
+        key_2 = (head[2], head[1])
+
+        # Select the appropriate ordering
+        if key_2 in working_dict:
+            key = key_2
+        if key_1 in working_dict:
+            key = key_1
+
+        if key_1 not in working_dict and key_2 not in working_dict:
+            if key_1 not in session_starts and key_2 not in session_starts:
+                session_starts[key_1] = time
+
+            if key_1 in session_starts:
+                session_start = session_starts[key_1]
+            if key_2 in session_starts:
+                session_start = session_starts[key_2]
+
+            key = key_1
+            if (session_start - first_packet_time).total_seconds() > threshold_time:
+                working_dict[key] = []
+
+        # Add the session to the session dict if it's start time is after
+        # the cutoff
+        if key in working_dict:
+            working_dict[key].append((head[0],packet))
 
     if duration is not None and working_dict is not None:
         if len(working_dict) > 0:
