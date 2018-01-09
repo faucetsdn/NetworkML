@@ -317,8 +317,11 @@ def basic_decision(
 if __name__ == '__main__':
     logger = logging.getLogger(__name__)
 
-   # path to the pcap to get the update from
-    pcap_path = sys.argv[1]
+    # path to the pcap to get the update from
+    if len(sys.argv) < 2:
+        pcap_path = "/pcaps/eval.pcap"
+    else:
+        pcap_path = sys.argv[1]
     # parse the filename to get IP address
     try:
         split_path = os.path.split(pcap_path)[-1]
