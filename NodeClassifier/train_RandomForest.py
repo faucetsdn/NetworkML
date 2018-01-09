@@ -28,5 +28,8 @@ if __name__ == '__main__':
     # Train the model
     model.train(data_dir)
     # Save the model to the specified path
-    save_path = sys.argv[2]
+    if len(save_path) == 3:
+        save_path = sys.argv[2]
+    else:
+        save_path = "/models/RandomForestModelNew.pkl"
     model.save(save_path)
