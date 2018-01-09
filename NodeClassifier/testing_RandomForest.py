@@ -88,6 +88,8 @@ if __name__ =='__main__':
         load_path = os.path.join('models','RandomForestModel.pkl')
     if len(sys.argv) > 3:
         save_path = sys.argv[3]
+    else:
+        save_path = "/models/RandomForestModelNew.pkl"
     model = RandomForestModel(duration=None, hidden_size=None)
     logger.info("Loading model from %s", load_path)
     model.load(load_path)
