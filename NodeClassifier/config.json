@@ -21,6 +21,8 @@
     ],
 
     "source identifier": "MAC",
+    "session threshold": 120,
+    "max port": 1024,
 
     "state size": 32,
     "duration": 900,

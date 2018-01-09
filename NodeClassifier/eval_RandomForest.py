@@ -345,7 +345,7 @@ if __name__ == '__main__':
         if len(sys.argv) > 2:
             load_path = sys.argv[2]
         else:
-            load_path = "/models/model.pickle"
+            load_path = os.path.join('models','RandomForestModel.pkl')
 
         # Compute model hash
         with open(load_path, 'rb') as handle:
@@ -362,158 +362,159 @@ if __name__ == '__main__':
                                                            mean=False
                                                                              )
 
-        logger.debug("Generating predictions")
-        last_update, prev_rep = get_previous_state(source_ip, timestamps[0])
-        _, mean_rep = average_representation(
-                                                reps,
-                                                timestamps,
-                                                prev_representation=prev_rep,
-                                                last_update=last_update
-                                            )
-        mean_preds = model.classify_representation(mean_rep)
-        if len(sys.argv) > 2:
-            for p in mean_preds:
-                logger.debug(p)
-        # Update the stored representation
-        current_rep, avg_rep = None, None
-        if reps is not None and is_private(source_ip):
-            logger.debug("Updating stored data")
-            current_rep, avg_rep = update_data(
-                                                source_ip,
-                                                reps,
-                                                timestamps,
-                                                preds,
-                                                others,
-                                                model_hash
-                                               )
+        if preds is not None:
+            logger.debug("Generating predictions")
+            last_update, prev_rep = get_previous_state(source_ip, timestamps[0])
+            _, mean_rep = average_representation(
+                                                    reps,
+                                                    timestamps,
+                                                    prev_representation=prev_rep,
+                                                    last_update=last_update
+                                                )
+            mean_preds = model.classify_representation(mean_rep)
+            if len(sys.argv) > 2:
+                for p in mean_preds:
+                    logger.debug(p)
+            # Update the stored representation
+            current_rep, avg_rep = None, None
+            if reps is not None and is_private(source_ip):
+                logger.debug("Updating stored data")
+                current_rep, avg_rep = update_data(
+                                                    source_ip,
+                                                    reps,
+                                                    timestamps,
+                                                    preds,
+                                                    others,
+                                                    model_hash
+                                                   )
 
-        # Get the sessions that the model looked at
-        sessions = model.sessions
-        # Clean the sessions
-        clean_sessions = []
-        inferred_ip = None
-        for session_dict in sessions:
-            cleaned_sessions, inferred_ip = \
-                        clean_session_dict(session_dict, source_ip=source_ip)
-            clean_sessions.append(cleaned_sessions)
+            # Get the sessions that the model looked at
+            sessions = model.sessions
+            # Clean the sessions
+            clean_sessions = []
+            inferred_ip = None
+            for session_dict in sessions:
+                cleaned_sessions, inferred_ip = \
+                            clean_session_dict(session_dict, source_ip=source_ip)
+                clean_sessions.append(cleaned_sessions)
 
-        if source_ip is None:
-            source_ip = inferred_ip
+            if source_ip is None:
+                source_ip = inferred_ip
 
-        # Use the RNN model to compute abnormality scores
-        rnnmodel = AbnormalDetector(
-                                 packet_embedding_size=rnn_size,
-                                 session_embedding_size=rnn_size,
-                                 hidden_size=rnn_size//2,
-                                 num_labels=len(mean_preds)
-                                )
-        # Initialize and load the model
-        if len(sys.argv) > 3:
-            rnnpath= sys.argv[3]
-        else:
-            rnnpath = "/models/rnnmodel.ckpt"
+            # Use the RNN model to compute abnormality scores
+            rnnmodel = AbnormalDetector(
+                                     packet_embedding_size=rnn_size,
+                                     session_embedding_size=rnn_size,
+                                     hidden_size=rnn_size//2,
+                                     num_labels=len(mean_preds)
+                                    )
+            # Initialize and load the model
+            if len(sys.argv) > 3:
+                rnnpath= sys.argv[3]
+            else:
+                rnnpath = "/models/rnnmodel.ckpt"
 
-        try:
-            rnnmodel.load(rnnpath)
-            abnormal_model = True
-        except:
-            abnormal_model = False
-            abnormality = 0
-
-        scores = []
-        max_key = None
-        max_score = 0
-        if abnormal_model is True:
-            # Group input sessions by number of packets
-            inputs_by_length = [[] for i in range(8)]
-            labels_by_length = [[] for i in range(8)]
-            for session_dict in clean_sessions:
-                for k, session in session_dict.items():
-                    X, L = create_inputs(mean_preds, session, 116)
-                    length = X.shape[1]
-                    if length <= 8:
-                        inputs_by_length[length-1].append(X)
-                        labels_by_length[length-1].append(L)
-            # Evaluate sessions by length and by batch
-            for i, sessions in enumerate(inputs_by_length):
-                    labels = labels_by_length[i]
-                    num_sessions = len(sessions)
-                    num_batches = num_sessions//batch_size
-                    for j in range(num_batches):
-                        batch_sessions = sessions[j*batch_size:(j+1)*batch_size]
-                        batch_labels = labels[j*batch_size:(j+1)*batch_size]
-                        X = np.concatenate(batch_sessions, axis=0)
-                        L = np.concatenate(batch_labels, axis=0)
-                        model_out = rnnmodel.get_output(X,L)
-                        scores.append(model_out[:,0])
-                    if len(sessions[num_batches*batch_size:]) > 0:
-                        batch_sessions = sessions[num_batches*batch_size:]
-                        batch_labels = labels[num_batches*batch_size:]
-                        X = np.concatenate(batch_sessions, axis=0)
-                        L = np.concatenate(batch_labels, axis=0)
-                        model_out = rnnmodel.get_output(X, L)
-                        scores.append(model_out[:,0])
             try:
-                scores = np.concatenate(scores, axis=0)
+                rnnmodel.load(rnnpath)
+                abnormal_model = True
             except:
-                scores = np.asarray([0])
+                abnormal_model = False
+                abnormality = 0
 
-            abnormality = np.max(scores)
+            scores = []
+            max_key = None
+            max_score = 0
+            if abnormal_model is True:
+                # Group input sessions by number of packets
+                inputs_by_length = [[] for i in range(8)]
+                labels_by_length = [[] for i in range(8)]
+                for session_dict in clean_sessions:
+                    for k, session in session_dict.items():
+                        X, L = create_inputs(mean_preds, session, 116)
+                        length = X.shape[1]
+                        if length <= 8:
+                            inputs_by_length[length-1].append(X)
+                            labels_by_length[length-1].append(L)
+                # Evaluate sessions by length and by batch
+                for i, sessions in enumerate(inputs_by_length):
+                        labels = labels_by_length[i]
+                        num_sessions = len(sessions)
+                        num_batches = num_sessions//batch_size
+                        for j in range(num_batches):
+                            batch_sessions = sessions[j*batch_size:(j+1)*batch_size]
+                            batch_labels = labels[j*batch_size:(j+1)*batch_size]
+                            X = np.concatenate(batch_sessions, axis=0)
+                            L = np.concatenate(batch_labels, axis=0)
+                            model_out = rnnmodel.get_output(X,L)
+                            scores.append(model_out[:,0])
+                        if len(sessions[num_batches*batch_size:]) > 0:
+                            batch_sessions = sessions[num_batches*batch_size:]
+                            batch_labels = labels[num_batches*batch_size:]
+                            X = np.concatenate(batch_sessions, axis=0)
+                            L = np.concatenate(batch_labels, axis=0)
+                            model_out = rnnmodel.get_output(X, L)
+                            scores.append(model_out[:,0])
+                try:
+                    scores = np.concatenate(scores, axis=0)
+                except:
+                    scores = np.asarray([0])
 
-        # Make simple decisions based on vector differences and update times
-        decisions = {}
-        timestamp = timestamps[0].timestamp()
-        labels, confs = zip(*preds)
-        repr_s, m_repr_s, _ , prev_s, _, _ = get_address_info(
-                                                               source_ip,
-                                                               timestamp
-                                                             )
-        decision = basic_decision(
-                                   key,
-                                   source_ip,
-                                   prev_s,
-                                   timestamp,
-                                   labels,
-                                   confs,
-                                   abnormality
-                                 )
-        logger.debug("Created message")
-        for i in range(3):
-            logger.debug(labels[i] + ' : ' + str(round(confs[i],3)))
-        # Get json message
-        message = json.dumps(decision)
+                abnormality = np.max(scores)
 
-        # Get our "SKIP_RABBIT" environment variable with a default value of
-        # false
-        skip_rabbit = os.getenv("SKIP_RABBIT", "False")
+            # Make simple decisions based on vector differences and update times
+            decisions = {}
+            timestamp = timestamps[0].timestamp()
+            labels, confs = zip(*preds)
+            repr_s, m_repr_s, _ , prev_s, _, _ = get_address_info(
+                                                                   source_ip,
+                                                                   timestamp
+                                                                 )
+            decision = basic_decision(
+                                       key,
+                                       source_ip,
+                                       prev_s,
+                                       timestamp,
+                                       labels,
+                                       confs,
+                                       abnormality
+                                     )
+            logger.debug("Created message")
+            for i in range(3):
+                logger.debug(labels[i] + ' : ' + str(round(confs[i],3)))
+            # Get json message
+            message = json.dumps(decision)
 
-        # Convert our string into a boolean
-        skip_rabbit = skip_rabbit.lower() in ["true", "t", "y", "1"]
+            # Get our "SKIP_RABBIT" environment variable with a default value of
+            # false
+            skip_rabbit = os.getenv("SKIP_RABBIT", "False")
 
-        logger.debug("SKIP_RABBIT set to: %s", str(skip_rabbit))
+            # Convert our string into a boolean
+            skip_rabbit = skip_rabbit.lower() in ["true", "t", "y", "1"]
 
-        if skip_rabbit:
-            # Rabbit settings
-            exchange = 'topic-poseidon-internal'
-            exchange_type = 'topic'
+            logger.debug("SKIP_RABBIT set to: %s", str(skip_rabbit))
 
-            # Starting rabbit connection
-            connection = pika.BlockingConnection(
-                pika.ConnectionParameters(host='rabbit')
-            )
+            if skip_rabbit:
+                # Rabbit settings
+                exchange = 'topic-poseidon-internal'
+                exchange_type = 'topic'
 
-            channel = connection.channel()
-            channel.exchange_declare(
-                exchange=exchange, exchange_type=exchange_type
-            )
+                # Starting rabbit connection
+                connection = pika.BlockingConnection(
+                    pika.ConnectionParameters(host='rabbit')
+                )
 
-            routing_key = 'poseidon.algos.decider'
-            channel.basic_publish(exchange=exchange,
-                                  routing_key=routing_key,
-                                  body=message)
-            logger.debug("Routing key: " + routing_key)
-            logger.debug("Exchange: " + exchange)
-            connection.close()
-        else:
-            # Skipping rabbit. Printing to STDOUT
-            logger.info("Message: " + message)
+                channel = connection.channel()
+                channel.exchange_declare(
+                    exchange=exchange, exchange_type=exchange_type
+                )
+
+                routing_key = 'poseidon.algos.decider'
+                channel.basic_publish(exchange=exchange,
+                                      routing_key=routing_key,
+                                      body=message)
+                logger.debug("Routing key: " + routing_key)
+                logger.debug("Exchange: " + exchange)
+                connection.close()
+            else:
+                # Skipping rabbit. Printing to STDOUT
+                logger.info("Message: " + message)

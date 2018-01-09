@@ -79,21 +79,25 @@ class RandomForestModel:
         self.sessions = binned_sessions
 
         if len(binned_sessions) is 0:
-            return None, None, None
+            return None, None, None, None
 
         for session_dict in binned_sessions:
-            if source_ip is None:
-                feature_list, source_ip, other_ips = extract_features(
-                                                                   session_dict
-                                                                     )
-            else:
-                feature_list, _, other_ips = extract_features(
-                                                      session_dict,
-                                                      capture_source=source_ip
-                                                             )
-            X.append(feature_list)
-            last_packet = list(session_dict.items())[-1]
-            timestamps.append(last_packet[1][0][0])
+            if len(session_dict) > 0:
+                if source_ip is None:
+                    feature_list, source_ip, other_ips = extract_features(
+                                                                    session_dict
+                                                                         )
+                else:
+                    feature_list, _, other_ips = extract_features(
+                                                        session_dict,
+                                                        capture_source=source_ip
+                                                                 )
+                X.append(feature_list)
+                last_packet = list(session_dict.items())[-1]
+                timestamps.append(last_packet[1][0][0])
+
+        if len(X) == 0:
+            return None, None, None, None
 
         full_features = np.stack(X)
 
@@ -102,9 +106,13 @@ class RandomForestModel:
         full_features /= np.expand_dims(self.stds, 0)
         features = full_features[:, self.feature_list]
 
-        last_packet = list(binned_sessions[-1].items())[-1]
-        timestamp = last_packet[1][0][0]
-
+        '''
+        try:
+            last_packet = list(binned_sessions[-1].items())[-1]
+            timestamp = last_packet[1][0][0]
+        except:
+            timestamp = None
+        '''
         return features, source_ip, timestamps, other_ips
 
 
@@ -224,7 +232,7 @@ class RandomForestModel:
                                                            source_ip=source_ip,
                                                                      )
         if features is None:
-            return None, None, None, None
+            return None, None, None, None, None
 
         representation = features
         mean_rep = np.mean(representation, axis=0)

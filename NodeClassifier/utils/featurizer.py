@@ -87,7 +87,7 @@ def get_indiv_source(sessions):
             all_ips[incoming_address] += 1
             all_ips[outgoing_address] += 1
             all_macs[source_mac] += 1
-            all_macs[destination_mac] +=1
+            all_macs[destination_mac] += 1
 
             incoming_ips[incoming_address] += 1
             incoming_macs[source_mac] += 1
@@ -97,7 +97,7 @@ def get_indiv_source(sessions):
 
     # The address with the most sessions is the capture source
     if len(sessions) == 0:
-        return None, 0, 0
+        return None, all_macs, all_ips
 
     sorted_sources = sorted(
                             all_macs.keys(),
@@ -128,6 +128,11 @@ def get_source(sessions, address_type='MAC'):
     if type(sessions) is list:
         all_addresses = Counter({})
         # Aggregate counts from all binned sessions
+        if address_type == 'MAC':
+            capture_source = '00:00:00:00:00:00'
+        else:
+            capture_source = '0.0.0.0'
+
         for session_dict in sessions:
             if address_type == 'MAC':
                 capture_source = '00:00:00:00:00:00'
@@ -136,7 +141,7 @@ def get_source(sessions, address_type='MAC'):
                 _, _, indiv_addresses = get_indiv_source(session_dict)
                 capture_source = '0.0.0.0'
             # Combine with previous stats
-            all_addresses = all_addresses + Counter(indiv_addresses)
+            all_addresses += Counter(indiv_addresses)
 
         # Find the most common address
         sorted_sources = sorted(
@@ -248,39 +253,50 @@ def is_protocol(session, protocol):
         return True
     return False
 
-def extract_features(session_dict, capture_source=None, max_port=1024):
+def extract_features(session_dict, capture_source=None, max_port=None):
     '''
     Extracts netflow level features from packet capture.
 
     Args:
         pcap_path: path to the packet capture to process into features
-        max_port:  Maximum port to get features on (default 1024)
+        max_port:  Maximum port to get features on (default to reading config)
 
     Returns:
         feature_vector: Vector containing the featurized representation
                         of the input pcap.
     '''
 
+    # Get featurization info from config
+    try:
+        with open('config.json', 'r') as config_file:
+            config = json.load(config_file)
+            address_type = config['source identifier']
+            if max_port is None:
+                max_port = config['max port']
+    except:
+        address_type = 'MAC'
+        
     # If the capture source isn't specified, default to the most used address
     if capture_source is None:
-        # check for what type of address to use from config
-        try:
-            with open('config.json', 'r') as config_file:
-                config = json.load(config_file)
-                address_type = config['source identifier']
-        except:
-            address_type = 'MAC'
-            
         capture_source = get_source(session_dict, address_type=address_type)
 
     # Initialize some counter variables
-    num_source_sess = [0]*max_port
-    num_destination_sess = [0]*max_port
-    num_sessions = 0
-    num_external = 0
-    num_tcp_sess = 0
-    num_udp_sess = 0
-    num_icmp_sess = 0
+    num_sport_init = [0]*max_port
+    num_dport_init = [0]*max_port
+    num_sport_rec = [0]*max_port
+    num_dport_rec = [0]*max_port
+
+    num_sessions_init = 0
+    num_external_init = 0
+    num_tcp_sess_init = 0
+    num_udp_sess_init = 0
+    num_icmp_sess_init = 0
+
+    num_sessions_rec = 0
+    num_external_rec = 0
+    num_tcp_sess_rec = 0
+    num_udp_sess_rec = 0
+    num_icmp_sess_rec = 0
 
     # Iterate over all sessions and aggregate the info
     other_ips = defaultdict(int)
@@ -298,15 +314,18 @@ def extract_features(session_dict, capture_source=None, max_port=1024):
 
             if is_private(address_2):
                 other_ips[address_2] += 1
-            num_sessions += 1
-            num_external += is_external(address_1, address_2)
-            num_tcp_sess += is_protocol(session, '06')
-            num_udp_sess += is_protocol(session, '11')
-            num_icmp_sess += is_protocol(session, '01')
+
+            num_sessions_init += 1
+            num_external_init += is_external(address_1, address_2)
+            num_tcp_sess_init += is_protocol(session, '06')
+            num_udp_sess_init += is_protocol(session, '11')
+            num_icmp_sess_init += is_protocol(session, '01')
+
             if int(port_1) < max_port:
-                num_source_sess[int(port_1)] += 1
+                num_sport_init[int(port_1)] += 1
+
             if int(port_2) < max_port:
-                num_destination_sess[int(port_2)] += 1
+                num_dport_init[int(port_2)] += 1
 
         # If the destination is the capture source
         if (destination_mac == capture_source
@@ -314,17 +333,44 @@ def extract_features(session_dict, capture_source=None, max_port=1024):
             if is_private(address_1):
                 other_ips[address_1] += 1
 
+            num_sessions_rec += 1
+            num_external_rec += is_external(address_2, address_1)
+            num_tcp_sess_rec += is_protocol(session, '06')
+            num_udp_sess_rec += is_protocol(session, '11')
+            num_icmp_sess_rec += is_protocol(session, '01')
+
+            if int(port_1) < max_port:
+                num_sport_rec[int(port_1)] += 1
+            if int(port_2) < max_port:
+                num_dport_rec[int(port_2)] += 1
+
     num_port_sess = np.concatenate(
-                                   (num_source_sess, num_destination_sess),
+                                   (
+                                   num_sport_init,
+                                   num_dport_init,
+                                   num_sport_rec,
+                                   num_dport_rec
+                                   ),
                                     axis=0
                                   )
-    if num_sessions == 0: num_sessions += 1
-    num_port_sess = np.asarray(num_port_sess)/num_sessions
-    extra_features = [0]*4
-    extra_features[0] = num_external/num_sessions
-    extra_features[1] = num_tcp_sess/num_sessions
-    extra_features[2] = num_udp_sess/num_sessions
-    extra_features[3] = num_icmp_sess/num_sessions
+
+    if num_sessions_init == 0:
+        num_sessions_init += 1
+    if num_sessions_rec == 0:
+        num_sessions_rec += 1
+
+    num_port_sess=np.asarray(num_port_sess)/(num_sessions_init+num_sessions_rec)
+
+    extra_features = [0]*8
+    extra_features[0] = num_external_init/num_sessions_init
+    extra_features[1] = num_tcp_sess_init/num_sessions_init
+    extra_features[2] = num_udp_sess_init/num_sessions_init
+    extra_features[3] = num_icmp_sess_init/num_sessions_init
+
+    extra_features[4] = num_external_rec/num_sessions_rec
+    extra_features[5] = num_tcp_sess_rec/num_sessions_rec
+    extra_features[6] = num_udp_sess_rec/num_sessions_rec
+    extra_features[7] = num_icmp_sess_rec/num_sessions_rec
 
     feature_vector = np.concatenate((num_port_sess, extra_features), axis=0)
     return feature_vector, capture_source, list(other_ips.keys())
