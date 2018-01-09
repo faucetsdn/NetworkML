@@ -5,8 +5,9 @@ RUN apt-get update && apt-get install -y \
     tcpdump
 
 RUN pip install numpy scikit-learn==0.18.2 scipy
-COPY . /TraditionalML
-WORKDIR /TraditionalML
 
-ENTRYPOINT ["python3.5", "train_RandomForest.py"]
+COPY . /NodeClassifier
+WORKDIR /NodeClassifier
+
+ENTRYPOINT ["python3.5", "train_OneLayer.py"]
 CMD [""]
