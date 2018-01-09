@@ -17,7 +17,10 @@ if __name__ == '__main__':
         labels = config['labels']
 
     # Get the data directory
-    data_dir = sys.argv[1]
+    if len(sys.argv) < 2:
+        data_dir = "/pcaps"
+    else:
+        data_dir = sys.argv[1]
     # Initialize the model
     model = OneLayerModel(
                             duration=duration,
@@ -27,5 +30,8 @@ if __name__ == '__main__':
     # Train the model
     model.train(data_dir)
     # Save the model to the specified path
-    save_path = sys.argv[2]
+    if len(sys.argv) == 3:
+        save_path = sys.argv[2]
+    else:
+        save_path = "/models/OneLayerModel.pkl"
     model.save(save_path)
