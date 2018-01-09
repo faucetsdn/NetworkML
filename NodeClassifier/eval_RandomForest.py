@@ -19,7 +19,7 @@ from utils.featurizer import is_private
 from utils.reader import sessionizer
 from utils.model_utils import clean_session_dict
 from utils.model_utils import create_inputs
-from rnnclassifier import AbnormalDetector
+from utils.rnnclassifier import AbnormalDetector
 
 logging.basicConfig(level=logging.DEBUG)
 tf.logging.set_verbosity(tf.logging.ERROR)
