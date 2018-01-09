@@ -27,6 +27,6 @@ Plugin for traffic classification to determine device types and their behavior.
     - Classes should be defined in the config.json file label list [config.json](https://github.com/Lab41/PoseidonML/blob/master/NodeClassifier/config.json)
 6. To train a model: python train_OneLayerModel.py &lt;pcapdir&gt; &lt;filename&gt;.pickle
 7. Once trained, to evaluate using that model: python eval_OneLayer.py &lt;pcapdir&gt; &lt;filename&gt;.pickle
-8. If model to be used with Poseidon, then but the model.picke in /tmp/models/ directory. 
+8. If model to be used with Poseidon, then put the model.picke in /tmp/models/ directory. 
 
 Output is currently JSON to STDOUT
