@@ -3,6 +3,10 @@
     [
         "Administrator workstation",
         "Business workstation",
+        "GPU laptop",
+        "VPN client",
+        "PKI server",
+        "Admin server",
         "Developer workstation",
         "Smartphone",
         "Printer",
