@@ -31,5 +31,5 @@ if __name__ == '__main__':
     if len(save_path) == 3:
         save_path = sys.argv[2]
     else:
-        save_path = "/models/RandomForestModelNew.pkl"
+        save_path = "/models/RandomForestModel.pkl"
     model.save(save_path)
