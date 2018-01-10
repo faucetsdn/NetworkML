@@ -47,7 +47,7 @@ def is_private(address):
 
     return private
 
-def get_indiv_source(sessions):
+def get_indiv_source(sessions, address_type='MAC'):
     '''
     Gets the source MAC address from an individual session dictionary.
     Also computes the number of sessions to and from this source.
@@ -56,63 +56,54 @@ def get_indiv_source(sessions):
 
     Inputs:
         sessions: A dictionary of hex sessions from the sessionizer
+        address_type: Type of address to report as the source
     Returns:
         capture_source: Address of the capture source
-        num_incoming: # of incoming sessions to the capture source
-        num_outgoing: # of outgoing sessions from the capture source
+        ip_mac_pairs: Counts of appearances of ip:mac pairs
     '''
 
     # Number of sessions involving the address
-    all_ips= defaultdict(int)
-    all_macs = defaultdict(int)
-    # Incoming sessions have the address as the destination
-    incoming_ips = defaultdict(int)
-    incoming_macs = defaultdict(int)
-    # Outgoing sessions have the address as the source
-    outgoing_ips = defaultdict(int)
-    outgoing_macs = defaultdict(int)
+    ip_mac_pairs = defaultdict(int)
 
     # Count the incoming/outgoing sessions for all addresses
     for key in sessions:
-        incoming_address = key[1].split(':')[0]
-        outgoing_address = key[0].split(':')[0]
+        source_address = key[0].split(':')[0]
+        destination_address = key[1].split(':')[0]
 
         # Get the first packet and grab the macs from it
         first_packet = sessions[key][0][1]
         source_mac, destination_mac = extract_macs(first_packet)
 
-        # Only look at internal <-> internal sessions
-        if is_private(incoming_address) or is_private(outgoing_address):
-            # Store the data
-            all_ips[incoming_address] += 1
-            all_ips[outgoing_address] += 1
-            all_macs[source_mac] += 1
-            all_macs[destination_mac] += 1
-
-            incoming_ips[incoming_address] += 1
-            incoming_macs[source_mac] += 1
-
-            outgoing_ips[outgoing_address] += 1
-            outgoing_ips[destination_mac] += 1
+        # Only look at sessions with an internal IP address
+        # This shouldn't actually be necessary at this stage
+        if is_private(source_address) or is_private(destination_address):
+            # Compute the IP/MAC address pairs
+            pair_1 = source_address + '-' + source_mac
+            pair_2 = destination_address + '-' + destination_mac
+            ip_mac_pairs[pair_1] += 1
+            ip_mac_pairs[pair_2] += 1
 
     # The address with the most sessions is the capture source
     if len(sessions) == 0:
-        return None, all_macs, all_ips
+        return None, ip_mac_pairs
 
     sorted_sources = sorted(
-                            all_macs.keys(),
-                            key=(lambda k: incoming_macs[k]),
+                            ip_mac_pairs.keys(),
+                            key=(lambda k: ip_mac_pairs[k]),
                             reverse=True
                            )
-    capture_source = '00:00:00:00:00:00'
+    if address_type == 'MAC':
+        capture_source = '00:00:00:00:00:00'
+    else:
+        capture_source = '0.0.0.0'
+
     if len(sorted_sources) > 0:
-        capture_source = sorted_sources[0]
+        if address_type == 'MAC':
+            capture_source = sorted_sources[0].split('-')[1]
+        else:
+            capture_source = sorted_sources[0].split('-')[0]
 
-    # Get the incoming/outgoing sessions for the capture source
-    num_incoming = incoming_macs[capture_source]
-    num_outgoing = outgoing_macs[capture_source]
-
-    return capture_source, all_macs, all_ips
+    return capture_source, ip_mac_pairs
 
 def get_source(sessions, address_type='MAC'):
     '''
@@ -121,6 +112,7 @@ def get_source(sessions, address_type='MAC'):
 
     Args:
         sessions: either a single session dict or a list of session dicts
+        address_type: Type of address to return as source identifer
     Returns
         capture_source: Majority MAC address across all sessions in input
     '''
@@ -134,40 +126,29 @@ def get_source(sessions, address_type='MAC'):
             capture_source = '0.0.0.0'
 
         for session_dict in sessions:
-            if address_type == 'MAC':
-                capture_source = '00:00:00:00:00:00'
-                _, indiv_addresses, _ = get_indiv_source(session_dict)
-            else:
-                _, _, indiv_addresses = get_indiv_source(session_dict)
-                capture_source = '0.0.0.0'
+            # Get the ip mac address pairs for each session dict
+            _, ip_mac_pairs = get_indiv_source(session_dict)
             # Combine with previous stats
-            all_addresses += Counter(indiv_addresses)
+            all_pairs += Counter(ip_mac_pairs)
 
         # Find the most common address
         sorted_sources = sorted(
-                                all_addresses.keys(),
-                                key=(lambda k: all_addresses[k]),
+                                all_pairs.keys(),
+                                key=(lambda k: all_pairs[k]),
                                 reverse=True
                                )
+
         if len(sorted_sources) > 0:
-            capture_source = sorted_sources[0]
+            if address_type == 'MAC':
+                capture_source = sorted_sources[0].split('-')[1]
+            else:
+                capture_source = sorted_sources[0].split('-')[0]
 
     else:
         if address_type == 'MAC':
-            capture_source = '00:00:00:00:00:00'
-            _, indiv_addresses, _ = get_indiv_source(sessions)
+            capture_source, _ = get_indiv_source(sessions)
         else:
-            _, _, indiv_addresses = get_indiv_source(sessions)
-            capture_source = '0.0.0.0'
-
-        # Find the most common address
-        sorted_sources = sorted(
-                                indiv_addresses.keys(),
-                                key=(lambda k: indiv_addresses[k]),
-                                reverse=True
-                               )
-        if len(sorted_sources) > 0:
-            capture_source = sorted_sources[0]
+            capture_source, _ = get_indiv_source(sessions, address_type='IP')
 
     return capture_source
 
@@ -275,7 +256,7 @@ def extract_features(session_dict, capture_source=None, max_port=None):
                 max_port = config['max port']
     except:
         address_type = 'MAC'
-        
+
     # If the capture source isn't specified, default to the most used address
     if capture_source is None:
         capture_source = get_source(session_dict, address_type=address_type)

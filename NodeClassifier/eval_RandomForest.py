@@ -21,7 +21,7 @@ from utils.model_utils import clean_session_dict
 from utils.model_utils import create_inputs
 from utils.rnnclassifier import AbnormalDetector
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 tf.logging.set_verbosity(tf.logging.ERROR)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] ='3'
 
@@ -483,7 +483,7 @@ if __name__ == '__main__':
                                      )
             logger.debug("Created message")
             for i in range(3):
-                logger.debug(labels[i] + ' : ' + str(round(confs[i],3)))
+                logger.info(labels[i] + ' : ' + str(round(confs[i],3)))
             # Get json message
             message = json.dumps(decision)
 
