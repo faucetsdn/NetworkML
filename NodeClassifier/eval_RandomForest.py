@@ -15,13 +15,11 @@ import tensorflow as tf
 
 from redis import StrictRedis
 from utils.RandomForestModel import RandomForestModel
-from utils.featurizer import is_private
+from utils.pcap_utils import is_private, clean_session_dict, create_inputs
 from utils.reader import sessionizer
-from utils.model_utils import clean_session_dict
-from utils.model_utils import create_inputs
 from utils.rnnclassifier import AbnormalDetector
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 tf.logging.set_verbosity(tf.logging.ERROR)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] ='3'
 
@@ -398,7 +396,10 @@ if __name__ == '__main__':
             inferred_ip = None
             for session_dict in sessions:
                 cleaned_sessions, inferred_ip = \
-                            clean_session_dict(session_dict, source_ip=source_ip)
+                            clean_session_dict(
+                                                session_dict,
+                                                source_address=source_ip
+                                              )
                 clean_sessions.append(cleaned_sessions)
 
             if source_ip is None:
@@ -483,7 +484,7 @@ if __name__ == '__main__':
                                      )
             logger.debug("Created message")
             for i in range(3):
-                logger.debug(labels[i] + ' : ' + str(round(confs[i],3)))
+                logger.info(labels[i] + ' : ' + str(round(confs[i],3)))
             # Get json message
             message = json.dumps(decision)
 

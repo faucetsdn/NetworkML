@@ -99,7 +99,7 @@ class OneLayerModel:
 
         if len(X) == 0:
             return None, None, None, None
-        
+
         full_features = np.stack(X)
 
         # Mean normalize the features
