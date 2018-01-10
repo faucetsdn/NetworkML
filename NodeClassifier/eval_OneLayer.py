@@ -15,10 +15,8 @@ import tensorflow as tf
 
 from redis import StrictRedis
 from utils.OneLayer import OneLayerModel
-from utils.featurizer import is_private
+from utils.pcap_utils import is_private, clean_session_dict, create_inputs
 from utils.reader import sessionizer
-from utils.model_utils import clean_session_dict
-from utils.model_utils import create_inputs
 from utils.rnnclassifier import AbnormalDetector
 
 logging.basicConfig(level=logging.INFO)
@@ -400,7 +398,10 @@ if __name__ == '__main__':
             inferred_ip = None
             for session_dict in sessions:
                 cleaned_sessions, inferred_ip = \
-                            clean_session_dict(session_dict, source_ip=source_ip)
+                            clean_session_dict(
+                                                session_dict,
+                                                source_address=source_ip
+                                               )
                 clean_sessions.append(cleaned_sessions)
 
             if source_ip is None:

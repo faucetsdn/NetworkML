@@ -12,8 +12,8 @@ from sklearn.linear_model import RandomizedLogisticRegression
 from sklearn.linear_model import LogisticRegression
 
 from .reader import sessionizer
+from .pcap_utils import get_source
 from .featurizer import extract_features
-from .featurizer import get_source
 
 def read_data(data_dir, duration=None, labels=None):
     '''
