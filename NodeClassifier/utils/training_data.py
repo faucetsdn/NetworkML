@@ -8,13 +8,13 @@ condition on
 import sys
 import os
 import json
-import pickle
 import logging
-from tqdm import tqdm
+import pickle
 
 import numpy as np
 from .OneLayer import OneLayerModel
-from .model_utils import clean_session_dict
+from .pcap_utils import clean_session_dict
+from .pcap_utils import get_source
 
 logging.basicConfig(level=logging.INFO)
 
@@ -41,13 +41,11 @@ def average_representation(rep, timestamp, prev_rep, prev_time):
 
     return new_rep, timestamp
 
-if __name__ == '__main__':
+def create_dataset(
+                    data_dir,
+                    model_path=os.path.join('models','OneLayerModel.pkl')
+                  ):
     logger = logging.getLogger(__name__)
-
-    # Get location of training data
-    data_dir = sys.argv[1]
-    # Get location of device classification model to use
-    model_path = sys.argv[2]
 
     # Load the model
     logger.info("Loading model")
@@ -66,13 +64,14 @@ if __name__ == '__main__':
     # Get and store the representations using the supplied model
     # Representations will be computed separately for each pcap
     representations = {}
-    for pcap in tqdm(pcaps):
-        # logger.info("Working on %s", pcap)
-        reps, source_ip, timestamps, _, _ = model.get_representation(
-                                                                     pcap,
-                                                                     mean=False
+    for pcap in pcaps:
+        logger.info("Working on %s", pcap)
+        reps, _, timestamps, _, _ = model.get_representation(
+                                                            pcap,
+                                                            mean=False
                                                                     )
         sessions = model.sessions
+        source_address = get_source(sessions)
 
         # Compute the mean representations
         prev_rep = None
@@ -97,7 +96,7 @@ if __name__ == '__main__':
         # Clean the sessions and merge them into a single session dict
         session_rep_pairs = []
         for session_dict in sessions:
-            clean_dict, _ = clean_session_dict(session_dict, source_ip)
+            clean_dict, _ = clean_session_dict(session_dict, source_address)
             # Go through the sessions and pair them with a representation that
             # preceeds them by as little as possible
             for key, value in clean_dict.items():
@@ -117,8 +116,10 @@ if __name__ == '__main__':
                 session_rep_pairs.append(pair)
 
         representations[pcap] = session_rep_pairs
-        byte_size = sys.getsizeof(pickle.dumps(representations))
-        # print(round(byte_size/1000000, 3))
+    byte_size = sys.getsizeof(pickle.dumps(representations))
+    logger.info(
+                "created training data of size %f mb",
+                round(byte_size/1000000, 3)
+               )
 
-        with open("training_data.pickle", 'wb') as handle:
-            pickle.dump(representations, handle)
+    return representations
