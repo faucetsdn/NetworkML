@@ -46,8 +46,10 @@ class BatchIterator:
         Handles loading the data into the correct format
         """
         if type(self.data_input) is dict:
+            print("Loading data from dict")
             self.data = self.data_input
         else:
+            print("Loading data from disk")
             with open(self.data_input,'rb') as handle:
                 data = pickle.load(handle)
             self.data = data
@@ -148,7 +150,7 @@ class BatchIterator:
                 np.random.shuffle(indicies)
             for i, idx in enumerate(indicies):
                 L_class[idx] = probas[i]
-                
+
             L[i] = L_class
 
             packets = session["packets"]

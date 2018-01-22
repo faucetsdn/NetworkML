@@ -12,7 +12,7 @@ import logging
 import pickle
 
 import numpy as np
-from .OneLayer import OneLayerModel
+from .RandomForestModel import RandomForestModel
 from .pcap_utils import clean_session_dict
 from .pcap_utils import get_source
 
@@ -49,7 +49,7 @@ def create_dataset(
 
     # Load the model
     logger.info("Loading model")
-    model = OneLayerModel(duration=None, hidden_size=None)
+    model = RandomForestModel(duration=None, hidden_size=None)
     model.load(model_path)
 
     # Get all the pcaps in the training directory
@@ -77,21 +77,23 @@ def create_dataset(
         prev_rep = None
         prev_time = None
         model_outputs = {}
-        for i, timestamp in enumerate(timestamps):
-            rep = reps[i]
-            new_rep, time = average_representation(
-                                                   rep,
-                                                   timestamp,
-                                                   prev_rep,
-                                                   prev_time
-                                                  )
-            preds = model.classify_representation(new_rep)
-            model_outputs[timestamp] = {
-                                        "classification": list(preds),
-                                        "representation": list(rep),
-                                        "mean representation": list(new_rep)
-                                       }
-            prev_rep, prev_time = new_rep, time
+
+        if timestamps is not None:
+            for i, timestamp in enumerate(timestamps):
+                rep = reps[i]
+                new_rep, time = average_representation(
+                                                       rep,
+                                                       timestamp,
+                                                       prev_rep,
+                                                       prev_time
+                                                      )
+                preds = model.classify_representation(new_rep)
+                model_outputs[timestamp] = {
+                                            "classification": list(preds),
+                                            "representation": list(rep),
+                                            "mean representation": list(new_rep)
+                                           }
+                prev_rep, prev_time = new_rep, time
 
         # Clean the sessions and merge them into a single session dict
         session_rep_pairs = []
