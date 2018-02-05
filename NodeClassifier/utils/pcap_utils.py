@@ -81,8 +81,10 @@ def get_indiv_source(sessions, address_type='MAC'):
             # Compute the IP/MAC address pairs
             pair_1 = source_address + '-' + source_mac
             pair_2 = destination_address + '-' + destination_mac
-            ip_mac_pairs[pair_1] += 1
-            ip_mac_pairs[pair_2] += 1
+            if is_private(source_address):
+                ip_mac_pairs[pair_1] += 1
+            if is_private(destination_address):
+                ip_mac_pairs[pair_2] += 1
 
     # The address with the most sessions is the capture source
     if len(sessions) == 0:
@@ -261,26 +263,36 @@ def clean_session_dict(sessions, source_address=None):
     return sessions of packets with no mac or ip addresses from the source
     '''
     if source_address is None:
-        source_address = get_source(sessions)
+        source_address = get_source(sessions, address_type='IP')
 
-    cleaned_sessions = OrderedDict()
-    for key, packets in sessions.items():
-        address_1, port_1 = key[0].split(':')
-        address_2, port_2 = key[1].split(':')
+    def clean_dict(sessions, source_address):
+        cleaned_sessions = OrderedDict()
+        for key, packets in sessions.items():
+            address_1, port_1 = key[0].split(':')
+            address_2, port_2 = key[1].split(':')
 
-        first_packet = sessions[key][0][1]
-        source_mac, destination_mac = extract_macs(first_packet)
+            first_packet = sessions[key][0][1]
+            source_mac, destination_mac = extract_macs(first_packet)
 
-        if (address_1 == source_address
-            or source_mac == source_address
-            or address_2 == source_address
-            or destination_mac == source_address):
+            if (address_1 == source_address
+                or source_mac == source_address
+                or address_2 == source_address
+                or destination_mac == source_address):
 
-            if is_private(address_1) and is_private(address_2):
-                    cleaned_sessions[key] = [
-                                             (ts, clean_packet(p))
-                                             for ts, p in packets[0:8]
-                                            ]
+                if is_private(address_1) or is_private(address_2):
+                        cleaned_sessions[key] = [
+                                                 (ts, clean_packet(p))
+                                                 for ts, p in packets[0:8]
+                                                ]
+        return cleaned_sessions
+
+    if type(sessions) == list:
+        cleaned_sessions = []
+        for sess in sessions:
+            cleaned_sessions.append(clean_dict(sess,source_address))
+    else:
+        cleaned_sessions = clean_dict(sessions, source_address)
+
     return cleaned_sessions, source_address
 
 def create_inputs(labels, session, seq_len, num_chars=16):

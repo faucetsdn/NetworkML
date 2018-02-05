@@ -65,14 +65,25 @@ if __name__ == '__main__':
 
     cost = validation_cost(rnnmodel,X_vala,L_vala,Y_vala)
     logger.info("Initial validation cost: %s",np.mean(cost))
-    for i in range(10):
+    min_cost = cost
+    ctr = 0
+    for i in range(100000):
         length = np.random.choice(range(1,9))
         X,L,Y,c = iterator.gen_batch(
                                         split='train',
                                         length=length,
-                                        batch_size=128
+                                        batch_size=256
                                     )
         _ = rnnmodel.train_on_batch(X,L,Y)
         if (i+1)%100 == 0:
+            ctr += 100
             cost = validation_cost(rnnmodel,X_vala,L_vala,Y_vala)
             logger.info("Validation cost after  %s batches: %s",i,cost)
+            if cost < min_cost:
+                ctr = 0
+                min_cost = cost
+                rnnmodel.save('models/AbnormalRNN')
+                logger.info("Saved model at validation cost %s", min_cost)
+        if ctr > 1000:
+            logger.info("No improvement after 1000 iterations. stopping with cost %s", min_cost)
+            break

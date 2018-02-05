@@ -73,9 +73,10 @@ class AbnormalDetector:
         self.graph = tf.Graph()
 
         # Use gpu:0 if one is available
-        if len(gpus) > 0:
+        if len(gpus) > 80:
             with self.graph.as_default():
                 with tf.device(gpus[0]):
+                    print("Using", gpu[0])
                     self._build_model()
         else:
             with self.graph.as_default():
@@ -270,7 +271,7 @@ class AbnormalDetector:
         """
         opt = tf.train.AdamOptimizer()
         gradients, variables = zip(*opt.compute_gradients(self.cost))
-        gradients, _ = tf.clip_by_global_norm(gradients, 0.1)
+        gradients, _ = tf.clip_by_global_norm(gradients, 0.01)
         return opt.apply_gradients(zip(gradients, variables))
 
     def save(self, path):
