@@ -127,10 +127,6 @@ def select_features(X, y):
                 threshold = trial/step_size
 
     importance = {i:s for i,s in enumerate(selection_model.scores_)}
-    print(importance)
-    with open('feature_importance.json', 'w') as handle:
-        json.dump(importance, handle)
-
     return [i for i, score in enumerate(selection_model.scores_)
             if score > threshold]
 
