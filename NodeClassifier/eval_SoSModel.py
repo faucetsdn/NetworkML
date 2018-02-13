@@ -22,19 +22,17 @@ with open('config.json') as config_file:
 def eval_pcap(pcap, label=None):
     logger = logging.getLogger(__name__)
     data = create_dataset(pcap, label=label)
-
-    logger.info("Loaded training data")
     # Create an iterator
     iterator = BatchIterator(
                              data,
                              labels,
                              perturb_types=['random data']
                             )
-    logger.info("Created iterator")
+    logger.debug("Created iterator")
     rnnmodel = SoSModel(rnn_size=100)
-    logger.info("Created model")
+    logger.debug("Created model")
     rnnmodel.load(os.path.join('models','SoSmodel'))
-    logger.info("Loaded model")
+    logger.debug("Loaded model")
 
     X_list = iterator.X
     L_list = iterator.L
@@ -42,6 +40,7 @@ def eval_pcap(pcap, label=None):
 
     num_total = 0
     num_abnormal = 0
+    max_score = 0
     scores = {}
     for i, X in enumerate(X_list):
         L = L_list[i]
@@ -63,16 +62,16 @@ def eval_pcap(pcap, label=None):
                 else:
                     flowlike += session['destination']+' to '+session['source']
                 scores[num_total] = str(s)
-                if s > 0.5:
-                    num_abnormal += 1
-                    print(flowlike," score ",s)
-                    print('-'*80)
+                if s > max_score:
+                    max_score = s
 
+    '''
     print("Processed",num_total,"sessions of which",num_abnormal,"were abnormal")
-'''
     with open('sos_output.json', 'w') as output_file:
         json.dump(scores, output_file)
-'''
+    '''
+    return max_score
+
 if __name__ == '__main__':
     # Path to training data
     pcap = sys.argv[1]
@@ -80,4 +79,5 @@ if __name__ == '__main__':
         label = sys.argv[2]
     else:
         label = None
-    eval_pcap(pcap,label=label)
+    mean_score = eval_pcap(pcap,label=label)
+    print(mean_score)
