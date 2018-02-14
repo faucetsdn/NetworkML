@@ -81,8 +81,10 @@ def get_indiv_source(sessions, address_type='MAC'):
             # Compute the IP/MAC address pairs
             pair_1 = source_address + '-' + source_mac
             pair_2 = destination_address + '-' + destination_mac
-            ip_mac_pairs[pair_1] += 1
-            ip_mac_pairs[pair_2] += 1
+            if is_private(source_address):
+                ip_mac_pairs[pair_1] += 1
+            if is_private(destination_address):
+                ip_mac_pairs[pair_2] += 1
 
     # The address with the most sessions is the capture source
     if len(sessions) == 0:
@@ -213,10 +215,10 @@ def is_external(address_1, address_2):
         is_external: True or False if this is an internal session
     '''
 
-    if address_1[0:3] == address_2[0:3]:
-        return True
+    if is_private(address_1) and is_private(address_2):
+        return False
 
-    return False
+    return True
 
 def is_protocol(session, protocol):
     '''
@@ -261,26 +263,36 @@ def clean_session_dict(sessions, source_address=None):
     return sessions of packets with no mac or ip addresses from the source
     '''
     if source_address is None:
-        source_address = get_source(sessions)
+        source_address = get_source(sessions, address_type='IP')
 
-    cleaned_sessions = OrderedDict()
-    for key, packets in sessions.items():
-        address_1, port_1 = key[0].split(':')
-        address_2, port_2 = key[1].split(':')
+    def clean_dict(sessions, source_address):
+        cleaned_sessions = OrderedDict()
+        for key, packets in sessions.items():
+            address_1, port_1 = key[0].split(':')
+            address_2, port_2 = key[1].split(':')
 
-        first_packet = sessions[key][0][1]
-        source_mac, destination_mac = extract_macs(first_packet)
+            first_packet = sessions[key][0][1]
+            source_mac, destination_mac = extract_macs(first_packet)
 
-        if (address_1 == source_address
-            or source_mac == source_address
-            or address_2 == source_address
-            or destination_mac == source_address):
+            if (address_1 == source_address
+                or source_mac == source_address
+                or address_2 == source_address
+                or destination_mac == source_address):
 
-            if is_private(address_1) and is_private(address_2):
-                    cleaned_sessions[key] = [
-                                             (ts, clean_packet(p))
-                                             for ts, p in packets[0:8]
-                                            ]
+                if is_private(address_1) or is_private(address_2):
+                        cleaned_sessions[key] = [
+                                                 (ts, clean_packet(p))
+                                                 for ts, p in packets[0:8]
+                                                ]
+        return cleaned_sessions
+
+    if type(sessions) == list:
+        cleaned_sessions = []
+        for sess in sessions:
+            cleaned_sessions.append(clean_dict(sess,source_address))
+    else:
+        cleaned_sessions = clean_dict(sessions, source_address)
+
     return cleaned_sessions, source_address
 
 def create_inputs(labels, session, seq_len, num_chars=16):
@@ -305,3 +317,74 @@ def create_inputs(labels, session, seq_len, num_chars=16):
     L[0] = np.asarray(class_array)
 
     return X, L
+
+def get_length(packet):
+    """
+    Gets the total length of the packet
+    """
+    hex_str = '0123456789abcdef'
+    hex_length = packet[32:36]
+    length = 0
+    for i,c in enumerate(hex_length[::-1]):
+        length += pow(16,i)*hex_str.index(c)
+    return length
+
+def featurize_session(key, packets, source=None):
+    # Global session properties
+    address_1, port_1 = key[0].split(':')
+    address_2, port_2 = key[1].split(':')
+    if address_1 == source or address_2 == source or source == None:
+        initiated_by_source = None
+        if address_1 == source:
+            initiated_by_source = True
+        if address_2 == source:
+            initiated_by_source = False
+
+        mac_1, mac_2 = extract_macs(packets[0][1])
+        protocol = extract_protocol(packets)
+        external = is_external(address_1, address_2)
+
+        # Packet specific properties
+        size_to_1 = 0
+        size_to_2 = 0
+
+        first_time = packets[0][0].timestamp()
+        last_time = packets[-1][0].timestamp()
+
+        num_sent_by_1 = 0
+        num_sent_by_2 = 0
+        for packet in packets:
+            time = packet[0].timestamp()
+            source_mac, destination_mac = extract_macs(packet[1])
+
+            if source_mac == mac_1:
+                size_to_2 = get_length(packet[1])
+                num_sent_by_1 += 1
+            if source_mac == mac_2:
+                size_to_1 = get_length(packet[1])
+                num_sent_by_2 += 1
+        if (num_sent_by_1 + num_sent_by_2) > 1:
+            freq_1 = num_sent_by_1/(last_time - first_time)
+            freq_2 = num_sent_by_2/(last_time - first_time)
+        else:
+            freq_1 = 1
+            freq_2 = 1
+
+        # Netflow-like session info
+        session_info = {
+                        'start time': packets[0][0],
+                        'initiated by source': initiated_by_source,
+                        'external session': external,
+                        'source': key[0],
+                        'destination': key[1],
+                        'protocol': protocol,
+                        'data to source': size_to_1,
+                        'data to destination': size_to_2,
+                        'packets to source': num_sent_by_2,
+                        'packets to destination': num_sent_by_1,
+                        'source frequency': freq_1,
+                        'destination frequency': freq_2,
+                       }
+        return session_info
+    else:
+        return None

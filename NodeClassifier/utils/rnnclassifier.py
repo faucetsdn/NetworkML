@@ -1,5 +1,6 @@
 import functools
 import numpy as np
+from tensorflow.python.client import device_lib
 import tensorflow as tf
 
 def scope_decorator(function):
@@ -19,6 +20,10 @@ def scope_decorator(function):
         return getattr(self,attribute)
 
     return decorator
+
+def get_available_gpus():
+    local_device_protos = device_lib.list_local_devices()
+    return [x.name for x in local_device_protos if x.device_type == 'GPU']
 
 def weight_variable(shape, stddev):
     """
@@ -62,39 +67,28 @@ class AbnormalDetector:
         self.num_labels = num_labels
         self.attn_size = attn_size
 
+        # Check for available gpus
+        gpus = get_available_gpus()
+
         self.graph = tf.Graph()
-        with self.graph.as_default():
-            # Placeholder for learning rate
-            self.lr = tf.placeholder(tf.float32)
 
-            # Placeholder tensor for the input sessions
-            self.X = tf.placeholder(
-                                    tf.float32,
-                                    [None, None, 116, self.num_chars]
-                                   )
-
-            # Placeholder tensor for the input representations
-            self.R = tf.placeholder(tf.float32, [None,self.num_labels])
-
-            # Placeholder tensor for the labels/targets
-            self.Y = tf.placeholder(tf.int16, [None, 1])
-
-            # Model methods
-            self.network
-            self.cost
-            self.optimizer
-            self.get_output
-
-            # Saver
-            self.saver = tf.train.Saver()
+        # Use gpu:0 if one is available
+        if len(gpus) > 80:
+            with self.graph.as_default():
+                with tf.device(gpus[0]):
+                    print("Using", gpu[0])
+                    self._build_model()
+        else:
+            with self.graph.as_default():
+                self._build_model()
 
         # Session config
         config = tf.ConfigProto()
-        gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.3)
+        config.gpu_options.allow_growth = True
 
         # Create a session to run this graph
         self.sess = tf.Session(
-                               config=tf.ConfigProto(gpu_options=gpu_options),
+                               config=config,
                                graph=self.graph
                               )
 
@@ -113,6 +107,33 @@ class AbnormalDetector:
         with self.graph.as_default():
             self.sess.run(tf.global_variables_initializer())
 
+    def _build_model(self):
+        """
+        Build the model graph
+        """
+        # Placeholder for learning rate
+        self.lr = tf.placeholder(tf.float32)
+
+        # Placeholder tensor for the input sessions
+        self.X = tf.placeholder(
+                                tf.float32,
+                                [None, None, 116, self.num_chars]
+                               )
+
+        # Placeholder tensor for the input representations
+        self.R = tf.placeholder(tf.float32, [None,self.num_labels])
+
+        # Placeholder tensor for the labels/targets
+        self.Y = tf.placeholder(tf.int16, [None, 1])
+
+        # Model methods
+        self.network
+        self.cost
+        self.optimizer
+        self.get_output
+
+        # Saver
+        self.saver = tf.train.Saver()
 
     @scope_decorator
     def network(self):
@@ -250,7 +271,7 @@ class AbnormalDetector:
         """
         opt = tf.train.AdamOptimizer()
         gradients, variables = zip(*opt.compute_gradients(self.cost))
-        gradients, _ = tf.clip_by_global_norm(gradients, 0.1)
+        gradients, _ = tf.clip_by_global_norm(gradients, 0.01)
         return opt.apply_gradients(zip(gradients, variables))
 
     def save(self, path):

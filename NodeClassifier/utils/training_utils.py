@@ -126,6 +126,7 @@ def select_features(X, y):
                 max_score = score
                 threshold = trial/step_size
 
+    importance = {i:s for i,s in enumerate(selection_model.scores_)}
     return [i for i, score in enumerate(selection_model.scores_)
             if score > threshold]
 
