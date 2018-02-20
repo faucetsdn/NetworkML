@@ -439,8 +439,9 @@ if __name__ == '__main__':
             skip_rabbit = skip_rabbit.lower() in ["true", "t", "y", "1"]
 
             logger.debug("SKIP_RABBIT set to: %s", str(skip_rabbit))
+            logger.info("Message: " + message)
 
-            if skip_rabbit:
+            if not skip_rabbit:
                 # Rabbit settings
                 exchange = 'topic-poseidon-internal'
                 exchange_type = 'topic'
@@ -462,8 +463,5 @@ if __name__ == '__main__':
                 logger.debug("Routing key: " + routing_key)
                 logger.debug("Exchange: " + exchange)
                 connection.close()
-            else:
-                # Skipping rabbit. Printing to STDOUT
-                logger.info("Message: " + message)
         else:
             logger.info("Not enough sessions in pcap")
