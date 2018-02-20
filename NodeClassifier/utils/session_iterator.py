@@ -91,9 +91,10 @@ class BatchIterator:
                     x = np.zeros((self.seq_len, self.feature_length))
                     l = np.zeros((self.classification_length, self.seq_len))
                     i = 0
-        self.X = np.stack(self.X)
-        self.L = np.stack(self.L)
-        self.data_length = self.X.shape[0]
+        if self.X and self.L:
+            self.X = np.stack(self.X)
+            self.L = np.stack(self.L)
+            self.data_length = self.X.shape[0]
 
     def _vectorize(self, session):
         '''
