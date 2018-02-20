@@ -3,6 +3,10 @@
     [
         "Administrator workstation",
         "Business workstation",
+        "GPU laptop",
+        "VPN client",
+        "PKI server",
+        "Admin server",
         "Developer workstation",
         "Smartphone",
         "Printer",
@@ -28,7 +32,7 @@
     "duration": 900,
     "look time": 86400,
     "time constant": 86400,
-    "threshold": 0.995,
+    "threshold": 0.99,
 
     "rnn size": 128,
     "batch size": 32

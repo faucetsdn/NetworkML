@@ -66,7 +66,10 @@ def parse_packet_data(line):
         packet_data: String containing the packet data
     '''
     raw_data = line.decode('utf-8')
-    _, data = raw_data.split(':', 1)
+    try:
+        _, data = raw_data.split(':', 1)
+    except ValueError:
+        return None
     packet_data = data.strip().replace(' ' ,'')
 
     return packet_data
@@ -102,11 +105,11 @@ def packetizer(path):
                 packet_dict[head] = ''
         else:
             data = parse_packet_data(line)
-            if head is not None:
+            if head is not None and data is not None:
                 packet_dict[head] += data
     return packet_dict
 
-def sessionizer(path, duration=None):
+def sessionizer(path, duration=None, threshold_time=None):
     '''
     Reads a pcap specified by the path and parses out the sessions.
     Sessions are defined as flows with matching sourceIP:sourcePort
@@ -135,12 +138,13 @@ def sessionizer(path, duration=None):
     session_starts = OrderedDict()
 
     # Get threshold time from config
-    try:
-        with open('config.json', 'r') as config_file:
-            config = json.load(config_file)
-            threshold_time  = config['session threshold']
-    except Exception as e:
-        threshold_time = 120
+    if threshold_time is None:
+        try:
+            with open('config.json', 'r') as config_file:
+                config = json.load(config_file)
+                threshold_time  = config['session threshold']
+        except Exception as e:
+            threshold_time = 120
 
     for head, packet in packet_dict.items():
         time = head[0]

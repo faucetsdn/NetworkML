@@ -12,8 +12,8 @@ from sklearn.linear_model import RandomizedLogisticRegression
 from sklearn.linear_model import LogisticRegression
 
 from .reader import sessionizer
+from .pcap_utils import get_source
 from .featurizer import extract_features
-from .featurizer import get_source
 
 def read_data(data_dir, duration=None, labels=None):
     '''
@@ -126,6 +126,7 @@ def select_features(X, y):
                 max_score = score
                 threshold = trial/step_size
 
+    importance = {i:s for i,s in enumerate(selection_model.scores_)}
     return [i for i, score in enumerate(selection_model.scores_)
             if score > threshold]
 

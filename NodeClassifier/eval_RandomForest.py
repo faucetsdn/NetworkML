@@ -15,13 +15,11 @@ import tensorflow as tf
 
 from redis import StrictRedis
 from utils.RandomForestModel import RandomForestModel
-from utils.featurizer import is_private
+from utils.pcap_utils import is_private, clean_session_dict, create_inputs
 from utils.reader import sessionizer
-from utils.model_utils import clean_session_dict
-from utils.model_utils import create_inputs
-from rnnclassifier import AbnormalDetector
+from eval_SoSModel import eval_pcap
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 tf.logging.set_verbosity(tf.logging.ERROR)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] ='3'
 
@@ -398,76 +396,21 @@ if __name__ == '__main__':
             inferred_ip = None
             for session_dict in sessions:
                 cleaned_sessions, inferred_ip = \
-                            clean_session_dict(session_dict, source_ip=source_ip)
+                            clean_session_dict(
+                                                session_dict,
+                                                source_address=source_ip
+                                              )
                 clean_sessions.append(cleaned_sessions)
 
             if source_ip is None:
                 source_ip = inferred_ip
 
-            # Use the RNN model to compute abnormality scores
-            rnnmodel = AbnormalDetector(
-                                     packet_embedding_size=rnn_size,
-                                     session_embedding_size=rnn_size,
-                                     hidden_size=rnn_size//2,
-                                     num_labels=len(mean_preds)
-                                    )
-            # Initialize and load the model
-            if len(sys.argv) > 3:
-                rnnpath= sys.argv[3]
-            else:
-                rnnpath = "/models/rnnmodel.ckpt"
-
-            try:
-                rnnmodel.load(rnnpath)
-                abnormal_model = True
-            except:
-                abnormal_model = False
-                abnormality = 0
-
-            scores = []
-            max_key = None
-            max_score = 0
-            if abnormal_model is True:
-                # Group input sessions by number of packets
-                inputs_by_length = [[] for i in range(8)]
-                labels_by_length = [[] for i in range(8)]
-                for session_dict in clean_sessions:
-                    for k, session in session_dict.items():
-                        X, L = create_inputs(mean_preds, session, 116)
-                        length = X.shape[1]
-                        if length <= 8:
-                            inputs_by_length[length-1].append(X)
-                            labels_by_length[length-1].append(L)
-                # Evaluate sessions by length and by batch
-                for i, sessions in enumerate(inputs_by_length):
-                        labels = labels_by_length[i]
-                        num_sessions = len(sessions)
-                        num_batches = num_sessions//batch_size
-                        for j in range(num_batches):
-                            batch_sessions = sessions[j*batch_size:(j+1)*batch_size]
-                            batch_labels = labels[j*batch_size:(j+1)*batch_size]
-                            X = np.concatenate(batch_sessions, axis=0)
-                            L = np.concatenate(batch_labels, axis=0)
-                            model_out = rnnmodel.get_output(X,L)
-                            scores.append(model_out[:,0])
-                        if len(sessions[num_batches*batch_size:]) > 0:
-                            batch_sessions = sessions[num_batches*batch_size:]
-                            batch_labels = labels[num_batches*batch_size:]
-                            X = np.concatenate(batch_sessions, axis=0)
-                            L = np.concatenate(batch_labels, axis=0)
-                            model_out = rnnmodel.get_output(X, L)
-                            scores.append(model_out[:,0])
-                try:
-                    scores = np.concatenate(scores, axis=0)
-                except:
-                    scores = np.asarray([0])
-
-                abnormality = np.max(scores)
-
             # Make simple decisions based on vector differences and update times
             decisions = {}
             timestamp = timestamps[0].timestamp()
             labels, confs = zip(*preds)
+            abnormality = eval_pcap(pcap_path, label=labels[0])
+
             repr_s, m_repr_s, _ , prev_s, _, _ = get_address_info(
                                                                    source_ip,
                                                                    timestamp
@@ -483,7 +426,7 @@ if __name__ == '__main__':
                                      )
             logger.debug("Created message")
             for i in range(3):
-                logger.debug(labels[i] + ' : ' + str(round(confs[i],3)))
+                logger.info(labels[i] + ' : ' + str(round(confs[i],3)))
             # Get json message
             message = json.dumps(decision)
 
