@@ -41,7 +41,7 @@ def lookup_key(key):
     try:
         r = StrictRedis(host='redis', port=6379, db=0)
         key_info = r.hgetall(key)
-        endpoint = key_info[b'endpoint']
+        endpoint = key_info[b'endpoint_data']
         endpoint = endpoint.decode('utf-8')
         end_dict = ast.literal_eval(endpoint)
         address = end_dict['ip-address']
