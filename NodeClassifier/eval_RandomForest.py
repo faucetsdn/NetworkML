@@ -242,7 +242,7 @@ def update_data(
     logger.debug("Storing data")
     try:
         r.hmset(key, state)
-        r.sadd(source_ip)
+        r.sadd('ip_addresses', source_ip)
     except Exception as e:
         logger.debug("created key %s", key)
         logger.debug(state)
@@ -264,7 +264,7 @@ def update_data(
     logger.debug(times)
     try:
         r.hmset(source_ip, times)
-        r.sadd(source_ip)
+        r.sadd('ip_addresses', source_ip)
     except Exception as e:
         logger.debug("Could not store update time")
 
