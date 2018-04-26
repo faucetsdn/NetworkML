@@ -55,6 +55,9 @@ class BatchIterator:
                                                                 random_state=0
                                                                              )
 
+        self.X_train = np.array(self.X_train)
+        self.X_test = np.array(self.X_test)
+        self.X_vala = np.array(self.X_vala)
         self.train_length = self.X_train.shape[0]
         self.validation_length = self.X_vala.shape[0]
         self.test_length = self.X_test.shape[0]
