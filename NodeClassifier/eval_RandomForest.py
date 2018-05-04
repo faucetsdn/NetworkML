@@ -33,6 +33,7 @@ with open('config.json') as config_file:
     threshold = config['threshold']
     batch_size = config['batch size']
     rnn_size = config['rnn size']
+    test_abnormality = config['test abnormality']
 
 def lookup_key(key):
     '''
@@ -411,8 +412,11 @@ if __name__ == '__main__':
             decisions = {}
             timestamp = timestamps[0].timestamp()
             labels, confs = zip(*preds)
-            abnormality = eval_pcap(pcap_path, label=labels[0])
-
+            if test_abnormality == 1:
+                abnormality = eval_pcap(pcap_path, label=labels[0])
+            else:
+                logger.debug("Bypassing abnormality detection")
+                abnormality = 0
             repr_s, m_repr_s, _ , prev_s, _, _ = get_address_info(
                                                                    source_ip,
                                                                    timestamp
