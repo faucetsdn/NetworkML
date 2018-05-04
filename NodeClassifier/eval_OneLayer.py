@@ -413,7 +413,11 @@ if __name__ == '__main__':
             decisions = {}
             timestamp = timestamps[0].timestamp()
             labels, confs = zip(*preds)
-            abnormality = eval_pcap(pcap_path, label=labels[0])
+            if os.environ.get('POSEIDON_PUBLIC_SESSIONS'):
+                logger.debug("Bypassing abnormality detection")
+                abnormality = 0
+            else:
+                abnormality = eval_pcap(pcap_path, label=labels[0])
             repr_s, m_repr_s, _ , prev_s, _, _ = get_address_info(
                                                                    source_ip,
                                                                    timestamp

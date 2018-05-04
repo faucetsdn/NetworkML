@@ -35,7 +35,5 @@
     "threshold": 0.99,
 
     "rnn size": 128,
-    "batch size": 32,
-
-    "test abnormality": 0
+    "batch size": 32
 }
