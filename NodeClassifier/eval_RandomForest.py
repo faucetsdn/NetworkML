@@ -33,7 +33,6 @@ with open('config.json') as config_file:
     threshold = config['threshold']
     batch_size = config['batch size']
     rnn_size = config['rnn size']
-    test_abnormality = config['test abnormality']
 
 def lookup_key(key):
     '''
