@@ -3,6 +3,7 @@ Utilities for preparing sessions for input into models
 '''
 from collections import OrderedDict, defaultdict, Counter
 import numpy as np
+import os
 
 def is_private(address):
     '''
@@ -75,16 +76,22 @@ def get_indiv_source(sessions, address_type='MAC'):
         first_packet = sessions[key][0][1]
         source_mac, destination_mac = extract_macs(first_packet)
 
-        # Only look at sessions with an internal IP address
-        # This shouldn't actually be necessary at this stage
-        if is_private(source_address) or is_private(destination_address):
-            # Compute the IP/MAC address pairs
+        # Compute the IP/MAC address pairs
+        if os.environ.get('POSEIDON_PUBLIC_SESSIONS'):
             pair_1 = source_address + '-' + source_mac
             pair_2 = destination_address + '-' + destination_mac
-            if is_private(source_address):
-                ip_mac_pairs[pair_1] += 1
-            if is_private(destination_address):
-                ip_mac_pairs[pair_2] += 1
+            ip_mac_pairs[pair_1] += 1
+            ip_mac_pairs[pair_2] += 1
+        else:
+            # Only look at sessions with an internal IP address
+            # This shouldn't actually be necessary at this stage
+            if is_private(source_address) or is_private(destination_address):
+                pair_1 = source_address + '-' + source_mac
+                pair_2 = destination_address + '-' + destination_mac
+                if is_private(source_address):
+                    ip_mac_pairs[pair_1] += 1
+                if is_private(destination_address):
+                    ip_mac_pairs[pair_2] += 1
 
     # The address with the most sessions is the capture source
     if len(sessions) == 0:
@@ -278,8 +285,13 @@ def clean_session_dict(sessions, source_address=None):
                 or source_mac == source_address
                 or address_2 == source_address
                 or destination_mac == source_address):
-
-                if is_private(address_1) or is_private(address_2):
+                if os.environ.get('POSEIDON_PUBLIC_SESSIONS'):
+                    cleaned_sessions[key] = [
+                                             (ts, clean_packet(p))
+                                             for ts, p in packets[0:8]
+                                            ]
+                else:
+                    if is_private(address_1) or is_private(address_2):
                         cleaned_sessions[key] = [
                                                  (ts, clean_packet(p))
                                                  for ts, p in packets[0:8]
