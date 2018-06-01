@@ -1,5 +1,4 @@
 import os
-import sys
 import subprocess
 from collections import OrderedDict
 import datetime
@@ -23,36 +22,70 @@ def parse_packet_head(line):
     # Only generate a key if this packet contains IP information
     if len(data) < 2:
         return None
-    if data[2] != 'IP':
+    # ipv4 packet
+    if data[2] == 'IP':
+
+        # Parse out the date and time the packet was seen
+        date_str = data[0] + ' ' + data[1]
+        date = datetime.datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S.%f')
+
+        # Parse out the source and destination addresses and ports
+        source_data = data[3].split('.')
+        if len(source_data) < 5:
+            source_port = '0'
+
+        else:
+            source_port = source_data[4]
+
+        source_str = '.'.join(source_data[0:4]) + ':' + source_port
+
+        destination_data = data[5].split('.')
+        if len(destination_data) < 5:
+            destination_port = '0'
+            destination_str = '.'.join(destination_data[0:4])[0:-1] \
+                              + ':' \
+                              + destination_port
+
+        else:
+            destination_port = destination_data[4][0:-1]
+            destination_str = '.'.join(destination_data[0:4]) \
+                              + ':' \
+                              + destination_port
+
+        return (date, source_str, destination_str)
+    
+    # ipv6 packet
+    elif data[2] == 'IP6':
+
+        # Parse out the date and time the packet was seen
+        date_str = data[0] + ' ' + data[1]
+        date = datetime.datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S.%f')
+
+        # Parse out the source and destination addresses and ports
+        source_data = data[3].split('.')
+        if len(source_data) < 2:
+            # if not TCP or UDP (e.g igmp) set port = 0
+            source_port = '0'
+        else:
+            source_port = source_data[1]
+
+        source_str = source_data[0] + ':' + source_port
+
+        destination_data = data[5].split('.')
+        if len(destination_data) < 2:
+            destination_port = '0'
+            destination_str = destination_data[0][0:-1] + ':' + destination_port
+
+        else:
+            destination_port = destination_data[1][0:-1]
+            destination_str = destination_data[0] \
+                              + ':' \
+                              + destination_port
+
+        return date, source_str, destination_str
+
+    else:
         return None
-
-    # Parse out the date and time the packet was seen
-    date_str = data[0] + ' ' + data[1]
-    date = datetime.datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S.%f')
-
-    # Parse out the source and destination addresses and ports
-    source_data = data[3].split('.')
-    if len(source_data) < 5:
-        source_port = '0'
-    else:
-        source_port = source_data[4]
-
-    source_str = '.'.join(source_data[0:4]) + ':' + source_port
-
-    destination_data = data[5].split('.')
-    if len(destination_data) < 5:
-        destination_port = '0'
-        destination_str = '.'.join(destination_data[0:4])[0:-1] \
-                          + ':' \
-                          + destination_port
-
-    else:
-        destination_port = destination_data[4][0:-1]
-        destination_str = '.'.join(destination_data[0:4]) \
-                          + ':' \
-                          + destination_port
-
-    return (date, source_str, destination_str)
 
 def parse_packet_data(line):
     '''
@@ -103,9 +136,9 @@ def packetizer(path):
             head = parse_packet_head(line)
             if head is not None:
                 packet_dict[head] = ''
-        else:
+        elif head is not None:
             data = parse_packet_data(line)
-            if head is not None and data is not None:
+            if data is not None:
                 packet_dict[head] += data
     return packet_dict
 
