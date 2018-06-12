@@ -4,7 +4,8 @@ from .pcap_utils import extract_macs, \
                        is_private, \
                        is_external, \
                        is_protocol, \
-                       get_source
+                       get_source, \
+                       get_ip_port
 import json
 
 def extract_features(session_dict, capture_source=None, max_port=None):
@@ -55,14 +56,8 @@ def extract_features(session_dict, capture_source=None, max_port=None):
     # Iterate over all sessions and aggregate the info
     other_ips = defaultdict(int)
     for key, session in session_dict.items():
-        splitter_index = key[0].rindex(':')
-        address_1 = key[0][0:splitter_index]
-        port_1 = key[0][splitter_index + 1:]
-
-        splitter_index = key[1].rindex(':')
-        address_2 = key[1][0:splitter_index]
-        port_2 = key[1][splitter_index + 1:]
-        
+        address_1, port_1 = get_ip_port(key[0])
+        address_2, port_2 = get_ip_port(key[1])
         
         # Get the first packet and grab the macs from it
         first_packet = session[0][1]
