@@ -69,8 +69,8 @@ def get_indiv_source(sessions, address_type='MAC'):
 
     # Count the incoming/outgoing sessions for all addresses
     for key in sessions:
-        source_address = key[0].split(':')[0]
-        destination_address = key[1].split(':')[0]
+        source_address, _ = get_ip_port(key[0])
+        destination_address, _ = get_ip_port(key[1])
 
         # Get the first packet and grab the macs from it
         first_packet = sessions[key][0][1]
@@ -275,8 +275,8 @@ def clean_session_dict(sessions, source_address=None):
     def clean_dict(sessions, source_address):
         cleaned_sessions = OrderedDict()
         for key, packets in sessions.items():
-            address_1, port_1 = key[0].split(':')
-            address_2, port_2 = key[1].split(':')
+            address_1, port_1 = get_ip_port(key[0])
+            address_2, port_2 = get_ip_port(key[1])
 
             first_packet = sessions[key][0][1]
             source_mac, destination_mac = extract_macs(first_packet)
@@ -341,10 +341,11 @@ def get_length(packet):
         length += pow(16,i)*hex_str.index(c)
     return length
 
+
 def featurize_session(key, packets, source=None):
     # Global session properties
-    address_1, port_1 = key[0].split(':')
-    address_2, port_2 = key[1].split(':')
+    address_1, port_1 = get_ip_port(key[0])
+    address_2, port_2 = get_ip_port(key[1])
     if address_1 == source or address_2 == source or source == None:
         initiated_by_source = None
         if address_1 == source:
@@ -400,3 +401,17 @@ def featurize_session(key, packets, source=None):
         return session_info
     else:
         return None
+
+
+def get_ip_port(socket_str):
+    """
+    Returns ip and port
+    :param socket_str: ipv4/6:port
+    :return:
+    address, port
+    """
+    splitter_index = socket_str.rindex(':')
+    address = socket_str[0:splitter_index]
+    port = socket_str[splitter_index + 1:]
+
+    return address, port
