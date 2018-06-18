@@ -1,0 +1,29 @@
+
+
+ToDo List
+=========
+
+- CONTRIBUTING.md file
+    - Short links to resources:
+        - docs
+        - bugs
+        - forum link, email list
+    - Environment details
+    - Contribution template and process
+        - What to do to prepare their PR
+        - What response they'll get back from the team
+        - Speed of response
+    - Reporting a bug
+    - Style guide / coding convention
+    - Where to ask for help
+X AUTHORS
+- CHANGELOG
+- CODE_OF_CONDUCT
+- README
+    - Overview
+    - How to run/install
+    - Feature extraction
+    - Models overview
+    - Contribution
+    - Models Documentation
+X MAINTAINERS
