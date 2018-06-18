@@ -26,4 +26,23 @@ X AUTHORS
     - Models overview
     - Contribution
     - Models Documentation
+- Fix utils scripts
+    - SoS model/feature processing
+    - featurizer
+- New run script that builds dockerfile also
 X MAINTAINERS
+
+
+Within the projects themselves:
+- model-specific docker build files
+- make sure eval/test/train models work with new reorg structure
+- model-specific readme
+    - author
+    - what to configure/how to run. 
+        - train
+        - test
+        - eval
+    - explanation of any config parameters (located in opts) and tests
+    - inputs to expect
+    - bugs/developer notes
+
