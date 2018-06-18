@@ -1,0 +1,13 @@
+[info]
+name = NodeClassifier Evaluate
+groups = pcap
+
+[settings]
+ext_types = pcap
+process_base = no
+process_from_tool = pcap node splitter
+
+[docker]
+links = {"Redis":"redis", "RabbitMQ":"rabbit"}
+volumes = {"/tmp/models/": {"bind": "/models/", "mode": "ro"}}
+environment = ["POSEIDON_PUBLIC_SESSIONS=1"]
