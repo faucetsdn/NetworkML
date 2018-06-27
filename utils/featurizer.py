@@ -23,7 +23,7 @@ def extract_features(session_dict, capture_source=None, max_port=None):
 
     # Get featurization info from config
     try:
-        with open('config.json', 'r') as config_file:
+        with open('opts/config.json', 'r') as config_file:
             config = json.load(config_file)
             address_type = config['source identifier']
             if max_port is None:

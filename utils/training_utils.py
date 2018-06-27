@@ -36,7 +36,7 @@ def read_data(data_dir, duration=None, labels=None):
 
     # Get all the files in the directory
     files = []
-    with open(os.path.join(data_dir,'label_assignments.json')) as handle:
+    with open('opts/label_assignments.json') as handle:
         label_assignments = json.load(handle)
 
     for dirpath, dirnames, filenames in os.walk(data_dir):
