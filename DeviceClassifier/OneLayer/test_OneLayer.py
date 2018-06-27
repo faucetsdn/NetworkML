@@ -9,7 +9,7 @@ import os
 import json
 import logging
 import numpy as np
-from utils.OneLayer import OneLayerModel
+from poseidonml.OneLayer import OneLayerModel
 import time
 
 logging.basicConfig(level=logging.INFO)
@@ -100,7 +100,7 @@ if __name__ =='__main__':
 
     # Get the true label assignments
     logger.info("Getting label assignments")
-    with open(os.path.join(data_dir,'label_assignments.json')) as handle:
+    with open('opts/label_assignments.json') as handle:
         label_assignments = json.load(handle)
 
     # Walk through testing directory and get all the pcaps
