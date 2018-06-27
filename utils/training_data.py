@@ -19,7 +19,7 @@ from .pcap_utils import get_source
 logging.basicConfig(level=logging.INFO)
 
 # Get model info from config
-with open('config.json') as config_file:
+with open('opts/config.json') as config_file:
     config = json.load(config_file)
     state_size = config['state size']
     duration = config['duration']
