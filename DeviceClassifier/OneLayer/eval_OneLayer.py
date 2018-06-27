@@ -364,7 +364,6 @@ if __name__ == '__main__':
                                                            source_ip=source_ip,
                                                            mean=False
                                                                              )
-
         if preds is not None:
 
             logger.debug("Generating predictions")

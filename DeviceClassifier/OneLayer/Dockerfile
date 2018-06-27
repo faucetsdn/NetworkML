@@ -20,8 +20,7 @@ ENV BUILD_PACKAGES="\
     PIP_PACKAGES="\
         numpy \
         scipy \
-        scikit-learn \
-        matplotlib \
+        scikit-learn==0.18.2 \
         poseidonml \
         tensorflow \
         redis \
