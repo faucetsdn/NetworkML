@@ -15,15 +15,20 @@ def is_private(address):
     Returns:
         True or False
     '''
-    if len(address) > 4:
+    if '.' in address:  # ipv4
         pairs = address.split('.')
-    elif len(address) == 4:
-        pairs = address
+    elif ':' in address:  # ipv6
+        pairs = address.split(':')
+    else:  # unknown
+        pairs = []
 
     private = False
-    if pairs[0] == '10': private = True
-    if pairs[0] == '192' and pairs[1] == '168': private = True
-    if pairs[0] == '172' and 16 <= int(pairs[1]) <= 31: private = True
+    if pairs:
+        if pairs[0] == '10': private = True
+        elif pairs[0] == '192' and pairs[1] == '168': private = True
+        elif pairs[0] == '172' and 16 <= int(pairs[1]) <= 31: private = True
+        elif pairs[0] == 'fe80': private = True
+        elif pairs[0].startswith('fd'): private = True
 
     return private
 

@@ -5,6 +5,8 @@ import logging
 import pickle
 import numpy as np
 import tensorflow as tf
+from pkg_resources import working_set
+from pkg_resources import Requirement
 from .SoSmodel import SoSModel
 from .session_sequence import create_dataset
 from .session_iterator import BatchIterator
@@ -31,7 +33,7 @@ def eval_pcap(pcap, label=None):
     logger.debug("Created iterator")
     rnnmodel = SoSModel(rnn_size=100)
     logger.debug("Created model")
-    rnnmodel.load(os.path.join('models','SoSmodel'))
+    rnnmodel.load(os.path.join(working_set.find(Requirement.parse('poseidonml')).location, 'poseidonml/models/SoSmodel'))
     logger.debug("Loaded model")
 
     X_list = iterator.X
