@@ -6,11 +6,11 @@ location specified by the second argument.
 
 import sys
 import json
-from utils.RandomForestModel import RandomForestModel
+from poseidonml.RandomForestModel import RandomForestModel
 
 if __name__ == '__main__':
     # Load model params from config
-    with open('config.json') as config_file:
+    with open('opts/config.json') as config_file:
         config = json.load(config_file)
         duration = config['duration']
         labels = config['labels']
@@ -31,5 +31,5 @@ if __name__ == '__main__':
     if len(sys.argv) == 3:
         save_path = sys.argv[2]
     else:
-        save_path = "/models/RandomForestModel.pkl"
+        save_path = "models/RandomForestModel.pkl"
     model.save(save_path)

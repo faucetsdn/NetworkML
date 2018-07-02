@@ -33,5 +33,5 @@ if __name__ == '__main__':
     if len(sys.argv) == 3:
         save_path = sys.argv[2]
     else:
-        save_path = "/models/OneLayerModel.pkl"
+        save_path = "models/OneLayerModel.pkl"
     model.save(save_path)
