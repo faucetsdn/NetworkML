@@ -9,7 +9,6 @@ def is_private(address):
     '''
     Checks if an address is private and if so returns True.  Otherwise returns
     False.
-
     Args:
         address: Address to check. Can be list or string
     Returns:
