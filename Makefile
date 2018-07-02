@@ -24,6 +24,6 @@ build_onelayer: build_base
 build_randomforest: build_base
 	@pushd DeviceClassifier/RandomForest && docker build -t poseidonml:randomforest . && popd
 build_base:
-	@docker build -t poseidonml:base -f Dockerfile.base .
+	@docker build -t cyberreboot/poseidonml:base -f Dockerfile.base .
 install:
 	python3 setup.py install
