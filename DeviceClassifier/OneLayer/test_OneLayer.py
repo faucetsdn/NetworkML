@@ -89,7 +89,7 @@ if __name__ =='__main__':
     if len(sys.argv) >= 4:
         save_path = sys.argv[3]
     else:
-        save_path = "/models/OneLayerModel.pkl"
+        save_path = "models/OneLayerModel.pkl"
     model = OneLayerModel(duration=None, hidden_size=None)
     logger.info("Loading model from %s", load_path)
     model.load(load_path)
