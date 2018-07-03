@@ -119,7 +119,7 @@ def eval_rnn(pcap, input_label=None):
     '''
     Evaluate the RNN model on a single pcap
     '''
-    load_path = os.path.join('models','RandomForestModel.pkl')
+    load_path = '/models/RandomForestModel.pkl'
     model = RandomForestModel(duration=None)
     model.load(load_path)
 
@@ -186,7 +186,7 @@ def eval_rnn(pcap, input_label=None):
 
         # Use the RNN model to compute abnormality scores
         rnnmodel = AbnormalDetector(num_labels=len(labels))
-        rnnpath = os.path.join('models','AbnormalRNN')
+        rnnpath = '/models/AbnormalRNN'
         rnnmodel.load(rnnpath)
 
         for session_dict in clean_sessions:
