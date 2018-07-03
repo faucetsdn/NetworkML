@@ -43,7 +43,7 @@ def average_representation(rep, timestamp, prev_rep, prev_time):
 
 def create_dataset(
                     data_dir,
-                    model_path=os.path.join('models','OneLayerModel.pkl')
+                    model_path='/models/OneLayerModel.pkl'
                   ):
     logger = logging.getLogger(__name__)
 

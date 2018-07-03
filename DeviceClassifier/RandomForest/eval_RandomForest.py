@@ -348,7 +348,7 @@ if __name__ == '__main__':
         if len(sys.argv) > 2:
             load_path = sys.argv[2]
         else:
-            load_path = os.path.join('models','RandomForestModel.pkl')
+            load_path = '/models/RandomForestModel.pkl'
 
         # Compute model hash
         with open(load_path, 'rb') as handle:
