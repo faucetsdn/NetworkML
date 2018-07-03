@@ -85,7 +85,7 @@ if __name__ =='__main__':
     if len(sys.argv) > 2:
         load_path = sys.argv[2]
     else:
-        load_path = os.path.join('models','RandomForestModel.pkl')
+        load_path = '/models/RandomForestModel.pkl'
     if len(sys.argv) > 3:
         save_path = sys.argv[3]
     else:

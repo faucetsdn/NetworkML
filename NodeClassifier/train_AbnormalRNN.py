@@ -82,7 +82,7 @@ if __name__ == '__main__':
             if cost < min_cost:
                 ctr = 0
                 min_cost = cost
-                rnnmodel.save('models/AbnormalRNN')
+                rnnmodel.save('/models/AbnormalRNN')
                 logger.info("Saved model at validation cost %s", min_cost)
         if ctr > 1000:
             logger.info("No improvement after 1000 iterations. stopping with cost %s", min_cost)
