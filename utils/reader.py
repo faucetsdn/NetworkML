@@ -1,3 +1,4 @@
+import json
 import os
 import subprocess
 from collections import OrderedDict
@@ -154,7 +155,7 @@ def sessionizer(path, duration=None, threshold_time=None):
     # Get threshold time from config
     if threshold_time is None:
         try:
-            with open('config.json', 'r') as config_file:
+            with open('opts/config.json', 'r') as config_file:
                 config = json.load(config_file)
                 threshold_time  = config['session threshold']
         except Exception as e:

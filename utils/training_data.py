@@ -19,7 +19,7 @@ from .pcap_utils import get_source
 logging.basicConfig(level=logging.INFO)
 
 # Get model info from config
-with open('config.json') as config_file:
+with open('opts/config.json') as config_file:
     config = json.load(config_file)
     state_size = config['state size']
     duration = config['duration']
@@ -43,7 +43,7 @@ def average_representation(rep, timestamp, prev_rep, prev_time):
 
 def create_dataset(
                     data_dir,
-                    model_path=os.path.join('models','OneLayerModel.pkl')
+                    model_path='/models/OneLayerModel.pkl'
                   ):
     logger = logging.getLogger(__name__)
 

@@ -14,17 +14,17 @@ import numpy as np
 import tensorflow as tf
 
 from redis import StrictRedis
-from utils.OneLayer import OneLayerModel
-from utils.pcap_utils import is_private, clean_session_dict, create_inputs
-from utils.reader import sessionizer
-from eval_SoSModel import eval_pcap
+from poseidonml.OneLayer import OneLayerModel
+from poseidonml.pcap_utils import is_private, clean_session_dict, create_inputs
+from poseidonml.reader import sessionizer
+from poseidonml.eval_SoSModel import eval_pcap
 
 logging.basicConfig(level=logging.INFO)
 tf.logging.set_verbosity(tf.logging.ERROR)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] ='3'
 
 # Get time constant from config
-with open('config.json') as config_file:
+with open('opts/config.json') as config_file:
     config = json.load(config_file)
     time_const = config['time constant']
     state_size = config['state size']
@@ -348,7 +348,7 @@ if __name__ == '__main__':
         if len(sys.argv) > 2:
             load_path = sys.argv[2]
         else:
-            load_path = os.path.join('models','OneLayerModel.pkl')
+            load_path = '/models/OneLayerModel.pkl'
 
         # Compute model hash
         with open(load_path, 'rb') as handle:
@@ -364,7 +364,6 @@ if __name__ == '__main__':
                                                            source_ip=source_ip,
                                                            mean=False
                                                                              )
-
         if preds is not None:
 
             logger.debug("Generating predictions")

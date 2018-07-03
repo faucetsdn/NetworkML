@@ -6,11 +6,11 @@ location specified by the second argument.
 
 import sys
 import json
-from utils.OneLayer import OneLayerModel
+from poseidonml.OneLayer import OneLayerModel
 
 if __name__ == '__main__':
     # Load model params from config
-    with open('config.json') as config_file:
+    with open('opts/config.json') as config_file:
         config = json.load(config_file)
         duration = config['duration']
         hidden_size = config['state size']
@@ -33,5 +33,5 @@ if __name__ == '__main__':
     if len(sys.argv) == 3:
         save_path = sys.argv[2]
     else:
-        save_path = "/models/OneLayerModel.pkl"
+        save_path = "models/OneLayerModel.pkl"
     model.save(save_path)

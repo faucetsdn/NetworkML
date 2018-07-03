@@ -9,7 +9,7 @@ import os
 import json
 import logging
 import numpy as np
-from utils.OneLayer import OneLayerModel
+from poseidonml.OneLayer import OneLayerModel
 import time
 
 logging.basicConfig(level=logging.INFO)
@@ -85,11 +85,11 @@ if __name__ =='__main__':
     if len(sys.argv) > 2:
         load_path = sys.argv[2]
     else:
-        load_path = os.path.join('models','OneLayerModel.pkl')
+        load_path = '/models/OneLayerModel.pkl'
     if len(sys.argv) >= 4:
         save_path = sys.argv[3]
     else:
-        save_path = "/models/OneLayerModel.pkl"
+        save_path = "models/OneLayerModel.pkl"
     model = OneLayerModel(duration=None, hidden_size=None)
     logger.info("Loading model from %s", load_path)
     model.load(load_path)
@@ -100,7 +100,7 @@ if __name__ =='__main__':
 
     # Get the true label assignments
     logger.info("Getting label assignments")
-    with open(os.path.join(data_dir,'label_assignments.json')) as handle:
+    with open('opts/label_assignments.json') as handle:
         label_assignments = json.load(handle)
 
     # Walk through testing directory and get all the pcaps

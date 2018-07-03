@@ -5,16 +5,16 @@ import logging
 import pickle
 import numpy as np
 import tensorflow as tf
-from utils.SoSmodel import SoSModel
-from utils.session_sequence import create_dataset
-from utils.session_iterator import BatchIterator
+from .SoSmodel import SoSModel
+from .session_sequence import create_dataset
+from .session_iterator import BatchIterator
 import time
 
 logging.basicConfig(level=logging.INFO)
 tf.logging.set_verbosity(tf.logging.ERROR)
 
 # Load info from config
-with open('config.json') as config_file:
+with open('opts/config.json') as config_file:
     config = json.load(config_file)
     rnn_size = config['rnn size']
     labels = config['labels']
@@ -44,7 +44,7 @@ if __name__ == '__main__':
     rnnmodel = SoSModel(rnn_size=100)
     logger.info("Created model")
     try:
-        rnnmodel.load(os.path.join('models','SoSmodel'))
+        rnnmodel.load('/models/SoSmodel')
         logger.info("Loaded model")
     except:
         rnnmodel.initialize()
@@ -74,7 +74,7 @@ if __name__ == '__main__':
             logger.info("Validation cost after  %s batches: %s",i,cost)
             if cost < min_cost:
                 min_cost = cost
-                rnnmodel.save(os.path.join('models','SoSmodel'))
+                rnnmodel.save('/models/SoSmodel')
                 last_save = 0
                 logger.info('Saving model at validation cost %s', cost)
             else:

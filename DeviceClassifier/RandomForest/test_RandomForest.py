@@ -9,7 +9,7 @@ import os
 import json
 import logging
 import numpy as np
-from utils.RandomForestModel import RandomForestModel
+from poseidonml.RandomForestModel import RandomForestModel
 import time
 
 logging.basicConfig(level=logging.INFO)
@@ -85,11 +85,11 @@ if __name__ =='__main__':
     if len(sys.argv) > 2:
         load_path = sys.argv[2]
     else:
-        load_path = os.path.join('models','RandomForestModel.pkl')
+        load_path = '/models/RandomForestModel.pkl'
     if len(sys.argv) > 3:
         save_path = sys.argv[3]
     else:
-        save_path = "/models/RandomForestModel.pkl"
+        save_path = "models/RandomForestModel.pkl"
     model = RandomForestModel(duration=None, hidden_size=None)
     logger.info("Loading model from %s", load_path)
     model.load(load_path)
@@ -100,7 +100,7 @@ if __name__ =='__main__':
 
     # Get the true label assignments
     logger.info("Getting label assignments")
-    with open(os.path.join(data_dir,'label_assignments.json')) as handle:
+    with open('opts/label_assignments.json') as handle:
         label_assignments = json.load(handle)
 
     # Walk through testing directory and get all the pcaps
