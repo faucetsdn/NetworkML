@@ -1,14 +1,14 @@
 # Contributing to PoseidonML
 
 Want to hack on PoseidonML? Awesome! Here are instructions to get you started.
-They are probably not perfect, please let us know if anything feels
-wrong or incomplete.
+If you have any questions or find the instructions to be incomplete, please do
+open an issue to let us know about it.
 
 ## Contribution guidelines
 
 ### Pull requests are always welcome
 
-We are always thrilled to receive pull requests, and do our best to
+We are always thrilled to receive pull requests and do our best to
 process them as fast as possible. Not sure if that typo is worth a pull
 request? Do it! We will appreciate it.
 
@@ -36,6 +36,36 @@ help prioritize the most common problems and requests.
 
 ### Conventions
 
+#### Project structure
+
+The PoseidonML project is currently structured to be a collection of
+models processing pcap traffic. Each model is contained within its own
+folder under the root directory. Code under root's `utils/` folder contains
+generic feature extraction and processing from raw pcap files, and can be
+reused by any of the models within the collection.
+
+Take the `DeviceClassifier` as an archetype example of one such model. 
+Our [Poseidon project](https://github.com/CyberReboot/Poseidon) uses this
+to identify device roles on the network based on their behavior on the 
+network. In fact, this classifier contains two different models that can
+be used depending on the amount of data available for training -- `OneLayer`
+neural network model, and the `RandomForest` model. Each of these models 
+are contained in their own subdirectories, and a `README` file describes
+the usage and requirements of both. Within each model's directory, you'll 
+find a Dockerfile and the scripts to train, test, and evaluate the models. 
+Any configurations or options specific to these models are located in the 
+`opts/` subfolder, and the optional trained models (in the form of 
+serialized pkl files) are made available in the `models/` subfolder.
+
+Our hope is that by following this structure as much as possible, newer 
+users can get up to speed more quickly, and models will be easier to
+maintain in the long run. However, if you find this too stifling for 
+your specific model, we will leave it to you to explain the usage, 
+requirements and structure in your model's `README` file.
+
+
+#### Submitting a pull request
+
 Fork the repo and make changes on your fork in a feature branch.
 
 Make sure you include relevant updates or additions to documentation and
@@ -58,10 +88,10 @@ same commit so that a revert would remove all traces of the feature or fix.
 Commits that fix or close an issue should include a reference like `Closes #XXX`
 or `Fixes #XXX`, which will automatically close the issue when merged.
 
-Add your name to the AUTHORS file, but make sure the list is sorted and your
-name and email address match your git configuration. The AUTHORS file is
-regenerated occasionally from the git commit history, so a mismatch may result
-in your changes being overwritten.
+Add your name to the AUTHORS file, but make sure that the list is sorted and that
+your name and email address match the ones you used to make your commits. The 
+AUTHORS file is regenerated occasionally from the commit history, so a mismatch 
+may result in your changes being overwritten.
 
 ## Decision process
 
@@ -98,3 +128,10 @@ It is every maintainer's responsibility to:
 Just like everything else: by making a pull request :)
 
 *Derivative work from [Docker](https://github.com/moby/moby/blob/master/CONTRIBUTING.md).*
+
+### Any questions?
+
+As stated above, if you have any questions or encounter any problems, we recommend checking the
+pre-existing issues on the project page. If nothing relates or the discussion turns out to not relate
+any longer, feel free to start a new issue. We do our best to respond in a timely fashion and to
+keep all discussions open and transparent.
