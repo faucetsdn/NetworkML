@@ -3,7 +3,7 @@
 ToDo List
 =========
 
-- CONTRIBUTING.md file
+X CONTRIBUTING.md file
     - Short links to resources:
         - docs
         - bugs
@@ -17,8 +17,8 @@ ToDo List
     - Style guide / coding convention
     - Where to ask for help
 X AUTHORS
-- CHANGELOG
-- CODE_OF_CONDUCT
+X CHANGELOG
+X CODE_OF_CONDUCT
 - README
     - Overview
     - How to run/install
@@ -26,16 +26,16 @@ X AUTHORS
     - Models overview
     - Contribution
     - Models Documentation
-- Fix utils scripts
+X Fix utils scripts
     - SoS model/feature processing
     - featurizer
-- New run script that builds dockerfile also
+X New run script that builds dockerfile also (Makefile)
 X MAINTAINERS
 
 
 Within the projects themselves:
-- model-specific docker build files
-- make sure eval/test/train models work with new reorg structure
+X model-specific docker build files
+X make sure eval/test/train models work with new reorg structure
 - model-specific readme
     - author
     - what to configure/how to run. 
