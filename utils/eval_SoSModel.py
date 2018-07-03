@@ -31,7 +31,7 @@ def eval_pcap(pcap, label=None):
     logger.debug("Created iterator")
     rnnmodel = SoSModel(rnn_size=100)
     logger.debug("Created model")
-    rnnmodel.load(os.path.join('models','SoSmodel'))
+    rnnmodel.load('/models/SoSmodel')
     logger.debug("Loaded model")
 
     X_list = iterator.X
