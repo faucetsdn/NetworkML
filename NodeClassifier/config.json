@@ -21,6 +21,10 @@
         "SSH server",
         "VOIP phone",
         "PBX",
+        "SynFlood",
+        "IOT1",
+        "IOT2",
+        "IOT3",
         "Unknown"
     ],
 
