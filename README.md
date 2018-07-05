@@ -1,12 +1,14 @@
-# Poseidon: Machine Learning - Phase II
+# Poseidon: Machine Learning
 
 ## Overview
 Poseidon is a machine learning implementation of our quest to determine 
-two questions: (1) what is on the network; and (2) what is it doing? For 
-more background and context on our project, please check out 
+two questions:
+  1. what is on the network; and 
+  2. what is it doing? 
+For more background and context on our project, please check out 
 [the Poseidon project](https://www.cyberreboot.org/projects/poseidon/) 
 page on our website. This repo specifically covers the algorithms and 
-models we deployed in the second phase of our research.
+models we deployed in our project.
 
 While this repository and resulting docker container can be used completely 
 independently, the code was written to support the Cyber Reboot Vent and 
@@ -30,8 +32,8 @@ free to use, discuss, and contribute!
 ## Plugins
 
 The plugin (i.e., model) we currently have available is **DeviceClassifier**,
-which utilizes the Random Forest technique by default, but the One Layer 
-feedforward technique we had used in the Poseidon project is also included. 
+which utilizes the OneLayer feedforward technique by default, but the 
+RandomForest technique used in our Poseidon project is also included. 
 
 For more information, check out the respective README file included within
 each plugin's folder.
@@ -43,5 +45,5 @@ Our models can be executed via Vent, Docker, and standalone. We recommend
 deployment via Vent in conjunction with Poseidon if you are running an SDN 
 (software-defined network). Otherwise, we recommend using Docker. 
 
-See the respective README files included in the plugin's folder for
+See the respective README files included in the plugin's folder for specific
 instructions on deployment.
