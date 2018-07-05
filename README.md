@@ -5,6 +5,7 @@ Poseidon is a machine learning implementation of our quest to determine
 two questions:
   1. what is on the network; and 
   2. what is it doing? 
+  
 For more background and context on our project, please check out 
 [the Poseidon project](https://www.cyberreboot.org/projects/poseidon/) 
 page on our website. This repo specifically covers the algorithms and 
