@@ -15,9 +15,9 @@ While this repository and resulting docker container can be used completely
 independently, the code was written to support the Cyber Reboot Vent and 
 Poseidon projects. See:
 
-[Vent](https://github.com/CyberReboot/vent) plugins for evaluating
-machine learning models on network data as part of the
-[Poseidon](https://github.com/CyberReboot/poseidon) SDN project.
+- [Vent](https://github.com/CyberReboot/vent) plugins for evaluating
+machine learning models on network data; and the
+- [Poseidon](https://github.com/CyberReboot/poseidon) SDN project.
 
 This repository contains the components necessary to build a docker container 
 that can be used for training a number of ML models using network packet 
