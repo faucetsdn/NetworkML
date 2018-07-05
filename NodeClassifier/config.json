@@ -22,9 +22,9 @@
         "VOIP phone",
         "PBX",
         "SynFlood",
-        "IOT1"
-        "IOT2"
-        "IOT3"
+        "IOT1",
+        "IOT2",
+        "IOT3",
         "Unknown"
     ],
 
