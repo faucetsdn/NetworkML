@@ -4,7 +4,7 @@ from .reader import sessionizer
 from .featurizer import extract_features
 
 from sklearn.model_selection import train_test_split
-#Naive Bayes import?
+from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import f1_score
 
 from .training_utils import read_data
@@ -50,9 +50,9 @@ class NaiveBayes:
         # Randomly permute the inputs, and label the permutations Unknown
         X_permed = np.copy(X)
         for i in range(X_permed.shape[1]):
-            np.random.shuffle(X_permed[:,i])
+            np.random.shuffle(X_permed[:, i])
 
-        y_permed = [self.labels.index("Unknown")]*X_permed.shape[0]
+        y_permed = [self.labels.index("Unknown")] * X_permed.shape[0]
         y_permed = np.stack(y_permed)
 
         X_aug = np.concatenate((X, X_permed), axis=0)
@@ -86,13 +86,13 @@ class NaiveBayes:
             if len(session_dict) > 0:
                 if source_ip is None:
                     feature_list, source_ip, other_ips = extract_features(
-                                                                    session_dict
-                                                                         )
+                        session_dict
+                    )
                 else:
                     feature_list, _, other_ips = extract_features(
-                                                      session_dict,
-                                                      capture_source=source_ip
-                                                                 )
+                        session_dict,
+                        capture_source=source_ip
+                    )
                 X.append(feature_list)
                 last_packet = list(session_dict.items())[-1]
                 timestamps.append(last_packet[1][0][0])
@@ -114,7 +114,6 @@ class NaiveBayes:
 
         return features, source_ip, timestamps, other_ips
 
-
     def train(self, data_dir):
         '''
         Trains a single layer model on the data contained in the specified
@@ -128,20 +127,20 @@ class NaiveBayes:
         print("Reading data")
         # First read the data directory for the features and labels
         X_all, y_all, new_labels = read_data(
-                                              data_dir,
-                                              duration=self.duration,
-                                              labels=self.labels
-                                            )
+            data_dir,
+            duration=self.duration,
+            labels=self.labels
+        )
         self.labels = new_labels
 
         print("Making data splits")
         # Split the data into training, validation, and testing sets
         X_train, X_test, y_train, y_test = train_test_split(
-                                                            X_all,
-                                                            y_all,
-                                                            test_size=0.2,
-                                                            random_state=0
-                                                           )
+            X_all,
+            y_all,
+            test_size=0.2,
+            random_state=0
+        )
 
         print("Normalizing features")
         # Mean normalize the features, saving the means and variances
@@ -162,11 +161,11 @@ class NaiveBayes:
         # If hidden size wasn't specified, default to the mean of the number
         # of features and the size of the label space
         if self.hidden_size is None:
-            self.hidden_size = int(1/2*(
-                                        len(self.labels) + \
-                                        len(self.feature_list)
-                                       )
-                                  )
+            self.hidden_size = int(1 / 2 * (
+                    len(self.labels) + \
+                    len(self.feature_list)
+            )
+                                   )
 
         # Augment the data with randomly permuted samples
         X_aug, y_aug = self._augment_data(X_normed, y_train)
@@ -174,7 +173,10 @@ class NaiveBayes:
         # Fit the one layer model to the augmented training data
         X_input = X_aug[:, self.feature_list]
 
-        #NAIVE BAYES MODEL???
+        # NAIVE BAYES MODEL???
+        self.model = GaussianNB(
+
+        )
         '''
         self.model = MLPClassifier(
                                     (self.hidden_size),
@@ -197,7 +199,7 @@ class NaiveBayes:
         X_test_aug, y_test_aug = self._augment_data(X_test_input, y_test)
         predictions = self.model.predict(X_test_aug[:, self.feature_list])
         print("F1 score:",
-                f1_score(y_test_aug, predictions, average='weighted'))
+              f1_score(y_test_aug, predictions, average='weighted'))
 
     def predict(self, filepath, source_ip=None):
         '''
@@ -219,9 +221,9 @@ class NaiveBayes:
         mean_predictions = np.mean(predictions, axis=0)
 
         prediction = [
-                      (self.labels[i], prob)
-                      for i, prob in enumerate(mean_predictions)
-                     ]
+            (self.labels[i], prob)
+            for i, prob in enumerate(mean_predictions)
+        ]
         prediction = sorted(prediction, key=lambda x: x[1], reverse=True)
         return prediction
 
@@ -238,13 +240,13 @@ class NaiveBayes:
         '''
 
         features, source_ip, timestamp, other_ips = self.get_features(
-                                                           filepath,
-                                                           source_ip=source_ip,
-                                                                     )
+            filepath,
+            source_ip=source_ip,
+        )
         if features is None:
             return None, None, None, None, None
 
-        #Features representation
+        # Features representation
         '''
         L1_weights = self.model.coefs_[0]
         L1_biases = self.model.intercepts_[0]
@@ -270,9 +272,9 @@ class NaiveBayes:
         probabilities = probabilities[0]
         '''
         prediction = [
-                        (self.labels[i], prob)
-                        for i, prob in enumerate(probabilities)
-                     ]
+            (self.labels[i], prob)
+            for i, prob in enumerate(probabilities)
+        ]
         prediction = sorted(prediction, key=lambda x: x[1], reverse=True)
 
         if mean:
@@ -291,9 +293,9 @@ class NaiveBayes:
         probabilities = np.exp(probabilities)
         probabilities /= np.sum(probabilities)
         prediction = [
-                        (self.labels[i], prob)
-                        for i, prob in enumerate(probabilities)
-                     ]
+            (self.labels[i], prob)
+            for i, prob in enumerate(probabilities)
+        ]
         prediction = sorted(prediction, key=lambda x: x[1], reverse=True)
 
         return prediction
@@ -307,14 +309,14 @@ class NaiveBayes:
         '''
 
         model_attributes = {
-                            'duration': self.duration,
-                            'hidden_size': self.hidden_size, #Not required for one
-                            'means': self.means,
-                            'stds': self.stds,
-                            'feature_list': self.feature_list,
-                            'model': self.model,
-                            'labels': self.labels
-                           }
+            'duration': self.duration,
+            'hidden_size': self.hidden_size,  # Not required for one
+            'means': self.means,
+            'stds': self.stds,
+            'feature_list': self.feature_list,
+            'model': self.model,
+            'labels': self.labels
+        }
 
         with open(save_path, 'wb') as handle:
             pickle.dump(model_attributes, handle)
@@ -331,7 +333,7 @@ class NaiveBayes:
             model_attributes = pickle.load(handle)
 
         self.duration = model_attributes['duration']
-        self.hidden_size = model_attributes['hidden_size'] #Not requires for one
+        self.hidden_size = model_attributes['hidden_size']  # Not requires for one
         self.means = model_attributes['means']
         self.stds = model_attributes['stds']
         self.feature_list = model_attributes['feature_list']
