@@ -1,54 +1,55 @@
-### DeviceClassifier
-Plugin for traffic classification to determine device types and their behavior.
+# DeviceClassifier
+
+Plugin to classify devices based on their network activity. This plugin is the
+original machine learning model used by Poseidon to identify device types (e.g.,
+"developer workstation," "SSH server," etc.). For more information on this model, 
+see our blog post [Using machine learning to classify devices on your network](https://blog.cyberreboot.org/using-machine-learning-to-classify-devices-on-your-network-e9bb98cbfdb6)
+
 
 ## Using Docker to evaluate, train, and test
-Currently there are two different models that can be used, by default
-RandomForest will be used and is the model for the `latest` tag.  There are
-tags for both models `onelayer` and `randomforest`.  Arguments can be passed in
-to change if it should `eval`, `train`, or for `testing`.  By default it will
-`eval` if no argument is supplied.
 
-For `eval` you'll supply a single PCAP from your local filesystem that can be
-mapped into the Docker container at runtime.  For `train` and `testing` you'll
-supply a directory of PCAP files along with a `label_assignments.json` for
-those PCAPs.  Additionally you'll map a place to save the models.
+_**Note:** we are aware of issues that currently render the RandomForest model
+unuseable, and we are working to fix this as soon as possible. You can check the 
+progress on this fix via [issue #104](https://github.com/CyberReboot/PoseidonML/issues/104)._
 
-Here's an example for implicit `eval` and implicit `randomforest`:
+We currently have two different models available on Docker Hub -- RandomForest and 
+OneLayer -- tagged `randomforest` and `onelayer`, respectively. OneLayer is used by 
+default, however, and is the model included in the `latest` tag. You can build 
+eval, test, and training versions of the models by using the Makefile in the root
+directory to call `eval_[modelname]`, `test_[modelname]`, and `train_[modelname]`, 
+respectively. 
 
-```
-docker run -v <path_to_local_pcap_file>:/pcaps/eval.pcap cyberreboot/poseidonml
-```
-
-Here's an example of explicit `eval` and explicit `onelayer`:
+At the moment, the eval versions of the models support one pcap at a time. To use
+this for device classification, you will first need to set a $PCAP environment 
+variable before calling the respective `make` command from the root directory, like 
+so:
 
 ```
-docker run -v <path_to_local_pcap_file>:/pcaps/eval.pcap cyberreboot/poseidonml:onelayer eval
+export PCAP=[path/to/pcap/file.pcap]
+make eval_onelayer
+```
+By default, `make run` uses the eval_onelayer script.
+
+To use `eval`, you will supply a single PCAP from your local filesystem that can 
+be mapped into the Docker container at runtime.  The `train` and `test` functions
+require a directory of PCAP files along with a `label_assignments.json` for
+those PCAPs. Additionally, you will need to map a place to save the models.
+
+Here's an example of implicitly calling `eval_onelayer`:
+```
+export PCAP=[path/to/file.pcap]
+make run
 ```
 
-Here's an example of explicit `train` and implicit `randomforest`:
-
+And an example of explicitly calling `test_onelayer`:
 ```
-docker run -v <path_to_local_pcaps>:/pcaps -v <path_to_save_models:/models cyberreboot/poseidonml train
-```
-
-Here's an example of explicit `testing` and explicit `randomforest`:
-
-```
-docker run -v <path_to_local_pcaps>:/pcaps -v <path_to_save_models:/models cyberreboot/poseidonml:randomforest testing
+export PCAP=[path/to/pcapdir]
+make test_onelayer
 ```
 
-## Rough Getting Started
-1. Get the bits: git clone https://github.com/CyberReboot/PoseidonML.git
-2. Build the docker container:
-    a. "cd PoseidonML/NodeClassifier/"
-    b. "./build-docker.sh"
-3. Collect your training pcaps and put them into a directory (tcpdump is what we usually use)
-4. Launch the docker container: "docker run -it -v /home/<user>/PoseidonML:/app poseidonml bash"
-5. create config file called “label_assignments.json” in pcaps dir
-    - It maps pcap files to class name, similar to [label_assignments.json sample](https://github.com/CyberReboot/PoseidonML/blob/master/NodeClassifier/data/label_assignments.json).
-    - Classes should be defined in the config.json file label list [config.json](https://github.com/CyberReboot/PoseidonML/blob/master/NodeClassifier/config.json)
-6. To train a model: python train_OneLayerModel.py &lt;pcapdir&gt; &lt;filename&gt;.pickle
-7. Once trained, to evaluate using that model: python eval_OneLayer.py &lt;pcapdir&gt; &lt;filename&gt;.pickle
-8. If model to be used with Poseidon, then put the model.picke in /tmp/models/ directory.
+Use `make help` to see the possible options.
 
-Output is currently JSON to STDOUT
+Output is currently JSON to STDOUT.
+
+For more information on how to run the models as part of Poseidon, please refer 
+to the documentation for [Poseidon](https://github.com/CyberReboot/poseidon)
