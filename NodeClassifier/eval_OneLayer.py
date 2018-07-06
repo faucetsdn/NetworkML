@@ -348,7 +348,7 @@ if __name__ == '__main__':
         if len(sys.argv) > 2:
             load_path = sys.argv[2]
         else:
-            load_path = os.path.join('models','OneLayerModel.pkl')
+            load_path = '/models/OneLayerModel.pkl'
 
         # Compute model hash
         with open(load_path, 'rb') as handle:
