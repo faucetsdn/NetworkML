@@ -41,10 +41,10 @@ export PCAP=[path/to/file.pcap]
 make run
 ```
 
-And an example of explicitly calling `eval_onelayer`:
+And an example of explicitly calling `test_onelayer`:
 ```
-export PCAP=[path/to/file.pcap]
-make eval_onelayer
+export PCAP=[path/to/pcapdir]
+make test_onelayer
 ```
 
 Use `make help` to see the possible options.
