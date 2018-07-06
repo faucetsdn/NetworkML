@@ -2,7 +2,7 @@ SHELL:=/bin/bash
 
 
 run: build_onelayer eval_onelayer
-list:
+help:
 	@echo "make OPTION      (see below for description; requires setting PCAP environment variable)"
 	@echo 
 	@echo "eval_[onelayer|randomforest]     Runs pcap file against specified model"
