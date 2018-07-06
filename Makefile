@@ -14,19 +14,19 @@ eval_onelayer: build_onelayer
 	docker run -it -v "$(PCAP):/pcaps/eval.pcap" -e SKIP_RABBIT=true poseidonml:onelayer
 test_onelayer: build_onelayer
 	@echo "Running OneLayer Test on PCAP file $(PCAP)"
-	@docker run -it -v "$(PCAP):/pcaps/eval.pcap" -e SKIP_RABBIT=true poseidonml:onelayer test_OneLayer.py
+	@docker run -it -v "$(PCAP):/pcaps/" -e SKIP_RABBIT=true poseidonml:onelayer test_OneLayer.py
 train_onelayer: build_onelayer
 	@echo "Running OneLayer Train on PCAP file $(PCAP)"
-	@docker run -it -v "$(PCAP):/pcaps/eval.pcap" -e SKIP_RABBIT=true poseidonml:onelayer train_OneLayer.py
+	@docker run -it -v "$(PCAP):/pcaps/" -e SKIP_RABBIT=true poseidonml:onelayer train_OneLayer.py
 eval_randomforest: build_randomforest
 	@echo "Running RandomForest Eval on PCAP file $(PCAP)"
 	@docker run -it -v "$(PCAP):/pcaps/eval.pcap" -e SKIP_RABBIT=true poseidonml:randomforest
 test_randomforest: build_randomforest
 	@echo "Running RandomForest Test on PCAP file $(PCAP)"
-	@docker run -it -v "$(PCAP):/pcaps/eval.pcap" -e SKIP_RABBIT=true poseidonml:randomforest test_RandomForest.py
+	@docker run -it -v "$(PCAP):/pcaps/" -e SKIP_RABBIT=true poseidonml:randomforest test_RandomForest.py
 train_randomforest: build_randomforest
 	@echo "Running RandomForest Train on PCAP file $(PCAP)"
-	@docker run -it -v "$(PCAP):/pcaps/eval.pcap" -e SKIP_RABBIT=true poseidonml:randomforest train_RandomForest.py
+	@docker run -it -v "$(PCAP):/pcaps/" -e SKIP_RABBIT=true poseidonml:randomforest train_RandomForest.py
 build_onelayer: build_base
 	@pushd DeviceClassifier/OneLayer && docker build -t poseidonml:onelayer . && popd
 build_randomforest: build_base
