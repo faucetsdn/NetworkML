@@ -8,9 +8,9 @@ see our blog post [Using machine learning to classify devices on your network](h
 
 ## Using Docker to evaluate, train, and test
 
-_Note: we are aware that issues currently exist that render the RandomForest model
+_**Note:** we are aware of issues that currently render the RandomForest model
 unuseable, and we are working to fix this as soon as possible. You can check the 
-progress on this fix via issue #104._
+progress on this fix via [issue #104](https://github.com/CyberReboot/PoseidonML/issues/104)._
 
 We currently have two different models available on Docker Hub -- RandomForest and 
 OneLayer -- tagged `randomforest` and `onelayer`, respectively. OneLayer is used by 
@@ -35,14 +35,19 @@ be mapped into the Docker container at runtime.  The `train` and `test` function
 require a directory of PCAP files along with a `label_assignments.json` for
 those PCAPs. Additionally, you will need to map a place to save the models.
 
-Here's an example of explicit `eval` and implicit `onelayer`:
-
+Here's an example of implicitly calling `eval_onelayer`:
 ```
 export PCAP=[path/to/file.pcap]
-make run $PCAP 
+make run
 ```
 
-Use `make list` to see the possible options.
+And an example of explicitly calling `eval_onelayer`:
+```
+export PCAP=[path/to/file.pcap]
+make eval_onelayer
+```
+
+Use `make help` to see the possible options.
 
 Output is currently JSON to STDOUT.
 
