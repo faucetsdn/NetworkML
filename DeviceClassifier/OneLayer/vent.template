@@ -1,5 +1,5 @@
 [info]
-name = NodeClassifier Evaluate
+name = DeviceClassifier Evaluate
 groups = pcap
 
 [settings]
@@ -9,5 +9,5 @@ process_from_tool = pcap node splitter
 
 [docker]
 links = {"Redis":"redis", "RabbitMQ":"rabbit"}
-volumes = {"/tmp/models/": {"bind": "/RandomForest/models/", "mode": "ro"}}
+volumes = {"/tmp/models/": {"bind": "/OneLayer/models/", "mode": "ro"}}
 environment = ["POSEIDON_PUBLIC_SESSIONS=1"]
