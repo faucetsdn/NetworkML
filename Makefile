@@ -25,7 +25,7 @@ test_randomforest: build_randomforest
 	@echo "Running RandomForest Test on PCAP files $(PCAP)"
 	@docker run -it -v "/tmp/models:/RandomForest/models" -v "$(PCAP):/pcaps/" -e SKIP_RABBIT=true poseidonml:randomforest test_RandomForest.py
 train_randomforest: build_randomforest
-	@echo "Running RandomForest Train on PCAP file $(PCAP)"
+	@echo "Running RandomForest Train on PCAP files $(PCAP)"
 	@docker run -it -v "/tmp/models:/RandomForest/models" -v "$(PCAP):/pcaps/" -e SKIP_RABBIT=true poseidonml:randomforest train_RandomForest.py
 build_onelayer: build_base
 	@pushd DeviceClassifier/OneLayer && docker build -t poseidonml:onelayer . && popd
