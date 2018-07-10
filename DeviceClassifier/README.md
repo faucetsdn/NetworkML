@@ -33,7 +33,7 @@ By default, `make run` uses the eval_onelayer script.
 To use `eval`, you will supply a single PCAP from your local filesystem that can 
 be mapped into the Docker container at runtime.  The `train` and `test` functions
 require a directory of PCAP files along with a `label_assignments.json` for
-those PCAPs. Additionally, you will need to map a place to save the models.
+those PCAPs. Models will be mapped to `/tmp/models`.
 
 Here's an example of implicitly calling `eval_onelayer`:
 ```
