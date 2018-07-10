@@ -11,7 +11,7 @@ from .training_utils import read_data
 from .training_utils import select_features
 
 
-class NaiveBayes:
+class NaiveBayesModel:
     def __init__(self, duration, hidden_size=None, labels=None):
         """
         Initializes a model with a single hidden layer.  Features are
