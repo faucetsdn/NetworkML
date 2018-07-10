@@ -173,23 +173,10 @@ class NaiveBayes:
         # Fit the one layer model to the augmented training data
         X_input = X_aug[:, self.feature_list]
 
-        # NAIVE BAYES MODEL???
+        #Gaussian Naive Bayes
         self.model = GaussianNB(
 
         )
-        '''
-        self.model = MLPClassifier(
-                                    (self.hidden_size),
-                                    alpha=0.1,
-                                    activation='relu',
-                                    max_iter=1000
-                                  )
-        self.model = RandomForestClassifier(
-                                            n_estimators=100,
-                                            min_samples_split=5,
-                                            class_weight='balanced'
-                                           )
-        '''
 
         self.model.fit(X_input, y_aug)
 
@@ -247,30 +234,14 @@ class NaiveBayes:
             return None, None, None, None, None
 
         # Features representation
-        '''
-        L1_weights = self.model.coefs_[0]
-        L1_biases = self.model.intercepts_[0]
-        representation = np.maximum(
-                                     np.matmul(features, L1_weights)+L1_biases,
-                                     0
-                                   )
-                                   
+
         representation = features
-        '''
 
         mean_rep = np.mean(representation, axis=0)
 
-        '''
-        L2_weights = self.model.coefs_[1]
-        L2_biases = self.model.intercepts_[1]
-        probabilities = np.matmul(representation, L2_weights) + L2_biases
-        probabilities = np.exp(probabilities)
-        probabilities /= np.expand_dims(np.sum(probabilities, axis=1), axis=1)
-        probabilities = np.mean(probabilities, axis=0)
-        
         probabilities = self.model.predict_proba(mean_rep.reshape(1,-1))
         probabilities = probabilities[0]
-        '''
+
         prediction = [
             (self.labels[i], prob)
             for i, prob in enumerate(probabilities)
@@ -285,13 +256,10 @@ class NaiveBayes:
 
     def classify_representation(self, representation):
         '''
-        Takes in a representation and produces a classification
-        '''
-        L2_weights = self.model.coefs_[1]
-        L2_biases = self.model.intercepts_[1]
-        probabilities = np.matmul(representation, L2_weights) + L2_biases
-        probabilities = np.exp(probabilities)
-        probabilities /= np.sum(probabilities)
+          Takes in a representation and produces a classification
+          '''
+        probabilities = self.model.predict_proba(representation.reshape(1, -1))
+        probabilities = probabilities[0]
         prediction = [
             (self.labels[i], prob)
             for i, prob in enumerate(probabilities)
@@ -310,7 +278,6 @@ class NaiveBayes:
 
         model_attributes = {
             'duration': self.duration,
-            'hidden_size': self.hidden_size,  # Not required for one
             'means': self.means,
             'stds': self.stds,
             'feature_list': self.feature_list,
@@ -333,7 +300,6 @@ class NaiveBayes:
             model_attributes = pickle.load(handle)
 
         self.duration = model_attributes['duration']
-        self.hidden_size = model_attributes['hidden_size']  # Not requires for one
         self.means = model_attributes['means']
         self.stds = model_attributes['stds']
         self.feature_list = model_attributes['feature_list']
