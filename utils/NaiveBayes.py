@@ -1,12 +1,12 @@
-import numpy as np
 import pickle as pickle
-from .reader import sessionizer
-from .featurizer import extract_features
 
+import numpy as np
+from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
-from sklearn.metrics import f1_score
 
+from .featurizer import extract_features
+from .reader import sessionizer
 from .training_utils import read_data
 from .training_utils import select_features
 

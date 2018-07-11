@@ -9,7 +9,7 @@ import os
 import json
 import logging
 import numpy as np
-from utils.NaiveBayes import NaiveBayesModel
+from poseidonml.NaiveBayes import NaiveBayesModel
 import time
 
 logging.basicConfig(level=logging.INFO)

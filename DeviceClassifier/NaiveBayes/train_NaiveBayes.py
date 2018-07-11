@@ -6,7 +6,7 @@ location specified by the second argument.
 
 import sys
 import json
-from utils.NaiveBayes import NaiveBayesModel
+from poseidonml.NaiveBayes import NaiveBayesModel
 
 if __name__ == '__main__':
     # Load model params from config
