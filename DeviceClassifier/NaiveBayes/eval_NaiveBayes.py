@@ -348,13 +348,13 @@ if __name__ == '__main__':
         if len(sys.argv) > 2:
             load_path = sys.argv[2]
         else:
-            load_path = '/models/RandomForestModel.pkl'
+            load_path = '/models/NaiveBayesModel.pkl'
 
         # Compute model hash
         with open(load_path, 'rb') as handle:
             model_hash = hashlib.md5(handle.read()).hexdigest()
 
-        model = RandomForestModel(duration=None)
+        model = NaiveBayesModel(duration=None)
         model.load(load_path)
         logger.debug("Loaded model from %s", load_path)
 
