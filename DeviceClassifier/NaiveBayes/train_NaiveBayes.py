@@ -13,7 +13,6 @@ if __name__ == '__main__':
     with open('opts/config.json') as config_file:
         config = json.load(config_file)
         duration = config['duration']
-        hidden_size = config['state size']
         labels = config['labels']
 
     # Get the data directory
@@ -24,7 +23,6 @@ if __name__ == '__main__':
     # Initialize the model
     model = NaiveBayesModel(
                             duration=duration,
-                            hidden_size=hidden_size,
                             labels=labels
                          )
     # Train the model

@@ -6,4 +6,4 @@ COPY models /models
 WORKDIR /NaiveBayes
 
 ENTRYPOINT ["python3"]
-CMD ["eval_OneLayer.py"]
+CMD ["eval_NaiveBayes.py"]

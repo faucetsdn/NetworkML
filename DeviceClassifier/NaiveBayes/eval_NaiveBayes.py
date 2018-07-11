@@ -15,7 +15,6 @@ import tensorflow as tf
 
 from redis import StrictRedis
 from poseidonml.NaiveBayes import NaiveBayesModel
-
 from poseidonml.pcap_utils import is_private, clean_session_dict, create_inputs
 from poseidonml.reader import sessionizer
 from poseidonml.eval_SoSModel import eval_pcap
@@ -42,7 +41,7 @@ def lookup_key(key):
     try:
         r = StrictRedis(host='redis', port=6379, db=0)
         key_info = r.hgetall(key)
-        endpoint = key_info[b'endpoint_data']
+        endpoint = key_info[b'endpoint']
         endpoint = endpoint.decode('utf-8')
         end_dict = ast.literal_eval(endpoint)
         address = end_dict['ip-address']
@@ -349,13 +348,13 @@ if __name__ == '__main__':
         if len(sys.argv) > 2:
             load_path = sys.argv[2]
         else:
-            load_path = '/models/OneLayerModel.pkl'
+            load_path = '/models/RandomForestModel.pkl'
 
         # Compute model hash
         with open(load_path, 'rb') as handle:
             model_hash = hashlib.md5(handle.read()).hexdigest()
 
-        model = OneLayerModel(duration=None, hidden_size=None)
+        model = RandomForestModel(duration=None)
         model.load(load_path)
         logger.debug("Loaded model from %s", load_path)
 
@@ -365,11 +364,10 @@ if __name__ == '__main__':
                                                            source_ip=source_ip,
                                                            mean=False
                                                                              )
-        if preds is not None:
 
+        if preds is not None:
             logger.debug("Generating predictions")
             last_update, prev_rep = get_previous_state(source_ip, timestamps[0])
-
             _, mean_rep = average_representation(
                                                     reps,
                                                     timestamps,
@@ -403,7 +401,7 @@ if __name__ == '__main__':
                             clean_session_dict(
                                                 session_dict,
                                                 source_address=source_ip
-                                               )
+                                              )
                 clean_sessions.append(cleaned_sessions)
 
             if source_ip is None:
@@ -413,11 +411,13 @@ if __name__ == '__main__':
             decisions = {}
             timestamp = timestamps[0].timestamp()
             labels, confs = zip(*preds)
+
             if os.environ.get('POSEIDON_PUBLIC_SESSIONS'):
                 logger.debug("Bypassing abnormality detection")
                 abnormality = 0
             else:
                 abnormality = eval_pcap(pcap_path, label=labels[0])
+
             repr_s, m_repr_s, _ , prev_s, _, _ = get_address_info(
                                                                    source_ip,
                                                                    timestamp
@@ -445,9 +445,8 @@ if __name__ == '__main__':
             skip_rabbit = skip_rabbit.lower() in ["true", "t", "y", "1"]
 
             logger.debug("SKIP_RABBIT set to: %s", str(skip_rabbit))
-            logger.info("Message: " + message)
 
-            if not skip_rabbit:
+            if skip_rabbit:
                 # Rabbit settings
                 exchange = 'topic-poseidon-internal'
                 exchange_type = 'topic'
@@ -469,5 +468,6 @@ if __name__ == '__main__':
                 logger.debug("Routing key: " + routing_key)
                 logger.debug("Exchange: " + exchange)
                 connection.close()
-        else:
-            logger.info("Not enough sessions in pcap")
+            else:
+                # Skipping rabbit. Printing to STDOUT
+                logger.info("Message: " + message)
