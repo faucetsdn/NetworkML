@@ -13,6 +13,7 @@ jobs:
   include:
   - stage: test
     script: docker build -f Dockerfile.base .
+    script: python3 setup.py install
 before_install:
   - sudo apt-get update
   - sudo apt-get install docker-ce
