@@ -14,7 +14,7 @@ import numpy as np
 import tensorflow as tf
 
 from redis import StrictRedis
-from poseidonml.NaiveBayes import NaiveBayesModel
+from utils.NaiveBayes import NaiveBayesModel
 from poseidonml.pcap_utils import is_private, clean_session_dict, create_inputs
 from poseidonml.reader import sessionizer
 from poseidonml.eval_SoSModel import eval_pcap
