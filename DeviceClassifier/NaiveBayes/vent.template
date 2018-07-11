@@ -1,5 +1,5 @@
 [info]
-name = NodeClassifier Evaluate
+name = DeviceClassifier Evaluate
 groups = pcap
 
 [settings]
