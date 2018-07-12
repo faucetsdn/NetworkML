@@ -5,5 +5,4 @@ COPY . /OneLayer
 COPY models /models
 WORKDIR /OneLayer
 
-ENTRYPOINT ["python3"]
-CMD ["eval_OneLayer.py"]
+ENTRYPOINT ["python3", "eval_OneLayer.py"]
