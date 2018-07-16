@@ -5,5 +5,4 @@ COPY . /RandomForest
 COPY models /models
 WORKDIR /RandomForest
 
-ENTRYPOINT ["python3"]
-CMD ["eval_RandomForest.py"]
+ENTRYPOINT ["python3", "eval_RandomForest.py"]

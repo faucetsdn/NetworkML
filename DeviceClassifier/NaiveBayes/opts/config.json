@@ -1,26 +1,9 @@
 {
     "labels":
     [
-        "Administrator workstation",
-        "Business workstation",
-        "GPU laptop",
-        "VPN client",
-        "PKI server",
-        "Admin server",
-        "Developer workstation",
-        "Smartphone",
-        "Printer",
-        "Mail server",
-        "File server",
-        "Internal web server",
-        "Database server",
-        "Code repository",
-        "DNS server",
-        "DHCP server",
-        "Active Directory controller",
-        "SSH server",
-        "VOIP phone",
-        "PBX",
+        "IOT1",
+	"IOT2",
+	"IOT3",
         "Unknown"
     ],
 
