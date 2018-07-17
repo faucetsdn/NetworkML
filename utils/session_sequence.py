@@ -44,7 +44,7 @@ def average_representation(rep, timestamp, prev_rep, prev_time):
 
 def create_dataset(
                     data_dir,
-                    model_path='/models/OneLayerModel.pkl',
+                    model_path='/models/NaiveBayesModel.pkl',
                     label=None
                   ):
     logger = logging.getLogger(__name__)
