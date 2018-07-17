@@ -15,7 +15,6 @@ import time
 logging.basicConfig(level=logging.INFO)
 
 def calc_f1(results, ignore_unknown=False):
-    logger = logging.getLogger(__name__)
     results_by_label = {}
     for file, file_results in results.items():
         if file != 'labels':

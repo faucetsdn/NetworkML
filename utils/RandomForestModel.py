@@ -106,13 +106,6 @@ class RandomForestModel:
         full_features /= np.expand_dims(self.stds, 0)
         features = full_features[:, self.feature_list]
 
-        '''
-        try:
-            last_packet = list(binned_sessions[-1].items())[-1]
-            timestamp = last_packet[1][0][0]
-        except:
-            timestamp = None
-        '''
         return features, source_ip, timestamps, other_ips
 
 
