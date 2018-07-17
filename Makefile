@@ -32,7 +32,7 @@ build_onelayer: build_base
 build_randomforest: build_base
 	@pushd DeviceClassifier/RandomForest && docker build -t poseidonml:randomforest . && popd
 test: install
-	pytest -l -s -v --cov=. --cov-report term-missing
+	pytest -l -s -v --cov=tests/ --cov=utils/ --cov=DeviceClassifier/ --cov-report term-missing
 test-local: build_base
 	docker build -t poseidonml-test -f Dockerfile.test .
 	docker run -it --rm poseidonml-test

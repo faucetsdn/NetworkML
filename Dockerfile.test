@@ -5,4 +5,4 @@ ENV PYTHONPATH=/poseidonml/utils:$PYTHONPATH
 ENV PYTHONPATH=/poseidonml/DeviceClassifier:$PYTHONPATH
 
 ENTRYPOINT ["pytest"]
-CMD ["-l", "-s", "-v", "--cov=.", "--cov-report", "term-missing"]
+CMD ["-l", "-s", "-v", "--cov=tests/", "--cov=utils/", "--cov=DeviceClassifier/", "--cov-report", "term-missing"]
