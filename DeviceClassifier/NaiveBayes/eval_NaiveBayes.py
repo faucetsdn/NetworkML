@@ -446,7 +446,7 @@ if __name__ == '__main__':
 
             logger.debug("SKIP_RABBIT set to: %s", str(skip_rabbit))
 
-            if skip_rabbit:
+            if not skip_rabbit:
                 # Rabbit settings
                 exchange = 'topic-poseidon-internal'
                 exchange_type = 'topic'
