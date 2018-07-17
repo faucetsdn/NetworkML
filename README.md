@@ -3,7 +3,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Build Status](https://api.travis-ci.com/CyberReboot/PoseidonML.svg?branch=master)](https://travis-ci.com/CyberReboot/PoseidonML)
 [![codecov](https://codecov.io/gh/CyberReboot/PoseidonML/branch/master/graph/badge.svg)](https://codecov.io/gh/CyberReboot/PoseidonML)
-[![Codacy Badge]([![Codacy Badge](https://api.codacy.com/project/badge/Grade/28bb6ce9fa154134b8dda35c5d5d7010)](https://www.codacy.com/app/CyberReboot/PoseidonML?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=CyberReboot/PoseidonML&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/28bb6ce9fa154134b8dda35c5d5d7010)](https://www.codacy.com/app/CyberReboot/PoseidonML?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=CyberReboot/PoseidonML&amp;utm_campaign=Badge_Grade)
 [![Docker Hub Downloads](https://img.shields.io/docker/pulls/cyberreboot/poseidonml.svg)](https://hub.docker.com/r/cyberreboot/poseidonml/)
 
 ## Overview
