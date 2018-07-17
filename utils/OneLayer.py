@@ -13,14 +13,14 @@ from .training_utils import select_features
 
 class OneLayerModel:
     def __init__(self, duration, hidden_size=None, labels=None):
-        """
+        '''
         Initializes a model with a single hidden layer.  Features are
         aggregated over the time specified by the duration and the hidden
         layer size is a hyperparameter set at initialization.
 
         Args:
             duration: Time duration to aggregate features for
-        """
+        '''
 
         self.duration = duration
         self.hidden_size = hidden_size

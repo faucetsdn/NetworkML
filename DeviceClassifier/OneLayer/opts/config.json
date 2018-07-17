@@ -1,14 +1,31 @@
 {
     "labels":
     [
-        "One",
-        "Two",
-        "Three",
+        "Administrator workstation",
+        "Business workstation",
+        "GPU laptop",
+        "VPN client",
+        "PKI server",
+        "Admin server",
+        "Developer workstation",
+        "Smartphone",
+        "Printer",
+        "Mail server",
+        "File server",
+        "Internal web server",
+        "Database server",
+        "Code repository",
+        "DNS server",
+        "DHCP server",
+        "Active Directory controller",
+        "SSH server",
+        "VOIP phone",
+        "PBX",
         "Unknown"
     ],
 
     "source identifier": "MAC",
-    "session threshold": 20,
+    "session threshold": 120,
     "max port": 1024,
 
     "state size": 32,
