@@ -2,7 +2,6 @@ import os
 import sys
 import json
 import logging
-import pickle
 import numpy as np
 import tensorflow as tf
 from pkg_resources import working_set
@@ -10,7 +9,6 @@ from pkg_resources import Requirement
 from .SoSmodel import SoSModel
 from .session_sequence import create_dataset
 from .session_iterator import BatchIterator
-import time
 
 logging.basicConfig(level=logging.INFO)
 tf.logging.set_verbosity(tf.logging.ERROR)
@@ -41,7 +39,6 @@ def eval_pcap(pcap, label=None):
     sessions = iterator.sessions
 
     num_total = 0
-    num_abnormal = 0
     max_score = 0
     scores = {}
     for i, X in enumerate(X_list):
@@ -57,7 +54,7 @@ def eval_pcap(pcap, label=None):
                 p = session['protocol']
                 if p == '06': p = 'TCP'
                 if p == '17': p = 'UDP'
-                if p == '01': p == 'ICMP'
+                if p == '01': p = 'ICMP'
                 flowlike = p + ' '
                 if session['initiated by source']:
                     flowlike += session['source']+' to '+session['destination']
@@ -67,11 +64,6 @@ def eval_pcap(pcap, label=None):
                 if s > max_score:
                     max_score = s
 
-    '''
-    print("Processed",num_total,"sessions of which",num_abnormal,"were abnormal")
-    with open('sos_output.json', 'w') as output_file:
-        json.dump(scores, output_file)
-    '''
     return max_score
 
 if __name__ == '__main__':

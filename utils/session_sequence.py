@@ -13,7 +13,6 @@ import pickle
 
 import numpy as np
 from .RandomForestModel import RandomForestModel
-from .pcap_utils import clean_session_dict
 from .pcap_utils import get_source
 from .pcap_utils import featurize_session
 
