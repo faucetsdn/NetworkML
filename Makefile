@@ -1,10 +1,10 @@
 SHELL:=/bin/bash
-
+PIP=$(shell which pip3 || echo "pip3")
 
 run: build_onelayer eval_onelayer
 help:
 	@echo "make OPTION      (see below for description; requires setting PCAP environment variable)"
-	@echo 
+	@echo
 	@echo "eval_[onelayer|randomforest]     Runs pcap file against specified model"
 	@echo "test_[onelayer|randomforest]     Tests directory of pcaps against specified model"
 	@echo "train_[onelayer|randomforest]    Trains directory of pcaps against specified model"
@@ -31,7 +31,14 @@ build_onelayer: build_base
 	@pushd DeviceClassifier/OneLayer && docker build -t poseidonml:onelayer . && popd
 build_randomforest: build_base
 	@pushd DeviceClassifier/RandomForest && docker build -t poseidonml:randomforest . && popd
+test: install
+	pytest -l -s -v --cov=. --cov-report term-missing
+test-local: build_base
+	docker build -t poseidonml-test -f Dockerfile.test .
+	docker run -it --rm poseidonml-test
 build_base:
 	@docker build -t cyberreboot/poseidonml:base -f Dockerfile.base .
 install:
+	$(PIP) install -r requirements.txt
 	python3 setup.py install
+

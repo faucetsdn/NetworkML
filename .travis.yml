@@ -9,11 +9,13 @@ python:
   - "3.5"
 install:
   - pip install codecov
+env:
+  - PYTHONPATH=/home/travis/build/$TRAVIS_REPO_SLUG/utils:$PYTHONPATH PYTHONPATH=/home/travis/build/$TRAVIS_REPO_SLUG/DeviceClassifier:$PYTHONPATH
 jobs:
   include:
   - stage: test
     script: docker build -f Dockerfile.base .
-  - script: python3 setup.py install
+  - script: make test && bash <(curl -s https://codecov.io/bash)
 before_install:
   - sudo apt-get update
   - sudo apt-get install docker-ce

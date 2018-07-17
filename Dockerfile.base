@@ -47,6 +47,6 @@ RUN set -ex; \
     find /usr/lib/python3 -name __pycache__ | xargs rm -r; \
     rm -rf /root/.[acpw]*
 
-COPY . /poseidon
-WORKDIR /poseidon
+COPY . /poseidonml
+WORKDIR /poseidonml
 RUN pip uninstall -y poseidonml && pip install .
