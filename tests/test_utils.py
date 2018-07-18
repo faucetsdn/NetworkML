@@ -16,6 +16,16 @@ from utils.pcap_utils import create_inputs
 from utils.pcap_utils import get_length
 from utils.pcap_utils import featurize_session
 from utils.pcap_utils import get_ip_port
+from utils.reader import parse_packet_head
+from utils.reader import parse_packet_data
+from utils.reader import packetizer
+from utils.reader import sessionizer
+from utils.rnnclassifier import scope_decorator
+from utils.rnnclassifier import get_available_gpus
+from utils.rnnclassifier import weight_variable
+from utils.rnnclassifier import bias_variable
+from utils.rnnclassifier import AbnormalDetector
+
 
 from utils.OneLayer import OneLayerModel
 from utils.RandomForestModel import RandomForestModel
@@ -33,3 +43,6 @@ def test_RandomForestModel():
 
 def test_SoSModel():
     instance = SoSModel()
+
+def test_AbnormalDetector():
+    instnace = AbnormalDetector()
