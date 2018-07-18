@@ -1,4 +1,5 @@
 from utils.featurizer import extract_features
+from utils.iterator import BatchIterator
 from utils.pcap_utils import is_private
 from utils.pcap_utils import extract_macs
 from utils.pcap_utils import get_indiv_source
@@ -25,7 +26,11 @@ from utils.rnnclassifier import get_available_gpus
 from utils.rnnclassifier import weight_variable
 from utils.rnnclassifier import bias_variable
 from utils.rnnclassifier import AbnormalDetector
-
+from utils.session_iterator import BatchIterator as SessBatchIterator
+from utils.training_utils import read_data
+from utils.training_utils import select_features
+from utils.training_utils import whiten_features
+from utils.training_utils import choose_regularization
 
 from utils.OneLayer import OneLayerModel
 from utils.RandomForestModel import RandomForestModel
@@ -35,6 +40,7 @@ from utils.SoSmodel import weight_variable
 from utils.SoSmodel import bias_variable
 from utils.SoSmodel import SoSModel
 
+
 def test_OneLayerModel():
     instance = OneLayerModel(15)
 
@@ -43,6 +49,12 @@ def test_RandomForestModel():
 
 def test_SoSModel():
     instance = SoSModel()
+
+def test_BatchIterator():
+    instance = BatchIterator({}, {})
+
+def test_SessBatchIterator():
+    instance = SessBatchIterator({}, {})
 
 def test_AbnormalDetector():
     instnace = AbnormalDetector()
