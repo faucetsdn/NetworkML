@@ -18,14 +18,8 @@ from .pcap_utils import featurize_session
 
 logging.basicConfig(level=logging.INFO)
 
-# Get model info from config
-with open('opts/config.json') as config_file:
-    config = json.load(config_file)
-    state_size = config['state size']
-    duration = config['duration']
-    time_const = config['time constant']
 
-def average_representation(rep, timestamp, prev_rep, prev_time):
+def average_representation(rep, timestamp, prev_rep, prev_time, time_const):
     """
     Computes the new moving average representation from a single input
     """
@@ -43,6 +37,7 @@ def average_representation(rep, timestamp, prev_rep, prev_time):
 
 def create_dataset(
                     data_dir,
+                    time_const,
                     model_path='/models/OneLayerModel.pkl',
                     label=None
                   ):
@@ -93,7 +88,8 @@ def create_dataset(
                                                        rep,
                                                        timestamp,
                                                        prev_rep,
-                                                       prev_time
+                                                       prev_time,
+                                                       time_const
                                                       )
                 preds = model.classify_representation(new_rep)
                 if label is not None:

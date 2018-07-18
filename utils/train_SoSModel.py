@@ -15,6 +15,7 @@ tf.logging.set_verbosity(tf.logging.ERROR)
 # Load info from config
 with open('opts/config.json') as config_file:
     config = json.load(config_file)
+    time_const = config['time constant']
     rnn_size = config['rnn size']
     labels = config['labels']
 
@@ -24,7 +25,7 @@ if __name__ == '__main__':
     data_dir = sys.argv[1]
     # Create the training data
     if len(sys.argv) == 3:
-        data = create_dataset(data_dir)
+        data = create_dataset(data_dir, time_const)
         write_dir = sys.argv[2]
         logger.info("Saving data to %s", write_dir)
         with open(write_dir, 'wb') as handle:

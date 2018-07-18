@@ -34,6 +34,6 @@
     "time constant": 86400,
     "threshold": 0.99,
 
-    "rnn size": 128,
+    "rnn size": 100,
     "batch size": 32
 }
