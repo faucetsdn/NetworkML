@@ -15,7 +15,7 @@ jobs:
   include:
   - stage: test
     script: docker build -f Dockerfile.base .
-  - script: find . -name requirements.txt -type f -exec pip3 install -r {} \; && pip3 uninstall -y poseidonml && pytest -l -s -v --cov=tests/ --cov=utils/ --cov=DeviceClassifier/ --cov-report term-missing -c .coveragerc
+  - script: find . -name requirements.txt -type f -exec pip3 install -r {} \; && pip3 uninstall -y poseidonml && pip3 install . && pytest -l -s -v --cov=tests/ --cov=utils/ --cov=DeviceClassifier/ --cov-report term-missing -c .coveragerc
 before_install:
   - sudo apt-get update
   - sudo apt-get install docker-ce
