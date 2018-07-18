@@ -432,7 +432,8 @@ if __name__ == '__main__':
 
             repr_s, m_repr_s, _ , prev_s, _, _ = get_address_info(
                                                                    source_ip,
-                                                                   timestamp
+                                                                   timestamp,
+                                                                   state_size
                                                                  )
             decision = basic_decision(
                                        key,
