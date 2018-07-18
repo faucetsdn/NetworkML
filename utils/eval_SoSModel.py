@@ -13,15 +13,10 @@ from .session_iterator import BatchIterator
 logging.basicConfig(level=logging.INFO)
 tf.logging.set_verbosity(tf.logging.ERROR)
 
-# Load info from config
-with open('opts/config.json') as config_file:
-    config = json.load(config_file)
-    rnn_size = config['rnn size']
-    labels = config['labels']
 
-def eval_pcap(pcap, label=None):
+def eval_pcap(pcap, labels, time_const, label=None, rnn_size=100):
     logger = logging.getLogger(__name__)
-    data = create_dataset(pcap, label=label)
+    data = create_dataset(pcap, time_const, label=label)
     # Create an iterator
     iterator = BatchIterator(
                              data,
@@ -29,7 +24,7 @@ def eval_pcap(pcap, label=None):
                              perturb_types=['random data']
                             )
     logger.debug("Created iterator")
-    rnnmodel = SoSModel(rnn_size=100)
+    rnnmodel = SoSModel(rnn_size=rnn_size)
     logger.debug("Created model")
     rnnmodel.load(os.path.join(working_set.find(Requirement.parse('poseidonml')).location, 'poseidonml/models/SoSmodel'))
     logger.debug("Loaded model")
@@ -73,5 +68,13 @@ if __name__ == '__main__':
         label = sys.argv[2]
     else:
         label = None
-    mean_score = eval_pcap(pcap,label=label)
+
+    # Load info from config
+    with open('opts/config.json') as config_file:
+        config = json.load(config_file)
+        rnn_size = config['rnn size']
+        labels = config['labels']
+        time_const = config['time constant']
+
+    mean_score = eval_pcap(pcap, labels, time_const, label=label, rnn_size=rnn_size)
     print(mean_score)

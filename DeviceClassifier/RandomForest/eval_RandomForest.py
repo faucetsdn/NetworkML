@@ -22,16 +22,6 @@ logging.basicConfig(level=logging.INFO)
 tf.logging.set_verbosity(tf.logging.ERROR)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] ='3'
 
-# Get time constant from config
-with open('opts/config.json') as config_file:
-    config = json.load(config_file)
-    time_const = config['time constant']
-    state_size = config['state size']
-    duration = config['duration']
-    look_time = config['look time']
-    threshold = config['threshold']
-    batch_size = config['batch size']
-    rnn_size = config['rnn size']
 
 def lookup_key(key):
     '''
@@ -50,7 +40,7 @@ def lookup_key(key):
 
     return address, None
 
-def get_address_info(address, timestamp):
+def get_address_info(address, timestamp, state_size):
     '''
     Look up address information prior to the timestamp
     '''
@@ -142,6 +132,7 @@ def get_previous_state(source_ip, timestamp):
 def average_representation(
                             representations,
                             timestamps,
+                            time_const,
                             prev_representation=None,
                             last_update=None,
                           ):
@@ -190,7 +181,8 @@ def update_data(
                  timestamps,
                  predictions,
                  other_ips,
-                 model_hash
+                 model_hash,
+                 time_const
                ):
     '''
     Updates the stored data with the new information
@@ -213,12 +205,13 @@ def update_data(
     last_update, prev_rep = get_previous_state(source_ip, timestamps[0])
 
     # Compute current representation
-    time, current_rep = average_representation(representations, timestamps)
+    time, current_rep = average_representation(representations, timestamps, time_const)
 
     # Compute moving average representation
     time, avg_rep = average_representation(
                                             representations,
                                             timestamps,
+                                            time_const,
                                             prev_representation=prev_rep,
                                             last_update=last_update
                                           )
@@ -276,7 +269,9 @@ def basic_decision(
                     timestamp,
                     labels,
                     confs,
-                    abnormality
+                    abnormality,
+                    look_time,
+                    threshold
                   ):
 
     valid = True
@@ -316,6 +311,22 @@ def basic_decision(
 if __name__ == '__main__':
     logger = logging.getLogger(__name__)
 
+    # Get time constant from config
+    try:
+        with open('opts/config.json') as config_file:
+            config = json.load(config_file)
+            time_const = config['time constant']
+            state_size = config['state size']
+            duration = config['duration']
+            look_time = config['look time']
+            threshold = config['threshold']
+            batch_size = config['batch size']
+            conf_labels = config['labels']
+            rnn_size = config['rnn size']
+    except Exception as e:  # pragma: no cover
+        logger.error("unable to read 'opts/config.json' properly because: %s", str(e))
+        sys.exit(1)
+
     # path to the pcap to get the update from
     if len(sys.argv) < 2:
         pcap_path = "/pcaps/eval.pcap"
@@ -333,7 +344,7 @@ if __name__ == '__main__':
         else:
             source_ip = None
     except Exception as e:
-        logger.debug("Could not get address info beacuse %s", e)
+        logger.debug("Could not get address info beacuse %s", str(e))
         logger.debug("Defaulting to inferring IP address from %s", pcap_path)
         source_ip = None
         key_address = None
@@ -370,6 +381,7 @@ if __name__ == '__main__':
             _, mean_rep = average_representation(
                                                     reps,
                                                     timestamps,
+                                                    time_const,
                                                     prev_representation=prev_rep,
                                                     last_update=last_update
                                                 )
@@ -387,7 +399,8 @@ if __name__ == '__main__':
                                                     timestamps,
                                                     preds,
                                                     others,
-                                                    model_hash
+                                                    model_hash,
+                                                    time_const
                                                    )
 
             # Get the sessions that the model looked at
@@ -415,11 +428,12 @@ if __name__ == '__main__':
                 logger.debug("Bypassing abnormality detection")
                 abnormality = 0
             else:
-                abnormality = eval_pcap(pcap_path, label=labels[0])
+                abnormality = eval_pcap(pcap_path, conf_labels, time_const, label=labels[0], rnn_size=rnn_size)
 
             repr_s, m_repr_s, _ , prev_s, _, _ = get_address_info(
                                                                    source_ip,
-                                                                   timestamp
+                                                                   timestamp,
+                                                                   state_size
                                                                  )
             decision = basic_decision(
                                        key,
@@ -428,7 +442,9 @@ if __name__ == '__main__':
                                        timestamp,
                                        labels,
                                        confs,
-                                       abnormality
+                                       abnormality,
+                                       look_time,
+                                       threshold
                                      )
             logger.debug("Created message")
             for i in range(3):
