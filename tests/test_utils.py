@@ -1,3 +1,4 @@
+from utils.eval_SoSModel import eval_pcap
 from utils.featurizer import extract_features
 from utils.iterator import BatchIterator
 from utils.pcap_utils import is_private
