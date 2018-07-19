@@ -1,3 +1,4 @@
+from utils import train_SoSModel
 from utils.eval_SoSModel import eval_pcap
 from utils.featurizer import extract_features
 from utils.iterator import BatchIterator
@@ -32,7 +33,6 @@ from utils.training_utils import read_data
 from utils.training_utils import select_features
 from utils.training_utils import whiten_features
 from utils.training_utils import choose_regularization
-
 from utils.OneLayer import OneLayerModel
 from utils.RandomForestModel import RandomForestModel
 from utils.SoSmodel import scope_decorator

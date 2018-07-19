@@ -12,15 +12,17 @@ import time
 logging.basicConfig(level=logging.INFO)
 tf.logging.set_verbosity(tf.logging.ERROR)
 
-# Load info from config
-with open('opts/config.json') as config_file:
-    config = json.load(config_file)
-    time_const = config['time constant']
-    rnn_size = config['rnn size']
-    labels = config['labels']
 
 if __name__ == '__main__':
     logger = logging.getLogger(__name__)
+
+    # Load info from config
+    with open('opts/config.json') as config_file:
+        config = json.load(config_file)
+        time_const = config['time constant']
+        rnn_size = config['rnn size']
+        labels = config['labels']
+
     # Path to training data
     data_dir = sys.argv[1]
     # Create the training data
