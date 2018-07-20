@@ -59,3 +59,23 @@ def test_SessBatchIterator():
 
 def test_AbnormalDetector():
     instnace = AbnormalDetector()
+
+def test_is_private():
+    private = is_private('192.168.0.1')
+    assert private == True
+    private = is_private('192.169.0.1')
+    assert private == False
+    private = is_private('10.0.0.1')
+    assert private == True
+    private = is_private('172.16.0.1')
+    assert private == True
+    private = is_private('172.33.0.1')
+    assert private == False
+    private = is_private('12.33.0.1')
+    assert private == False
+    private = is_private('fe80:00:1')
+    assert private == True
+    private = is_private('fd80:00:1')
+    assert private == True
+    private = is_private('21e0:fe80:00:1')
+    assert private == False
