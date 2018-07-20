@@ -1,5 +1,6 @@
 import functools
 import numpy as np
+import os
 from tensorflow.python.client import device_lib
 import tensorflow as tf
 
