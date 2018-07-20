@@ -3,6 +3,7 @@ import json
 import logging
 import pickle
 import numpy as np
+import os
 import tensorflow as tf
 try:
    from .SoSmodel import SoSModel

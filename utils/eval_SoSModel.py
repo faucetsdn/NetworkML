@@ -1,8 +1,8 @@
-import os
-import sys
 import json
 import logging
 import numpy as np
+import os
+import sys
 import tensorflow as tf
 from pkg_resources import working_set
 from pkg_resources import Requirement
