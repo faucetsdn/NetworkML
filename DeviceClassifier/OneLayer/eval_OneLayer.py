@@ -18,6 +18,7 @@ from poseidonml.OneLayer import OneLayerModel
 from poseidonml.pcap_utils import is_private, clean_session_dict
 from poseidonml.eval_SoSModel import eval_pcap
 
+
 logging.basicConfig(level=logging.INFO)
 tf.logging.set_verbosity(tf.logging.ERROR)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] ='3'

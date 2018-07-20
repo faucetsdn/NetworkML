@@ -27,10 +27,20 @@ test_randomforest: build_randomforest
 train_randomforest: build_randomforest
 	@echo "Running RandomForest Train on PCAP files $(PCAP)"
 	@docker run -it -v "/tmp/models:/RandomForest/models" -v "$(PCAP):/pcaps/" -e SKIP_RABBIT=true --entrypoint=python3 poseidonml:randomforest train_RandomForest.py
+eval_sosmodel: build_sosmodel
+	@echo "Running SoSModel Eval on PCAP file $(PCAP)"
+	@docker run -it -v "$(PCAP):/pcaps/eval.pcap" -e SKIP_RABBIT=true --entrypoint=python3 poseidonml:sosmodel eval_SoSModel.py
+train_sosmodel: build_sosmodel
+	@echo "Running SoSModel Train on PCAP files $(PCAP)"
+	@docker run -it -v "/tmp/models:/models" -v "$(PCAP):/pcaps/" -e SKIP_RABBIT=true --entrypoint=python3 poseidonml:sosmodel train_SoSModel.py /pcaps/ /models/SoSModel.pkl
 build_onelayer: build_base
 	@pushd DeviceClassifier/OneLayer && docker build -t poseidonml:onelayer . && popd
 build_randomforest: build_base
 	@pushd DeviceClassifier/RandomForest && docker build -t poseidonml:randomforest . && popd
+build_sosmodel: build_base
+	@cp -R DeviceClassifier/OneLayer/opts utils/
+	@pushd utils && docker build -f Dockerfile.sosmodel -t poseidonml:sosmodel . && popd
+	@rm -rf utils/opts
 test: build_base
 	docker build -t poseidonml-test -f Dockerfile.test .
 	docker run -it --rm poseidonml-test

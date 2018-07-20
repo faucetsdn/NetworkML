@@ -1,11 +1,19 @@
 import numpy as np
 from collections import defaultdict
-from .pcap_utils import extract_macs, \
-                       is_private, \
-                       is_external, \
-                       is_protocol, \
-                       get_source, \
-                       get_ip_port
+try:
+    from .pcap_utils import extract_macs, \
+                           is_private, \
+                           is_external, \
+                           is_protocol, \
+                           get_source, \
+                           get_ip_port
+except SystemError:
+    from pcap_utils import extract_macs, \
+                          is_private, \
+                          is_external, \
+                          is_protocol, \
+                          get_source, \
+                          get_ip_port
 import json
 
 def extract_features(session_dict, capture_source=None, max_port=None):
@@ -58,7 +66,7 @@ def extract_features(session_dict, capture_source=None, max_port=None):
     for key, session in session_dict.items():
         address_1, port_1 = get_ip_port(key[0])
         address_2, port_2 = get_ip_port(key[1])
-        
+
         # Get the first packet and grab the macs from it
         first_packet = session[0][1]
         source_mac, destination_mac = extract_macs(first_packet)

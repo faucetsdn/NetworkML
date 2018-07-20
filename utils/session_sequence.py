@@ -11,9 +11,14 @@ import logging
 import pickle
 
 import numpy as np
-from .RandomForestModel import RandomForestModel
-from .pcap_utils import get_source
-from .pcap_utils import featurize_session
+try:
+    from .RandomForestModel import RandomForestModel
+    from .pcap_utils import get_source
+    from .pcap_utils import featurize_session
+except SystemError:
+    from RandomForestModel import RandomForestModel
+    from pcap_utils import get_source
+    from pcap_utils import featurize_session
 
 logging.basicConfig(level=logging.INFO)
 
