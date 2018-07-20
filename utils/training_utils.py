@@ -11,9 +11,14 @@ from sklearn.decomposition import PCA
 from sklearn.linear_model import RandomizedLogisticRegression
 from sklearn.linear_model import LogisticRegression
 
-from .reader import sessionizer
-from .pcap_utils import get_source
-from .featurizer import extract_features
+try:
+    from .reader import sessionizer
+    from .pcap_utils import get_source
+    from .featurizer import extract_features
+except SystemError:
+    from reader import sessionizer
+    from pcap_utils import get_source
+    from featurizer import extract_features
 
 def read_data(data_dir, duration=None, labels=None):
     '''

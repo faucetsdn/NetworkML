@@ -6,12 +6,19 @@ import numpy as np
 import tensorflow as tf
 from pkg_resources import working_set
 from pkg_resources import Requirement
-from .SoSmodel import SoSModel
-from .session_sequence import create_dataset
-from .session_iterator import BatchIterator
+try:
+    from .SoSmodel import SoSModel
+    from .session_sequence import create_dataset
+    from .session_iterator import BatchIterator
+except SystemError:
+    from SoSmodel import SoSModel
+    from session_sequence import create_dataset
+    from session_iterator import BatchIterator
+
 
 logging.basicConfig(level=logging.INFO)
 tf.logging.set_verbosity(tf.logging.ERROR)
+os.environ['TF_CPP_MIN_LOG_LEVEL'] ='3'
 
 
 def eval_pcap(pcap, labels, time_const, label=None, rnn_size=100):

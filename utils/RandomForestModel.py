@@ -1,14 +1,20 @@
 import numpy as np
 import pickle as pickle
-from .reader import sessionizer
-from .featurizer import extract_features
+try:
+    from .reader import sessionizer
+    from .featurizer import extract_features
+    from .training_utils import read_data
+    from .training_utils import select_features
+except SystemError:
+    from reader import sessionizer
+    from featurizer import extract_features
+    from training_utils import read_data
+    from training_utils import select_features
 
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import f1_score
 
-from .training_utils import read_data
-from .training_utils import select_features
 
 class RandomForestModel:
     def __init__(self, duration, hidden_size=None, labels=None):

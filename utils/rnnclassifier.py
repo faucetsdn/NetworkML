@@ -3,6 +3,11 @@ import numpy as np
 from tensorflow.python.client import device_lib
 import tensorflow as tf
 
+
+tf.logging.set_verbosity(tf.logging.ERROR)
+os.environ['TF_CPP_MIN_LOG_LEVEL'] ='3'
+
+
 def scope_decorator(function):
     """
     Decorator that handles graph construction and variable scoping

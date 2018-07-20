@@ -4,13 +4,20 @@ import logging
 import pickle
 import numpy as np
 import tensorflow as tf
-from .SoSmodel import SoSModel
-from .session_sequence import create_dataset
-from .session_iterator import BatchIterator
+try:
+   from .SoSmodel import SoSModel
+   from .session_sequence import create_dataset
+   from .session_iterator import BatchIterator
+except SystemError:
+   from SoSmodel import SoSModel
+   from session_sequence import create_dataset
+   from session_iterator import BatchIterator
 import time
+
 
 logging.basicConfig(level=logging.INFO)
 tf.logging.set_verbosity(tf.logging.ERROR)
+os.environ['TF_CPP_MIN_LOG_LEVEL'] ='3'
 
 
 if __name__ == '__main__':

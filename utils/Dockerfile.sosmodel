@@ -1,0 +1,8 @@
+FROM cyberreboot/poseidonml:base
+LABEL maintainer="Charlie Lewis <clewis@iqt.org>"
+
+COPY . /SoSModel
+COPY models /models
+WORKDIR /SoSModel
+
+ENTRYPOINT ["python3", "eval_SoSModel.py"]
