@@ -26,7 +26,10 @@ def parse_packet_head(line):
 
     # Parse out the date and time the packet was seen
     date_str = data[0] + ' ' + data[1]
-    date = datetime.datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S.%f')
+    try:
+        date = datetime.datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S.%f')
+    except ValueError:
+        return None
 
     # Parse out the source and destination addresses and ports
     source_data = data[3].split('.')

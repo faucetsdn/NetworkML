@@ -54,5 +54,12 @@ Use `make help` to see the possible options.
 
 Output is currently JSON to STDOUT.
 
+The logger level is set to INFO by default, if you'd like to override that to
+ say DEBUG, you can export the `LOG_LEVEL` variable with the desired value
+ before running the make command, like so:
+```
+export LOG_LEVEL=DEBUG
+```
+
 For more information on how to run the models as part of Poseidon, please refer
  to the documentation for [Poseidon](https://github.com/CyberReboot/poseidon).

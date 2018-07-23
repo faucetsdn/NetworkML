@@ -5,12 +5,12 @@ obtained from a device classifier model specified by the second argument to
 condition on
 """
 
-import sys
-import os
 import logging
-import pickle
-
 import numpy as np
+import os
+import pickle
+import sys
+
 try:
     from .RandomForestModel import RandomForestModel
     from .pcap_utils import get_source
@@ -46,6 +46,11 @@ def create_dataset(
                     label=None
                   ):
     logger = logging.getLogger(__name__)
+    try:
+        if "LOG_LEVEL" in os.environ and os.environ['LOG_LEVEL'] != '':
+            logger.setLevel(os.environ['LOG_LEVEL'])
+    except Exception as e:
+        print("Unable to set logging level because: {0} defaulting to INFO.".format(str(e)))
 
     # Load the model
     logger.debug("Loading model")

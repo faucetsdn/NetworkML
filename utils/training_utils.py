@@ -1,9 +1,10 @@
 '''
 Contains utilities required for parsing pcaps into model training features
 '''
-import os
 import json
+import logging
 import numpy as np
+import os
 
 from sklearn.model_selection import cross_val_score
 from sklearn.decomposition import PCA
@@ -20,6 +21,9 @@ except SystemError:
     from pcap_utils import get_source
     from featurizer import extract_features
 
+logging.basicConfig(level=logging.INFO)
+
+
 def read_data(data_dir, duration=None, labels=None):
     '''
     Reads all the data in the specified directory and parses it into
@@ -35,6 +39,12 @@ def read_data(data_dir, duration=None, labels=None):
         y: numpy 1D array that contains the labels for the features in X
         new_labels: Reordered labels used in training
     '''
+    logger = logging.getLogger(__name__)
+    try:
+        if "LOG_LEVEL" in os.environ and os.environ['LOG_LEVEL'] != '':
+            logger.setLevel(os.environ['LOG_LEVEL'])
+    except Exception as e:
+        print("Unable to set logging level because: {0} defaulting to INFO.".format(str(e)))
     X = []
     y = []
     assigned_labels = []
@@ -50,7 +60,10 @@ def read_data(data_dir, duration=None, labels=None):
             if ext == '.pcap':
                 files.append(os.path.join(dirpath,file))
     # Go through all the files in the directory
+    logger.info("Found {0} pcap files to read.".format(len(files)))
+    count = 0
     for filename in files:
+        count += 1
         # Extract the label from the filename
         name = os.path.split(filename)[1]
         name = name.split('-')[0]
@@ -62,7 +75,7 @@ def read_data(data_dir, duration=None, labels=None):
         if label not in assigned_labels:
             assigned_labels.append(label)
 
-        print("Reading", filename,"as",label)
+        logger.info("Reading {0} ({1} bytes) as {2} ({3}/{4})".format(filename, os.path.getsize(filename), label, count, len(files)))
         # Bin the sessions with the specified time window
         binned_sessions = sessionizer(
                                        filename,
@@ -137,7 +150,7 @@ def select_features(X, y):
 
 def whiten_features(X):
     '''
-    Fits the witening transformation for the features X. and returns the
+    Fits the whitening transformation for the features X. and returns the
     associated matrix.
 
     Args:
