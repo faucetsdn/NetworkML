@@ -3,14 +3,14 @@ Reads a pcap and updates the stored representation of the source using
 the one layer feedforward model.
 '''
 
+import ast
+import hashlib
 import json
+import logging
+import numpy as np
+import os
 import pika
 import sys
-import os
-import ast
-import logging
-import hashlib
-import numpy as np
 import tensorflow as tf
 
 from redis import StrictRedis
@@ -196,6 +196,11 @@ def update_data(
         model_hash: Hash of the model used to compute this information
     '''
     logger = logging.getLogger(__name__)
+    try:
+        if "LOG_LEVEL" in os.environ and os.environ['LOG_LEVEL'] != '':
+            logger.setLevel(os.environ['LOG_LEVEL'])
+    except Exception as e:
+        print("Unable to set logging level because: {0} defaulting to INFO.".format(str(e)))
 
     try:
         r = StrictRedis(host='redis', port=6379, db=0)
@@ -310,6 +315,11 @@ def basic_decision(
 
 if __name__ == '__main__':
     logger = logging.getLogger(__name__)
+    try:
+        if "LOG_LEVEL" in os.environ and os.environ['LOG_LEVEL'] != '':
+            logger.setLevel(os.environ['LOG_LEVEL'])
+    except Exception as e:
+        print("Unable to set logging level because: {0} defaulting to INFO.".format(str(e)))
 
     # Get time constant from config
     try:
@@ -344,7 +354,7 @@ if __name__ == '__main__':
         else:
             source_ip = None
     except Exception as e:
-        logger.debug("Could not get address info beacuse %s", str(e))
+        logger.debug("Could not get address info because %s", str(e))
         logger.debug("Defaulting to inferring IP address from %s", pcap_path)
         source_ip = None
         key_address = None

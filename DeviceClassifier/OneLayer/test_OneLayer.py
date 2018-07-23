@@ -4,13 +4,15 @@ labeled data (first argument).  Results are saved to the path specified by the
 third argument.
 '''
 
-import sys
-import os
 import json
 import logging
 import numpy as np
-from poseidonml.OneLayer import OneLayerModel
+import os
+import sys
 import time
+
+from poseidonml.OneLayer import OneLayerModel
+
 
 logging.basicConfig(level=logging.INFO)
 
@@ -75,6 +77,11 @@ def calc_f1(results, ignore_unknown=False):
 
 if __name__ =='__main__':
     logger = logging.getLogger(__name__)
+    try:
+        if "LOG_LEVEL" in os.environ and os.environ['LOG_LEVEL'] != '':
+            logger.setLevel(os.environ['LOG_LEVEL'])
+    except Exception as e:
+        print("Unable to set logging level because: {0} defaulting to INFO.".format(str(e)))
 
     if len(sys.argv) < 2:
         data_dir = "/pcaps"

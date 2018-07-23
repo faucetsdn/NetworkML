@@ -1,10 +1,12 @@
-import sys
 import json
 import logging
-import pickle
 import numpy as np
 import os
+import pickle
+import sys
 import tensorflow as tf
+import time
+
 try:
    from .SoSmodel import SoSModel
    from .session_sequence import create_dataset
@@ -13,7 +15,6 @@ except SystemError:
    from SoSmodel import SoSModel
    from session_sequence import create_dataset
    from session_iterator import BatchIterator
-import time
 
 
 logging.basicConfig(level=logging.INFO)
@@ -23,6 +24,11 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] ='3'
 
 if __name__ == '__main__':
     logger = logging.getLogger(__name__)
+    try:
+        if "LOG_LEVEL" in os.environ and os.environ['LOG_LEVEL'] != '':
+            logger.setLevel(os.environ['LOG_LEVEL'])
+    except Exception as e:
+        print("Unable to set logging level because: {0} defaulting to INFO.".format(str(e)))
 
     # Load info from config
     with open('opts/config.json') as config_file:
@@ -51,7 +57,7 @@ if __name__ == '__main__':
                              perturb_types=['random data','port swap', 'direction_swap']
                             )
     logger.info("Created iterator")
-    rnnmodel = SoSModel(rnn_size=100)
+    rnnmodel = SoSModel(rnn_size=100, label_size=len(labels))
     logger.info("Created model")
     try:
         rnnmodel.load('/models/SoSmodel')
