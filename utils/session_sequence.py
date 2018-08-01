@@ -15,7 +15,7 @@ try:
     from .RandomForestModel import RandomForestModel
     from .pcap_utils import get_source
     from .pcap_utils import featurize_session
-except SystemError:
+except SystemError:  # pragma: no cover
     from RandomForestModel import RandomForestModel
     from pcap_utils import get_source
     from pcap_utils import featurize_session

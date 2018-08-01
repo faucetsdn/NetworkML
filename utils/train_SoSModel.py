@@ -11,7 +11,7 @@ try:
    from .SoSmodel import SoSModel
    from .session_sequence import create_dataset
    from .session_iterator import BatchIterator
-except SystemError:
+except SystemError:  # pragma: no cover
    from SoSmodel import SoSModel
    from session_sequence import create_dataset
    from session_iterator import BatchIterator

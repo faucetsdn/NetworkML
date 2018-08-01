@@ -5,7 +5,7 @@ try:
     from .featurizer import extract_features
     from .training_utils import read_data
     from .training_utils import select_features
-except SystemError:
+except SystemError:  # pragma: no cover
     from reader import sessionizer
     from featurizer import extract_features
     from training_utils import read_data
