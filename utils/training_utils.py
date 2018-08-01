@@ -16,7 +16,7 @@ try:
     from .reader import sessionizer
     from .pcap_utils import get_source
     from .featurizer import extract_features
-except SystemError:
+except SystemError:  # pragma: no cover
     from reader import sessionizer
     from pcap_utils import get_source
     from featurizer import extract_features

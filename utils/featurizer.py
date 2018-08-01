@@ -7,7 +7,7 @@ try:
                            is_protocol, \
                            get_source, \
                            get_ip_port
-except SystemError:
+except SystemError:  # pragma: no cover
     from pcap_utils import extract_macs, \
                           is_private, \
                           is_external, \
