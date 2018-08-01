@@ -1,20 +1,22 @@
-import numpy as np
 from collections import defaultdict
+
+import numpy as np
 try:
     from .pcap_utils import extract_macs, \
-                           is_private, \
-                           is_external, \
-                           is_protocol, \
-                           get_source, \
-                           get_ip_port
+        is_private, \
+        is_external, \
+        is_protocol, \
+        get_source, \
+        get_ip_port
 except SystemError:  # pragma: no cover
     from pcap_utils import extract_macs, \
-                          is_private, \
-                          is_external, \
-                          is_protocol, \
-                          get_source, \
-                          get_ip_port
+        is_private, \
+        is_external, \
+        is_protocol, \
+        get_source, \
+        get_ip_port
 import json
+
 
 def extract_features(session_dict, capture_source=None, max_port=None):
     '''
@@ -73,7 +75,7 @@ def extract_features(session_dict, capture_source=None, max_port=None):
 
         # If the source is the cpature source
         if (source_mac == capture_source
-            or address_1 == capture_source):
+                or address_1 == capture_source):
 
             if is_private(address_2):
                 other_ips[address_2] += 1
@@ -92,7 +94,7 @@ def extract_features(session_dict, capture_source=None, max_port=None):
 
         # If the destination is the capture source
         if (destination_mac == capture_source
-            or address_2 == capture_source):
+                or address_2 == capture_source):
             if is_private(address_1):
                 other_ips[address_1] += 1
 
@@ -108,21 +110,22 @@ def extract_features(session_dict, capture_source=None, max_port=None):
                 num_dport_rec[int(port_2)] += 1
 
     num_port_sess = np.concatenate(
-                                   (
-                                   num_sport_init,
-                                   num_dport_init,
-                                   num_sport_rec,
-                                   num_dport_rec
-                                   ),
-                                    axis=0
-                                  )
+        (
+            num_sport_init,
+            num_dport_init,
+            num_sport_rec,
+            num_dport_rec
+        ),
+        axis=0
+    )
 
     if num_sessions_init == 0:
         num_sessions_init += 1
     if num_sessions_rec == 0:
         num_sessions_rec += 1
 
-    num_port_sess=np.asarray(num_port_sess)/(num_sessions_init+num_sessions_rec)
+    num_port_sess = np.asarray(num_port_sess) / \
+        (num_sessions_init+num_sessions_rec)
 
     extra_features = [0]*8
     extra_features[0] = num_external_init/num_sessions_init

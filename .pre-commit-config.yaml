@@ -1,0 +1,17 @@
+repos:
+-   repo: git@github.com:pre-commit/pre-commit-hooks
+    rev: v1.4.0
+    hooks:
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: autopep8-wrapper
+    -   id: check-case-conflict
+    -   id: check-json
+    -   id: pretty-format-json
+        args: ['--autofix']
+    -   id: double-quote-string-fixer
+    -   id: check-yaml
+-   repo: git@github.com:asottile/reorder_python_imports
+    rev: v1.1.0
+    hooks:
+    -   id: reorder-python-imports

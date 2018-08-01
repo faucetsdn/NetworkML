@@ -1,25 +1,21 @@
 {
-    "labels":
-    [
-        "Administrator workstation",
-        "Business workstation",
-        "GPU laptop",
-        "VPN client",
-        "Developer workstation",
-        "Active Directory controller",
-        "Unknown"
-    ],
-
-    "source identifier": "MAC",
-    "session threshold": 120,
-    "max port": 1024,
-
-    "state size": 32,
-    "duration": 900,
-    "look time": 86400,
-    "time constant": 86400,
-    "threshold": 0.99,
-
-    "rnn size": 100,
-    "batch size": 32
+  "batch size": 32,
+  "duration": 900,
+  "labels": [
+    "Administrator workstation",
+    "Business workstation",
+    "GPU laptop",
+    "VPN client",
+    "Developer workstation",
+    "Active Directory controller",
+    "Unknown"
+  ],
+  "look time": 86400,
+  "max port": 1024,
+  "rnn size": 100,
+  "session threshold": 120,
+  "source identifier": "MAC",
+  "state size": 32,
+  "threshold": 0.99,
+  "time constant": 86400
 }

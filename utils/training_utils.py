@@ -3,14 +3,13 @@ Contains utilities required for parsing pcaps into model training features
 '''
 import json
 import logging
-import numpy as np
 import os
 
-from sklearn.model_selection import cross_val_score
+import numpy as np
 from sklearn.decomposition import PCA
-
-from sklearn.linear_model import RandomizedLogisticRegression
 from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import RandomizedLogisticRegression
+from sklearn.model_selection import cross_val_score
 
 try:
     from .reader import sessionizer
@@ -41,10 +40,11 @@ def read_data(data_dir, duration=None, labels=None):
     '''
     logger = logging.getLogger(__name__)
     try:
-        if "LOG_LEVEL" in os.environ and os.environ['LOG_LEVEL'] != '':
+        if 'LOG_LEVEL' in os.environ and os.environ['LOG_LEVEL'] != '':
             logger.setLevel(os.environ['LOG_LEVEL'])
     except Exception as e:
-        print("Unable to set logging level because: {0} defaulting to INFO.".format(str(e)))
+        print(
+            'Unable to set logging level because: {0} defaulting to INFO.'.format(str(e)))
     X = []
     y = []
     assigned_labels = []
@@ -58,9 +58,9 @@ def read_data(data_dir, duration=None, labels=None):
         for file in filenames:
             _, ext = os.path.splitext(file)
             if ext == '.pcap':
-                files.append(os.path.join(dirpath,file))
+                files.append(os.path.join(dirpath, file))
     # Go through all the files in the directory
-    logger.info("Found {0} pcap files to read.".format(len(files)))
+    logger.info('Found {0} pcap files to read.'.format(len(files)))
     count = 0
     for filename in files:
         count += 1
@@ -69,27 +69,29 @@ def read_data(data_dir, duration=None, labels=None):
         name = name.split('-')[0]
         if name in label_assignments:
             label = label_assignments[name]
-            if label not in labels: label = 'Unknown'
+            if label not in labels:
+                label = 'Unknown'
         else:
             label = 'Unknown'
         if label not in assigned_labels:
             assigned_labels.append(label)
 
-        logger.info("Reading {0} ({1} bytes) as {2} ({3}/{4})".format(filename, os.path.getsize(filename), label, count, len(files)))
+        logger.info('Reading {0} ({1} bytes) as {2} ({3}/{4})'.format(
+            filename, os.path.getsize(filename), label, count, len(files)))
         # Bin the sessions with the specified time window
         binned_sessions = sessionizer(
-                                       filename,
-                                       duration=duration
-                                     )
+            filename,
+            duration=duration
+        )
         # Get the capture source from the binned sessions
         capture_source = get_source(binned_sessions)
 
         # For each of the session bins, compute the  full feature vectors
         for session_dict in binned_sessions:
             features, _, _ = extract_features(
-                                            session_dict,
-                                            capture_source=capture_source
-                                             )
+                session_dict,
+                capture_source=capture_source
+            )
 
             # Store the feature vector and the labels
             X.append(features)
@@ -97,9 +99,10 @@ def read_data(data_dir, duration=None, labels=None):
 
         # Update the labels to reflect the new assignments
         new_labels = assigned_labels + \
-                     [l for l in labels if l not in assigned_labels]
+            [l for l in labels if l not in assigned_labels]
 
     return np.stack(X), np.stack(y), new_labels
+
 
 def select_features(X, y):
     '''
@@ -122,31 +125,33 @@ def select_features(X, y):
     # threshold at which a feature is included
     step_size = 50
     max_weight = int(max(selection_model.scores_)) + 1
-    trial_thresholds = [i/step_size for i in range(1,max_weight*step_size + 1)]
+    trial_thresholds = [
+        i/step_size for i in range(1, max_weight*step_size + 1)]
     threshold = 0
     max_score = 0
     for trial in trial_thresholds:
         selected_features = [i
-                        for i, score in enumerate(selection_model.scores_)
-                        if score > trial]
+                             for i, score in enumerate(selection_model.scores_)
+                             if score > trial]
         if len(selected_features) > 0:
             X_reduced = X[:, selected_features]
             model = LogisticRegression(
-                                       multi_class='multinomial',
-                                       class_weight='balanced',
-                                       solver='newton-cg',
-                                       random_state=0,
-                                       max_iter=1000
-                                      )
+                multi_class='multinomial',
+                class_weight='balanced',
+                solver='newton-cg',
+                random_state=0,
+                max_iter=1000
+            )
             scores = cross_val_score(model, X_reduced, y, cv=5)
             score = scores.mean()
             if score >= max_score:
                 max_score = score
                 threshold = trial/step_size
 
-    importance = {i:s for i,s in enumerate(selection_model.scores_)}
+    importance = {i: s for i, s in enumerate(selection_model.scores_)}
     return [i for i, score in enumerate(selection_model.scores_)
             if score > threshold]
+
 
 def whiten_features(X):
     '''
@@ -165,6 +170,7 @@ def whiten_features(X):
     whitening_transformation.fit(X)
 
     return whitening_transformation
+
 
 def choose_regularization(X, y):
     '''
@@ -187,13 +193,13 @@ def choose_regularization(X, y):
     # Grid search with cross validation to get C
     for trial in trial_Cs:
         model = LogisticRegression(
-                                    C=trial,
-                                    multi_class='multinomial',
-                                    solver='newton-cg',
-                                    class_weight='balanced',
-                                    random_state=0,
-                                    max_iter=1000
-                                  )
+            C=trial,
+            multi_class='multinomial',
+            solver='newton-cg',
+            class_weight='balanced',
+            random_state=0,
+            max_iter=1000
+        )
         scores = cross_val_score(model, X, y, cv=10)
         score = scores.mean()
         if score > best_score:

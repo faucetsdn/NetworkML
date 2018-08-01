@@ -1,5 +1,6 @@
-import numpy as np
 import pickle as pickle
+
+import numpy as np
 try:
     from .reader import sessionizer
     from .featurizer import extract_features
@@ -55,9 +56,9 @@ class RandomForestModel:
         # Randomly permute the inputs, and label the permutations Unknown
         X_permed = np.copy(X)
         for i in range(X_permed.shape[1]):
-            np.random.shuffle(X_permed[:,i])
+            np.random.shuffle(X_permed[:, i])
 
-        y_permed = [self.labels.index("Unknown")]*X_permed.shape[0]
+        y_permed = [self.labels.index('Unknown')]*X_permed.shape[0]
         y_permed = np.stack(y_permed)
 
         X_aug = np.concatenate((X, X_permed), axis=0)
@@ -91,13 +92,13 @@ class RandomForestModel:
             if len(session_dict) > 0:
                 if source_ip is None:
                     feature_list, source_ip, other_ips = extract_features(
-                                                                    session_dict
-                                                                         )
+                        session_dict
+                    )
                 else:
                     feature_list, _, other_ips = extract_features(
-                                                        session_dict,
-                                                        capture_source=source_ip
-                                                                 )
+                        session_dict,
+                        capture_source=source_ip
+                    )
                 X.append(feature_list)
                 last_packet = list(session_dict.items())[-1]
                 timestamps.append(last_packet[1][0][0])
@@ -114,7 +115,6 @@ class RandomForestModel:
 
         return features, source_ip, timestamps, other_ips
 
-
     def train(self, data_dir):
         '''
         Trains a single layer model on the data contained in the specified
@@ -125,25 +125,25 @@ class RandomForestModel:
             data_dir: Directory containing the training data
         '''
 
-        print("Reading data")
+        print('Reading data')
         # First read the data directory for the features and labels
         X_all, y_all, new_labels = read_data(
-                                              data_dir,
-                                              duration=self.duration,
-                                              labels=self.labels
-                                            )
+            data_dir,
+            duration=self.duration,
+            labels=self.labels
+        )
         self.labels = new_labels
 
-        print("Making data splits")
+        print('Making data splits')
         # Split the data into training, validation, and testing sets
         X_train, X_test, y_train, y_test = train_test_split(
-                                                            X_all,
-                                                            y_all,
-                                                            test_size=0.2,
-                                                            random_state=0
-                                                           )
+            X_all,
+            y_all,
+            test_size=0.2,
+            random_state=0
+        )
 
-        print("Normalizing features")
+        print('Normalizing features')
         # Mean normalize the features, saving the means and variances
         self.means = X_train.mean(axis=0)
         self.stds = X_train.std(axis=0)
@@ -154,7 +154,7 @@ class RandomForestModel:
         X_normed = X_train - np.expand_dims(self.means, 0)
         X_normed /= np.expand_dims(self.stds, 0)
 
-        print("Doing feature selection")
+        print('Doing feature selection')
         # Select the relevant features from the training set
         self.feature_list = select_features(X_normed, y_train)
         print(self.feature_list)
@@ -163,10 +163,10 @@ class RandomForestModel:
         # of features and the size of the label space
         if self.hidden_size is None:
             self.hidden_size = int(1/2*(
-                                        len(self.labels) + \
-                                        len(self.feature_list)
-                                       )
-                                  )
+                len(self.labels) +
+                len(self.feature_list)
+            )
+            )
 
         # Augment the data with randomly permuted samples
         X_aug, y_aug = self._augment_data(X_normed, y_train)
@@ -174,10 +174,10 @@ class RandomForestModel:
         # Fit the one layer model to the augmented training data
         X_input = X_aug[:, self.feature_list]
         self.model = RandomForestClassifier(
-                                            n_estimators=100,
-                                            min_samples_split=5,
-                                            class_weight='balanced'
-                                           )
+            n_estimators=100,
+            min_samples_split=5,
+            class_weight='balanced'
+        )
         self.model.fit(X_input, y_aug)
 
         # Evaulate the model on the augmented test data
@@ -185,8 +185,8 @@ class RandomForestModel:
         X_test_input /= np.expand_dims(self.stds, 0)
         X_test_aug, y_test_aug = self._augment_data(X_test_input, y_test)
         predictions = self.model.predict(X_test_aug[:, self.feature_list])
-        print("F1 score:",
-                f1_score(y_test_aug, predictions, average='weighted'))
+        print('F1 score:',
+              f1_score(y_test_aug, predictions, average='weighted'))
 
     def predict(self, filepath, source_ip=None):
         '''
@@ -208,9 +208,9 @@ class RandomForestModel:
         mean_predictions = np.mean(predictions, axis=0)
 
         prediction = [
-                      (self.labels[i], prob)
-                      for i, prob in enumerate(mean_predictions)
-                     ]
+            (self.labels[i], prob)
+            for i, prob in enumerate(mean_predictions)
+        ]
         prediction = sorted(prediction, key=lambda x: x[1], reverse=True)
         return prediction
 
@@ -227,21 +227,21 @@ class RandomForestModel:
         '''
 
         features, source_ip, timestamp, other_ips = self.get_features(
-                                                           filepath,
-                                                           source_ip=source_ip,
-                                                                     )
+            filepath,
+            source_ip=source_ip,
+        )
         if features is None:
             return None, None, None, None, None
 
         representation = features
         mean_rep = np.mean(representation, axis=0)
 
-        probabilities = self.model.predict_proba(mean_rep.reshape(1,-1))
+        probabilities = self.model.predict_proba(mean_rep.reshape(1, -1))
         probabilities = probabilities[0]
         prediction = [
-                        (self.labels[i], prob)
-                        for i, prob in enumerate(probabilities)
-                     ]
+            (self.labels[i], prob)
+            for i, prob in enumerate(probabilities)
+        ]
         prediction = sorted(prediction, key=lambda x: x[1], reverse=True)
 
         if mean:
@@ -254,12 +254,12 @@ class RandomForestModel:
         '''
         Takes in a representation and produces a classification
         '''
-        probabilities = self.model.predict_proba(representation.reshape(1,-1))
+        probabilities = self.model.predict_proba(representation.reshape(1, -1))
         probabilities = probabilities[0]
         prediction = [
-                        (self.labels[i], prob)
-                        for i, prob in enumerate(probabilities)
-                     ]
+            (self.labels[i], prob)
+            for i, prob in enumerate(probabilities)
+        ]
         prediction = sorted(prediction, key=lambda x: x[1], reverse=True)
 
         return prediction
@@ -273,13 +273,13 @@ class RandomForestModel:
         '''
 
         model_attributes = {
-                            'duration': self.duration,
-                            'means': self.means,
-                            'stds': self.stds,
-                            'feature_list': self.feature_list,
-                            'model': self.model,
-                            'labels': self.labels
-                           }
+            'duration': self.duration,
+            'means': self.means,
+            'stds': self.stds,
+            'feature_list': self.feature_list,
+            'model': self.model,
+            'labels': self.labels
+        }
 
         with open(save_path, 'wb') as handle:
             pickle.dump(model_attributes, handle)
