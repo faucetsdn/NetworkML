@@ -1,8 +1,8 @@
 {
-        "AdminWorkstation": "Administrator workstation",
-        "BusinessWorkstation": "Business workstation",
-        "GPULaptop": "GPU laptop",
-        "VPNClient": "VPN client",
-        "DevWorkstation": "Developer workstation",
-        "ActiveDirectoryController": "Active Directory controller"
+  "ActiveDirectoryController": "Active Directory controller",
+  "AdminWorkstation": "Administrator workstation",
+  "BusinessWorkstation": "Business workstation",
+  "DevWorkstation": "Developer workstation",
+  "GPULaptop": "GPU laptop",
+  "VPNClient": "VPN client"
 }

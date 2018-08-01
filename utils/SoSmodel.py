@@ -1,12 +1,13 @@
 import functools
-import numpy as np
 import os
-from tensorflow.python.client import device_lib
+
+import numpy as np
 import tensorflow as tf
+from tensorflow.python.client import device_lib
 
 
 tf.logging.set_verbosity(tf.logging.ERROR)
-os.environ['TF_CPP_MIN_LOG_LEVEL'] ='3'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
 def scope_decorator(function):
@@ -20,16 +21,18 @@ def scope_decorator(function):
     @property
     @functools.wraps(function)
     def decorator(self):
-        if not hasattr(self,attribute):
+        if not hasattr(self, attribute):
             with tf.variable_scope(name):
-                setattr(self,attribute,function(self))
-        return getattr(self,attribute)
+                setattr(self, attribute, function(self))
+        return getattr(self, attribute)
 
     return decorator
+
 
 def get_available_gpus():
     local_device_protos = device_lib.list_local_devices()
     return [x.name for x in local_device_protos if x.device_type == 'GPU']
+
 
 def weight_variable(shape, stddev):
     """
@@ -40,6 +43,7 @@ def weight_variable(shape, stddev):
     """
     initial = tf.truncated_normal(shape, stddev=stddev)
     return tf.Variable(initial)
+
 
 def bias_variable(shape, value=0.1):
     """
@@ -52,13 +56,14 @@ def bias_variable(shape, value=0.1):
     initial = tf.constant(value, shape=shape)
     return tf.Variable(initial)
 
+
 class SoSModel:
     def __init__(
-                    self,
-                    feature_size=41,
-                    label_size=21,
-                    rnn_size=100,
-                ):
+        self,
+        feature_size=41,
+        label_size=21,
+        rnn_size=100,
+    ):
         """
         Initializes the model
         """
@@ -87,9 +92,9 @@ class SoSModel:
 
         # Create a session to run this graph
         self.sess = tf.Session(
-                               config=config,
-                               graph=self.graph
-                              )
+            config=config,
+            graph=self.graph
+        )
 
     def __del__(self):
         """
@@ -115,12 +120,12 @@ class SoSModel:
 
         # Placeholder tensor for the input sessions
         self.X = tf.placeholder(
-                                tf.float32,
-                                [None, None, self.feature_size]
-                               )
+            tf.float32,
+            [None, None, self.feature_size]
+        )
 
         # Placeholder tensor for the input representations
-        self.L = tf.placeholder(tf.float32, [None,self.label_size])
+        self.L = tf.placeholder(tf.float32, [None, self.label_size])
 
         # Placeholder tensor for the labels/targets
         self.Y = tf.placeholder(tf.float32, [None])
@@ -146,32 +151,33 @@ class SoSModel:
         # Embed the session sequence with an LSTM with attention
         with tf.variable_scope('session_rnn', reuse=None):
             session_cell = tf.contrib.rnn.BasicLSTMCell(
-                                                self.rnn_size,
-                                                activation=tf.tanh
-                                                         )
+                self.rnn_size,
+                activation=tf.tanh
+            )
 
             session_vectors, session_states = tf.nn.dynamic_rnn(
-                                                                session_cell,
-                                                                self.X,
-                                                                dtype=tf.float32
-                                                               )
+                session_cell,
+                self.X,
+                dtype=tf.float32
+            )
         # session_vectors should be (batch_size, time_step, rnn_size)
         # Reshape to (batch_size*time_step, rnn_size) to calc outputs
-        vectors = tf.reshape(session_vectors, (shape[0]*shape[1],self.rnn_size))
+        vectors = tf.reshape(
+            session_vectors, (shape[0]*shape[1], self.rnn_size))
 
         # Pass the vectors through a feedforward layer
         std_dev = np.sqrt(2)/np.sqrt(self.rnn_size+self.label_size)
-        weights_1 = weight_variable([self.rnn_size,self.label_size],std_dev)
+        weights_1 = weight_variable([self.rnn_size, self.label_size], std_dev)
         biases_1 = bias_variable([self.label_size], value=0.0)
-        layer_1 = tf.matmul(vectors,weights_1) + biases_1
+        layer_1 = tf.matmul(vectors, weights_1) + biases_1
         layer_1 = layer_1
-        layer_1 = tf.reshape(layer_1, (shape[0],shape[1],self.label_size))
+        layer_1 = tf.reshape(layer_1, (shape[0], shape[1], self.label_size))
 
         # Compute the weighted average over the class vectors
         class_vectors = tf.expand_dims(self.L, axis=1)
         weighted_average = tf.reduce_sum(layer_1*class_vectors, axis=2)
 
-        return weighted_average[:,-1], tf.sigmoid(weighted_average)
+        return weighted_average[:, -1], tf.sigmoid(weighted_average)
 
     @scope_decorator
     def cost(self):
@@ -180,9 +186,9 @@ class SoSModel:
         """
         output, _ = self.network
         cost = tf.nn.sigmoid_cross_entropy_with_logits(
-                                                        labels=self.Y,
-                                                        logits=output
-                                                      )
+            labels=self.Y,
+            logits=output
+        )
         return tf.reduce_mean(cost)
 
     @scope_decorator
@@ -194,7 +200,7 @@ class SoSModel:
         opt = tf.train.AdamOptimizer()
         #gradients, variables = zip(*opt.compute_gradients(self.cost))
         #gradients, _ = tf.clip_by_global_norm(gradients, 0.1)
-        #return opt.apply_gradients(zip(gradients, variables))
+        # return opt.apply_gradients(zip(gradients, variables))
         return opt.minimize(self.cost)
 
     def save(self, path):
@@ -215,12 +221,12 @@ class SoSModel:
         """
         c, _ = self.sess.run([self.cost, self.optimizer],
                              {
-                                self.X: X,
-                                self.L: L,
-                                self.Y: Y,
-                                self.lr: learning_rate
-                             }
-                            )
+            self.X: X,
+            self.L: L,
+            self.Y: Y,
+            self.lr: learning_rate
+        }
+        )
         return c
 
     def get_cost(self, X, L, Y):
@@ -228,13 +234,13 @@ class SoSModel:
         Get the cost on a specified batch
         """
         c = self.sess.run(
-                            self.cost,
-                                {
-                                 self.X: X,
-                                 self.L: L,
-                                 self.Y: Y
-                                }
-                         )
+            self.cost,
+            {
+                self.X: X,
+                self.L: L,
+                self.Y: Y
+            }
+        )
         return c
 
     def get_output(self, X, L):
@@ -242,11 +248,11 @@ class SoSModel:
         Get the predictions given input data
         """
         _, out = self.sess.run(
-                                self.network,
-                                    {
-                                        self.X: X,
-                                        self.L: L
-                                    }
-                              )
+            self.network,
+            {
+                self.X: X,
+                self.L: L
+            }
+        )
 
         return out

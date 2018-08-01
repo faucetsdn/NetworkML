@@ -1,8 +1,9 @@
+import datetime
 import json
 import os
 import subprocess
 from collections import OrderedDict
-import datetime
+
 
 def parse_packet_head(line):
     '''
@@ -61,16 +62,18 @@ def parse_packet_head(line):
 
         source_str = source_data[0] + ':' + source_port
         if len(destination_data) < 2:
-            destination_str = destination_data[0][0:-1] + ':' + destination_port
+            destination_str = destination_data[0][0:-
+                                                  1] + ':' + destination_port
         else:
             destination_port = destination_data[1][0:-1]
             destination_str = destination_data[0] \
-                              + ':' \
-                              + destination_port
+                + ':' \
+                + destination_port
     else:
         return None
 
     return date, source_str, destination_str
+
 
 def parse_packet_data(line):
     '''
@@ -88,9 +91,10 @@ def parse_packet_data(line):
         _, data = raw_data.split(':', 1)
     except ValueError:
         return None
-    packet_data = data.strip().replace(' ' ,'')
+    packet_data = data.strip().replace(' ', '')
 
     return packet_data
+
 
 def packetizer(path):
     '''
@@ -108,11 +112,11 @@ def packetizer(path):
     # Read get the pcap info with tcpdump
     FNULL = open(os.devnull, 'w')
     proc = subprocess.Popen(
-                            'tcpdump -nn -tttt -xx -r' + path,
-                            shell=True,
-                            stdout=subprocess.PIPE,
-                            stderr=FNULL
-                           )
+        'tcpdump -nn -tttt -xx -r' + path,
+        shell=True,
+        stdout=subprocess.PIPE,
+        stderr=FNULL
+    )
     head = None
     packet_dict = OrderedDict()
     # Go through all the lines of the output
@@ -126,6 +130,7 @@ def packetizer(path):
             if data is not None:
                 packet_dict[head] += data
     return packet_dict
+
 
 def sessionizer(path, duration=None, threshold_time=None):
     '''
@@ -160,7 +165,7 @@ def sessionizer(path, duration=None, threshold_time=None):
         try:
             with open('opts/config.json', 'r') as config_file:
                 config = json.load(config_file)
-                threshold_time  = config['session threshold']
+                threshold_time = config['session threshold']
         except Exception as e:
             threshold_time = 120
 
@@ -209,7 +214,7 @@ def sessionizer(path, duration=None, threshold_time=None):
         # Add the session to the session dict if it's start time is after
         # the cutoff
         if key in working_dict:
-            working_dict[key].append((head[0],packet))
+            working_dict[key].append((head[0], packet))
 
     if duration is not None and working_dict is not None:
         if len(working_dict) > 0:

@@ -3,18 +3,18 @@ Evaluates the performance of a model (second argument) on a directory of
 labeled data (first argument).  Results are saved to the path specified by the
 third argument.
 '''
-
 import json
 import logging
-import numpy as np
 import os
 import sys
 import time
 
+import numpy as np
 from poseidonml.OneLayer import OneLayerModel
 
 
 logging.basicConfig(level=logging.INFO)
+
 
 def calc_f1(results, ignore_unknown=False):
     results_by_label = {}
@@ -26,16 +26,17 @@ def calc_f1(results, ignore_unknown=False):
             if true_label not in results_by_label:
                 if true_label == 'Unknown':
                     if ignore_unknown is False:
-                        results_by_label[true_label]  = {'tp':0, 'fp':0, 'fn':0}
+                        results_by_label[true_label] = {
+                            'tp': 0, 'fp': 0, 'fn': 0}
                 else:
-                    results_by_label[true_label]  = {'tp':0, 'fp':0, 'fn':0}
+                    results_by_label[true_label] = {'tp': 0, 'fp': 0, 'fn': 0}
 
             for i, classification in indiv_results.items():
                 class_label = classification[0][0]
                 if class_label == 'Unknown' and ignore_unknown is True:
                     class_label = classification[1][0]
                 if class_label not in results_by_label:
-                    results_by_label[class_label]  = {'tp':0, 'fp':0, 'fn':0}
+                    results_by_label[class_label] = {'tp': 0, 'fp': 0, 'fn': 0}
                 if true_label != 'Unknown':
                     if class_label == true_label:
                         results_by_label[true_label]['tp'] += 1
@@ -71,20 +72,22 @@ def calc_f1(results, ignore_unknown=False):
 
         if f1 is not 'NaN':
             if (tp + fn) > 0:
-                print("F1 of {} for {}".format(f1, label))
+                print('F1 of {} for {}'.format(f1, label))
 
-    print("Mean F1: {}".format(np.mean(f1s)))
+    print('Mean F1: {}'.format(np.mean(f1s)))
 
-if __name__ =='__main__':
+
+if __name__ == '__main__':
     logger = logging.getLogger(__name__)
     try:
-        if "LOG_LEVEL" in os.environ and os.environ['LOG_LEVEL'] != '':
+        if 'LOG_LEVEL' in os.environ and os.environ['LOG_LEVEL'] != '':
             logger.setLevel(os.environ['LOG_LEVEL'])
     except Exception as e:
-        print("Unable to set logging level because: {0} defaulting to INFO.".format(str(e)))
+        print(
+            'Unable to set logging level because: {0} defaulting to INFO.'.format(str(e)))
 
     if len(sys.argv) < 2:
-        data_dir = "/pcaps"
+        data_dir = '/pcaps'
     else:
         data_dir = sys.argv[1]
     # Load model from specified path
@@ -95,9 +98,9 @@ if __name__ =='__main__':
     if len(sys.argv) >= 4:
         save_path = sys.argv[3]
     else:
-        save_path = "models/OneLayerModel.pkl"
+        save_path = 'models/OneLayerModel.pkl'
     model = OneLayerModel(duration=None, hidden_size=None)
-    logger.info("Loading model from %s", load_path)
+    logger.info('Loading model from %s', load_path)
     model.load(load_path)
 
     # Initialize results dictionary
@@ -105,25 +108,25 @@ if __name__ =='__main__':
     results['labels'] = model.labels
 
     # Get the true label assignments
-    logger.info("Getting label assignments")
+    logger.info('Getting label assignments')
     with open('opts/label_assignments.json') as handle:
         label_assignments = json.load(handle)
 
     # Walk through testing directory and get all the pcaps
-    logger.info("Getting pcaps")
+    logger.info('Getting pcaps')
     pcaps = []
     for dirpath, dirnames, filenames in os.walk(data_dir):
         for filename in filenames:
             name, extension = os.path.splitext(filename)
             if extension == '.pcap':
-                pcaps.append(os.path.join(dirpath,filename))
+                pcaps.append(os.path.join(dirpath, filename))
 
     # Evaluate the model on each pcap
     tick = time.clock()
     file_size = 0
     file_num = 0
     time_slices = 0
-    logger.info("processing pcaps")
+    logger.info('processing pcaps')
     for pcap in pcaps:
          # Get the true label
         _, pcap_file = os.path.split(pcap)
@@ -134,9 +137,10 @@ if __name__ =='__main__':
             true_label = 'Unknown'
         single_result = {}
         single_result['label'] = true_label
-        logger.info("Reading " + pcap_file + " as " + true_label)
+        logger.info('Reading ' + pcap_file + ' as ' + true_label)
         # Get the internal representations
-        representations, _, _, p, _= model.get_representation(pcap, mean=False)
+        representations, _, _, p, _ = model.get_representation(
+            pcap, mean=False)
         if representations is not None:
             file_size += os.path.getsize(pcap)
             file_num += 1
@@ -145,7 +149,7 @@ if __name__ =='__main__':
             single_result['aggregate'] = p
             individual_dict = {}
             # Classify each slice
-            logger.info("Computing classifications by slice")
+            logger.info('Computing classifications by slice')
             for i in range(length):
                 p_r = model.classify_representation(representations[i])
                 individual_dict[i] = p_r
@@ -158,21 +162,21 @@ if __name__ =='__main__':
         with open(save_path, 'w') as output_file:
             json.dump(results, output_file)
     print('-'*80)
-    print("Results with unknowns")
+    print('Results with unknowns')
     print('-'*80)
     calc_f1(results)
     print('-'*80)
-    print("Results forcing decisions")
+    print('Results forcing decisions')
     print('-'*80)
     calc_f1(results, ignore_unknown=True)
     print('-'*80)
-    print("Analysis statistics")
+    print('Analysis statistics')
     print('-'*80)
-    elapsed_time = tock -tick
-    rate = file_size/(pow(10,6)*elapsed_time)
-    print("Evaluated",file_num,"pcaps in", round(elapsed_time,3),"seconds")
-    print("Total data:", file_size/pow(10,6),"Mb")
-    print("Total capture time:",time_slices/4,"hours")
-    print("Data processing rate:", rate, "Mb per second")
-    print("time per 15 minute capture", (elapsed_time)/(time_slices),"seconds")
+    elapsed_time = tock - tick
+    rate = file_size/(pow(10, 6)*elapsed_time)
+    print('Evaluated', file_num, 'pcaps in', round(elapsed_time, 3), 'seconds')
+    print('Total data:', file_size/pow(10, 6), 'Mb')
+    print('Total capture time:', time_slices/4, 'hours')
+    print('Data processing rate:', rate, 'Mb per second')
+    print('time per 15 minute capture', (elapsed_time)/(time_slices), 'seconds')
     print('-'*80)

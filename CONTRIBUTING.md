@@ -44,23 +44,23 @@ folder under the root directory. Code under root's `utils/` folder contains
 generic feature extraction and processing from raw pcap files, and can be
 reused by any of the models within the collection.
 
-Take the `DeviceClassifier` as an archetype example of one such model. 
+Take the `DeviceClassifier` as an archetype example of one such model.
 Our [Poseidon project](https://github.com/CyberReboot/Poseidon) uses this
-to identify device roles on the network based on their behavior on the 
+to identify device roles on the network based on their behavior on the
 network. In fact, this classifier contains two different models that can
 be used depending on the amount of data available for training -- `OneLayer`
-neural network model, and the `RandomForest` model. Each of these models 
+neural network model, and the `RandomForest` model. Each of these models
 are contained in their own subdirectories, and a `README` file describes
-the usage and requirements of both. Within each model's directory, you'll 
-find a Dockerfile and the scripts to train, test, and evaluate the models. 
-Any configurations or options specific to these models are located in the 
-`opts/` subfolder, and the optional trained models (in the form of 
+the usage and requirements of both. Within each model's directory, you'll
+find a Dockerfile and the scripts to train, test, and evaluate the models.
+Any configurations or options specific to these models are located in the
+`opts/` subfolder, and the optional trained models (in the form of
 serialized pkl files) are made available in the `models/` subfolder.
 
-Our hope is that by following this structure as much as possible, newer 
+Our hope is that by following this structure as much as possible, newer
 users can get up to speed more quickly, and models will be easier to
-maintain in the long run. However, if you find this too stifling for 
-your specific model, we will leave it to you to explain the usage, 
+maintain in the long run. However, if you find this too stifling for
+your specific model, we will leave it to you to explain the usage,
 requirements and structure in your model's `README` file.
 
 
@@ -89,8 +89,8 @@ Commits that fix or close an issue should include a reference like `Closes #XXX`
 or `Fixes #XXX`, which will automatically close the issue when merged.
 
 Add your name to the AUTHORS file, but make sure that the list is sorted and that
-your name and email address match the ones you used to make your commits. The 
-AUTHORS file is regenerated occasionally from the commit history, so a mismatch 
+your name and email address match the ones you used to make your commits. The
+AUTHORS file is regenerated occasionally from the commit history, so a mismatch
 may result in your changes being overwritten.
 
 ## Decision process
