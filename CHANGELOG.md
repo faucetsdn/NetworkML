@@ -1,3 +1,10 @@
+# v0.1.6 (2018-08-10_
+
+ - updated model
+ - upgraded pytest to 3.7.1
+ - upgraded scikit-learn to 0.19.2
+ - linting
+
 # v0.1.5 (2018-07-27)
 
  - fixes pairs issue when checking private addresses
