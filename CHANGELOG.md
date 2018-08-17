@@ -1,4 +1,4 @@
-# v0.1.6 (2018-08-10_
+# v0.1.6 (2018-08-10)
 
  - updated model
  - upgraded pytest to 3.7.1
