@@ -1,6 +1,6 @@
 numpy==1.15.1
 pika==0.12.0
-poseidonml==0.1.6
+poseidonml==0.1.7
 pytest==3.7.2
 pytest-cov==2.5.1
 redis==2.10.6
