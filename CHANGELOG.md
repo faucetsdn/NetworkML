@@ -1,3 +1,8 @@
+# v0.1.7 (2018-08-24)
+
+ - upgraded pytest to 3.7.2
+ - upgraded numpy to 1.15.1
+
 # v0.1.6 (2018-08-10)
 
  - updated model
