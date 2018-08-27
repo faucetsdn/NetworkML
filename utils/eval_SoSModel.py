@@ -28,7 +28,7 @@ def eval_pcap(pcap, labels, time_const, label=None, rnn_size=100):
         if 'LOG_LEVEL' in os.environ and os.environ['LOG_LEVEL'] != '':
             logger.setLevel(os.environ['LOG_LEVEL'])
     except Exception as e:
-        print(
+        logger.error(
             'Unable to set logging level because: {0} defaulting to INFO.'.format(str(e)))
     data = create_dataset(pcap, time_const, label=label)
     # Create an iterator
@@ -77,6 +77,7 @@ def eval_pcap(pcap, labels, time_const, label=None, rnn_size=100):
                 if s > max_score:
                     max_score = s
 
+    logger.info(max_score)
     return max_score
 
 
@@ -95,6 +96,5 @@ if __name__ == '__main__':
         labels = config['labels']
         time_const = config['time constant']
 
-    mean_score = eval_pcap(pcap, labels, time_const,
-                           label=label, rnn_size=rnn_size)
-    print(mean_score)
+    eval_pcap(pcap, labels, time_const,
+              label=label, rnn_size=rnn_size)
