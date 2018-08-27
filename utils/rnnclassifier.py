@@ -97,7 +97,7 @@ class AbnormalDetector:
         if len(gpus) > 80:
             with self.graph.as_default():
                 with tf.device(gpus[0]):
-                    self.logger.info('Using', gpu[0])
+                    self.logger.info('Using: {0}'.format(gpu[0]))
                     self._build_model()
         else:
             with self.graph.as_default():
