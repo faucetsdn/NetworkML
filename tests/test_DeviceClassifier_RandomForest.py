@@ -1,3 +1,5 @@
+import logging
+
 from DeviceClassifier.RandomForest import train_RandomForest
 from DeviceClassifier.RandomForest.eval_RandomForest import average_representation
 from DeviceClassifier.RandomForest.eval_RandomForest import basic_decision
@@ -8,8 +10,12 @@ from DeviceClassifier.RandomForest.eval_RandomForest import update_data
 from DeviceClassifier.RandomForest.test_RandomForest import calc_f1
 
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
 def test_calc_f1():
-    calc_f1({})
+    calc_f1({}, logger)
 
 
 def test_lookup_key():

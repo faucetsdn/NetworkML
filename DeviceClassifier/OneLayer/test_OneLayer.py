@@ -16,7 +16,7 @@ from poseidonml.OneLayer import OneLayerModel
 logging.basicConfig(level=logging.INFO)
 
 
-def calc_f1(results, ignore_unknown=False):
+def calc_f1(results, logger, ignore_unknown=False):
     results_by_label = {}
     for file, file_results in results.items():
         if file != 'labels':
@@ -72,9 +72,9 @@ def calc_f1(results, ignore_unknown=False):
 
         if f1 is not 'NaN':
             if (tp + fn) > 0:
-                print('F1 of {} for {}'.format(f1, label))
+                logger.info('F1 of {} for {}'.format(f1, label))
 
-    print('Mean F1: {}'.format(np.mean(f1s)))
+    logger.info('Mean F1: {}'.format(np.mean(f1s)))
 
 
 if __name__ == '__main__':
@@ -83,7 +83,7 @@ if __name__ == '__main__':
         if 'LOG_LEVEL' in os.environ and os.environ['LOG_LEVEL'] != '':
             logger.setLevel(os.environ['LOG_LEVEL'])
     except Exception as e:
-        print(
+        logger.error(
             'Unable to set logging level because: {0} defaulting to INFO.'.format(str(e)))
 
     if len(sys.argv) < 2:
@@ -161,22 +161,22 @@ if __name__ == '__main__':
     if len(sys.argv) >= 4:
         with open(save_path, 'w') as output_file:
             json.dump(results, output_file)
-    print('-'*80)
-    print('Results with unknowns')
-    print('-'*80)
-    calc_f1(results)
-    print('-'*80)
-    print('Results forcing decisions')
-    print('-'*80)
-    calc_f1(results, ignore_unknown=True)
-    print('-'*80)
-    print('Analysis statistics')
-    print('-'*80)
+    logger.info('-'*80)
+    logger.info('Results with unknowns')
+    logger.info('-'*80)
+    calc_f1(results, logger)
+    logger.info('-'*80)
+    logger.info('Results forcing decisions')
+    logger.info('-'*80)
+    calc_f1(results, logger, ignore_unknown=True)
+    logger.info('-'*80)
+    logger.info('Analysis statistics')
+    logger.info('-'*80)
     elapsed_time = tock - tick
     rate = file_size/(pow(10, 6)*elapsed_time)
-    print('Evaluated', file_num, 'pcaps in', round(elapsed_time, 3), 'seconds')
-    print('Total data:', file_size/pow(10, 6), 'Mb')
-    print('Total capture time:', time_slices/4, 'hours')
-    print('Data processing rate:', rate, 'Mb per second')
-    print('time per 15 minute capture', (elapsed_time)/(time_slices), 'seconds')
-    print('-'*80)
+    logger.info('Evaluated', file_num, 'pcaps in', round(elapsed_time, 3), 'seconds')
+    logger.info('Total data:', file_size/pow(10, 6), 'Mb')
+    logger.info('Total capture time:', time_slices/4, 'hours')
+    logger.info('Data processing rate:', rate, 'Mb per second')
+    logger.info('time per 15 minute capture', (elapsed_time)/(time_slices), 'seconds')
+    logger.info('-'*80)
