@@ -1,9 +1,14 @@
 """
 Contains iterator class for generating training batches from a canned dataset
 """
+import logging
+import os
 import pickle
 
 import numpy as np
+
+
+logging.basicConfig(level=logging.INFO)
 
 
 class BatchIterator:
@@ -35,21 +40,29 @@ class BatchIterator:
         self.vala_labels_by_length = None
         self.test_sessions_by_length = None
         self.test_labels_by_length = None
-        self.load_data()
 
         self.seq_len = seq_len
         self.num_chars = num_chars
         self.perturb_types = perturb_types
+        self.logger = logging.getLogger(__name__)
+        try:
+            if 'LOG_LEVEL' in os.environ and os.environ['LOG_LEVEL'] != '':
+                self.logger.setLevel(os.environ['LOG_LEVEL'])
+        except Exception as e:
+            self.logger.error(
+                'Unable to set logging level because: {0} defaulting to INFO.'.format(str(e)))
+
+        self.load_data()
 
     def load_data(self):
         """
         Handles loading the data into the correct format
         """
         if type(self.data_input) is dict:
-            print('Loading data from dict')
+            self.logger.info('Loading data from dict')
             self.data = self.data_input
         else:
-            print('Loading data from disk')
+            self.logger.info('Loading data from disk')
             with open(self.data_input, 'rb') as handle:
                 data = pickle.load(handle)
             self.data = data
