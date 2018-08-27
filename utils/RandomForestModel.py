@@ -1,3 +1,5 @@
+import logging
+import os
 import pickle as pickle
 
 import numpy as np
@@ -17,6 +19,9 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import f1_score
 
 
+logging.basicConfig(level=logging.INFO)
+
+
 class RandomForestModel:
     def __init__(self, duration, hidden_size=None, labels=None):
         '''
@@ -30,14 +35,19 @@ class RandomForestModel:
 
         self.duration = duration
         self.hidden_size = hidden_size
-
         self.means = None
         self.stds = None
         self.feature_list = None
         self.model = None
         self.labels = labels
-
         self.sessions = None
+        self.logger = logging.getLogger(__name__)
+        try:
+            if 'LOG_LEVEL' in os.environ and os.environ['LOG_LEVEL'] != '':
+                self.logger.setLevel(os.environ['LOG_LEVEL'])
+        except Exception as e:
+            self.logger.error(
+                'Unable to set logging level because: {0} defaulting to INFO.'.format(str(e)))
 
     def _augment_data(self, X, y):
         '''
@@ -125,7 +135,7 @@ class RandomForestModel:
             data_dir: Directory containing the training data
         '''
 
-        print('Reading data')
+        self.logger.info('Reading data')
         # First read the data directory for the features and labels
         X_all, y_all, new_labels = read_data(
             data_dir,
@@ -134,7 +144,7 @@ class RandomForestModel:
         )
         self.labels = new_labels
 
-        print('Making data splits')
+        self.logger.info('Making data splits')
         # Split the data into training, validation, and testing sets
         X_train, X_test, y_train, y_test = train_test_split(
             X_all,
@@ -143,7 +153,7 @@ class RandomForestModel:
             random_state=0
         )
 
-        print('Normalizing features')
+        self.logger.info('Normalizing features')
         # Mean normalize the features, saving the means and variances
         self.means = X_train.mean(axis=0)
         self.stds = X_train.std(axis=0)
@@ -154,10 +164,10 @@ class RandomForestModel:
         X_normed = X_train - np.expand_dims(self.means, 0)
         X_normed /= np.expand_dims(self.stds, 0)
 
-        print('Doing feature selection')
+        self.logger.info('Doing feature selection')
         # Select the relevant features from the training set
         self.feature_list = select_features(X_normed, y_train)
-        print(self.feature_list)
+        self.logger.info(self.feature_list)
 
         # If hidden size wasn't specified, default to the mean of the number
         # of features and the size of the label space
@@ -185,8 +195,8 @@ class RandomForestModel:
         X_test_input /= np.expand_dims(self.stds, 0)
         X_test_aug, y_test_aug = self._augment_data(X_test_input, y_test)
         predictions = self.model.predict(X_test_aug[:, self.feature_list])
-        print('F1 score:',
-              f1_score(y_test_aug, predictions, average='weighted'))
+        self.logger.info('F1 score:')
+        self.logger.info(f1_score(y_test_aug, predictions, average='weighted'))
 
     def predict(self, filepath, source_ip=None):
         '''

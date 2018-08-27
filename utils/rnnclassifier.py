@@ -1,4 +1,5 @@
 import functools
+import logging
 import os
 
 import numpy as np
@@ -8,6 +9,7 @@ from tensorflow.python.client import device_lib
 
 tf.logging.set_verbosity(tf.logging.ERROR)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+logging.basicConfig(level=logging.INFO)
 
 
 def scope_decorator(function):
@@ -78,6 +80,14 @@ class AbnormalDetector:
         self.num_labels = num_labels
         self.attn_size = attn_size
 
+        self.logger = logging.getLogger(__name__)
+        try:
+            if 'LOG_LEVEL' in os.environ and os.environ['LOG_LEVEL'] != '':
+                self.logger.setLevel(os.environ['LOG_LEVEL'])
+        except Exception as e:
+            self.logger.error(
+                'Unable to set logging level because: {0} defaulting to INFO.'.format(str(e)))
+
         # Check for available gpus
         gpus = get_available_gpus()
 
@@ -87,7 +97,7 @@ class AbnormalDetector:
         if len(gpus) > 80:
             with self.graph.as_default():
                 with tf.device(gpus[0]):
-                    print('Using', gpu[0])
+                    self.logger.info('Using', gpu[0])
                     self._build_model()
         else:
             with self.graph.as_default():
