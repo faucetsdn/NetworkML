@@ -204,7 +204,7 @@ def update_data(
         if 'LOG_LEVEL' in os.environ and os.environ['LOG_LEVEL'] != '':
             logger.setLevel(os.environ['LOG_LEVEL'])
     except Exception as e:
-        logger.error(
+        print(
             'Unable to set logging level because: {0} defaulting to INFO.'.format(str(e)))
 
     try:
@@ -326,7 +326,7 @@ if __name__ == '__main__':
         if 'LOG_LEVEL' in os.environ and os.environ['LOG_LEVEL'] != '':
             logger.setLevel(os.environ['LOG_LEVEL'])
     except Exception as e:
-        logger.error(
+        print(
             'Unable to set logging level because: {0} defaulting to INFO.'.format(str(e)))
 
     # Get time constant from config
@@ -369,6 +369,34 @@ if __name__ == '__main__':
         key_address = None
     if key_address is None:
         key = None
+
+    # Get our "SKIP_RABBIT" environment variable with a default value of
+    # false
+    skip_rabbit = os.getenv('SKIP_RABBIT', 'False')
+
+    # Convert our string into a boolean
+    skip_rabbit = skip_rabbit.lower() in ['true', 't', 'y', '1']
+
+    logger.debug('SKIP_RABBIT set to: %s', str(skip_rabbit))
+
+    if not skip_rabbit:
+        # Rabbit settings
+        exchange = 'topic-poseidon-internal'
+        exchange_type = 'topic'
+
+        # Starting rabbit connection
+        connection = pika.BlockingConnection(
+            pika.ConnectionParameters(host='rabbit')
+        )
+
+        channel = connection.channel()
+        channel.exchange_declare(
+            exchange=exchange, exchange_type=exchange_type
+        )
+
+        routing_key = 'poseidon.algos.decider'
+        logger.debug('Routing key: ' + routing_key)
+        logger.debug('Exchange: ' + exchange)
 
     # extra check in case running the first time
     if ((split_path[-1] != 'miscellaneous' and key_address == source_ip) or
@@ -472,38 +500,19 @@ if __name__ == '__main__':
                 logger.info(labels[i] + ' : ' + str(round(confs[i], 3)))
             # Get json message
             message = json.dumps(decision)
-
-            # Get our "SKIP_RABBIT" environment variable with a default value of
-            # false
-            skip_rabbit = os.getenv('SKIP_RABBIT', 'False')
-
-            # Convert our string into a boolean
-            skip_rabbit = skip_rabbit.lower() in ['true', 't', 'y', '1']
-
-            logger.debug('SKIP_RABBIT set to: %s', str(skip_rabbit))
-
+            logger.info('Message: ' + message)
             if not skip_rabbit:
-                # Rabbit settings
-                exchange = 'topic-poseidon-internal'
-                exchange_type = 'topic'
-
-                # Starting rabbit connection
-                connection = pika.BlockingConnection(
-                    pika.ConnectionParameters(host='rabbit')
-                )
-
-                channel = connection.channel()
-                channel.exchange_declare(
-                    exchange=exchange, exchange_type=exchange_type
-                )
-
-                routing_key = 'poseidon.algos.decider'
                 channel.basic_publish(exchange=exchange,
                                       routing_key=routing_key,
                                       body=message)
-                logger.debug('Routing key: ' + routing_key)
-                logger.debug('Exchange: ' + exchange)
-                connection.close()
-            else:
-                # Skipping rabbit. Printing to STDOUT
-                logger.info('Message: ' + message)
+        else:
+            message = {}
+            message[key] = {'valid':False}
+            message = json.dumps(message)
+            logger.info('Not enough sessions in pcap')
+            if not skip_rabbit:
+                channel.basic_publish(exchange=exchange,
+                                      routing_key=routing_key,
+                                      body=message)
+    if not skip_rabbit:
+        connection.close()
