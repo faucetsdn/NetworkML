@@ -272,7 +272,7 @@ def update_data(
     except Exception as e:
         logger.debug('Could not store update time')
 
-    return current_rep, avg_rep
+    return current_rep, avg_rep, key
 
 
 def basic_decision(
@@ -443,7 +443,7 @@ if __name__ == '__main__':
             current_rep, avg_rep = None, None
             if reps is not None and is_private(source_ip):
                 logger.debug('Updating stored data')
-                current_rep, avg_rep = update_data(
+                current_rep, avg_rep, r_key = update_data(
                     source_ip,
                     reps,
                     timestamps,
@@ -498,6 +498,14 @@ if __name__ == '__main__':
             logger.debug('Created message')
             for i in range(3):
                 logger.info(labels[i] + ' : ' + str(round(confs[i], 3)))
+
+            # update Redis with decision
+            try:
+                r = StrictRedis(host='redis', port=6379, db=0)
+                r.hmset(r_key, decision)
+            except:
+                pass
+
             # Get json message
             message = json.dumps(decision)
             logger.info('Message: ' + message)
