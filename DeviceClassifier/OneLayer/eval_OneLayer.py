@@ -29,7 +29,7 @@ def lookup_key(key):
     Look up a key from the input filename
     '''
     try:
-        r = StrictRedis(host='redis', port=6379, db=0)
+        r = StrictRedis(host='redis', port=6379, db=0, socket_connect_timeout=2)
         key_info = r.hgetall(key)
         endpoint = key_info[b'endpoint_data']
         endpoint = endpoint.decode('utf-8')
@@ -42,16 +42,19 @@ def lookup_key(key):
     return address, None
 
 
-def get_address_info(address, timestamp, state_size):
+def get_address_info(address, timestamp, state_size, skip_rabbit):
     '''
     Look up address information prior to the timestamp
     '''
-    # Get the timestamps of the past updates for this address
-    try:
-        r = StrictRedis(host='redis', port=6379, db=0)
-        updates = r.hgetall(address)
-        timestamps = json.loads(updates[b'timestamps'].decode('ascii'))
-    except Exception as e:
+    if not skip_rabbit:
+        # Get the timestamps of the past updates for this address
+        try:
+            r = StrictRedis(host='redis', port=6379, db=0, socket_connect_timeout=2)
+            updates = r.hgetall(address)
+            timestamps = json.loads(updates[b'timestamps'].decode('ascii'))
+        except Exception as e:
+            timestamps = None
+    else:
         timestamps = None
 
     # Defaults if there are no previous updates
@@ -86,7 +89,7 @@ def get_address_info(address, timestamp, state_size):
     return current_state, average_state, other_ips, last_update, labels, confs
 
 
-def get_previous_state(source_ip, timestamp):
+def get_previous_state(source_ip, timestamp, skip_rabbit):
     '''
     Gets the average representation vector from the most recent update
     before the current timestamp
@@ -100,11 +103,14 @@ def get_previous_state(source_ip, timestamp):
         previous_representation: Average representation at last update
     '''
 
-    # Try to read the old updates, if there are none return Nones
-    try:
-        r = StrictRedis(host='redis', port=6379, db=0)
-        updates = r.hgetall(source_ip)
-    except Exception as e:
+    if not skip_rabbit:
+        # Try to read the old updates, if there are none return Nones
+        try:
+            r = StrictRedis(host='redis', port=6379, db=0, socket_connect_timeout=2)
+            updates = r.hgetall(source_ip)
+        except Exception as e:
+            return None, None
+    else:
         return None, None
 
     # Get the most recent prior timestamp from the update list
@@ -187,7 +193,8 @@ def update_data(
     predictions,
     other_ips,
     model_hash,
-    time_const
+    time_const,
+    skip_rabbit
 ):
     '''
     Updates the stored data with the new information
@@ -208,12 +215,8 @@ def update_data(
         logger.error(
             'Unable to set logging level because: {0} defaulting to INFO.'.format(str(e)))
 
-    try:
-        r = StrictRedis(host='redis', port=6379, db=0)
-    except:
-        pass
     # Get the previous update time and average representation
-    last_update, prev_rep = get_previous_state(source_ip, timestamps[0])
+    last_update, prev_rep = get_previous_state(source_ip, timestamps[0], skip_rabbit)
 
     # Compute current representation
     time, current_rep = average_representation(
@@ -243,34 +246,35 @@ def update_data(
         'model_hash': model_hash
     }
 
-    logger.debug('Storing data')
-    try:
-        r.hmset(key, state)
-        r.sadd('ip_addresses', source_ip)
-    except Exception as e:
-        logger.debug('created key %s', key)
-        logger.debug(state)
-
-    logger.debug('Storing update time')
-    # Add this update time to the list of updates
-    try:
-        updates = r.hgetall(source_ip)
-        update_list = json.loads(updates[b'timestamps'].decode('ascii'))
-        logger.debug('Got previous updates from %s', source_ip)
-    except Exception as e:
-        logger.debug('No previous updates found for %s', source_ip)
-        update_list = []
+    logger.debug('created key %s', key)
+    logger.debug(state)
+    r = None
+    if not skip_rabbit:
+        try:
+            r = StrictRedis(host='redis', port=6379, db=0, socket_connect_timeout=2)
+            logger.debug('Storing data')
+            r.hmset(key, state)
+            r.sadd('ip_addresses', source_ip)
+            logger.debug('Storing update time')
+            # Add this update time to the list of updates
+            updates = r.hgetall(source_ip)
+            update_list = json.loads(updates[b'timestamps'].decode('ascii'))
+            logger.debug('Got previous updates from %s', source_ip)
+        except Exception as e:
+            logger.debug('No previous updates found for %s', source_ip)
+            update_list = []
 
     update_list.append(time)
     update_list = sorted(update_list)
     times = {'timestamps': update_list}
     logger.debug('Updating %s', source_ip)
     logger.debug(times)
-    try:
-        r.hmset(source_ip, times)
-        r.sadd('ip_addresses', source_ip)
-    except Exception as e:
-        logger.debug('Could not store update time')
+    if not skip_rabbit:
+        try:
+            r.hmset(source_ip, times)
+            r.sadd('ip_addresses', source_ip)
+        except Exception as e:
+            logger.debug('Could not store update time')
 
     return current_rep, avg_rep, key
 
@@ -330,6 +334,13 @@ if __name__ == '__main__':
         logger.error(
             'Unable to set logging level because: {0} defaulting to INFO.'.format(str(e)))
 
+    # Get our "SKIP_RABBIT" environment variable with a default value of false
+    skip_rabbit = os.getenv('SKIP_RABBIT', 'False')
+
+    # Convert our string into a boolean
+    skip_rabbit = skip_rabbit.lower() in ['true', 't', 'y', '1']
+    logger.debug('SKIP_RABBIT set to: %s', str(skip_rabbit))
+
     # Get time constant from config
     try:
         with open('opts/config.json') as config_file:
@@ -358,7 +369,10 @@ if __name__ == '__main__':
         split_path = split_path.split('.')
         split_path = split_path[0].split('-')
         key = split_path[0].split('_')[1]
-        key_address, _ = lookup_key(key)
+        if not skip_rabbit:
+            key_address, _ = lookup_key(key)
+        else:
+            key_address = None
         if len(split_path) >= 7:
             source_ip = '.'.join(split_path[-4:])
         else:
@@ -370,15 +384,6 @@ if __name__ == '__main__':
         key_address = None
     if key_address is None:
         key = None
-
-    # Get our "SKIP_RABBIT" environment variable with a default value of
-    # false
-    skip_rabbit = os.getenv('SKIP_RABBIT', 'False')
-
-    # Convert our string into a boolean
-    skip_rabbit = skip_rabbit.lower() in ['true', 't', 'y', '1']
-
-    logger.debug('SKIP_RABBIT set to: %s', str(skip_rabbit))
 
     if not skip_rabbit:
         # Rabbit settings
@@ -426,7 +431,7 @@ if __name__ == '__main__':
 
             logger.debug('Generating predictions')
             last_update, prev_rep = get_previous_state(
-                source_ip, timestamps[0])
+                source_ip, timestamps[0], skip_rabbit)
 
             _, mean_rep = average_representation(
                 reps,
@@ -450,7 +455,8 @@ if __name__ == '__main__':
                     preds,
                     others,
                     model_hash,
-                    time_const
+                    time_const,
+                    skip_rabbit
                 )
 
             # Get the sessions that the model looked at
@@ -482,7 +488,8 @@ if __name__ == '__main__':
             repr_s, m_repr_s, _, prev_s, _, _ = get_address_info(
                 source_ip,
                 timestamp,
-                state_size
+                state_size,
+                skip_rabbit
             )
             decision = basic_decision(
                 key,
@@ -499,12 +506,13 @@ if __name__ == '__main__':
             for i in range(3):
                 logger.info(labels[i] + ' : ' + str(round(confs[i], 3)))
 
-            # update Redis with decision
-            try:
-                r = StrictRedis(host='redis', port=6379, db=0)
-                r.hmset(r_key, decision)
-            except:
-                pass
+            if not skip_rabbit:
+                # update Redis with decision
+                try:
+                    r = StrictRedis(host='redis', port=6379, db=0, socket_connect_timeout=2)
+                    r.hmset(r_key, decision)
+                except:
+                    pass
 
             # Get json message
             message = json.dumps(decision)
