@@ -44,7 +44,6 @@ RUN set -ex; \
     rm -f /var/cache/apt/archives/*.deb \
         /var/cache/apt/archives/partial/*.deb \
         /var/cache/apt/*.bin; \
-    find /usr/lib/python3 -name __pycache__ | xargs rm -r; \
     rm -rf /root/.[acpw]*
 
 COPY . /poseidonml
