@@ -25,10 +25,11 @@ def test_lookup_key():
 
 def test_get_address_info():
     current_state, average_state, other_ips, last_update, labels, conf = get_address_info(
-        '10.0.0.1', '1', 1)
+        '10.0.0.1', '1', 1, True)
 
 
 def test_get_previous_state():
-    last_update, previous_representation = get_previous_state('10.0.0.1', '1')
+    last_update, previous_representation = get_previous_state(
+        '10.0.0.1', '1', True)
     assert last_update == None
     assert previous_representation == None
