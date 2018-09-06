@@ -3,9 +3,10 @@
   "duration": 900,
   "labels": [
     "Administrator workstation",
+    "Administrator server",
     "Business workstation",
     "GPU laptop",
-    "VPN client",
+    "PKI server",
     "Developer workstation",
     "Active Directory controller",
     "Unknown"
