@@ -1,3 +1,14 @@
+# v0.1.8 (2018-09-10)
+
+ - upgraded pytest to 3.8.0
+ - upgraded pytest-cov to 2.6.0
+ - upgraded tensorflow to 1.10.1
+ - made all print statements logger statements
+ - sends messages to rabbitmq now even if not enough sessions
+ - stores normal/abnormal results in redis now
+ - fixed performance issue where evaluation would take a long time
+ - updated the model
+
 # v0.1.7 (2018-08-24)
 
  - upgraded pytest to 3.7.2
