@@ -29,7 +29,8 @@ def lookup_key(key):
     Look up a key from the input filename
     '''
     try:
-        r = StrictRedis(host='redis', port=6379, db=0, socket_connect_timeout=2)
+        r = StrictRedis(host='redis', port=6379, db=0,
+                        socket_connect_timeout=2)
         key_info = r.hgetall(key)
         endpoint = key_info[b'endpoint_data']
         endpoint = endpoint.decode('utf-8')
@@ -46,15 +47,13 @@ def get_address_info(address, timestamp, state_size, skip_rabbit):
     '''
     Look up address information prior to the timestamp
     '''
-    if not skip_rabbit:
-        # Get the timestamps of the past updates for this address
-        try:
-            r = StrictRedis(host='redis', port=6379, db=0, socket_connect_timeout=2)
-            updates = r.hgetall(address)
-            timestamps = json.loads(updates[b'timestamps'].decode('ascii'))
-        except Exception as e:
-            timestamps = None
-    else:
+    # Get the timestamps of the past updates for this address
+    try:
+        r = StrictRedis(host='redis', port=6379, db=0,
+                        socket_connect_timeout=2)
+        updates = r.hgetall(address)
+        timestamps = json.loads(updates[b'timestamps'].decode('ascii'))
+    except Exception as e:
         timestamps = None
 
     # Defaults if there are no previous updates
@@ -103,14 +102,12 @@ def get_previous_state(source_ip, timestamp, skip_rabbit):
         previous_representation: Average representation at last update
     '''
 
-    if not skip_rabbit:
-        # Try to read the old updates, if there are none return Nones
-        try:
-            r = StrictRedis(host='redis', port=6379, db=0, socket_connect_timeout=2)
-            updates = r.hgetall(source_ip)
-        except Exception as e:
-            return None, None
-    else:
+    # Try to read the old updates, if there are none return Nones
+    try:
+        r = StrictRedis(host='redis', port=6379, db=0,
+                        socket_connect_timeout=2)
+        updates = r.hgetall(source_ip)
+    except Exception as e:
         return None, None
 
     # Get the most recent prior timestamp from the update list
@@ -216,7 +213,8 @@ def update_data(
             'Unable to set logging level because: {0} defaulting to INFO.'.format(str(e)))
 
     # Get the previous update time and average representation
-    last_update, prev_rep = get_previous_state(source_ip, timestamps[0], skip_rabbit)
+    last_update, prev_rep = get_previous_state(
+        source_ip, timestamps[0], skip_rabbit)
 
     # Compute current representation
     time, current_rep = average_representation(
@@ -249,32 +247,31 @@ def update_data(
     logger.debug('created key %s', key)
     logger.debug(state)
     r = None
-    if not skip_rabbit:
-        try:
-            r = StrictRedis(host='redis', port=6379, db=0, socket_connect_timeout=2)
-            logger.debug('Storing data')
-            r.hmset(key, state)
-            r.sadd('ip_addresses', source_ip)
-            logger.debug('Storing update time')
-            # Add this update time to the list of updates
-            updates = r.hgetall(source_ip)
-            update_list = json.loads(updates[b'timestamps'].decode('ascii'))
-            logger.debug('Got previous updates from %s', source_ip)
-        except Exception as e:
-            logger.debug('No previous updates found for %s', source_ip)
-            update_list = []
+    try:
+        r = StrictRedis(host='redis', port=6379, db=0,
+                        socket_connect_timeout=2)
+        logger.debug('Storing data')
+        r.hmset(key, state)
+        r.sadd('ip_addresses', source_ip)
+        logger.debug('Storing update time')
+        # Add this update time to the list of updates
+        updates = r.hgetall(source_ip)
+        update_list = json.loads(updates[b'timestamps'].decode('ascii'))
+        logger.debug('Got previous updates from %s', source_ip)
+    except Exception as e:
+        logger.debug('No previous updates found for %s', source_ip)
+        update_list = []
 
     update_list.append(time)
     update_list = sorted(update_list)
     times = {'timestamps': update_list}
     logger.debug('Updating %s', source_ip)
     logger.debug(times)
-    if not skip_rabbit:
-        try:
-            r.hmset(source_ip, times)
-            r.sadd('ip_addresses', source_ip)
-        except Exception as e:
-            logger.debug('Could not store update time')
+    try:
+        r.hmset(source_ip, times)
+        r.sadd('ip_addresses', source_ip)
+    except Exception as e:
+        logger.debug('Could not store update time')
 
     return current_rep, avg_rep, key
 
@@ -369,10 +366,7 @@ if __name__ == '__main__':
         split_path = split_path.split('.')
         split_path = split_path[0].split('-')
         key = split_path[0].split('_')[1]
-        if not skip_rabbit:
-            key_address, _ = lookup_key(key)
-        else:
-            key_address = None
+        key_address, _ = lookup_key(key)
         if len(split_path) >= 7:
             source_ip = '.'.join(split_path[-4:])
         else:
@@ -446,7 +440,8 @@ if __name__ == '__main__':
                     logger.debug(p)
             # Update the stored representation
             current_rep, avg_rep = None, None
-            if reps is not None and is_private(source_ip):
+            # if reps is not None and is_private(source_ip):
+            if reps is not None:
                 logger.debug('Updating stored data')
                 current_rep, avg_rep, r_key = update_data(
                     source_ip,
@@ -506,13 +501,14 @@ if __name__ == '__main__':
             for i in range(3):
                 logger.info(labels[i] + ' : ' + str(round(confs[i], 3)))
 
-            if not skip_rabbit:
-                # update Redis with decision
-                try:
-                    r = StrictRedis(host='redis', port=6379, db=0, socket_connect_timeout=2)
-                    r.hmset(r_key, decision)
-                except:
-                    pass
+            # update Redis with decision
+            try:
+                r = StrictRedis(host='redis', port=6379, db=0,
+                                socket_connect_timeout=2)
+                r.hmset(r_key, decision)
+            except Exception as e:
+                logger.error(
+                    'Failed to update keys in Redis because: {0}'.format(str(e)))
 
             # Get json message
             message = json.dumps(decision)
@@ -523,7 +519,7 @@ if __name__ == '__main__':
                                       body=message)
         else:
             message = {}
-            message[key] = {'valid':False}
+            message[key] = {'valid': False}
             message = json.dumps(message)
             logger.info('Not enough sessions in pcap')
             if not skip_rabbit:
