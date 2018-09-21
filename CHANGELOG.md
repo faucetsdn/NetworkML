@@ -1,3 +1,9 @@
+# v0.1.9 (2018-09-21)
+
+ - fixed issue where results were not getting sent to rabbitmq or stored in redis
+ - cleaned up cruft in OneLayer Eval
+ - moved OneLayer Eval code into a class to reduce duplication
+
 # v0.1.8 (2018-09-10)
 
  - upgraded pytest to 3.8.0
