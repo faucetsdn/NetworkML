@@ -1,7 +1,3 @@
-'''
-Reads a pcap and updates the stored representation of the source using
-the one layer feedforward model.
-'''
 import ast
 import hashlib
 import json
@@ -19,513 +15,514 @@ from poseidonml.pcap_utils import is_private
 from redis import StrictRedis
 
 
-logging.basicConfig(level=logging.INFO)
-tf.logging.set_verbosity(tf.logging.ERROR)
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+class OneLayerEval:
+    """
+    Reads a pcap and updates the stored representation of the source using
+    the one layer feedforward model.
+    """
 
+    def __init__(self):
+        self.r = None
+        self.logger = logging.getLogger(__name__)
+        logging.basicConfig(level=logging.INFO)
+        tf.logging.set_verbosity(tf.logging.ERROR)
+        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-def lookup_key(key):
-    '''
-    Look up a key from the input filename
-    '''
-    try:
-        r = StrictRedis(host='redis', port=6379, db=0,
-                        socket_connect_timeout=2)
-        key_info = r.hgetall(key)
-        endpoint = key_info[b'endpoint_data']
-        endpoint = endpoint.decode('utf-8')
-        end_dict = ast.literal_eval(endpoint)
-        address = end_dict['ip-address']
-    except Exception as e:
-        address = None
-        return address, e
+        try:
+            if 'LOG_LEVEL' in os.environ and os.environ['LOG_LEVEL'] != '':
+                self.logger.setLevel(os.environ['LOG_LEVEL'])
+        except Exception as e:
+            self.logger.error(
+                'Unable to set logging level because: {0}, defaulting to INFO.'.format(str(e)))
 
-    return address, None
+        # Get "SKIP_RABBIT" environment variable with a default value of false
+        self.skip_rabbit = os.getenv('SKIP_RABBIT', 'False')
 
+        # Convert our string into a boolean
+        self.skip_rabbit = self.skip_rabbit.lower() in ['true', 't', 'y', '1']
+        self.logger.debug('SKIP_RABBIT set to: %s', str(self.skip_rabbit))
 
-def get_address_info(address, timestamp, state_size, skip_rabbit):
-    '''
-    Look up address information prior to the timestamp
-    '''
-    # Get the timestamps of the past updates for this address
-    try:
-        r = StrictRedis(host='redis', port=6379, db=0,
-                        socket_connect_timeout=2)
-        updates = r.hgetall(address)
-        timestamps = json.loads(updates[b'timestamps'].decode('ascii'))
-    except Exception as e:
-        timestamps = None
+        self.get_config()
+        self.connect_redis()
+        if not self.skip_rabbit:
+            self.connect_rabbit()
 
-    # Defaults if there are no previous updates
-    current_state = np.zeros(state_size)
-    average_state = np.zeros(state_size)
-    other_ips = []
+    def connect_redis(self, host='redis', port=6379, db=0):
+        self.r = None
+        try:
+            self.r = StrictRedis(host=host, port=port, db=db,
+                                 socket_connect_timeout=2)
+        except Exception as e:
+            self.logger.error(
+                "Failed connect to Redis because: {0}".format(str(e)))
+        return
 
-    # If there is a previous update, read out the state
-    last_update = None
-    if timestamps is not None:
-        # Get the most recent update prior to the current timestsmp
-        updates = [time for time in timestamps if time < timestamp]
-        if len(updates) > 0:
-            last_update = max(updates)
-
-    # Read the state of the most recent update if there was one
-    if last_update is not None:
-        key = address + '_' + str(last_update)
-        state = r.hgetall(key)
-
-        current_state = json.loads(
-            state[b'current_representation'].decode('ascii')
-        )
-        average_state = json.loads(state[b'representation'].decode('ascii'))
-        labels = ast.literal_eval(state[b'labels'].decode('utf-8'))
-        confs = ast.literal_eval(state[b'confidences'].decode('utf-8'))
-        other_ips = ast.literal_eval(state[b'other_ips'].decode('utf-8'))
-    else:
-        labels = None
-        confs = None
-
-    return current_state, average_state, other_ips, last_update, labels, confs
-
-
-def get_previous_state(source_ip, timestamp, skip_rabbit):
-    '''
-    Gets the average representation vector from the most recent update
-    before the current timestamp
-
-    Args:
-        source_ip: IP address to read the representation from
-        timestamp: Current timestamp.  Get only representations before this
-
-    Returns:
-        last_update: Timestamp of last update
-        previous_representation: Average representation at last update
-    '''
-
-    # Try to read the old updates, if there are none return Nones
-    try:
-        r = StrictRedis(host='redis', port=6379, db=0,
-                        socket_connect_timeout=2)
-        updates = r.hgetall(source_ip)
-    except Exception as e:
-        return None, None
-
-    # Get the most recent prior timestamp from the update list
-    try:
-        update_list = json.loads(updates[b'timestamps'].decode('ascii'))
-    except:
-        update_list = []
-    last_update = None
-    for update in update_list:
-        if update < timestamp.timestamp():
-            last_update = update
-
-    # Return Nones if there is no earlier update
-    if last_update is None:
-        return None, None
-
-    # Read the last updated entry to get the previous representation
-    key = source_ip + '_' + str(last_update)
-    try:
-        state = r.hgetall(key)
-    except Exception as e:
-        return None, None
-    previous_representation = json.loads(
-        state[b'representation'].decode('ascii')
-    )
-    return last_update, previous_representation
-
-
-def average_representation(
-    representations,
-    timestamps,
-    time_const,
-    prev_representation=None,
-    last_update=None,
-):
-    '''
-    Computes the new representation from the old ones if they are given.
-    If they are not, compute the EMA of the new observations
-
-    Args:
-        representations: New representations
-        timestamps: Times that the new representations were seen
-        prev_representation: The representation computed at last_update
-        last_update: Time of previous representation update
-
-    Returns:
-        new_timestamp: Timestamp of the new representations
-        new_representation: Newly computed representations
-    '''
-
-    # If there is no previous representation, default to zeros
-    if prev_representation is None:
-        last_update = None
-        prev_representation = np.zeros(representations.shape[1])
-
-    prev_time = last_update
-    representation = prev_representation
-    for i, rep in enumerate(representations):
-        time = timestamps[i].timestamp()
-        # If there was no previous update the representation is set equal to
-        # the current representaton
-        if prev_time is None:
-            representation = rep
-            prev_time = time
-        # If the time of the representation is after the previous update,
-        # compute the exponentially weighted moving average.
-        elif time > prev_time:
-            time_diff = time - prev_time
-            alpha = 1 - np.exp(-time_diff/time_const)
-            representation += alpha*(rep - representation)
-            prev_time = time
-
-    return time, representation
-
-
-def update_data(
-    source_ip,
-    representations,
-    timestamps,
-    predictions,
-    other_ips,
-    model_hash,
-    time_const,
-    skip_rabbit
-):
-    '''
-    Updates the stored data with the new information
-
-    Args:
-        source_ip: Address of the representaion to update
-        representations: New observations of representations
-        timestamps: Time at which each representation was observed
-        predictions: Model predictions along with confidences
-        other_ips: Other IP addresses the source has communicated with
-        model_hash: Hash of the model used to compute this information
-    '''
-    logger = logging.getLogger(__name__)
-    try:
-        if 'LOG_LEVEL' in os.environ and os.environ['LOG_LEVEL'] != '':
-            logger.setLevel(os.environ['LOG_LEVEL'])
-    except Exception as e:
-        logger.error(
-            'Unable to set logging level because: {0} defaulting to INFO.'.format(str(e)))
-
-    # Get the previous update time and average representation
-    last_update, prev_rep = get_previous_state(
-        source_ip, timestamps[0], skip_rabbit)
-
-    # Compute current representation
-    time, current_rep = average_representation(
-        representations, timestamps, time_const)
-
-    # Compute moving average representation
-    time, avg_rep = average_representation(
-        representations,
-        timestamps,
-        time_const,
-        prev_representation=prev_rep,
-        last_update=last_update
-    )
-
-    # Separate labels and confidences
-    labels = [label for label, confidence in predictions]
-    confidences = [confidence for label, confidence in predictions]
-
-    # Create the information to store
-    key = source_ip + '_' + str(time)
-    state = {
-        'representation': list(avg_rep),
-        'current_representation': list(current_rep),
-        'labels': labels,
-        'confidences': confidences,
-        'other_ips': sorted(other_ips),
-        'model_hash': model_hash
-    }
-
-    logger.debug('created key %s', key)
-    logger.debug(state)
-    r = None
-    try:
-        r = StrictRedis(host='redis', port=6379, db=0,
-                        socket_connect_timeout=2)
-        logger.debug('Storing data')
-        r.hmset(key, state)
-        r.sadd('ip_addresses', source_ip)
-        logger.debug('Storing update time')
-        # Add this update time to the list of updates
-        updates = r.hgetall(source_ip)
-        update_list = json.loads(updates[b'timestamps'].decode('ascii'))
-        logger.debug('Got previous updates from %s', source_ip)
-    except Exception as e:
-        logger.debug('No previous updates found for %s', source_ip)
-        update_list = []
-
-    update_list.append(time)
-    update_list = sorted(update_list)
-    times = {'timestamps': update_list}
-    logger.debug('Updating %s', source_ip)
-    logger.debug(times)
-    try:
-        r.hmset(source_ip, times)
-        r.sadd('ip_addresses', source_ip)
-    except Exception as e:
-        logger.debug('Could not store update time')
-
-    return current_rep, avg_rep, key
-
-
-def basic_decision(
-    key,
-    address,
-    prev_time,
-    timestamp,
-    labels,
-    confs,
-    abnormality,
-    look_time,
-    threshold
-):
-
-    valid = True
-
-    if labels is None:
-        labels = ['Unknown']*3
-        confs = [1, 0, 0]
-        valid = False
-
-    if key is None:
-        key = address
-        valid = False
-
-    investigate = False
-    if prev_time is not None and timestamp - prev_time > look_time:
-        investigate = True
-    if labels[0] == 'Unknown':
-        investigate = True
-
-    behavior = 'normal'
-    if abnormality > threshold:
-        behavior = 'abnormal'
-
-    output = {}
-    decisions = {'behavior': behavior, 'investigate': investigate}
-    classifications = {'labels': labels[0:3], 'confidences': confs[0:3]}
-    id_dict = {
-        'decisions': decisions,
-        'classification': classifications,
-        'timestamp': timestamp,
-        'valid': valid
-    }
-    output[key] = id_dict
-    return output
-
-
-if __name__ == '__main__':
-    logger = logging.getLogger(__name__)
-    try:
-        if 'LOG_LEVEL' in os.environ and os.environ['LOG_LEVEL'] != '':
-            logger.setLevel(os.environ['LOG_LEVEL'])
-    except Exception as e:
-        logger.error(
-            'Unable to set logging level because: {0} defaulting to INFO.'.format(str(e)))
-
-    # Get our "SKIP_RABBIT" environment variable with a default value of false
-    skip_rabbit = os.getenv('SKIP_RABBIT', 'False')
-
-    # Convert our string into a boolean
-    skip_rabbit = skip_rabbit.lower() in ['true', 't', 'y', '1']
-    logger.debug('SKIP_RABBIT set to: %s', str(skip_rabbit))
-
-    # Get time constant from config
-    try:
-        with open('opts/config.json') as config_file:
-            config = json.load(config_file)
-            time_const = config['time constant']
-            state_size = config['state size']
-            duration = config['duration']
-            look_time = config['look time']
-            threshold = config['threshold']
-            batch_size = config['batch size']
-            conf_labels = config['labels']
-            rnn_size = config['rnn size']
-    except Exception as e:  # pragma: no cover
-        logger.error(
-            "unable to read 'opts/config.json' properly because: %s", str(e))
-        sys.exit(1)
-
-    # path to the pcap to get the update from
-    if len(sys.argv) < 2:
-        pcap_path = '/pcaps/eval.pcap'
-    else:
-        pcap_path = sys.argv[1]
-    # parse the filename to get IP address
-    try:
-        split_path = os.path.split(pcap_path)[-1]
-        split_path = split_path.split('.')
-        split_path = split_path[0].split('-')
-        key = split_path[0].split('_')[1]
-        key_address, _ = lookup_key(key)
-        if len(split_path) >= 7:
-            source_ip = '.'.join(split_path[-4:])
-        else:
-            source_ip = None
-    except Exception as e:
-        logger.debug('Could not get address info because %s', str(e))
-        logger.debug('Defaulting to inferring IP address from %s', pcap_path)
-        source_ip = None
-        key_address = None
-    if key_address is None:
-        key = None
-
-    if not skip_rabbit:
+    def connect_rabbit(self):
         # Rabbit settings
-        exchange = 'topic-poseidon-internal'
-        exchange_type = 'topic'
+        self.exchange = 'topic-poseidon-internal'
+        self.exchange_type = 'topic'
 
         # Starting rabbit connection
-        connection = pika.BlockingConnection(
+        self.connection = pika.BlockingConnection(
             pika.ConnectionParameters(host='rabbit')
         )
 
-        channel = connection.channel()
-        channel.exchange_declare(
-            exchange=exchange, exchange_type=exchange_type
+        self.channel = connection.channel()
+        self.channel.exchange_declare(
+            exchange=self.exchange, exchange_type=self.exchange_type
         )
 
-        routing_key = 'poseidon.algos.decider'
-        logger.debug('Routing key: ' + routing_key)
-        logger.debug('Exchange: ' + exchange)
+        self.routing_key = 'poseidon.algos.decider'
+        self.logger.debug('Routing key: ' + self.routing_key)
+        self.logger.debug('Exchange: ' + self.exchange)
 
-    # extra check in case running the first time
-    if ((split_path[-1] != 'miscellaneous' and key_address == source_ip) or
-            (split_path[-1] != 'miscellaneous' and key_address == None)):
-        # Initialize and load the model
-        if len(sys.argv) > 2:
-            load_path = sys.argv[2]
-        else:
-            load_path = '/models/OneLayerModel.pkl'
+        return
 
-        # Compute model hash
-        with open(load_path, 'rb') as handle:
-            model_hash = hashlib.md5(handle.read()).hexdigest()
+    def lookup_key(self, key):
+        '''
+        Look up a key from the input filename
+        '''
+        try:
+            key_info = self.r.hgetall(key)
+            endpoint = key_info[b'endpoint_data']
+            endpoint = endpoint.decode('utf-8')
+            end_dict = ast.literal_eval(endpoint)
+            address = end_dict['ip-address']
+        except Exception as e:
+            self.logger.error("Failed to retrieve address because: {0}".format(str(e)))
+            address = None
+            return address, e
 
-        model = OneLayerModel(duration=None, hidden_size=None)
-        model.load(load_path)
-        logger.debug('Loaded model from %s', load_path)
+        return address, None
 
-        # Get representations from the model
-        reps, source_ip, timestamps, preds, others = model.get_representation(
-            pcap_path,
-            source_ip=source_ip,
-            mean=False
-        )
-        if preds is not None:
+    def get_address_info(self, address, timestamp):
+        '''
+        Look up address information prior to the timestamp
+        '''
+        # Get the timestamps of the past updates for this address
+        try:
+            updates = self.r.hgetall(address)
+            timestamps = json.loads(updates[b'timestamps'].decode('ascii'))
+        except Exception as e:
+            timestamps = None
 
-            logger.debug('Generating predictions')
-            last_update, prev_rep = get_previous_state(
-                source_ip, timestamps[0], skip_rabbit)
+        # Defaults if there are no previous updates
+        current_state = np.zeros(self.state_size)
+        average_state = np.zeros(self.state_size)
+        other_ips = []
 
-            _, mean_rep = average_representation(
-                reps,
-                timestamps,
-                time_const,
-                prev_representation=prev_rep,
-                last_update=last_update
+        # If there is a previous update, read out the state
+        last_update = None
+        if timestamps is not None:
+            # Get the most recent update prior to the current timestsmp
+            updates = [time for time in timestamps if time < timestamp]
+            if len(updates) > 0:
+                last_update = max(updates)
+
+        # Read the state of the most recent update if there was one
+        if last_update is not None:
+            key = address + '_' + str(last_update)
+            state = self.r.hgetall(key)
+
+            current_state = json.loads(
+                state[b'current_representation'].decode('ascii')
             )
-            mean_preds = model.classify_representation(mean_rep)
+            average_state = json.loads(state[b'representation'].decode('ascii'))
+            labels = ast.literal_eval(state[b'labels'].decode('utf-8'))
+            confs = ast.literal_eval(state[b'confidences'].decode('utf-8'))
+            other_ips = ast.literal_eval(state[b'other_ips'].decode('utf-8'))
+        else:
+            labels = None
+            confs = None
+
+        return current_state, average_state, last_update
+
+    def get_previous_state(self, source_mac, timestamp):
+        '''
+        Gets the average representation vector from the most recent update
+        before the current timestamp
+
+        Args:
+            source_mac: MAC address to read the representation from
+            timestamp: Current timestamp.  Get only representations before this
+
+        Returns:
+            last_update: Timestamp of last update
+            previous_representation: Average representation at last update
+        '''
+
+        # Try to read the old updates, if there are none return Nones
+        try:
+            updates = self.r.hgetall(source_mac)
+        except Exception as e:
+            return None, None
+
+        # Get the most recent prior timestamp from the update list
+        try:
+            update_list = json.loads(updates[b'timestamps'].decode('ascii'))
+        except:
+            update_list = []
+        last_update = None
+        for update in update_list:
+            if update < timestamp.timestamp():
+                last_update = update
+
+        # Return Nones if there is no earlier update
+        if last_update is None:
+            return None, None
+
+        # Read the last updated entry to get the previous representation
+        key = source_mac + '_' + str(last_update)
+        try:
+            state = self.r.hgetall(key)
+        except Exception as e:
+            return None, None
+        previous_representation = json.loads(
+            state[b'representation'].decode('ascii')
+        )
+        return last_update, previous_representation
+
+    def average_representation(
+        self,
+        representations,
+        timestamps,
+        prev_representation=None,
+        last_update=None,
+    ):
+        '''
+        Computes the new representation from the old ones if they are given.
+        If they are not, compute the EMA of the new observations
+
+        Args:
+            representations: New representations
+            timestamps: Times that the new representations were seen
+            prev_representation: The representation computed at last_update
+            last_update: Time of previous representation update
+
+        Returns:
+            new_timestamp: Timestamp of the new representations
+            new_representation: Newly computed representations
+        '''
+
+        # If there is no previous representation, default to zeros
+        if prev_representation is None:
+            last_update = None
+            prev_representation = np.zeros(representations.shape[1])
+
+        prev_time = last_update
+        representation = prev_representation
+        for i, rep in enumerate(representations):
+            time = timestamps[i].timestamp()
+            # If there was no previous update the representation is set equal to
+            # the current representaton
+            if prev_time is None:
+                representation = rep
+                prev_time = time
+            # If the time of the representation is after the previous update,
+            # compute the exponentially weighted moving average.
+            elif time > prev_time:
+                time_diff = time - prev_time
+                alpha = 1 - np.exp(-time_diff/self.time_const)
+                representation += alpha*(rep - representation)
+                prev_time = time
+
+        return time, representation
+
+
+    def update_data(
+        self,
+        source_mac,
+        representations,
+        timestamps,
+        predictions,
+        other_ips,
+        model_hash
+    ):
+        '''
+        Updates the stored data with the new information
+
+        Args:
+            source_mac: Address of the representaion to update
+            representations: New observations of representations
+            timestamps: Time at which each representation was observed
+            predictions: Model predictions along with confidences
+            other_ips: Other IP addresses the source has communicated with
+            model_hash: Hash of the model used to compute this information
+        '''
+        # Get the previous update time and average representation
+        last_update, prev_rep = self.get_previous_state(
+            source_mac, timestamps[0])
+
+        # Compute current representation
+        time, current_rep = self.average_representation(
+            representations, timestamps)
+
+        # Compute moving average representation
+        time, avg_rep = self.average_representation(
+            representations,
+            timestamps,
+            prev_representation=prev_rep,
+            last_update=last_update
+        )
+
+        # Separate labels and confidences
+        labels = [label for label, confidence in predictions]
+        confidences = [confidence for label, confidence in predictions]
+
+        # Create the information to store
+        key = source_mac + '_' + str(time)
+        state = {
+            'representation': list(avg_rep),
+            'current_representation': list(current_rep),
+            'labels': labels,
+            'confidences': confidences,
+            'other_ips': sorted(other_ips),
+            'model_hash': model_hash
+        }
+
+        self.logger.debug('created key %s', key)
+        self.logger.debug(state)
+        r = None
+        try:
+            self.logger.debug('Storing data')
+            self.r.hmset(key, state)
+            self.r.sadd('mac_addresses', source_mac)
+            self.logger.debug('Storing update time')
+            # Add this update time to the list of updates
+            updates = self.r.hgetall(source_mac)
+            update_list = json.loads(updates[b'timestamps'].decode('ascii'))
+            self.logger.debug('Got previous updates from %s', source_mac)
+        except Exception as e:
+            self.logger.debug('No previous updates found for %s', source_mac)
+            update_list = []
+
+        update_list.append(time)
+        update_list = sorted(update_list)
+        times = {'timestamps': update_list}
+        self.logger.debug('Updating %s', source_mac)
+        self.logger.debug(times)
+        try:
+            self.r.hmset(source_mac, times)
+            self.r.sadd('mac_addresses', source_mac)
+        except Exception as e:
+            self.logger.debug('Could not store update time')
+
+        return current_rep, avg_rep, key
+
+    def basic_decision(
+        self,
+        key,
+        address,
+        prev_time,
+        timestamp,
+        labels,
+        confs,
+        abnormality
+    ):
+
+        valid = True
+
+        if labels is None:
+            labels = ['Unknown']*3
+            confs = [1, 0, 0]
+            valid = False
+
+        if key is None:
+            key = address
+            valid = False
+
+        investigate = False
+        if prev_time is not None and timestamp - prev_time > self.look_time:
+            investigate = True
+        if labels[0] == 'Unknown':
+            investigate = True
+
+        behavior = 'normal'
+        if abnormality > self.threshold:
+            behavior = 'abnormal'
+
+        output = {}
+        decisions = {'behavior': behavior, 'investigate': investigate}
+        classifications = {'labels': labels[0:3], 'confidences': confs[0:3]}
+        id_dict = {
+            'decisions': decisions,
+            'classification': classifications,
+            'timestamp': timestamp,
+            'valid': valid
+        }
+        output[key] = id_dict
+        return output
+
+    def get_config(self):
+        # Get time constant from config
+        try:
+            with open('opts/config.json') as config_file:
+                config = json.load(config_file)
+                self.time_const = config['time constant']
+                self.state_size = config['state size']
+                self.look_time = config['look time']
+                self.threshold = config['threshold']
+                self.conf_labels = config['labels']
+                self.rnn_size = config['rnn size']
+                #self.duration = config['duration']
+                #self.batch_size = config['batch size']
+        except Exception as e:  # pragma: no cover
+            self.logger.error(
+                "unable to read 'opts/config.json' properly because: %s", str(e))
+            sys.exit(1)
+        return
+
+    def main(self):
+        # path to the pcap to get the update from
+        if len(sys.argv) < 2:
+            pcap_path = '/pcaps/eval.pcap'
+        else:
+            pcap_path = sys.argv[1]
+        # parse the filename to get IP address
+        try:
+            split_path = os.path.split(pcap_path)[-1]
+            split_path = split_path.split('.')
+            split_path = split_path[0].split('-')
+            key = split_path[0].split('_')[1]
+            key_address, _ = self.lookup_key(key)
+            if len(split_path) >= 7:
+                source_mac = '.'.join(split_path[-4:])
+            else:
+                source_mac = None
+        except Exception as e:
+            self.logger.debug('Could not get address info because %s', str(e))
+            self.logger.debug('Defaulting to inferring MAC address from %s', pcap_path)
+            source_mac = None
+            key_address = None
+        if key_address is None:
+            key = None
+
+        # extra check in case running the first time
+        if ((split_path[-1] != 'miscellaneous' and key_address == source_mac) or
+                (split_path[-1] != 'miscellaneous' and key_address == None)):
+            # Initialize and load the model
             if len(sys.argv) > 2:
-                for p in mean_preds:
-                    logger.debug(p)
-            # Update the stored representation
-            current_rep, avg_rep = None, None
-            # if reps is not None and is_private(source_ip):
-            if reps is not None:
-                logger.debug('Updating stored data')
-                current_rep, avg_rep, r_key = update_data(
-                    source_ip,
+                load_path = sys.argv[2]
+            else:
+                load_path = '/models/OneLayerModel.pkl'
+
+            # Compute model hash
+            with open(load_path, 'rb') as handle:
+                model_hash = hashlib.md5(handle.read()).hexdigest()
+
+            model = OneLayerModel(duration=None, hidden_size=None)
+            model.load(load_path)
+            self.logger.debug('Loaded model from %s', load_path)
+
+            # Get representations from the model
+            reps, source_mac, timestamps, preds, others = model.get_representation(
+                pcap_path,
+                source_ip=source_mac,
+                mean=False
+            )
+            if preds is not None:
+                self.logger.debug('Generating predictions')
+                last_update, prev_rep = self.get_previous_state(
+                    source_mac, timestamps[0])
+
+                _, mean_rep = self.average_representation(
                     reps,
                     timestamps,
-                    preds,
-                    others,
-                    model_hash,
-                    time_const,
-                    skip_rabbit
+                    prev_representation=prev_rep,
+                    last_update=last_update
                 )
-
-            # Get the sessions that the model looked at
-            sessions = model.sessions
-            # Clean the sessions
-            clean_sessions = []
-            inferred_ip = None
-            for session_dict in sessions:
-                cleaned_sessions, inferred_ip = \
-                    clean_session_dict(
-                        session_dict,
-                        source_address=source_ip
+                mean_preds = model.classify_representation(mean_rep)
+                if len(sys.argv) > 2:
+                    for p in mean_preds:
+                        self.logger.debug(p)
+                # Update the stored representation
+                current_rep, avg_rep = None, None
+                # if reps is not None and is_private(source_mac):
+                if reps is not None:
+                    self.logger.debug('Updating stored data')
+                    current_rep, avg_rep, r_key = self.update_data(
+                        source_mac,
+                        reps,
+                        timestamps,
+                        preds,
+                        others,
+                        model_hash
                     )
-                clean_sessions.append(cleaned_sessions)
 
-            if source_ip is None:
-                source_ip = inferred_ip
+                # Get the sessions that the model looked at
+                sessions = model.sessions
+                # Clean the sessions
+                clean_sessions = []
+                inferred_mac = None
+                for session_dict in sessions:
+                    cleaned_sessions, inferred_mac = \
+                        clean_session_dict(
+                            session_dict,
+                            source_address=source_mac
+                        )
+                    clean_sessions.append(cleaned_sessions)
 
-            # Make simple decisions based on vector differences and update times
-            decisions = {}
-            timestamp = timestamps[0].timestamp()
-            labels, confs = zip(*preds)
-            if os.environ.get('POSEIDON_PUBLIC_SESSIONS'):
-                logger.debug('Bypassing abnormality detection')
-                abnormality = 0
+                if source_mac is None:
+                    source_mac = inferred_mac
+
+                # Make simple decisions based on vector differences and update times
+                decisions = {}
+                timestamp = timestamps[0].timestamp()
+                labels, confs = zip(*preds)
+                if os.environ.get('POSEIDON_PUBLIC_SESSIONS'):
+                    self.logger.debug('Bypassing abnormality detection')
+                    abnormality = 0
+                else:
+                    abnormality = eval_pcap(
+                        pcap_path, self.conf_labels, self.time_const, label=labels[0], rnn_size=self.rnn_size)
+                repr_s, m_repr_s, prev_s = self.get_address_info(
+                    source_mac,
+                    timestamp
+                )
+                decision = self.basic_decision(
+                    key,
+                    source_mac,
+                    prev_s,
+                    timestamp,
+                    labels,
+                    confs,
+                    abnormality
+                )
+                self.logger.debug('Created message')
+                for i in range(3):
+                    self.logger.info(labels[i] + ' : ' + str(round(confs[i], 3)))
+
+                # update Redis with decision
+                try:
+                    self.r.hmset(r_key, decision)
+                except Exception as e:
+                    self.logger.error(
+                        'Failed to update keys in Redis because: {0}'.format(str(e)))
+
+                # Get json message
+                message = json.dumps(decision)
+                self.logger.info('Message: ' + message)
+                if not self.skip_rabbit:
+                    self.channel.basic_publish(exchange=self.exchange,
+                                               routing_key=self.routing_key,
+                                               body=message)
             else:
-                abnormality = eval_pcap(
-                    pcap_path, conf_labels, time_const, label=labels[0], rnn_size=rnn_size)
-            repr_s, m_repr_s, _, prev_s, _, _ = get_address_info(
-                source_ip,
-                timestamp,
-                state_size,
-                skip_rabbit
-            )
-            decision = basic_decision(
-                key,
-                source_ip,
-                prev_s,
-                timestamp,
-                labels,
-                confs,
-                abnormality,
-                look_time,
-                threshold
-            )
-            logger.debug('Created message')
-            for i in range(3):
-                logger.info(labels[i] + ' : ' + str(round(confs[i], 3)))
+                message = {}
+                message[key] = {'valid': False}
+                message = json.dumps(message)
+                self.logger.info('Not enough sessions in pcap')
+                if not self.skip_rabbit:
+                    self.channel.basic_publish(exchange=self.exchange,
+                                               routing_key=self.routing_key,
+                                               body=message)
 
-            # update Redis with decision
+        if not self.skip_rabbit:
             try:
-                r = StrictRedis(host='redis', port=6379, db=0,
-                                socket_connect_timeout=2)
-                r.hmset(r_key, decision)
+                self.connection.close()
             except Exception as e:
-                logger.error(
-                    'Failed to update keys in Redis because: {0}'.format(str(e)))
+                self.logger.error("Unable to close rabbit connection because: {0}".format(str(e)))
+        return
 
-            # Get json message
-            message = json.dumps(decision)
-            logger.info('Message: ' + message)
-            if not skip_rabbit:
-                channel.basic_publish(exchange=exchange,
-                                      routing_key=routing_key,
-                                      body=message)
-        else:
-            message = {}
-            message[key] = {'valid': False}
-            message = json.dumps(message)
-            logger.info('Not enough sessions in pcap')
-            if not skip_rabbit:
-                channel.basic_publish(exchange=exchange,
-                                      routing_key=routing_key,
-                                      body=message)
-
-    if not skip_rabbit:
-        connection.close()
+if __name__ == '__main__':
+    instance = OneLayerEval()
+    instance.main()

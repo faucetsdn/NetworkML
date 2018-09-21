@@ -1,6 +1,6 @@
 {
   "batch size": 32,
-  "duration": 900,
+  "duration": 300,
   "labels": [
     "Administrator workstation",
     "Administrator server",
@@ -14,7 +14,7 @@
   "look time": 86400,
   "max port": 1024,
   "rnn size": 100,
-  "session threshold": 120,
+  "session threshold": 5,
   "source identifier": "MAC",
   "state size": 32,
   "threshold": 0.99,
