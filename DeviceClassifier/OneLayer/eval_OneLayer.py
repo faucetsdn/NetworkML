@@ -74,7 +74,7 @@ class OneLayerEval:
             pika.ConnectionParameters(host='rabbit')
         )
 
-        self.channel = connection.channel()
+        self.channel = self.connection.channel()
         self.channel.exchange_declare(
             exchange=self.exchange, exchange_type=self.exchange_type
         )
