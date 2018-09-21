@@ -66,8 +66,8 @@ def create_dataset(
         name, ext = os.path.splitext(data_dir)
         if ext == '.pcap':
             pcaps.append(data_dir)
-    except:
-        pass
+    except Exception as e:
+        logger.debug("Skipping {0} because: {1}".format(data_dir, str(e)))
 
     for dirpath, dirnames, filenames in os.walk(data_dir):
         for filename in filenames:

@@ -115,7 +115,8 @@ def get_previous_state(source_ip, timestamp, skip_rabbit):
     # Get the most recent prior timestamp from the update list
     try:
         update_list = json.loads(updates[b'timestamps'].decode('ascii'))
-    except:
+    except Exception as e:
+        logger.debug("Empty update list because: {0}".format(str(e)))
         update_list = []
     last_update = None
     for update in update_list:

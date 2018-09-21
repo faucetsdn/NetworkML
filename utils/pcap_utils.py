@@ -193,7 +193,7 @@ def packet_size(packet):
     size = packet[1][32:36]
     try:
         size = int(size, 16)
-    except:
+    except Exception as e:
         size = 0
 
     return size
