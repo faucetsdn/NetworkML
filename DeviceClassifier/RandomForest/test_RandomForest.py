@@ -58,7 +58,8 @@ def calc_f1(results, logger, ignore_unknown=False):
         try:
             precision = tp/(tp + fp)
             recall = tp/(tp + fn)
-        except:
+        except Exception as e:
+            logger.debug("precision and recall being set to 0 because {0}".format(str(e)))
             precision = 0
             recall = 0
 
@@ -174,9 +175,9 @@ if __name__ == '__main__':
     logger.info('-'*80)
     elapsed_time = tock - tick
     rate = file_size/(pow(10, 6)*elapsed_time)
-    logger.info('Evaluated', file_num, 'pcaps in', round(elapsed_time, 3), 'seconds')
-    logger.info('Total data:', file_size/pow(10, 6), 'Mb')
-    logger.info('Total capture time:', time_slices/4, 'hours')
-    logger.info('Data processing rate:', rate, 'Mb per second')
-    logger.info('time per 15 minute capture', (elapsed_time)/(time_slices), 'seconds')
+    logger.info("Evaluated {0} pcaps in {1} seconds".format(file_num, round(elapsed_time, 3)))
+    logger.info("Total data: {0} Mb".format(file_size/pow(10, 6)))
+    logger.info("Total capture time: {0} hours".format(time_slices/4))
+    logger.info("Data processing rate: {0} Mb per second".format(rate))
+    logger.info("time per 15 minute capture {0} seconds".format((elapsed_time)/(time_slices)))
     logger.info('-'*80)
