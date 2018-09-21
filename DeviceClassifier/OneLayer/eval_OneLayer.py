@@ -23,6 +23,13 @@ class OneLayerEval:
 
     def __init__(self):
         self.r = None
+        self.time_const = None
+        self.state_size = None
+        self.look_time = None
+        self.threshold = None
+        self.conf_labels = None
+        self.rnn_size = None
+
         self.logger = logging.getLogger(__name__)
         logging.basicConfig(level=logging.INFO)
         tf.logging.set_verbosity(tf.logging.ERROR)
@@ -369,7 +376,6 @@ class OneLayerEval:
         except Exception as e:  # pragma: no cover
             self.logger.error(
                 "unable to read 'opts/config.json' properly because: %s", str(e))
-            sys.exit(1)
         return
 
     def main(self):
