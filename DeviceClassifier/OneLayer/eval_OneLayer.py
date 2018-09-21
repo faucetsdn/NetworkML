@@ -11,7 +11,6 @@ import tensorflow as tf
 from poseidonml.eval_SoSModel import eval_pcap
 from poseidonml.OneLayer import OneLayerModel
 from poseidonml.pcap_utils import clean_session_dict
-from poseidonml.pcap_utils import is_private
 from redis import StrictRedis
 
 
@@ -113,11 +112,6 @@ class OneLayerEval:
         except Exception as e:
             timestamps = None
 
-        # Defaults if there are no previous updates
-        current_state = np.zeros(self.state_size)
-        average_state = np.zeros(self.state_size)
-        other_ips = []
-
         # If there is a previous update, read out the state
         last_update = None
         if timestamps is not None:
@@ -126,23 +120,7 @@ class OneLayerEval:
             if len(updates) > 0:
                 last_update = max(updates)
 
-        # Read the state of the most recent update if there was one
-        if last_update is not None:
-            key = address + '_' + str(last_update)
-            state = self.r.hgetall(key)
-
-            current_state = json.loads(
-                state[b'current_representation'].decode('ascii')
-            )
-            average_state = json.loads(state[b'representation'].decode('ascii'))
-            labels = ast.literal_eval(state[b'labels'].decode('utf-8'))
-            confs = ast.literal_eval(state[b'confidences'].decode('utf-8'))
-            other_ips = ast.literal_eval(state[b'other_ips'].decode('utf-8'))
-        else:
-            labels = None
-            confs = None
-
-        return current_state, average_state, last_update
+        return last_update
 
     def get_previous_state(self, source_mac, timestamp):
         '''
@@ -290,7 +268,6 @@ class OneLayerEval:
 
         self.logger.debug('created key %s', key)
         self.logger.debug(state)
-        r = None
         try:
             self.logger.debug('Storing data')
             self.r.hmset(key, state)
@@ -438,8 +415,7 @@ class OneLayerEval:
                     for p in mean_preds:
                         self.logger.debug(p)
                 # Update the stored representation
-                current_rep, avg_rep = None, None
-                # if reps is not None and is_private(source_mac):
+                avg_rep = None
                 if reps is not None:
                     self.logger.debug('Updating stored data')
                     current_rep, avg_rep, r_key = self.update_data(
@@ -468,7 +444,6 @@ class OneLayerEval:
                     source_mac = inferred_mac
 
                 # Make simple decisions based on vector differences and update times
-                decisions = {}
                 timestamp = timestamps[0].timestamp()
                 labels, confs = zip(*preds)
                 if os.environ.get('POSEIDON_PUBLIC_SESSIONS'):
@@ -477,7 +452,7 @@ class OneLayerEval:
                 else:
                     abnormality = eval_pcap(
                         pcap_path, self.conf_labels, self.time_const, label=labels[0], rnn_size=self.rnn_size)
-                repr_s, m_repr_s, prev_s = self.get_address_info(
+                prev_s = self.get_address_info(
                     source_mac,
                     timestamp
                 )
