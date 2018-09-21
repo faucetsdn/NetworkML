@@ -122,7 +122,6 @@ class OneLayerModel:
         full_features -= np.expand_dims(self.means, 0)
         full_features /= np.expand_dims(self.stds, 0)
         features = full_features[:, self.feature_list]
-
         return features, source_ip, timestamps, other_ips
 
     def train(self, data_dir):

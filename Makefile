@@ -9,10 +9,13 @@ help:
 	@echo "test_[onelayer|randomforest]     Tests directory of pcaps against specified model"
 	@echo "train_[onelayer|randomforest]    Trains directory of pcaps against specified model"
 	@echo "run      Equivalent to eval_onelayer"
-eval_onelayer: build_onelayer eval_onelayer_nobuild
+eval_onelayer: build_onelayer run_redis eval_onelayer_nobuild
 eval_onelayer_nobuild:
+	@echo
 	@echo "Running OneLayer Eval on PCAP file $(PCAP)"
-	docker run -it --rm -v "$(PCAP):/pcaps/eval.pcap" -e SKIP_RABBIT=true -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) --entrypoint=python3 poseidonml:onelayer eval_OneLayer.py
+	@docker run -it --rm -v "$(PCAP):/pcaps/eval.pcap" --link poseidonml-redis:redis -e SKIP_RABBIT=true -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) --entrypoint=python3 poseidonml:onelayer eval_OneLayer.py
+	@docker rm -f poseidonml-redis > /dev/null
+	@echo
 test_onelayer: build_onelayer
 	@echo "Running OneLayer Test on PCAP files $(PCAP)"
 	@docker run -it --rm -v "/tmp/models:/OneLayer/models" -v "$(PCAP):/pcaps/" -e SKIP_RABBIT=true -e LOG_LEVEL=$(LOG_LEVEL) --entrypoint=python3 poseidonml:onelayer train_OneLayer.py
@@ -34,6 +37,8 @@ eval_sosmodel: build_sosmodel
 train_sosmodel: build_sosmodel
 	@echo "Running SoSModel Train on PCAP files $(PCAP)"
 	@docker run -it --rm -v "/tmp/models:/models" -v "$(PCAP):/pcaps/" -e SKIP_RABBIT=true -e LOG_LEVEL=$(LOG_LEVEL) --entrypoint=python3 poseidonml:sosmodel train_SoSModel.py /pcaps/ /models/SoSModel.pkl
+run_redis:
+	@docker run -d --name poseidonml-redis redis:latest
 build_onelayer: build_base
 	@pushd DeviceClassifier/OneLayer && docker build -t poseidonml:onelayer . && popd
 build_randomforest: build_base
