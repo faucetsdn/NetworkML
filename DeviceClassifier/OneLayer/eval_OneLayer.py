@@ -385,24 +385,19 @@ class OneLayerEval:
             pcap_path = '/pcaps/eval.pcap'
         else:
             pcap_path = sys.argv[1]
-        # parse the filename to get IP address
+
+        source_mac = None
+        key_address = None
+        key = None
+        split_path = "None"
         try:
             split_path = os.path.split(pcap_path)[-1]
             split_path = split_path.split('.')
             split_path = split_path[0].split('-')
             key = split_path[0].split('_')[1]
             key_address, _ = self.lookup_key(key)
-            if len(split_path) >= 7:
-                source_mac = '.'.join(split_path[-4:])
-            else:
-                source_mac = None
         except Exception as e:
             self.logger.debug('Could not get address info because %s', str(e))
-            self.logger.debug('Defaulting to inferring MAC address from %s', pcap_path)
-            source_mac = None
-            key_address = None
-        if key_address is None:
-            key = None
 
         # extra check in case running the first time
         if ((split_path[-1] != 'miscellaneous' and key_address == source_mac) or
