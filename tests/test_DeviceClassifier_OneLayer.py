@@ -22,8 +22,7 @@ def test_onelayereval():
     address, e = instance.lookup_key('foo')
     assert address == None
 
-    current_state, average_state, last_update = instance.get_address_info(
-        '10.0.0.1', '1')
+    last_update = instance.get_address_info('10.0.0.1', '1')
     last_update, previous_representation = instance.get_previous_state(
         '10.0.0.1', '1')
     assert last_update == None
