@@ -50,8 +50,6 @@ class OneLayerEval:
 
         self.get_config()
         self.connect_redis()
-        if not self.skip_rabbit:
-            self.connect_rabbit()
 
     def connect_redis(self, host='redis', port=6379, db=0):
         self.r = None
@@ -376,9 +374,8 @@ class OneLayerEval:
         except Exception as e:
             self.logger.debug('Could not get address info because %s', str(e))
 
-        # extra check in case running the first time
-        if ((split_path[-1] != 'miscellaneous' and key_address == source_mac) or
-                (split_path[-1] != 'miscellaneous' and key_address == None)):
+        # ignore misc files
+        if (split_path[-1] != 'miscellaneous'):
             # Initialize and load the model
             if len(sys.argv) > 2:
                 load_path = sys.argv[2]
@@ -480,6 +477,7 @@ class OneLayerEval:
                 message = json.dumps(decision)
                 self.logger.info('Message: ' + message)
                 if not self.skip_rabbit:
+                    self.connect_rabbit()
                     self.channel.basic_publish(exchange=self.exchange,
                                                routing_key=self.routing_key,
                                                body=message)
@@ -489,6 +487,7 @@ class OneLayerEval:
                 message = json.dumps(message)
                 self.logger.info('Not enough sessions in pcap')
                 if not self.skip_rabbit:
+                    self.connect_rabbit()
                     self.channel.basic_publish(exchange=self.exchange,
                                                routing_key=self.routing_key,
                                                body=message)
