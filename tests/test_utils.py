@@ -20,7 +20,7 @@ from utils.pcap_utils import is_protocol
 from utils.pcap_utils import packet_size
 from utils.pcap_utils import strip_ips
 from utils.pcap_utils import strip_macs
-from utils.RandomForestModel import RandomForestModel
+from utils.RandomForest import RandomForestModel
 from utils.reader import packetizer
 from utils.reader import parse_packet_data
 from utils.reader import parse_packet_head

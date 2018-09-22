@@ -22,7 +22,7 @@ tf.logging.set_verbosity(tf.logging.ERROR)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
-def eval_pcap(pcap, labels, time_const, label=None, rnn_size=100):
+def eval_pcap(pcap, labels, time_const, label=None, rnn_size=100, model_path='/models/OneLayerModel.pkl'):
     logger = logging.getLogger(__name__)
     try:
         if 'LOG_LEVEL' in os.environ and os.environ['LOG_LEVEL'] != '':
@@ -30,7 +30,7 @@ def eval_pcap(pcap, labels, time_const, label=None, rnn_size=100):
     except Exception as e:
         logger.error(
             'Unable to set logging level because: {0} defaulting to INFO.'.format(str(e)))
-    data = create_dataset(pcap, time_const, label=label)
+    data = create_dataset(pcap, time_const, label=label, model_path=model_path)
     # Create an iterator
     iterator = BatchIterator(
         data,

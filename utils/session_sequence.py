@@ -12,11 +12,11 @@ import sys
 import numpy as np
 
 try:
-    from .RandomForestModel import RandomForestModel
+    from .RandomForest import RandomForestModel
     from .pcap_utils import get_source
     from .pcap_utils import featurize_session
 except SystemError:  # pragma: no cover
-    from RandomForestModel import RandomForestModel
+    from RandomForest import RandomForestModel
     from pcap_utils import get_source
     from pcap_utils import featurize_session
 
@@ -67,7 +67,7 @@ def create_dataset(
         if ext == '.pcap':
             pcaps.append(data_dir)
     except Exception as e:
-        logger.debug("Skipping {0} because: {1}".format(data_dir, str(e)))
+        logger.debug('Skipping {0} because: {1}'.format(data_dir, str(e)))
 
     for dirpath, dirnames, filenames in os.walk(data_dir):
         for filename in filenames:
