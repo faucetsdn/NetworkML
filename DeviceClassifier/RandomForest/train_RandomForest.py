@@ -6,7 +6,7 @@ location specified by the second argument.
 import json
 import sys
 
-from poseidonml.RandomForestModel import RandomForestModel
+from poseidonml.RandomForest import RandomForestModel
 
 if __name__ == '__main__':
     # Load model params from config

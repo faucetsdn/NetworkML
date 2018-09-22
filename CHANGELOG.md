@@ -1,3 +1,7 @@
+# v0.2.0 (2018-09-22)
+
+ - moved a bunch of duplicated code into common utils
+
 # v0.1.9 (2018-09-21)
 
  - fixed issue where results were not getting sent to rabbitmq or stored in redis
