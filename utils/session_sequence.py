@@ -70,7 +70,7 @@ def create_dataset(
 
     for dirpath, _, filenames in os.walk(data_dir):
         for filename in filenames:
-            name, ext = os.path.splitext(filename)
+            ext = os.path.splitext(filename)[-1]
             if ext == '.pcap':
                 pcaps.append(os.path.join(dirpath, filename))
 

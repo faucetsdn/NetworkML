@@ -237,7 +237,9 @@ class Model:
             return None, None, None, None, None
 
         probabilities = []
+        representation = features
         if self.model_type == 'RandomForest':
+            mean_rep = np.mean(representation, axis=0)
             probabilities = self.model.predict_proba(mean_rep.reshape(1, -1))
             probabilities = probabilities[0]
         elif self.model_type == 'OneLayer':
