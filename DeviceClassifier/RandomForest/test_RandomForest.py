@@ -10,7 +10,7 @@ import sys
 import time
 
 import numpy as np
-from poseidonml.RandomForest import RandomForestModel
+from poseidonml.Model import Model
 
 
 logging.basicConfig(level=logging.INFO)
@@ -101,7 +101,7 @@ if __name__ == '__main__':
         save_path = sys.argv[3]
     else:
         save_path = 'models/RandomForestModel.pkl'
-    model = RandomForestModel(duration=None, hidden_size=None)
+    model = Model(duration=None, hidden_size=None, model_type='RandomForest')
     logger.info('Loading model from %s', load_path)
     model.load(load_path)
 

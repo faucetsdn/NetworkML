@@ -2,7 +2,7 @@ from utils import train_SoSModel
 from utils.eval_SoSModel import eval_pcap
 from utils.featurizer import extract_features
 from utils.iterator import BatchIterator
-from utils.OneLayer import OneLayerModel
+from utils.Model import Model
 from utils.pcap_utils import clean_packet
 from utils.pcap_utils import clean_session_dict
 from utils.pcap_utils import create_inputs
@@ -20,7 +20,6 @@ from utils.pcap_utils import is_protocol
 from utils.pcap_utils import packet_size
 from utils.pcap_utils import strip_ips
 from utils.pcap_utils import strip_macs
-from utils.RandomForest import RandomForestModel
 from utils.reader import packetizer
 from utils.reader import parse_packet_data
 from utils.reader import parse_packet_head
@@ -42,12 +41,8 @@ from utils.training_utils import select_features
 from utils.training_utils import whiten_features
 
 
-def test_OneLayerModel():
-    instance = OneLayerModel(15)
-
-
-def test_RandomForestModel():
-    instance = RandomForestModel(15)
+def test_Model():
+    instance = Model(15)
 
 
 def test_SoSModel():

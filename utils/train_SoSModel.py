@@ -64,7 +64,7 @@ if __name__ == '__main__':
     try:
         rnnmodel.load('/models/SoSmodel')
         logger.info('Loaded model')
-    except:
+    except Exception as e:
         rnnmodel.initialize()
         logger.info('Initialized model')
 

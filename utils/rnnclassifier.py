@@ -226,7 +226,7 @@ class AbnormalDetector:
                 session_cell_b,
                 attn_length=self.attn_size
             )
-            session_vectors, session_states = tf.nn.bidirectional_dynamic_rnn(
+            session_vectors, _ = tf.nn.bidirectional_dynamic_rnn(
                 session_attn_cell_f,
                 session_attn_cell_b,
                 sessions,

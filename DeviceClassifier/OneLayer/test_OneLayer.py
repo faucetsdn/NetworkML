@@ -10,7 +10,7 @@ import sys
 import time
 
 import numpy as np
-from poseidonml.OneLayer import OneLayerModel
+from poseidonml.Model import Model
 
 
 logging.basicConfig(level=logging.INFO)
@@ -31,7 +31,7 @@ def calc_f1(results, logger, ignore_unknown=False):
                 else:
                     results_by_label[true_label] = {'tp': 0, 'fp': 0, 'fn': 0}
 
-            for i, classification in indiv_results.items():
+            for _, classification in indiv_results.items():
                 class_label = classification[0][0]
                 if class_label == 'Unknown' and ignore_unknown is True:
                     class_label = classification[1][0]
@@ -58,7 +58,7 @@ def calc_f1(results, logger, ignore_unknown=False):
         try:
             precision = tp/(tp + fp)
             recall = tp/(tp + fn)
-        except:
+        except Exception as e:
             precision = 0
             recall = 0
 
@@ -99,7 +99,7 @@ if __name__ == '__main__':
         save_path = sys.argv[3]
     else:
         save_path = 'models/OneLayerModel.pkl'
-    model = OneLayerModel(duration=None, hidden_size=None)
+    model = Model(duration=None, hidden_size=None, model_type='OneLayer')
     logger.info('Loading model from %s', load_path)
     model.load(load_path)
 
@@ -174,9 +174,11 @@ if __name__ == '__main__':
     logger.info('-'*80)
     elapsed_time = tock - tick
     rate = file_size/(pow(10, 6)*elapsed_time)
-    logger.info("Evaluated {0} pcaps in {1} seconds".format(file_num, round(elapsed_time, 3)))
-    logger.info("Total data: {0} Mb".format(file_size/pow(10, 6)))
-    logger.info("Total capture time: {0} hours".format(time_slices/4))
-    logger.info("Data processing rate: {0} Mb per second".format(rate))
-    logger.info("time per 15 minute capture {0} seconds".format((elapsed_time)/(time_slices)))
+    logger.info('Evaluated {0} pcaps in {1} seconds'.format(
+        file_num, round(elapsed_time, 3)))
+    logger.info('Total data: {0} Mb'.format(file_size/pow(10, 6)))
+    logger.info('Total capture time: {0} hours'.format(time_slices/4))
+    logger.info('Data processing rate: {0} Mb per second'.format(rate))
+    logger.info('time per 15 minute capture {0} seconds'.format(
+        (elapsed_time)/(time_slices)))
     logger.info('-'*80)

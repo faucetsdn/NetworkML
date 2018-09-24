@@ -54,7 +54,7 @@ def read_data(data_dir, duration=None, labels=None):
     with open('opts/label_assignments.json') as handle:
         label_assignments = json.load(handle)
 
-    for dirpath, dirnames, filenames in os.walk(data_dir):
+    for dirpath, _, filenames in os.walk(data_dir):
         for file in filenames:
             _, ext = os.path.splitext(file)
             if ext == '.pcap':
@@ -148,7 +148,6 @@ def select_features(X, y):
                 max_score = score
                 threshold = trial/step_size
 
-    importance = {i: s for i, s in enumerate(selection_model.scores_)}
     return [i for i, score in enumerate(selection_model.scores_)
             if score > threshold]
 

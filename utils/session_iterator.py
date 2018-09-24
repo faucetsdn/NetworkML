@@ -71,14 +71,14 @@ class BatchIterator:
         """
         Handles loading the data into the correct format
         """
-        if type(self.data_input) is dict:
+        if isinstance(self.data_input, dict):
             self.data = self.data_input
         else:
             with open(self.data_input, 'rb') as handle:
                 data = pickle.load(handle)
             self.data = data
 
-        for pcap, sessions in self.data.items():
+        for _, sessions in self.data.items():
             x = np.zeros((self.seq_len, self.feature_length))
             l = np.zeros((self.classification_length, self.seq_len))
             i = 0
@@ -185,7 +185,8 @@ class BatchIterator:
             X[s, 11+port_len:], X[s, 11:port_len+11]
         return X_swapped
 
-    def _switch_host(self, X):
+    @staticmethod
+    def _switch_host(X):
         '''
         Switch the directionality of sessions in the sequence
         '''

@@ -19,9 +19,6 @@ def test_onelayereval():
     instance = OneLayerEval()
     # instance.main()
 
-    address, e = instance.common.lookup_key('foo')
-    assert address == None
-
     last_update = instance.common.get_address_info('10.0.0.1', '1')
     last_update, previous_representation = instance.common.get_previous_state(
         '10.0.0.1', '1')

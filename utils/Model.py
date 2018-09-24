@@ -15,19 +15,16 @@ except SystemError:  # pragma: no cover
     from training_utils import select_features
 
 from sklearn.model_selection import train_test_split
-from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import f1_score
 
 
 logging.basicConfig(level=logging.INFO)
 
 
-class OneLayerModel:
-    def __init__(self, duration, hidden_size=None, labels=None):
+class Model:
+    def __init__(self, duration, hidden_size=None, labels=None, model=None, model_type=None):
         '''
-        Initializes a model with a single hidden layer.  Features are
-        aggregated over the time specified by the duration and the hidden
-        layer size is a hyperparameter set at initialization.
+        Initializes functions shared in various models.
 
         Args:
             duration: Time duration to aggregate features for
@@ -38,7 +35,8 @@ class OneLayerModel:
         self.means = None
         self.stds = None
         self.feature_list = None
-        self.model = None
+        self.model = model
+        self.model_type = model_type
         self.labels = labels
         self.sessions = None
         self.logger = logging.getLogger(__name__)
@@ -182,12 +180,6 @@ class OneLayerModel:
 
         # Fit the one layer model to the augmented training data
         X_input = X_aug[:, self.feature_list]
-        self.model = MLPClassifier(
-            (self.hidden_size),
-            alpha=0.1,
-            activation='relu',
-            max_iter=1000
-        )
 
         self.model.fit(X_input, y_aug)
 
@@ -244,21 +236,28 @@ class OneLayerModel:
         if features is None:
             return None, None, None, None, None
 
-        L1_weights = self.model.coefs_[0]
-        L1_biases = self.model.intercepts_[0]
-        representation = np.maximum(
-            np.matmul(features, L1_weights)+L1_biases,
-            0
-        )
+        probabilities = []
+        if self.model_type == 'RandomForest':
+            probabilities = self.model.predict_proba(mean_rep.reshape(1, -1))
+            probabilities = probabilities[0]
+        elif self.model_type == 'OneLayer':
+            L1_weights = self.model.coefs_[0]
+            L1_biases = self.model.intercepts_[0]
+            representation = np.maximum(
+                np.matmul(features, L1_weights)+L1_biases,
+                0
+            )
 
-        mean_rep = np.mean(representation, axis=0)
+            mean_rep = np.mean(representation, axis=0)
 
-        L2_weights = self.model.coefs_[1]
-        L2_biases = self.model.intercepts_[1]
-        probabilities = np.matmul(representation, L2_weights) + L2_biases
-        probabilities = np.exp(probabilities)
-        probabilities /= np.expand_dims(np.sum(probabilities, axis=1), axis=1)
-        probabilities = np.mean(probabilities, axis=0)
+            L2_weights = self.model.coefs_[1]
+            L2_biases = self.model.intercepts_[1]
+            probabilities = np.matmul(representation, L2_weights) + L2_biases
+            probabilities = np.exp(probabilities)
+            probabilities /= np.expand_dims(
+                np.sum(probabilities, axis=1), axis=1)
+            probabilities = np.mean(probabilities, axis=0)
+
         prediction = [
             (self.labels[i], prob)
             for i, prob in enumerate(probabilities)
@@ -275,11 +274,17 @@ class OneLayerModel:
         '''
         Takes in a representation and produces a classification
         '''
-        L2_weights = self.model.coefs_[1]
-        L2_biases = self.model.intercepts_[1]
-        probabilities = np.matmul(representation, L2_weights) + L2_biases
-        probabilities = np.exp(probabilities)
-        probabilities /= np.sum(probabilities)
+        probabilities = []
+        if self.model_type == 'RandomForest':
+            probabilities = self.model.predict_proba(
+                representation.reshape(1, -1))
+            probabilities = probabilities[0]
+        elif self.model_type == 'OneLayer':
+            L2_weights = self.model.coefs_[1]
+            L2_biases = self.model.intercepts_[1]
+            probabilities = np.matmul(representation, L2_weights) + L2_biases
+            probabilities = np.exp(probabilities)
+            probabilities /= np.sum(probabilities)
         prediction = [
             (self.labels[i], prob)
             for i, prob in enumerate(probabilities)

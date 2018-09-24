@@ -12,11 +12,9 @@ import sys
 import numpy as np
 
 try:
-    from .RandomForest import RandomForestModel
     from .pcap_utils import get_source
     from .pcap_utils import featurize_session
 except SystemError:  # pragma: no cover
-    from RandomForest import RandomForestModel
     from pcap_utils import get_source
     from pcap_utils import featurize_session
 
@@ -44,7 +42,8 @@ def create_dataset(
     data_dir,
     time_const,
     model_path='/models/OneLayerModel.pkl',
-    label=None
+    label=None,
+    model_type='RandomForest'
 ):
     logger = logging.getLogger(__name__)
     try:
@@ -56,20 +55,20 @@ def create_dataset(
 
     # Load the model
     logger.debug('Loading model')
-    model = RandomForestModel(duration=None, hidden_size=None)
+    model = Model(duration=None, hidden_size=None, model_type=model_type)
     model.load(model_path)
 
     # Get all the pcaps in the training directory
     logger.debug('Getting pcaps')
     pcaps = []
     try:
-        name, ext = os.path.splitext(data_dir)
+        ext = os.path.splitext(data_dir)[-1]
         if ext == '.pcap':
             pcaps.append(data_dir)
     except Exception as e:
         logger.debug('Skipping {0} because: {1}'.format(data_dir, str(e)))
 
-    for dirpath, dirnames, filenames in os.walk(data_dir):
+    for dirpath, _, filenames in os.walk(data_dir):
         for filename in filenames:
             name, ext = os.path.splitext(filename)
             if ext == '.pcap':
@@ -85,7 +84,6 @@ def create_dataset(
             mean=False
         )
         sessions = model.sessions
-        source_address = get_source(sessions)
 
         # Compute the mean representations
         prev_rep = None
