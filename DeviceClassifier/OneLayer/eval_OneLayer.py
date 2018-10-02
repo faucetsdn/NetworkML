@@ -6,7 +6,7 @@ import sys
 
 from poseidonml.common import Common
 from poseidonml.eval_SoSModel import eval_pcap
-from poseidonml.OneLayer import OneLayerModel
+from poseidonml.Model import Model
 from poseidonml.pcap_utils import clean_session_dict
 
 
@@ -21,7 +21,7 @@ class OneLayerEval:
         logging.basicConfig(level=logging.INFO)
 
         self.common = Common()
-        self.logger = self.common.setup_logger(self.logger)
+        self.logger = Common().setup_logger(self.logger)
         self.r = self.common.r
         self.time_const = self.common.time_const
         self.state_size = self.common.state_size
@@ -39,7 +39,6 @@ class OneLayerEval:
             pcap_path = sys.argv[1]
 
         source_mac = None
-        key_address = None
         key = None
         split_path = 'None'
         try:
@@ -47,9 +46,8 @@ class OneLayerEval:
             split_path = split_path.split('.')
             split_path = split_path[0].split('-')
             key = split_path[0].split('_')[1]
-            key_address, _ = self.common.lookup_key(key)
         except Exception as e:
-            self.logger.debug('Could not get address info because %s', str(e))
+            self.logger.debug('Could not get key because %s', str(e))
 
         # ignore misc files
         if (split_path[-1] != 'miscellaneous'):
@@ -63,7 +61,8 @@ class OneLayerEval:
             with open(load_path, 'rb') as handle:
                 model_hash = hashlib.md5(handle.read()).hexdigest()
 
-            model = OneLayerModel(duration=None, hidden_size=None)
+            model = Model(duration=None, hidden_size=None,
+                          model_type='OneLayer')
             model.load(load_path)
             self.logger.debug('Loaded model from %s', load_path)
 
@@ -124,7 +123,7 @@ class OneLayerEval:
                     abnormality = 0
                 else:
                     abnormality = eval_pcap(
-                        pcap_path, self.conf_labels, self.time_const, label=labels[0], rnn_size=self.rnn_size)
+                        pcap_path, self.conf_labels, self.time_const, label=labels[0], rnn_size=self.rnn_size, model_type='OneLayer')
                 prev_s = self.common.get_address_info(
                     source_mac,
                     timestamp

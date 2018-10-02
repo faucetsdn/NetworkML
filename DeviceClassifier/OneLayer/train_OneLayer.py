@@ -6,7 +6,9 @@ location specified by the second argument.
 import json
 import sys
 
-from poseidonml.OneLayer import OneLayerModel
+from poseidonml.Model import Model
+from sklearn.neural_network import MLPClassifier
+
 
 if __name__ == '__main__':
     # Load model params from config
@@ -21,11 +23,21 @@ if __name__ == '__main__':
         data_dir = '/pcaps'
     else:
         data_dir = sys.argv[1]
+
+    m = MLPClassifier(
+        (hidden_size),
+        alpha=0.1,
+        activation='relu',
+        max_iter=1000
+    )
+
     # Initialize the model
-    model = OneLayerModel(
+    model = Model(
         duration=duration,
         hidden_size=hidden_size,
-        labels=labels
+        labels=labels,
+        model=m,
+        model_type='OneLayer'
     )
     # Train the model
     model.train(data_dir)

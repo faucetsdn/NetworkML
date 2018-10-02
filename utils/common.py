@@ -1,4 +1,3 @@
-import ast
 import json
 import logging
 import os
@@ -30,7 +29,8 @@ class Common:
         self.get_config()
         self.connect_redis()
 
-    def setup_logger(self, logger):
+    @staticmethod
+    def setup_logger(logger):
         try:
             if 'LOG_LEVEL' in os.environ and os.environ['LOG_LEVEL'] != '':
                 logger.setLevel(os.environ['LOG_LEVEL'])
@@ -82,24 +82,6 @@ class Common:
 
         return
 
-    def lookup_key(self, key):
-        '''
-        Look up a key from the input filename
-        '''
-        try:
-            key_info = self.r.hgetall(key)
-            endpoint = key_info[b'endpoint_data']
-            endpoint = endpoint.decode('utf-8')
-            end_dict = ast.literal_eval(endpoint)
-            address = end_dict['ip-address']
-        except Exception as e:
-            self.logger.error(
-                'Failed to retrieve address because: {0}'.format(str(e)))
-            address = None
-            return address, e
-
-        return address, None
-
     def get_address_info(self, address, timestamp):
         '''
         Look up address information prior to the timestamp
@@ -109,6 +91,8 @@ class Common:
             updates = self.r.hgetall(address)
             timestamps = json.loads(updates[b'timestamps'].decode('ascii'))
         except Exception as e:
+            self.logger.debug(
+                'No timestamp found because: {0}, setting to None'.format(str(e)))
             timestamps = None
 
         # If there is a previous update, read out the state

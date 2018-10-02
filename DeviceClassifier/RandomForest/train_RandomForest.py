@@ -6,7 +6,9 @@ location specified by the second argument.
 import json
 import sys
 
-from poseidonml.RandomForest import RandomForestModel
+from poseidonml.Model import Model
+from sklearn.ensemble import RandomForestClassifier
+
 
 if __name__ == '__main__':
     # Load model params from config
@@ -20,10 +22,19 @@ if __name__ == '__main__':
         data_dir = '/pcaps'
     else:
         data_dir = sys.argv[1]
+
+    m = RandomForestClassifier(
+        n_estimators=100,
+        min_samples_split=5,
+        class_weight='balanced'
+    )
+
     # Initialize the model
-    model = RandomForestModel(
+    model = Model(
         duration=duration,
-        labels=labels
+        labels=labels,
+        model=m,
+        model_type='RandomForest'
     )
     # Train the model
     model.train(data_dir)

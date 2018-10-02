@@ -58,7 +58,7 @@ class BatchIterator:
         """
         Handles loading the data into the correct format
         """
-        if type(self.data_input) is dict:
+        if isinstance(self.data_input, dict):
             self.logger.info('Loading data from dict')
             self.data = self.data_input
         else:
@@ -74,7 +74,7 @@ class BatchIterator:
         test_sessions_by_length = [{} for i in range(9)]
         test_labels_by_length = [{} for i in range(9)]
 
-        for key, value in self.data.items():
+        for _, value in self.data.items():
             for session in value:
                 session_length = len(session['packets'])
                 model_output = session['model outputs']

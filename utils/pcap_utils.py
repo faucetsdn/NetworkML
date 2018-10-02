@@ -143,7 +143,7 @@ def get_source(sessions, address_type='MAC'):
         capture_source: Majority MAC address across all sessions in input
     '''
 
-    if type(sessions) is list:
+    if isinstance(sessions, list):
         all_pairs = Counter({})
         # Aggregate counts from all binned sessions
         if address_type == 'MAC':
@@ -323,7 +323,7 @@ def clean_session_dict(sessions, source_address=None):
                         ]
         return cleaned_sessions
 
-    if type(sessions) == list:
+    if isinstance(sessions, list):
         cleaned_sessions = []
         for sess in sessions:
             cleaned_sessions.append(clean_dict(sess, source_address))
@@ -394,8 +394,7 @@ def featurize_session(key, packets, source=None):
         num_sent_by_1 = 0
         num_sent_by_2 = 0
         for packet in packets:
-            time = packet[0].timestamp()
-            source_mac, destination_mac = extract_macs(packet[1])
+            source_mac, _ = extract_macs(packet[1])
 
             if source_mac == mac_1:
                 size_to_2 = get_length(packet[1])
