@@ -1,3 +1,10 @@
+# v0.2.1 (2018-10-02)
+
+ - lots of cleanup of duplicated code
+ - upgraded tensorflow to 1.11.0
+ - upgraded scikit-learn to 0.20.0
+ - updated the model
+
 # v0.2.0 (2018-09-22)
 
  - moved a bunch of duplicated code into common utils
