@@ -3,17 +3,17 @@ Trains and saves an instance of the one layer feedforward model on the
 data directory specified by the first argument.  The model is saved to the
 location specified by the second argument.
 '''
-import json
 import sys
 
 from poseidonml.Model import Model
 from sklearn.neural_network import MLPClassifier
 
+from utils.config import get_config
+
 
 if __name__ == '__main__':
     # Load model params from config
-    with open('opts/config.json') as config_file:
-        config = json.load(config_file)
+    with get_config() as config:
         duration = config['duration']
         hidden_size = config['state size']
         labels = config['labels']

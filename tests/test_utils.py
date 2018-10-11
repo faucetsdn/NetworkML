@@ -39,6 +39,7 @@ from utils.training_utils import choose_regularization
 from utils.training_utils import read_data
 from utils.training_utils import select_features
 from utils.training_utils import whiten_features
+from utils.config import get_config
 
 
 def test_Model():
@@ -80,3 +81,8 @@ def test_is_private():
     assert private == True
     private = is_private('21e0:fe80:00:1')
     assert private == False
+
+def test_get_config():
+    TESTCONFIG_FILENAME = os.path.join(os.path.dirname(__file__), 'testConfig.json')
+     with get_config(TESTCONFIG_FILENAME) as config:
+        assert config['hasConfig'] == True

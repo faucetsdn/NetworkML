@@ -1,8 +1,8 @@
 import datetime
-import json
 import os
 import subprocess
 from collections import OrderedDict
+from utils.config import get_config
 
 
 def parse_packet_head(line):
@@ -163,8 +163,7 @@ def sessionizer(path, duration=None, threshold_time=None):
     # Get threshold time from config
     if threshold_time is None:
         try:
-            with open('opts/config.json', 'r') as config_file:
-                config = json.load(config_file)
+            with get_config() as config:
                 threshold_time = config['session threshold']
         except Exception as e:
             threshold_time = 120

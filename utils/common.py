@@ -7,6 +7,8 @@ import pika
 import tensorflow as tf
 from redis import StrictRedis
 
+from utils.config import get_config as get_cfg
+
 
 class Common:
     """
@@ -323,8 +325,7 @@ class Common:
     def get_config(self):
         # Get time constant from config
         try:
-            with open('opts/config.json') as config_file:
-                config = json.load(config_file)
+            with get_cfg() as config:
                 self.time_const = config['time constant']
                 self.state_size = config['state size']
                 self.look_time = config['look time']
