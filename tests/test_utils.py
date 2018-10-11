@@ -82,9 +82,3 @@ def test_is_private():
     assert private == True
     private = is_private('21e0:fe80:00:1')
     assert private == False
-
-def test_get_config():
-    test_config = os.path.join(os.path.dirname(__file__), 'testConfig.json')
-
-    with get_config(test_config) as config:
-        assert config['hasConfig'] == True
