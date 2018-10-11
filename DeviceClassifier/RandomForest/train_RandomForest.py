@@ -8,12 +8,12 @@ import sys
 
 from poseidonml.Model import Model
 from sklearn.ensemble import RandomForestClassifier
+from utils.config import get_config
 
 
 if __name__ == '__main__':
     # Load model params from config
-    with open('opts/config.json') as config_file:
-        config = json.load(config_file)
+    with get_config() as config:
         duration = config['duration']
         labels = config['labels']
 
