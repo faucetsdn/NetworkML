@@ -1,3 +1,4 @@
+import os
 from utils import train_SoSModel
 from utils.eval_SoSModel import eval_pcap
 from utils.featurizer import extract_features
