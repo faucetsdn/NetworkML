@@ -11,9 +11,9 @@ def get_config(cfg_file='opts/config.json'):
 	logger = logging.getLogger(__name__)
 	try:
 		with open('opts/config.json', 'r') as config_file:
-	        config = json.load(config_file)
-	        return config
+			config = json.load(config_file)
+			return config
 	except Exception as e:  # pragma: no cover
-            self.logger.error(
-                "unable to read '%s' properly because: %s", cfg_file, str(e))
-            return
+			self.logger.error(
+				"unable to read '%s' properly because: %s", cfg_file, str(e))
+			return

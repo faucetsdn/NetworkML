@@ -1,6 +1,7 @@
 __pycache__/
 
 __init__.pyc
+*.pyc
 
 .DS_Store
 build/

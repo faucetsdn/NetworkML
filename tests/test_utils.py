@@ -84,5 +84,5 @@ def test_is_private():
 
 def test_get_config():
     TESTCONFIG_FILENAME = os.path.join(os.path.dirname(__file__), 'testConfig.json')
-     with get_config(TESTCONFIG_FILENAME) as config:
+    with get_config(TESTCONFIG_FILENAME) as config:
         assert config['hasConfig'] == True
