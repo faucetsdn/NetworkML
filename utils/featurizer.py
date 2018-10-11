@@ -14,8 +14,7 @@ except SystemError:  # pragma: no cover
         is_external, \
         is_protocol, \
         get_source, \
-        get_ip_port
-        
+        get_ip_port        
 from utils.config import get_config
 
 def extract_features(session_dict, capture_source=None, max_port=None):
