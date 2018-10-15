@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import sys
@@ -7,6 +6,7 @@ import numpy as np
 import tensorflow as tf
 from pkg_resources import Requirement
 from pkg_resources import working_set
+from utils.config import get_config
 try:
     from .SoSmodel import SoSModel
     from .session_sequence import create_dataset
@@ -91,8 +91,7 @@ if __name__ == '__main__':
         label = None
 
     # Load info from config
-    with open('opts/config.json') as config_file:
-        config = json.load(config_file)
+    with get_config() as config:
         rnn_size = config['rnn size']
         labels = config['labels']
         time_const = config['time constant']

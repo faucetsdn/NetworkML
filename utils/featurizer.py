@@ -14,9 +14,8 @@ except SystemError:  # pragma: no cover
         is_external, \
         is_protocol, \
         get_source, \
-        get_ip_port
-import json
-
+        get_ip_port        
+from utils.config import get_config
 
 def extract_features(session_dict, capture_source=None, max_port=None):
     '''
@@ -33,8 +32,7 @@ def extract_features(session_dict, capture_source=None, max_port=None):
 
     # Get featurization info from config
     try:
-        with open('opts/config.json', 'r') as config_file:
-            config = json.load(config_file)
+        with get_config() as config:
             address_type = config['source identifier']
             if max_port is None:
                 max_port = config['max port']

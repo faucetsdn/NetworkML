@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import pickle
@@ -7,6 +6,8 @@ import time
 
 import numpy as np
 import tensorflow as tf
+
+from utils.config import get_config
 
 try:
     from .SoSmodel import SoSModel
@@ -33,8 +34,7 @@ if __name__ == '__main__':
             'Unable to set logging level because: {0} defaulting to INFO.'.format(str(e)))
 
     # Load info from config
-    with open('opts/config.json') as config_file:
-        config = json.load(config_file)
+    with get_config() as config:
         time_const = config['time constant']
         rnn_size = config['rnn size']
         labels = config['labels']
