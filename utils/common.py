@@ -325,15 +325,15 @@ class Common:
     def get_config(self):
         # Get time constant from config
         try:
-            with get_cfg() as config:
-                self.time_const = config['time constant']
-                self.state_size = config['state size']
-                self.look_time = config['look time']
-                self.threshold = config['threshold']
-                self.conf_labels = config['labels']
-                self.rnn_size = config['rnn size']
-                #self.duration = config['duration']
-                #self.batch_size = config['batch size']
+            config = get_cfg()
+            self.time_const = config['time constant']
+            self.state_size = config['state size']
+            self.look_time = config['look time']
+            self.threshold = config['threshold']
+            self.conf_labels = config['labels']
+            self.rnn_size = config['rnn size']
+            #self.duration = config['duration']
+            #self.batch_size = config['batch size']
         except Exception as e:  # pragma: no cover
             self.logger.error(
                 "unable to read 'opts/config.json' properly because: %s", str(e))
