@@ -7,7 +7,7 @@ import time
 import numpy as np
 import tensorflow as tf
 
-from utils.config import get_config
+from .config import get_config
 
 try:
     from .SoSmodel import SoSModel

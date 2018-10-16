@@ -6,9 +6,9 @@ location specified by the second argument.
 import json
 import sys
 
+from poseidonml.config import get_config
 from poseidonml.Model import Model
 from sklearn.ensemble import RandomForestClassifier
-from utils.config import get_config
 
 
 if __name__ == '__main__':

@@ -5,10 +5,9 @@ location specified by the second argument.
 '''
 import sys
 
+from poseidonml.config import get_config
 from poseidonml.Model import Model
 from sklearn.neural_network import MLPClassifier
-
-from utils.config import get_config
 
 
 if __name__ == '__main__':
