@@ -7,7 +7,7 @@ import pika
 import tensorflow as tf
 from redis import StrictRedis
 
-from utils.config import get_config as get_cfg
+from .config import get_config as get_cfg
 
 
 class Common:
