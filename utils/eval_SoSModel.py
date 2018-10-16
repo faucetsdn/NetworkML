@@ -6,7 +6,9 @@ import numpy as np
 import tensorflow as tf
 from pkg_resources import Requirement
 from pkg_resources import working_set
-from utils.config import get_config
+
+from .config import get_config
+
 try:
     from .SoSmodel import SoSModel
     from .session_sequence import create_dataset

@@ -2,7 +2,8 @@ import datetime
 import os
 import subprocess
 from collections import OrderedDict
-from utils.config import get_config
+
+from .config import get_config
 
 
 def parse_packet_head(line):
