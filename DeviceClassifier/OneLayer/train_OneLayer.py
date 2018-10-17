@@ -12,10 +12,10 @@ from sklearn.neural_network import MLPClassifier
 
 if __name__ == '__main__':
     # Load model params from config
-    with get_config() as config:
-        duration = config['duration']
-        hidden_size = config['state size']
-        labels = config['labels']
+    config = get_config()
+    duration = config['duration']
+    hidden_size = config['state size']
+    labels = config['labels']
 
     # Get the data directory
     if len(sys.argv) < 2:

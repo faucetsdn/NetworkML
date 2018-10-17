@@ -93,10 +93,10 @@ if __name__ == '__main__':
         label = None
 
     # Load info from config
-    with get_config() as config:
-        rnn_size = config['rnn size']
-        labels = config['labels']
-        time_const = config['time constant']
+    config = get_config()
+    rnn_size = config['rnn size']
+    labels = config['labels']
+    time_const = config['time constant']
 
     eval_pcap(pcap, labels, time_const,
               label=label, rnn_size=rnn_size)

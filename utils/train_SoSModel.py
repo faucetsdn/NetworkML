@@ -34,10 +34,10 @@ if __name__ == '__main__':
             'Unable to set logging level because: {0} defaulting to INFO.'.format(str(e)))
 
     # Load info from config
-    with get_config() as config:
-        time_const = config['time constant']
-        rnn_size = config['rnn size']
-        labels = config['labels']
+    config = get_config()
+    time_const = config['time constant']
+    rnn_size = config['rnn size']
+    labels = config['labels']
 
     # Path to training data
     data_dir = sys.argv[1]
