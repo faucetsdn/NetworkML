@@ -33,10 +33,10 @@ def extract_features(session_dict, capture_source=None, max_port=None):
 
     # Get featurization info from config
     try:
-        with get_config() as config:
-            address_type = config['source identifier']
-            if max_port is None:
-                max_port = config['max port']
+        config = get_config()
+        address_type = config['source identifier']
+        if max_port is None:
+            max_port = config['max port']
     except Exception as e:
         address_type = 'MAC'
 

@@ -164,8 +164,8 @@ def sessionizer(path, duration=None, threshold_time=None):
     # Get threshold time from config
     if threshold_time is None:
         try:
-            with get_config() as config:
-                threshold_time = config['session threshold']
+            config = get_config()
+            threshold_time = config['session threshold']
         except Exception as e:
             threshold_time = 120
 
