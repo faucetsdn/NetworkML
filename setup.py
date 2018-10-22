@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='poseidonml',
-    version='0.2.2.dev',
+    version='0.2.2',
     packages=['poseidonml'],
     package_dir={'poseidonml': 'utils'},
     package_data={'poseidonml': ['models/*']},
