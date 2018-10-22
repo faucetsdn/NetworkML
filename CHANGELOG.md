@@ -1,3 +1,10 @@
+# v0.2.2 (2018-10-22)
+
+ - upgraded pytest to 3.9.1
+ - fixed a NoneType error when multiplying
+ - fixed an issue where the config file wasn't being read properly
+ - abstracted away the code to read the config file into one place
+
 # v0.2.1 (2018-10-02)
 
  - lots of cleanup of duplicated code
