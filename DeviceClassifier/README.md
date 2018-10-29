@@ -34,9 +34,9 @@ To use `eval`, you will supply a single PCAP from your local filesystem that can
  require a directory of PCAP files along with a `label_assignments.json` for
  those PCAPs. If the label_assignments don't line up with the ones in `config.json`
  under the `opts` directory, be sure to add them there as well.  Currently the
- models require that the number of labels in `config.json` be exactly 21, don't
+ models require that the number of labels in `config.json` be exactly 7, don't
  worry if you don't have data to train all of the labels, but note that you need
- to keep 21 there, even if you don't use them all. Models will be mapped to `/tmp/models`.
+ to keep 7 there, even if you don't use them all. Models will be mapped to `/tmp/models`.
 
 Here's an example of implicitly calling `eval_onelayer`:
 ```
