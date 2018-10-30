@@ -13,7 +13,7 @@ eval_onelayer: build_onelayer run_redis eval_onelayer_nobuild
 eval_onelayer_nobuild:
 	@echo
 	@echo "Running OneLayer Eval on PCAP file $(PCAP)"
-	@docker run -it --rm -v "$(PCAP):/pcaps/eval.pcap" --link poseidonml-redis:redis -e SKIP_RABBIT=true -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) --entrypoint=python3 poseidonml:onelayer eval_OneLayer.py
+	@docker run -it --rm -v "$(PCAP):/pcaps/eval.pcap" --link poseidonml-redis:redis -e SKIP_RABBIT=true -e POSEIDON_PUBLIC_SESSIONS=0 -e LOG_LEVEL=$(LOG_LEVEL) --entrypoint=python3 poseidonml:onelayer eval_OneLayer.py
 	@docker rm -f poseidonml-redis > /dev/null
 	@echo
 test_onelayer: build_onelayer
