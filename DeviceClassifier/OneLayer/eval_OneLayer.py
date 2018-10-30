@@ -118,12 +118,8 @@ class OneLayerEval:
                 # Make simple decisions based on vector differences and update times
                 timestamp = timestamps[0].timestamp()
                 labels, confs = zip(*preds)
-                if os.environ.get('POSEIDON_PUBLIC_SESSIONS'):
-                    self.logger.debug('Bypassing abnormality detection')
-                    abnormality = 0
-                else:
-                    abnormality = eval_pcap(
-                        pcap_path, self.conf_labels, self.time_const, label=labels[0], rnn_size=self.rnn_size, model_type='OneLayer')
+                abnormality = eval_pcap(
+                    pcap_path, self.conf_labels, self.time_const, label=labels[0], rnn_size=self.rnn_size, model_type='OneLayer')
                 prev_s = self.common.get_address_info(
                     source_mac,
                     timestamp
