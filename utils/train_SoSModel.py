@@ -7,13 +7,14 @@ import time
 import numpy as np
 import tensorflow as tf
 
-from .config import get_config
 
 try:
+    from .config import get_config
     from .SoSmodel import SoSModel
     from .session_sequence import create_dataset
     from .session_iterator import BatchIterator
 except SystemError:  # pragma: no cover
+    from config import get_config
     from SoSmodel import SoSModel
     from session_sequence import create_dataset
     from session_iterator import BatchIterator
@@ -92,7 +93,7 @@ if __name__ == '__main__':
             logger.info('Validation cost after  %s batches: %s', i, cost)
             if cost < min_cost:
                 min_cost = cost
-                rnnmodel.save('/models/SoSmodel')
+                rnnmodel.save('/new_models/SoSmodel')
                 last_save = 0
                 logger.info('Saving model at validation cost %s', cost)
             else:

@@ -7,10 +7,6 @@ Plugin to classify devices based on their network activity. This plugin is the
 
 ## Using Docker to evaluate, train, and test
 
-_**Note:** we are aware of issues that currently render the RandomForest model
- unuseable, and we are working to fix this as soon as possible. You can check the
- progress on this fix via [issue #104](https://github.com/CyberReboot/PoseidonML/issues/104)._
-
 We currently have two different models available on Docker Hub -- RandomForest and
  OneLayer -- tagged `randomforest` and `onelayer`, respectively. OneLayer is used by
  default, however, and is the model included in the `latest` tag. You can build

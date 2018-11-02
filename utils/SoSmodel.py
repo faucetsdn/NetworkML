@@ -61,7 +61,7 @@ class SoSModel:
     def __init__(
         self,
         feature_size=41,
-        label_size=21,
+        label_size=8,
         rnn_size=100,
     ):
         """

@@ -2,6 +2,7 @@ from collections import defaultdict
 
 import numpy as np
 try:
+    from .config import get_config
     from .pcap_utils import extract_macs, \
         is_private, \
         is_external, \
@@ -9,13 +10,13 @@ try:
         get_source, \
         get_ip_port
 except SystemError:  # pragma: no cover
+    from config import get_config
     from pcap_utils import extract_macs, \
         is_private, \
         is_external, \
         is_protocol, \
         get_source, \
         get_ip_port
-from .config import get_config
 
 
 def extract_features(session_dict, capture_source=None, max_port=None):

@@ -7,13 +7,14 @@ import tensorflow as tf
 from pkg_resources import Requirement
 from pkg_resources import working_set
 
-from .config import get_config
 
 try:
+    from .config import get_config
     from .SoSmodel import SoSModel
     from .session_sequence import create_dataset
     from .session_iterator import BatchIterator
 except SystemError:  # pragma: no cover
+    from config import get_config
     from SoSmodel import SoSModel
     from session_sequence import create_dataset
     from session_iterator import BatchIterator

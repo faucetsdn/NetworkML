@@ -7,7 +7,10 @@ import pika
 import tensorflow as tf
 from redis import StrictRedis
 
-from .config import get_config as get_cfg
+try:
+    from .config import get_config as get_cfg
+except SystemError:  # pragma: no cover
+    from config import get_config as get_cfg
 
 
 class Common:
