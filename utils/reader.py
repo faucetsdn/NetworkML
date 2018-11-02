@@ -3,7 +3,10 @@ import os
 import subprocess
 from collections import OrderedDict
 
-from .config import get_config
+try:
+    from .config import get_config
+except SystemError:  # pragma: no cover
+    from config import get_config
 
 
 def parse_packet_head(line):

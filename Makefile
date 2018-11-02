@@ -36,7 +36,7 @@ eval_sosmodel: build_sosmodel
 	@docker run -it --rm -v "$(PCAP):/pcaps/eval.pcap" -e SKIP_RABBIT=true -e LOG_LEVEL=$(LOG_LEVEL) --entrypoint=python3 poseidonml:sosmodel eval_SoSModel.py
 train_sosmodel: build_sosmodel
 	@echo "Running SoSModel Train on PCAP files $(PCAP)"
-	@docker run -it --rm -v "/tmp/models:/models" -v "$(PCAP):/pcaps/" -e SKIP_RABBIT=true -e LOG_LEVEL=$(LOG_LEVEL) --entrypoint=python3 poseidonml:sosmodel train_SoSModel.py /pcaps/ /models/SoSModel.pkl
+	@docker run -it --rm -v "/tmp/models:/new_models" -v "$(PCAP):/pcaps/" -e SKIP_RABBIT=true -e LOG_LEVEL=$(LOG_LEVEL) --entrypoint=python3 poseidonml:sosmodel train_SoSModel.py /pcaps/ /models/SoSModel.pkl
 run_redis:
 	@docker run -d --name poseidonml-redis redis:latest
 build_onelayer: build_base
@@ -45,8 +45,10 @@ build_randomforest: build_base
 	@pushd DeviceClassifier/RandomForest && docker build -t poseidonml:randomforest . && popd
 build_sosmodel: build_base
 	@cp -R DeviceClassifier/OneLayer/opts utils/
+	@cp DeviceClassifier/OneLayer/models/OneLayerModel.pkl utils/models/
 	@pushd utils && docker build -f Dockerfile.sosmodel -t poseidonml:sosmodel . && popd
 	@rm -rf utils/opts
+	@rm -rf utils/models/OneLayerModel.pkl
 test: build_base
 	docker build -t poseidonml-test -f Dockerfile.test .
 	docker run -it --rm poseidonml-test
