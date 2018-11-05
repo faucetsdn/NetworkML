@@ -8,7 +8,8 @@ import os
 import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LogisticRegression
-from sklearn.linear_model import RandomizedLogisticRegression
+#from sklearn.linear_model import RandomizedLogisticRegression
+from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.model_selection import cross_val_score
 
 try:
@@ -103,7 +104,6 @@ def read_data(data_dir, duration=None, labels=None):
 
     return np.stack(X), np.stack(y), new_labels
 
-
 def select_features(X, y):
     '''
     Select the relevant features from X that are useful for predicting
@@ -118,20 +118,35 @@ def select_features(X, y):
     '''
 
     # Get the selection model (stability selection)
-    selection_model = RandomizedLogisticRegression(random_state=0)
-    selection_model.fit(X, y)
+    # RandomizedLogisticRegression is currently depreciated in sklearn - due to supposed instability
+    # Code retained for reference
+
+    #selection_model = RandomizedLogisticRegression(random_state=0)
+    #selection_model.fit(X, y)
+    #print(selection_model.scores_)
+
+    # Using a random forest classifier to estimate feature feature importance
+
+    # set the number of trees equal to sqrt(nb_features)
+    nb_trees = int(np.sqrt(X.shape[1]))
+
+    selection_forest = ExtraTreesClassifier(nb_trees, random_state = 3)
+    selection_forest.fit(X, y)
+    # .feature_importances_ replaced .scores_
+    #print(selection_forest.feature_importances_)
 
     # Use a cross validated logistic regression to choose the importance
     # threshold at which a feature is included
     step_size = 50
-    max_weight = int(max(selection_model.scores_)) + 1
+    max_weight = int(max(selection_forest.feature_importances_)) + 1
     trial_thresholds = [
         i/step_size for i in range(1, max_weight*step_size + 1)]
     threshold = 0
     max_score = 0
+
     for trial in trial_thresholds:
         selected_features = [i
-                             for i, score in enumerate(selection_model.scores_)
+                             for i, score in enumerate(selection_forest.feature_importances_)
                              if score > trial]
         if len(selected_features) > 0:
             X_reduced = X[:, selected_features]
@@ -148,9 +163,8 @@ def select_features(X, y):
                 max_score = score
                 threshold = trial/step_size
 
-    return [i for i, score in enumerate(selection_model.scores_)
+    return [i for i, score in enumerate(selection_forest.feature_importances_)
             if score > threshold]
-
 
 def whiten_features(X):
     '''
