@@ -52,9 +52,12 @@ class OneLayerEval:
             self.logger.error('Input \'%s\' was neither pcap nor directory.', str(pcap_path))
             return
 
-        if not pcaps: 
+        if not pcaps:
             self.logger.error('Did not find pcap file(s) from \'%s\'.', str(pcap_path))
             return
+
+        if not self.skip_rabbit:
+            self.common.connect_rabbit()
 
         # Initialize and load the model
         if len(sys.argv) > 2:
@@ -97,9 +100,8 @@ class OneLayerEval:
                 message = {}
                 message[key] = {'valid': False}
                 message = json.dumps(message)
-                self.logger.info('Not enough sessions in pcap ')
+                self.logger.info('Not enough sessions in pcap \'%s\'', str(pcap))
                 if not self.skip_rabbit:
-                    self.common.connect_rabbit()
                     self.common.channel.basic_publish(exchange=self.common.exchange,
                                                       routing_key=self.common.routing_key,
                                                       body=message)
@@ -184,7 +186,6 @@ class OneLayerEval:
                 message = json.dumps(decision)
                 self.logger.info('Message: ' + message)
                 if not self.skip_rabbit:
-                    self.common.connect_rabbit()
                     self.common.channel.basic_publish(exchange=self.common.exchange,
                                                       routing_key=self.common.routing_key,
                                                       body=message)
