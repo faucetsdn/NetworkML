@@ -2,6 +2,7 @@ import hashlib
 import json
 import logging
 import os
+from pathlib import Path
 import sys
 
 from poseidonml.common import Common
@@ -33,46 +34,80 @@ class RandomForestEval:
 
     def main(self):
         # path to the pcap to get the update from
+        pcaps = []
         if len(sys.argv) < 2:
             pcap_path = '/pcaps/eval.pcap'
         else:
             pcap_path = sys.argv[1]
 
-        source_mac = None
-        key = None
-        split_path = 'None'
-        try:
-            split_path = os.path.split(pcap_path)[-1]
-            split_path = split_path.split('.')
-            split_path = split_path[0].split('-')
-            key = split_path[0].split('_')[1]
-        except Exception as e:
-            self.logger.debug('Could not get key because %s', str(e))
+        if Path(pcap_path).is_dir():
+            for child in Path(pcap_path).iterdir():
+                if child.is_file() and \
+                        os.path.split(child)[-1].split('.')[-1] in {'pcap','dump','cap'}:
+                    pcaps.append(child)
+        elif Path(pcap_path).is_file() and \
+                os.path.split(pcap_path)[-1].split('.')[-1] in {'pcap','dump', 'cap'}:
+            pcaps.append(pcap_path)
+        else:
+            self.logger.error('Input \'%s\' was neither pcap nor directory.', str(pcap_path))
+            return
 
-        # ignore misc files
-        if (split_path[-1] != 'miscellaneous'):
-            # Initialize and load the model
-            if len(sys.argv) > 2:
-                load_path = sys.argv[2]
-            else:
-                load_path = '/models/RandomForestModel.pkl'
+        if not pcaps:
+            self.logger.error('Did not find pcap file(s) from \'%s\'.', str(pcap_path))
+            return
 
-            # Compute model hash
-            with open(load_path, 'rb') as handle:
-                model_hash = hashlib.md5(handle.read()).hexdigest()
+        if not self.skip_rabbit:
+            self.common.connect_rabbit()
 
-            model = Model(duration=None, hidden_size=None,
-                          model_type='RandomForest')
-            model.load(load_path)
-            self.logger.debug('Loaded model from %s', load_path)
+        # Initialize and load the model
+        if len(sys.argv) > 2:
+            load_path = sys.argv[2]
+        else:
+            load_path = '/models/RandomForestModel.pkl'
+
+        # Compute model hash
+        with open(load_path, 'rb') as handle:
+            model_hash = hashlib.md5(handle.read()).hexdigest()
+
+        model = Model(duration=None, hidden_size=None,
+                      model_type='RandomForest')
+        model.load(load_path)
+        self.logger.debug('Loaded model from %s', load_path)
+
+        for pcap in pcaps:
+            source_mac = None
+            key = None
+            split_path = 'None'
+            try:
+                split_path = os.path.split(pcap)[-1]
+                split_path = split_path.split('.')
+                split_path = split_path[0].split('-')
+                key = split_path[0].split('_')[1]
+            except Exception as e:
+                self.logger.debug('Could not get key because %s', str(e))
+
+            # ignore misc files
+            if (split_path[-1] == 'miscellaneous'):
+                continue
 
             # Get representations from the model
             reps, source_mac, timestamps, preds, others = model.get_representation(
-                pcap_path,
+                str(pcap),
                 source_ip=source_mac,
                 mean=False
             )
-            if preds is not None:
+            if preds is None:
+                message = {}
+                message[key] = {'valid': False}
+                message = json.dumps(message)
+                self.logger.info('Not enough sessions in pcap \'%s\'', str(pcap))
+                if not self.skip_rabbit:
+                    self.common.channel.basic_publish(exchange=self.common.exchange,
+                                                      routing_key=self.common.routing_key,
+                                                      body=message)
+                continue
+
+            else:
                 self.logger.debug('Generating predictions')
                 last_update, prev_rep = self.common.get_previous_state(
                     source_mac, timestamps[0])
@@ -120,7 +155,9 @@ class RandomForestEval:
                 labels, confs = zip(*preds)
                 abnormality = 0
                 # abnormality = eval_pcap(
-                #    pcap_path, self.conf_labels, self.time_const, label=labels[0], rnn_size=self.rnn_size, model_path='/models/RandomForestModel.pkl', model_type='RandomForest')
+                #    str(pcap), self.conf_labels, self.time_const, label=labels[0],
+                #    rnn_size=self.rnn_size, model_path='/models/RandomForestModel.pkl',
+                #    model_type='RandomForest')
                 prev_s = self.common.get_address_info(
                     source_mac,
                     timestamp
@@ -149,16 +186,6 @@ class RandomForestEval:
                 # Get json message
                 message = json.dumps(decision)
                 self.logger.info('Message: ' + message)
-                if not self.skip_rabbit:
-                    self.common.connect_rabbit()
-                    self.common.channel.basic_publish(exchange=self.common.exchange,
-                                                      routing_key=self.common.routing_key,
-                                                      body=message)
-            else:
-                message = {}
-                message[key] = {'valid': False}
-                message = json.dumps(message)
-                self.logger.info('Not enough sessions in pcap')
                 if not self.skip_rabbit:
                     self.common.connect_rabbit()
                     self.common.channel.basic_publish(exchange=self.common.exchange,
