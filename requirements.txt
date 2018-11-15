@@ -3,7 +3,7 @@ pika==0.12.0
 poseidonml==0.2.2
 pytest==3.10.0
 pytest-cov==2.6.0
-redis==2.10.6
+redis==3.0.0.post1
 scikit-learn==0.20.0
 scipy==1.1.0
 tensorflow==1.11.0
