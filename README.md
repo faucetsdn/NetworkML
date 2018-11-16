@@ -8,13 +8,14 @@
 [![Docker Hub Downloads](https://img.shields.io/docker/pulls/cyberreboot/poseidonml.svg)](https://hub.docker.com/r/cyberreboot/poseidonml/)
 
 ## Overview
-Poseidon is a machine learning implementation of our quest to determine
-two questions:
-  1. what is on the network; and
-  2. what is it doing?
+PoseidonML is the Machine Learning portion of our (Poseidon) project that
+attempts to answer two questions:
+  1. what type of device is in this packet capture (pcap)?
+  2. is it behaving in an expected way?
 
-For more background and context on our project, please check out
-[the Poseidon project](https://www.cyberreboot.org/projects/poseidon/)
+This repo is for the ML portion of the project, which can also be used
+in a "standalone" mode from the CLI. For more background and context on
+the macro project, please check out[the Poseidon project](https://www.cyberreboot.org/projects/poseidon/)
 page on our website. This repo specifically covers the algorithms and
 models we deployed in our project.
 
@@ -30,7 +31,8 @@ This repository contains the components necessary to build a docker container
 that can be used for training a number of ML models using network packet
 captures (pcaps). The repository includes scripts necessary to do the
 training (e.g. "train_OneLayer.py") as well as doing the evaluation once a
-model has been trained (e.g. "eval_OneLayer.py")
+model has been trained (e.g. "eval_OneLayer.py") These can be run from a
+shell.
 
 Additional algorithms and models will be added here as we delve more
 deeply into network security profiles via machine learning models. Feel
@@ -49,9 +51,8 @@ each plugin's folder.
 
 # Installation/Run
 
-Our models can be executed via Vent, Docker, and standalone. We recommend
-deployment via Vent in conjunction with Poseidon if you are running an SDN
-(software-defined network). Otherwise, we recommend using Docker.
+Our models can be executed via Vent, Docker, and in a standalone manner on a
+Linux host. We recommend deployment via Vent in conjunction with Poseidon if you
+are running an SDN (software-defined network). Otherwise, we recommend using Docker.
 
-See the respective README files included in the plugin's folder for specific
-instructions on deployment.
+See the [README](https://github.com/CyberReboot/PoseidonML/blob/master/DeviceClassifier/README.md) file included in the plugin's folder for specific instructions on deployment.
