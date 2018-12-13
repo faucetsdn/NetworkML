@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-import random
 
 import numpy as np
 import pika
@@ -72,24 +71,9 @@ class Common:
         self.exchange = 'topic-poseidon-internal'
         self.exchange_type = 'topic'
 
-        # look for rabbit hosts
-        rabbit_hosts = []
-        i = 2
-        more_hosts = True
-        while more_hosts:
-            if os.environ.get('RABBIT' + str(i) + '_NAME') is not None:
-                rabbit_hosts.append(pika.URLParameters('amqp://rabbit'+str(i)))
-            else:
-                more_hosts = False
-            i += 1
-        if not rabbit_hosts:
-            rabbit_hosts.append(pika.URLParameters('amqp://rabbit'))
-
-        random.shuffle(rabbit_hosts)
-
         # Starting rabbit connection
         self.connection = pika.BlockingConnection(
-            pika.ConnectionParameters(rabbit_hosts)
+            pika.ConnectionParameters(host='rabbit')
         )
 
         self.channel = self.connection.channel()
