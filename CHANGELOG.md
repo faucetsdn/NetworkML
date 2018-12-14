@@ -1,3 +1,17 @@
+# v0.2.3 (2018-12-14)
+
+ - upgraded pytest to 4.0.2
+ - upgraded scikit-learn to 0.20.1
+ - improved README documentation
+ - upgraded redis to 3.0.1
+ - added pcap directory support
+ - re-enabled the behavior model
+ - includes the trained behavior model
+ - fixed hardcoded onelayer pickle file in randomforest
+ - fixed missing labels
+ - simplified rabbit connection
+ - replaced deprecated randomized logistic regression with random forest
+
 # v0.2.2 (2018-10-22)
 
  - upgraded pytest to 3.9.1
