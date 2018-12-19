@@ -48,4 +48,4 @@ RUN set -ex; \
 
 COPY . /poseidonml
 WORKDIR /poseidonml
-RUN pip uninstall -y poseidonml && pip install .
+RUN pip install .

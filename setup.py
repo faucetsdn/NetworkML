@@ -7,7 +7,7 @@ setup(
     package_dir={'poseidonml': 'utils'},
     package_data={'poseidonml': ['models/*']},
     install_requires=['numpy==1.15.4', 'pika==0.12.0', 'redis==3.0.1',
-                      'scikit-learn==0.20.1', 'tensorflow==1.12.0'],
+                      'scikit-learn==0.20.2', 'tensorflow==1.12.0'],
     license='Apache License 2.0',
     author='cglewis',
     author_email='clewis@iqt.org',
