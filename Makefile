@@ -5,7 +5,7 @@ run: build_onelayer eval_onelayer
 help:
 	@echo "make OPTION      (see below for description; requires setting PCAP environment variable)"
 	@echo
-	@echo Set the PCAP environment variable to the directory of pcaps you want to work with
+	@echo Set the PCAP environment variable to the directory of pcaps or a single pcap file you want to work with
 	@echo
 	@echo "eval_[onelayer|randomforest|sosmodel]   Runs a directory of pcap files against specified model"
 	@echo "test_[onelayer|randomforest]            Tests directory of pcaps against specified model"
