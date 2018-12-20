@@ -51,7 +51,7 @@ train_randomforest: build_randomforest run_redis train_randomforest_nobuild
 train_randomforest_nobuild:
 	@echo
 	@echo "Running RandomForest Train on PCAP files $(PCAP)"
-	@docker run -it --rm -v "/tmp/models:/RandomForest/models" -v "$(PCAP):/pcaps/" ---link poseidonml-redis:redis -e SKIP_RABBIT=true -e LOG_LEVEL=$(LOG_LEVEL) --entrypoint=python3 poseidonml:randomforest train_RandomForest.py
+	@docker run -it --rm -v "/tmp/models:/RandomForest/models" -v "$(PCAP):/pcaps/" --link poseidonml-redis:redis -e SKIP_RABBIT=true -e LOG_LEVEL=$(LOG_LEVEL) --entrypoint=python3 poseidonml:randomforest train_RandomForest.py
 	@docker rm -f poseidonml-redis > /dev/null
 	@echo
 eval_sosmodel: build_sosmodel run_redis eval_sosmodel_nobuild
