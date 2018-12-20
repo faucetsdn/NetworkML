@@ -16,7 +16,7 @@ eval_onelayer: build_onelayer run_redis eval_onelayer_nobuild
 eval_onelayer_nobuild:
 	@echo
 	@echo "Running OneLayer Eval on PCAP file $(PCAP)"
-	@docker run -it --rm -v "$(PCAP):/pcaps" --link poseidonml-redis:redis -e SKIP_RABBIT=true -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) --entrypoint=python3 poseidonml:onelayer eval_OneLayer.py /pcaps
+	@docker run -it --rm -v "$(PCAP):/pcap/$(PCAP)" --link poseidonml-redis:redis -e SKIP_RABBIT=true -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) --entrypoint=python3 poseidonml:onelayer eval_OneLayer.py /pcap/$(PCAP)
 	@docker rm -f poseidonml-redis > /dev/null
 	@echo
 test_onelayer: build_onelayer run_redis test_onelayer_nobuild
@@ -37,7 +37,7 @@ eval_randomforest: build_randomforest run_redis eval_randomforest_nobuild
 eval_randomforest_nobuild:
 	@echo
 	@echo "Running RandomForest Eval on PCAP file $(PCAP)"
-	@docker run -it --rm -v "$(PCAP):/pcaps" --link poseidonml-redis:redis -e SKIP_RABBIT=true -e LOG_LEVEL=$(LOG_LEVEL) --entrypoint=python3 poseidonml:randomforest eval_RandomForest.py /pcaps
+	@docker run -it --rm -v "$(PCAP):/pcaps/$(PCAP)" --link poseidonml-redis:redis -e SKIP_RABBIT=true -e LOG_LEVEL=$(LOG_LEVEL) --entrypoint=python3 poseidonml:randomforest eval_RandomForest.py /pcaps/$(PCAP)
 	@docker rm -f poseidonml-redis > /dev/null
 	@echo
 test_randomforest: build_randomforest run_redis test_randomforest_nobuild
@@ -58,7 +58,7 @@ eval_sosmodel: build_sosmodel run_redis eval_sosmodel_nobuild
 eval_sosmodel_nobuild:
 	@echo
 	@echo "Running SoSModel Eval on PCAP file $(PCAP)"
-	@docker run -it --rm -v "$(PCAP):/pcaps" --link poseidonml-redis:redis -e SKIP_RABBIT=true -e LOG_LEVEL=$(LOG_LEVEL) --entrypoint=python3 poseidonml:sosmodel eval_SoSModel.py /pcaps
+	@docker run -it --rm -v "$(PCAP):/pcaps/$(PCAP)" --link poseidonml-redis:redis -e SKIP_RABBIT=true -e LOG_LEVEL=$(LOG_LEVEL) --entrypoint=python3 poseidonml:sosmodel eval_SoSModel.py /pcaps/$(PCAP)
 	@docker rm -f poseidonml-redis > /dev/null
 	@echo
 train_sosmodel: build_sosmodel run_redis train_sosmodel_nobuild
