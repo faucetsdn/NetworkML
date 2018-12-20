@@ -151,12 +151,13 @@ class Common:
 
         # Read the last updated entry to get the previous representation
         key = source_mac + '_' + str(last_update)
+        previous_representation = None
         try:
             state = self.r.hgetall(key)
+            previous_representation = ast.literal_eval(
+                state[b'representation'].decode('ascii'))
         except Exception as e:
             return None, None
-        previous_representation = ast.literal_eval(
-            state[b'representation'].decode('ascii'))
         return last_update, previous_representation
 
     def average_representation(
