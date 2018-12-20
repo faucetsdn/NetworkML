@@ -1,3 +1,4 @@
+import ast
 import json
 import logging
 import os
@@ -94,7 +95,8 @@ class Common:
         # Get the timestamps of the past updates for this address
         try:
             updates = self.r.hgetall(address)
-            timestamps = json.loads(updates[b'timestamps'].decode('ascii'))
+            timestamps = ast.literal_eval(
+                updates[b'timestamps'].decode('ascii'))
         except Exception as e:
             self.logger.debug(
                 'No timestamp found because: {0}, setting to None'.format(str(e)))
@@ -132,9 +134,11 @@ class Common:
 
         # Get the most recent prior timestamp from the update list
         try:
-            update_list = json.loads(updates[b'timestamps'].decode('ascii'))
+            update_list = ast.literal_eval(
+                updates[b'timestamps'].decode('ascii'))
         except Exception as e:
-            self.logger.debug('Empty update list because: {0}'.format(str(e)))
+            self.logger.debug(
+                'Empty update list because: {0} key not found'.format(str(e)))
             update_list = []
         last_update = None
         for update in update_list:
@@ -151,9 +155,8 @@ class Common:
             state = self.r.hgetall(key)
         except Exception as e:
             return None, None
-        previous_representation = json.loads(
-            state[b'representation'].decode('ascii')
-        )
+        previous_representation = ast.literal_eval(
+            state[b'representation'].decode('ascii'))
         return last_update, previous_representation
 
     def average_representation(
@@ -255,14 +258,18 @@ class Common:
 
         self.logger.debug('created key %s', key)
         self.logger.debug(state)
+        redis_state = {}
+        for key in state:
+            redis_state[key] = str(state[key])
         try:
             self.logger.debug('Storing data')
-            self.r.hmset(key, state)
+            self.r.hmset(key, redis_state)
             self.r.sadd('mac_addresses', source_mac)
             self.logger.debug('Storing update time')
             # Add this update time to the list of updates
             updates = self.r.hgetall(source_mac)
-            update_list = json.loads(updates[b'timestamps'].decode('ascii'))
+            update_list = ast.literal_eval(
+                updates[b'timestamps'].decode('ascii'))
             self.logger.debug('Got previous updates from %s', source_mac)
         except Exception as e:
             self.logger.debug('No previous updates found for %s', source_mac)
@@ -273,8 +280,11 @@ class Common:
         times = {'timestamps': update_list}
         self.logger.debug('Updating %s', source_mac)
         self.logger.debug(times)
+        redis_times = {}
+        for key in times:
+            redis_times[key] = str(times[key])
         try:
-            self.r.hmset(source_mac, times)
+            self.r.hmset(source_mac, redis_times)
             self.r.sadd('mac_addresses', source_mac)
         except Exception as e:
             self.logger.debug('Could not store update time')

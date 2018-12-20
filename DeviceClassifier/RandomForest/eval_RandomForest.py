@@ -2,9 +2,9 @@ import hashlib
 import json
 import logging
 import os
-from pathlib import Path
 import sys
 
+from pathlib import Path
 from poseidonml.common import Common
 from poseidonml.eval_SoSModel import eval_pcap
 from poseidonml.Model import Model
@@ -43,17 +43,19 @@ class RandomForestEval:
         if Path(pcap_path).is_dir():
             for child in Path(pcap_path).iterdir():
                 if child.is_file() and \
-                        os.path.split(child)[-1].split('.')[-1] in {'pcap','dump','cap'}:
+                        os.path.split(child)[-1].split('.')[-1] in {'pcap', 'dump', 'cap'}:
                     pcaps.append(child)
         elif Path(pcap_path).is_file() and \
-                os.path.split(pcap_path)[-1].split('.')[-1] in {'pcap','dump', 'cap'}:
+                os.path.split(pcap_path)[-1].split('.')[-1] in {'pcap', 'dump', 'cap'}:
             pcaps.append(pcap_path)
         else:
-            self.logger.error('Input \'%s\' was neither pcap nor directory.', str(pcap_path))
+            self.logger.error(
+                'Input \'%s\' was neither pcap nor directory.', str(pcap_path))
             return
 
         if not pcaps:
-            self.logger.error('Did not find pcap file(s) from \'%s\'.', str(pcap_path))
+            self.logger.error(
+                'Did not find pcap file(s) from \'%s\'.', str(pcap_path))
             return
 
         if not self.skip_rabbit:
@@ -100,7 +102,8 @@ class RandomForestEval:
                 message = {}
                 message[key] = {'valid': False}
                 message = json.dumps(message)
-                self.logger.info('Not enough sessions in pcap \'%s\'', str(pcap))
+                self.logger.info(
+                    'Not enough sessions in pcap \'%s\'', str(pcap))
                 if not self.skip_rabbit:
                     self.common.channel.basic_publish(exchange=self.common.exchange,
                                                       routing_key=self.common.routing_key,
@@ -177,8 +180,11 @@ class RandomForestEval:
                         labels[i] + ' : ' + str(round(confs[i], 3)))
 
                 # update Redis with decision
+                redis_decision = {}
+                for key in decision:
+                    redis_decision[key] = str(decision[key])
                 try:
-                    self.r.hmset(r_key, decision)
+                    self.r.hmset(r_key, redis_decision)
                 except Exception as e:
                     self.logger.error(
                         'Failed to update keys in Redis because: {0}'.format(str(e)))
