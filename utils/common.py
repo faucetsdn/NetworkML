@@ -283,7 +283,7 @@ class Common:
         self.logger.debug(times)
         redis_times = {}
         for k in times:
-            redis_times[key] = str(times[k])
+            redis_times[k] = str(times[k])
         try:
             self.r.hmset(source_mac, redis_times)
             self.r.sadd('mac_addresses', source_mac)
