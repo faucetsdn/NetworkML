@@ -1,3 +1,14 @@
+# v0.2.4 (2018-12-21)
+
+ - upgraded scikit-learn to 0.20.2
+ - removed scipy
+ - cleaned up requirements.txt and setup.py
+ - fixed issue where redis was throwing error when saving decisions
+ - fixed error in eval_onelayer that was using nonexistent key
+ - Make train/eval/test process consistent for all models
+ - Fixed path error specific to python 3.5 that occurred when processing PCAP files
+ - PCAP directories can now be used when running model evals
+
 # v0.2.3 (2018-12-14)
 
  - upgraded pytest to 4.0.2
