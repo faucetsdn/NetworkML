@@ -260,8 +260,8 @@ class Common:
         self.logger.debug('created key %s', key)
         self.logger.debug(state)
         redis_state = {}
-        for key in state:
-            redis_state[key] = str(state[key])
+        for k in state:
+            redis_state[k] = str(state[k])
         try:
             self.logger.debug('Storing data')
             self.r.hmset(key, redis_state)
@@ -282,8 +282,8 @@ class Common:
         self.logger.debug('Updating %s', source_mac)
         self.logger.debug(times)
         redis_times = {}
-        for key in times:
-            redis_times[key] = str(times[key])
+        for k in times:
+            redis_times[key] = str(times[k])
         try:
             self.r.hmset(source_mac, redis_times)
             self.r.sadd('mac_addresses', source_mac)
