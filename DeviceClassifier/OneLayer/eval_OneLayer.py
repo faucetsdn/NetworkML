@@ -181,8 +181,8 @@ class OneLayerEval:
 
                 # update Redis with decision
                 redis_decision = {}
-                for key in decision:
-                    redis_decision[key] = str(decision[key])
+                for k in decision:
+                    redis_decision[k] = str(decision[k])
                 try:
                     self.r.hmset(r_key, redis_decision)
                 except Exception as e:

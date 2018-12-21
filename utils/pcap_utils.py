@@ -403,8 +403,12 @@ def featurize_session(key, packets, source=None):
                 size_to_1 = get_length(packet[1])
                 num_sent_by_2 += 1
         if (num_sent_by_1 + num_sent_by_2) > 1:
-            freq_1 = num_sent_by_1/(last_time - first_time)
-            freq_2 = num_sent_by_2/(last_time - first_time)
+            elapsed_time = last_time - first_time
+            # don't divide by zero, if no time has elapsed then divide by 1
+            if elapsed_time == 0:
+                elapsed_time = 1
+            freq_1 = num_sent_by_1/elapsed_time
+            freq_2 = num_sent_by_2/elapsed_time
         else:
             freq_1 = 1
             freq_2 = 1
