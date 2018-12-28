@@ -342,7 +342,7 @@ def create_inputs(labels, session, seq_len, num_chars=16):
 
     # Create the packet input
     hex_str = '0123456789abcdef'
-    for i, key in enumerate(session):
+    for i, _ in enumerate(session):
         raw_hex = session[i][1]
         for j, c in enumerate(raw_hex):
             if j < seq_len:
@@ -371,8 +371,8 @@ def get_length(packet):
 
 def featurize_session(key, packets, source=None):
     # Global session properties
-    address_1, port_1 = get_ip_port(key[0])
-    address_2, port_2 = get_ip_port(key[1])
+    address_1, _ = get_ip_port(key[0])
+    address_2, _ = get_ip_port(key[1])
     if address_1 == source or address_2 == source or source == None:
         initiated_by_source = None
         if address_1 == source:

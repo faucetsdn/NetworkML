@@ -61,7 +61,7 @@ def eval_pcap(pcap, labels, time_const, label=None, rnn_size=100, model_path='/m
             np.expand_dims(X, axis=0),
             np.expand_dims(L, axis=0),
         )
-        for j, o in enumerate(out):
+        for _, o in enumerate(out):
             for k, s in enumerate(o):
                 num_total += 1
                 session = sessions[i][k]['session info']

@@ -240,7 +240,7 @@ class BatchIterator:
 
         X_list = []
         L_list = []
-        for i in range(batch_size):
+        for _ in range(batch_size):
             idx = np.random.choice(range(length))
             X_chosen = X[idx]
             #X_chosen -= self.means

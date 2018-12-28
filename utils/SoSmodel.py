@@ -155,7 +155,7 @@ class SoSModel:
                 activation=tf.tanh
             )
 
-            session_vectors, session_states = tf.nn.dynamic_rnn(
+            session_vectors, _ = tf.nn.dynamic_rnn(
                 session_cell,
                 self.X,
                 dtype=tf.float32
