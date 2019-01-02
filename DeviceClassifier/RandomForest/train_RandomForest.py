@@ -3,7 +3,6 @@ Trains and saves an instance of the one layer feedforward model on the
 data directory specified by the first argument.  The model is saved to the
 location specified by the second argument.
 '''
-import json
 import sys
 
 from poseidonml.config import get_config

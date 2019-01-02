@@ -1,5 +1,4 @@
 import ast
-import json
 import logging
 import os
 
@@ -130,6 +129,8 @@ class Common:
         try:
             updates = self.r.hgetall(source_mac)
         except Exception as e:
+            self.logger.warning(
+                'Unable to read old updates because: {0}, defaulting to None'.format(str(e)))
             return None, None
 
         # Get the most recent prior timestamp from the update list

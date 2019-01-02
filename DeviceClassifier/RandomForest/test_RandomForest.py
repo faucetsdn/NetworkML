@@ -31,7 +31,7 @@ def calc_f1(results, logger, ignore_unknown=False):
                 else:
                     results_by_label[true_label] = {'tp': 0, 'fp': 0, 'fn': 0}
 
-            for i, classification in indiv_results.items():
+            for _, classification in indiv_results.items():
                 class_label = classification[0][0]
                 if class_label == 'Unknown' and ignore_unknown is True:
                     class_label = classification[1][0]

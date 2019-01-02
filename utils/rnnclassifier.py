@@ -190,7 +190,7 @@ class AbnormalDetector:
                 packet_cell_b,
                 attn_length=self.attn_size
             )
-            packet_vectors, packet_states = tf.nn.bidirectional_dynamic_rnn(
+            packet_vectors, _ = tf.nn.bidirectional_dynamic_rnn(
                 packet_attn_cell_f,
                 packet_attn_cell_b,
                 X_reshaped,

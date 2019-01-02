@@ -59,6 +59,8 @@ def calc_f1(results, logger, ignore_unknown=False):
             precision = tp/(tp + fp)
             recall = tp/(tp + fn)
         except Exception as e:
+            logger.info(
+                'Unable to set precision or recall because: {0}, defaulting to 0'.format(str(e)))
             precision = 0
             recall = 0
 
