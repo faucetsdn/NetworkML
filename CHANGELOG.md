@@ -1,3 +1,9 @@
+# v0.2.5 (2019-01-11)
+
+ - models have been retrained to fix a warning about invalid results when evaluating a pcap
+ - some unused code and module has been removed
+ - upgraded pytest to 4.1.0 and pytest-cov to 2.6.1
+
 # v0.2.4 (2018-12-21)
 
  - upgraded scikit-learn to 0.20.2
