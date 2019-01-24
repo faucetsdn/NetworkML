@@ -56,3 +56,14 @@ Linux host. We recommend deployment via Vent in conjunction with Poseidon if you
 are running an SDN (software-defined network). Otherwise, we recommend using Docker.
 
 See the [README](https://github.com/CyberReboot/PoseidonML/blob/master/DeviceClassifier/README.md) file included in the plugin's folder for specific instructions on deployment.
+
+
+# Develop/Standalone installation
+
+This package is set up for anaconda/miniconda to be used for package and environment 
+management. Assuming you have the latest install (current known compatibility is with
+conda 4.5.12), ensure that the CONDA_EXE environment variable has been set. (This may
+be as simple as running `export CONDA_EXE=$CONDA_EXE` in your bash shell.) Then run
+`make dev` to set up the environment and `conda activate posml-dev` to begin.
+
+For more information about using conda, please refer to Conda's [user documentation](https://conda.io/projects/conda/en/latest/user-guide/getting-started.html).
