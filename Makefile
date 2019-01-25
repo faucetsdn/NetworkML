@@ -20,6 +20,7 @@ help:
 	@echo "install                                 Installs the python library"
 	@echo "run                                     Equivalent to eval_onelayer"
 	@echo
+	@echo "DEV/STANDALONE OPTIONS:"
 	@echo "dev                                     Uses conda to create a contained python development environment"
 	@echo "rmdev                                   Removes the conda development environment"
 eval_onelayer: build_onelayer run_redis eval_onelayer_nobuild
