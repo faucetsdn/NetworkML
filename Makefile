@@ -1,6 +1,13 @@
 SHELL:=/bin/bash
 PIP=$(shell which pip3 || echo "pip3")
 
+
+# CONDA_EXE must be set before running `make dev` or `rmdev`
+# export CONDA_EXE=$_CONDA_EXE
+CONDA_DEV=posml-dev
+CONDAROOT=$(shell ${CONDA_EXE} info --base)/bin
+CONDA_ENV=$(shell ${CONDA_EXE} info --base)/envs/$(CONDA_DEV)/bin
+
 run: build_onelayer eval_onelayer
 help:
 	@echo "make OPTION      (see below for description; requires setting PCAP environment variable)"
@@ -12,6 +19,10 @@ help:
 	@echo "train_[onelayer|randomforest|sosmodel]  Trains directory of pcaps against specified model"
 	@echo "install                                 Installs the python library"
 	@echo "run                                     Equivalent to eval_onelayer"
+	@echo
+	@echo "DEV/STANDALONE OPTIONS:"
+	@echo "dev                                     Uses conda to create a contained python development environment"
+	@echo "rmdev                                   Removes the conda development environment"
 eval_onelayer: build_onelayer run_redis eval_onelayer_nobuild
 eval_onelayer_nobuild:
 	@echo
@@ -90,3 +101,11 @@ clean:
 install:
 	$(PIP) install -r requirements.txt
 	python3 setup.py install
+
+dev:
+	${CONDA_EXE} env create --force -f $(CONDA_DEV).yml python=3.6
+	source $(CONDAROOT)/activate $(CONDA_DEV) ;	\
+	$(CONDA_ENV)/pip install --upgrade pip ;	\
+	$(CONDA_ENV)/pip install .
+rmdev:
+	${CONDA_EXE} env remove -y -n $(CONDA_DEV)

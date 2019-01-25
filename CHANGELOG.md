@@ -1,3 +1,9 @@
+# v0.2.6 (2019-01-25)
+
+ - Updated numpy to 1.16.0
+ - Updated pika to 0.13.0
+ - Included a conda yml file for a standalone/dev environment, and new Makefile options to build it.
+
 # v0.2.5 (2019-01-11)
 
  - models have been retrained to fix a warning about invalid results when evaluating a pcap
