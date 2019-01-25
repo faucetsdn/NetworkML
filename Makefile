@@ -4,7 +4,7 @@ PIP=$(shell which pip3 || echo "pip3")
 
 # CONDA_EXE must be set before running `make dev` or `rmdev`
 # export CONDA_EXE=$_CONDA_EXE
-CONDA_DEV=testABC
+CONDA_DEV=posml-dev
 CONDAROOT=$(shell ${CONDA_EXE} info --base)/bin
 CONDA_ENV=$(shell ${CONDA_EXE} info --base)/envs/$(CONDA_DEV)/bin
 
