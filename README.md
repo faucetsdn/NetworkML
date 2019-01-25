@@ -61,9 +61,16 @@ See the [README](https://github.com/CyberReboot/PoseidonML/blob/master/DeviceCla
 # Develop/Standalone installation
 
 This package is set up for anaconda/miniconda to be used for package and environment 
-management. Assuming you have the latest install (current known compatibility is with
-conda 4.5.12), ensure that the CONDA_EXE environment variable has been set. (This may
-be as simple as running `export CONDA_EXE=$CONDA_EXE` in your bash shell.) Then run
-`make dev` to set up the environment and `conda activate posml-dev` to begin.
+management. Assuming you have the latest install (as of this writing, we have been using
+conda 4.5.12), set up the environment by performing the following:
+ 1. Ensure that the CONDA_EXE environment variable has been set. If `echo $CONDA_EXE`
+returns empty, resolve this by `export CONDA_EXE=$_CONDA_EXE` in your bash shell.
+ 2. Run `make dev` to set up the environment
+ 3. Run `conda activate posml-dev` to begin.
 
-For more information about using conda, please refer to Conda's [user documentation](https://conda.io/projects/conda/en/latest/user-guide/getting-started.html).
+You can remove the dev environment via standard conda commands:
+ 1. Run `conda deactivate`
+ 2. Run `conda env remove -y -n posml-dev`
+
+For more information about using conda, please refer to their 
+[user documentation](https://conda.io/projects/conda/en/latest/user-guide/getting-started.html).
