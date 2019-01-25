@@ -14,7 +14,6 @@ def scope_decorator(function):
     """
     Decorator that handles graph construction and variable scoping
     """
-
     name = function.__name__
     attribute = '_cache_' + name
 
@@ -67,7 +66,6 @@ class SoSModel:
         """
         Initializes the model
         """
-
         self.feature_size = feature_size
         self.label_size = label_size
         self.rnn_size = rnn_size
@@ -100,14 +98,12 @@ class SoSModel:
         """
         Close the session when the model is deleted
         """
-
         self.sess.close()
 
     def initialize(self):
         """
         Initialize variables in the graph
         """
-
         with self.graph.as_default():
             self.sess.run(tf.global_variables_initializer())
 
@@ -131,10 +127,7 @@ class SoSModel:
         self.Y = tf.placeholder(tf.float32, [None])
 
         # Model methods
-        self.network
-        self.cost
-        self.optimizer
-        self.get_output
+        _ = self.network
 
         # Saver
         self.saver = tf.train.Saver()
@@ -144,7 +137,6 @@ class SoSModel:
         """
         Construct the network used for classifying sessions
         """
-
         # Get the shape of the input
         shape = tf.shape(self.X)
 

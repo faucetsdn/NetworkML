@@ -16,7 +16,6 @@ def scope_decorator(function):
     """
     Decorator that handles graph construction and variable scoping
     """
-
     name = function.__name__
     attribute = '_cache_' + name
 
@@ -72,7 +71,6 @@ class AbnormalDetector:
         """
         Initializes the model
         """
-
         self.packet_embedding_size = packet_embedding_size
         self.session_embedding_size = session_embedding_size
         self.hidden_size = hidden_size
@@ -117,14 +115,12 @@ class AbnormalDetector:
         """
         Close the session when the model is deleted
         """
-
         self.sess.close()
 
     def initialize(self):
         """
         Initialize variables in the graph
         """
-
         with self.graph.as_default():
             self.sess.run(tf.global_variables_initializer())
 
@@ -148,10 +144,7 @@ class AbnormalDetector:
         self.Y = tf.placeholder(tf.int16, [None, 1])
 
         # Model methods
-        self.network
-        self.cost
-        self.optimizer
-        self.get_output
+        _ = self.network
 
         # Saver
         self.saver = tf.train.Saver()
@@ -161,7 +154,6 @@ class AbnormalDetector:
         """
         Construct the network used for classifying sessions
         """
-
         # Get the shape of the input
         shape = tf.shape(self.X)
 
