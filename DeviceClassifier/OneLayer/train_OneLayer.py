@@ -1,11 +1,11 @@
 '''
 Trains and saves an instance of the one layer feedforward model on the
-data directory specified by the first argument.  The model requires a 
-directory of pcaps to train on ('/pcaps' by default) and is saved to the
-location specified by the -w parameter ('models/OneLayerModel' default).
+data directory specified by the '-P' argument ('/pcaps' by default).  The 
+model is saved to a location specified by the -w parameter 
+('models/OneLayerModel' by default).
 '''
-import sys
 import argparse
+import sys
 
 from poseidonml.config import get_config
 from poseidonml.Model import Model
