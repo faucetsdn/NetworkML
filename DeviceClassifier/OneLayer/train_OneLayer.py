@@ -1,27 +1,36 @@
 '''
 Trains and saves an instance of the one layer feedforward model on the
-data directory specified by the first argument.  The model is saved to the
-location specified by the second argument.
+data directory specified by the first argument.  The model requires a 
+directory of pcaps to train on ('/pcaps' by default) and is saved to the
+location specified by the -w parameter ('models/OneLayerModel' default).
 '''
 import sys
+import argparse
 
 from poseidonml.config import get_config
 from poseidonml.Model import Model
 from sklearn.neural_network import MLPClassifier
 
 
-if __name__ == '__main__':
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config', '-c', default='opts/config.json',
+                        help='model\'s config file')
+    parser.add_argument('--pcaps', '-P', default='/pcaps',
+                        help='pcap directory to train on (e.g., /pcaps)')
+    parser.add_argument('--save', '-w', default='models/OneLayerModel.pkl',
+                        help='path to save model (e.g., models/OneLayerModel.pkl)')
+                       
+    args = parser.parse_args()
+
     # Load model params from config
-    config = get_config()
+    config = get_config(args.config)
     duration = config['duration']
     hidden_size = config['state size']
     labels = config['labels']
 
     # Get the data directory
-    if len(sys.argv) < 2:
-        data_dir = '/pcaps'
-    else:
-        data_dir = sys.argv[1]
+    data_dir = args.pcaps
 
     m = MLPClassifier(
         (hidden_size),
@@ -41,8 +50,7 @@ if __name__ == '__main__':
     # Train the model
     model.train(data_dir)
     # Save the model to the specified path
-    if len(sys.argv) == 3:
-        save_path = sys.argv[2]
-    else:
-        save_path = 'models/OneLayerModel.pkl'
-    model.save(save_path)
+    model.save(args.save)
+
+if __name__ == '__main__':
+    main()
