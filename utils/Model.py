@@ -272,6 +272,69 @@ class Model:
 
         return representation, source_ip, timestamp, prediction, other_ips
 
+    def calc_f1(self, results, ignore_unknown=False):
+        results_by_label = {}
+        for file, file_results in results.items():
+            if file != 'labels':
+                indiv_results = file_results['individual']
+                true_label = file_results['label']
+
+                if true_label not in results_by_label:
+                    if true_label == 'Unknown':
+                        if ignore_unknown is False:
+                            results_by_label[true_label] = {
+                                'tp': 0, 'fp': 0, 'fn': 0}
+                    else:
+                        results_by_label[true_label] = {'tp': 0, 'fp': 0, 'fn': 0}
+
+                for _, classification in indiv_results.items():
+                    class_label = classification[0][0]
+                    if class_label == 'Unknown' and ignore_unknown is True:
+                        class_label = classification[1][0]
+                    if class_label not in results_by_label:
+                        results_by_label[class_label] = {'tp': 0, 'fp': 0, 'fn': 0}
+                    if true_label != 'Unknown':
+                        if class_label == true_label:
+                            results_by_label[true_label]['tp'] += 1
+                        if class_label != true_label:
+                            results_by_label[true_label]['fn'] += 1
+                            results_by_label[class_label]['fp'] += 1
+                    elif ignore_unknown is False:
+                        if class_label == true_label:
+                            results_by_label[true_label]['tp'] += 1
+                        if class_label != true_label:
+                            results_by_label[true_label]['fn'] += 1
+                            results_by_label[class_label]['fp'] += 1
+        f1s = []
+        for label in results_by_label:
+            tp = results_by_label[label]['tp']
+            fp = results_by_label[label]['fp']
+            fn = results_by_label[label]['fn']
+
+            try:
+                precision = tp/(tp + fp)
+                recall = tp/(tp + fn)
+            except Exception as e:
+                self.logger.debug(
+                    'Setting precision and recall to 0 because: {0}'.format(str(e)))
+                precision = 0
+                recall = 0
+
+            if precision == 0 or recall == 0:
+                f1 = 0
+            else:
+                f1 = 2/(1/precision + 1/recall)
+
+            if (tp + fn) > 0:
+                f1s.append(f1)
+
+            if f1 is not 'NaN':
+                if (tp + fn) > 0:
+                    self.logger.info('F1 of {} for {}'.format(f1, label))
+
+        self.logger.info('Mean F1: {}'.format(np.mean(f1s)))
+        
+
     def classify_representation(self, representation):
         '''
         Takes in a representation and produces a classification
