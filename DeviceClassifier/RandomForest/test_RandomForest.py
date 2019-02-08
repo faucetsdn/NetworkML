@@ -80,10 +80,10 @@ def main():
     tick = time.clock()
     for pcap in pcaps:
          # Get the true label
-        label = utils.get_true_label(pcap, label_assignments)
+        name, label = utils.get_true_label(pcap, label_assignments)
         single_result = {}
-        single_result['label'] = label[1]
-        logger.info('Reading ' + label[0] + ' as ' + label[1])
+        single_result['label'] = label
+        logger.info('Reading ' + name + ' as ' + label)
         # Get the internal representations
         representations, _, _, p, _ = model.get_representation(
             pcap, mean=False)
