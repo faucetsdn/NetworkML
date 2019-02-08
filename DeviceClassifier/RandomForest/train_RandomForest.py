@@ -1,7 +1,7 @@
 '''
 Trains and saves an instance of the random decision forest model on the
-data directory specified by the '-P' argument ('/pcaps' by default).  The 
-model is saved to a location specified by the -w parameter 
+data directory specified by the '-P' argument ('/pcaps' by default). The
+model is saved to a location specified by the -w parameter
 ('models/RandomForestModel' by default).
 '''
 import argparse
