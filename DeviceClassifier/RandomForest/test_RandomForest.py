@@ -11,7 +11,7 @@ import sys
 import time
 
 import numpy as np
-import poseidonml.training_utils as utils 
+import poseidonml.training_utils as utils
 from poseidonml.Model import Model
 
 
@@ -32,13 +32,13 @@ def main():
                         help='path to save the model (json)')
     parser.add_argument('--labels', '-l', default='opts/label_assignments.json',
                         help='path to labels file (default: opts/label_assignments.json)')
-    parser.add_argument('--debug', action='store_true', 
+    parser.add_argument('--debug', action='store_true',
                         help='print debug messages, if any')
     args = parser.parse_args()
 
     if args.debug:
         logger.setLevel(logging.DEBUG)
-    else: 
+    else:
         try:
             if 'LOG_LEVEL' in os.environ and os.environ['LOG_LEVEL'] != '':
                 logger.setLevel(os.environ['LOG_LEVEL'])

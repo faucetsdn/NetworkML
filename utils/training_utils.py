@@ -56,7 +56,7 @@ def get_labels(labels_file, model_labels=None):
 
 def get_true_label(name, label_dict):
     '''
-    Reads in a filename, extracts the label, and checks the dictionary 
+    Reads in a filename, extracts the label, and checks the dictionary
     for the true label, or labels it as Unknown.
 
     Args:

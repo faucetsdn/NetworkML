@@ -333,7 +333,7 @@ class Model:
                     self.logger.info('F1 of {} for {}'.format(f1, label))
 
         self.logger.info('Mean F1: {}'.format(np.mean(f1s)))
-        
+
 
     def classify_representation(self, representation):
         '''
