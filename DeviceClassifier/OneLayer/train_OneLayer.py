@@ -1,7 +1,7 @@
 '''
 Trains and saves an instance of the one layer feedforward model on the
-data directory specified by the '-P' argument ('/pcaps' by default).  The 
-model is saved to a location specified by the -w parameter 
+data directory specified by the '-P' argument ('/pcaps' by default). The
+model is saved to a location specified by the -w parameter
 ('models/OneLayerModel' by default).
 '''
 import argparse
@@ -20,7 +20,11 @@ def main():
                         help='pcap directory to train on (e.g., /pcaps)')
     parser.add_argument('--save', '-w', default='models/OneLayerModel.pkl',
                         help='path to save model (e.g., models/OneLayerModel.pkl)')
+<<<<<<< HEAD
                        
+=======
+
+>>>>>>> master
     args = parser.parse_args()
 
     # Load model params from config
