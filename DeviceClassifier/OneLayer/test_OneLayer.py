@@ -7,10 +7,8 @@ import argparse
 import json
 import logging
 import os
-import sys
 import time
 
-import numpy as np
 import poseidonml.training_utils as utils
 from poseidonml.Model import Model
 
