@@ -34,7 +34,7 @@ test_onelayer: build_onelayer run_redis test_onelayer_nobuild
 test_onelayer_nobuild:
 	@echo
 	@echo "Running OneLayer Test on PCAP files $(PCAP)"
-	@docker run -it --rm -v "/tmp/models:/OneLayer/models" -v "$(PCAP):/pcaps/" --link poseidonml-redis:redis -e SKIP_RABBIT=true -e LOG_LEVEL=$(LOG_LEVEL) --entrypoint=python3 poseidonml:onelayer train_OneLayer.py
+	@docker run -it --rm -v "/tmp/models:/OneLayer/models" -v "$(PCAP):/pcaps/" --link poseidonml-redis:redis -e SKIP_RABBIT=true -e LOG_LEVEL=$(LOG_LEVEL) --entrypoint=python3 poseidonml:onelayer test_OneLayer.py
 	@docker rm -f poseidonml-redis > /dev/null
 	@echo
 train_onelayer: build_onelayer run_redis train_onelayer_nobuild
@@ -107,5 +107,6 @@ dev:
 	source $(CONDAROOT)/activate $(CONDA_DEV) ;	\
 	$(CONDA_ENV)/pip install --upgrade pip ;	\
 	$(CONDA_ENV)/pip install .
+
 rmdev:
 	${CONDA_EXE} env remove -y -n $(CONDA_DEV)
