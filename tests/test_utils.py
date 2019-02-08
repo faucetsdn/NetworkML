@@ -40,11 +40,24 @@ from utils.training_utils import choose_regularization
 from utils.training_utils import read_data
 from utils.training_utils import select_features
 from utils.training_utils import whiten_features
+from utils.training_utils import get_labels
+from utils.training_utils import get_true_label
+from utils.training_utils import get_pcap_paths
 from utils.config import get_config
+
+
+def test_labels():
+    labels = get_labels('test_labels.json') 
+    assert get_true_label('dev2', labels) == 'Device Two'
+
+
+def test_get_pcap_paths():
+    get_pcap_paths('.')
 
 
 def test_Model():
     instance = Model(15)
+    instance.calc_f1({})
 
 
 def test_SoSModel():
