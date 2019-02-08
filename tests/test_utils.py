@@ -47,7 +47,7 @@ from utils.config import get_config
 
 
 def test_labels():
-    labels = get_labels('/test_labels.json') 
+    labels = get_labels('tests/test_labels.json') 
     assert get_true_label('dev2', labels) == ('dev2', 'Device Two')
 
 
