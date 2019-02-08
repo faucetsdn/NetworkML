@@ -27,8 +27,8 @@ def main():
                         help='pcap directory to train on (e.g., /pcaps)')
     parser.add_argument('--model', '-r', default='/models/OneLayerModel.pkl',
                         help='path to the RandomForest model (pickle file)')
-    parser.add_argument('--save', '-w', default='models/OneLayerModel.pkl',
-                        help='path to save the model (pickle file)')
+    parser.add_argument('--save', '-w', default='models/OneLayerModel.json',
+                        help='path to save the model (json)')
     parser.add_argument('--labels', '-l', default='opts/label_assignments.json',
                         help='path to labels file (default: opts/label_assignments.json)')
     parser.add_argument('--debug', action='store_true',
