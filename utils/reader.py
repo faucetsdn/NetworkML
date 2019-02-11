@@ -115,6 +115,7 @@ def packetizer(path):
 
     # Read get the pcap info with tcpdump
     FNULL = open(os.devnull, 'w')
+    # TODO: yikes @ the shell=True + unvalidated user input
     proc = subprocess.Popen(
         'tcpdump -nn -tttt -xx -r' + path,
         shell=True,
@@ -166,10 +167,12 @@ def sessionizer(path, duration=None, threshold_time=None):
 
     # Get threshold time from config
     if threshold_time is None:
+        # TODO: error-check threshold_time, if < 0
+        # error-check all config parameters, as well.
         try:
             config = get_config()
             threshold_time = config['session threshold']
-        except Exception as e:
+        except:
             threshold_time = 120
 
     for head, packet in packet_dict.items():

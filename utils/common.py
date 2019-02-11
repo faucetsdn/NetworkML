@@ -273,7 +273,7 @@ class Common:
             update_list = ast.literal_eval(
                 updates[b'timestamps'].decode('ascii'))
             self.logger.debug('Got previous updates from %s', source_mac)
-        except Exception as e:
+        except:
             self.logger.debug('No previous updates found for %s', source_mac)
             update_list = []
 
@@ -288,7 +288,7 @@ class Common:
         try:
             self.r.hmset(source_mac, redis_times)
             self.r.sadd('mac_addresses', source_mac)
-        except Exception as e:
+        except:
             self.logger.debug('Could not store update time')
 
         return key
