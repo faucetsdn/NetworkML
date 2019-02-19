@@ -160,7 +160,7 @@ class OneLayerEval:
                 abnormality = 0
                 abnormality = eval_pcap(
                     str(pcap), self.conf_labels, self.time_const, label=labels[0],
-                    rnn_size=self.rnn_size, model_type='OneLayer')
+                    rnn_size=self.rnn_size, model_path=load_path, model_type='OneLayer')
                 prev_s = self.common.get_address_info(
                     source_mac,
                     timestamp
