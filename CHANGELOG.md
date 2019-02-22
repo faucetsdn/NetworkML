@@ -1,3 +1,9 @@
+# v0.2.8 (2019-02-22)
+
+ - Updated pytest to 4.3.0 from 4.2.0.
+ - Cleaned up some code issues as pointed out by Codacy.
+ - Minor miscellaneous bugfixes to support running training natively.
+
 # v0.2.7 (2019-02-09)
 
  - Provided a way to run DeviceClassifier training and testing scripts from command line.
