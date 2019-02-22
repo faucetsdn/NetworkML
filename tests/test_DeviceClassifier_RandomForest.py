@@ -3,15 +3,11 @@ import os
 
 from DeviceClassifier.RandomForest import train_RandomForest
 from DeviceClassifier.RandomForest.eval_RandomForest import RandomForestEval
-from DeviceClassifier.RandomForest.test_RandomForest import calc_f1
 
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
-def test_calc_f1():
-    calc_f1({}, logger)
 
 
 def test_randomforesteval():

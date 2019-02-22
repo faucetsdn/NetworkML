@@ -1,7 +1,7 @@
-numpy==1.16.0
+numpy==1.16.1
 pika==0.13.0
-pytest==4.1.1
+pytest==4.3.0
 pytest-cov==2.6.1
-redis==3.0.1
+redis==3.2.0
 scikit-learn==0.20.2
 tensorflow==1.12.0

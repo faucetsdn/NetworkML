@@ -21,6 +21,72 @@ except SystemError:  # pragma: no cover
     from featurizer import extract_features
 
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__file__.split(os.path.sep)[-1])
+
+
+
+def get_labels(labels_file, model_labels=None):
+    '''
+    Reads the label assignments json from the labels file, and if the model's
+    labels are provided, does a match comparison of the two sets.
+
+    Args:
+        labels_file: path to the labels_assignment folder
+        model_labels: the array of labels as read in from the model file
+    Returns:
+        label_assignments: an array of all the labels to be evaluated
+    '''
+    label_assignments = []
+    with open(labels_file) as handle:
+        label_assignments = json.load(handle)
+    if not label_assignments:
+        return None
+
+    if model_labels:
+        mismatch_ct = 0
+        for name in label_assignments:
+            label = label_assignments[name]
+            if label not in model_labels:
+                logger.warn('Label "'+label+'" was not accounted for in this model.')
+                mismatch_ct += 1
+        if mismatch_ct > 0:
+            logger.warn('A total of '+str(mismatch_ct)+' labels not covered by this model.')
+    return label_assignments
+
+
+def get_true_label(name, label_dict):
+    '''
+    Reads in a filename, extracts the label, and checks the dictionary
+    for the true label, or labels it as Unknown.
+
+    Args:
+        name: filename
+        label_dict: json of name to label, as specified in the labels file
+    Returns:
+        A tuple of the name and its matching label, or Unknown if not found
+    '''
+    key = os.path.split(name)[1].split('-')[0]
+    if key in label_dict:
+        return (key, label_dict[key])
+    else:
+        return (key, 'Unknown')
+
+
+def get_pcap_paths(data_dir):
+    '''
+    Gets all the pcaps in the provided data directory
+
+    Args:
+        data_dir: directory of pcap files
+    Returns:
+        pcaps: the array of all the pcaps in the directory
+    '''
+    pcaps = []
+    for dirpath, _, filenames in os.walk(data_dir):
+        for filename in filenames:
+            if os.path.splitext(filename)[1] == '.pcap':
+                pcaps.append(os.path.join(dirpath, filename))
+    return pcaps
 
 
 def read_data(data_dir, duration=None, labels=None):
@@ -38,7 +104,6 @@ def read_data(data_dir, duration=None, labels=None):
         y: numpy 1D array that contains the labels for the features in X
         new_labels: Reordered labels used in training
     '''
-    logger = logging.getLogger(__name__)
     try:
         if 'LOG_LEVEL' in os.environ and os.environ['LOG_LEVEL'] != '':
             logger.setLevel(os.environ['LOG_LEVEL'])
@@ -49,35 +114,23 @@ def read_data(data_dir, duration=None, labels=None):
     y = []
     assigned_labels = []
 
-    # Get all the files in the directory
-    files = []
-    with open('opts/label_assignments.json') as handle:
-        label_assignments = json.load(handle)
+    label_assignments = get_labels('opts/label_assignments.json')
 
-    for dirpath, _, filenames in os.walk(data_dir):
-        for file in filenames:
-            _, ext = os.path.splitext(file)
-            if ext == '.pcap':
-                files.append(os.path.join(dirpath, file))
+    # Get all the files in the directory
+    files = get_pcap_paths(data_dir)
+
     # Go through all the files in the directory
     logger.info('Found {0} pcap files to read.'.format(len(files)))
     count = 0
     for filename in files:
         count += 1
         # Extract the label from the filename
-        name = os.path.split(filename)[1]
-        name = name.split('-')[0]
-        if name in label_assignments:
-            label = label_assignments[name]
-            if label not in labels:
-                label = 'Unknown'
-        else:
-            label = 'Unknown'
+        name, label = get_true_label(filename, label_assignments)
         if label not in assigned_labels:
             assigned_labels.append(label)
 
         logger.info('Reading {0} ({1} bytes) as {2} ({3}/{4})'.format(
-            filename, os.path.getsize(filename), label, count, len(files)))
+            name, os.path.getsize(filename), label, count, len(files)))
         # Bin the sessions with the specified time window
         binned_sessions = sessionizer(
             filename,

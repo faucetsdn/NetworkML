@@ -1,3 +1,17 @@
+# v0.2.8 (2019-02-22)
+
+ - Updated pytest to 4.3.0 from 4.2.0.
+ - Cleaned up some code issues as pointed out by Codacy.
+ - Minor miscellaneous bugfixes to support running training natively.
+
+# v0.2.7 (2019-02-09)
+
+ - Provided a way to run DeviceClassifier training and testing scripts from command line.
+ - Cleaned up some unused code and consolidated common operations into utils and model class.
+ - Fixed issue where Makefile built the OneLayer training container when building the test one.
+ - Updated redis to 3.1.0
+ - Updated numpy to 1.16.1
+
 # v0.2.6 (2019-01-25)
 
  - Updated numpy to 1.16.0
