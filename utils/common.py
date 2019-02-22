@@ -288,8 +288,8 @@ class Common:
         try:
             self.r.hmset(source_mac, redis_times)
             self.r.sadd('mac_addresses', source_mac)
-        except:
-            self.logger.debug('Could not store update time')
+        except (ConnectionError, TimeoutError) as e:
+            self.logger.debug('Could not store update time because: %s', str(e))
 
         return key
 
@@ -351,5 +351,5 @@ class Common:
             #self.batch_size = config['batch size']
         except Exception as e:  # pragma: no cover
             self.logger.error(
-                "unable to read 'opts/config.json' properly because: %s", str(e))
+                "Unable to read 'opts/config.json' properly because: %s", str(e))
         return
