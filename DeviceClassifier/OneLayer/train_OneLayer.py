@@ -5,7 +5,6 @@ model is saved to a location specified by the -w parameter
 ('models/OneLayerModel' by default).
 '''
 import argparse
-import sys
 
 from poseidonml.config import get_config
 from poseidonml.Model import Model

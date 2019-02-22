@@ -193,9 +193,8 @@ def packet_size(packet):
     size = packet[1][32:36]
     try:
         size = int(size, 16)
-    except Exception as e:
+    except ValueError:
         size = 0
-
     return size
 
 
@@ -300,8 +299,11 @@ def clean_session_dict(sessions, source_address=None):
     def clean_dict(sessions, source_address):
         cleaned_sessions = OrderedDict()
         for key, packets in sessions.items():
-            address_1, port_1 = get_ip_port(key[0])
-            address_2, port_2 = get_ip_port(key[1])
+            # TODO: Removing port_1 and port_2 (i.e., returned val [1])
+            # due to unuse, but I'm a little surprised we aren't using
+            # this... O_o
+            address_1 = get_ip_port(key[0])[0]
+            address_2 = get_ip_port(key[1])[0]
 
             first_packet = sessions[key][0][1]
             source_mac, destination_mac = extract_macs(first_packet)
