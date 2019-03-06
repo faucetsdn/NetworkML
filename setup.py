@@ -2,11 +2,11 @@ from setuptools import setup
 
 setup(
     name='poseidonml',
-    version='0.2.8',
+    version='0.2.9.dev',
     packages=['poseidonml'],
     package_dir={'poseidonml': 'utils'},
     package_data={'poseidonml': ['models/*']},
-    install_requires=['numpy==1.16.1', 'pika==0.13.0', 'redis==3.2.0',
+    install_requires=['numpy==1.16.2', 'pika==0.13.0', 'redis==3.2.0',
                       'scikit-learn==0.20.2', 'tensorflow==1.12.0'],
     license='Apache License 2.0',
     author='cglewis',
