@@ -166,11 +166,10 @@ def sessionizer(path, duration=None, threshold_time=None):
     session_starts = OrderedDict()
 
     # Get threshold time from config
-    if threshold_time is None:
-        # TODO: error-check threshold_time, if < 0
-        # error-check all config parameters, as well.
-        config = get_config()
-        threshold_time = config.get('session threshold', 120)
+    config = get_config()
+    if not threshold_time or threshold_time < 1:
+        cfg_threshold = config.get('session threshold')
+        threshold_time = cfg_threshold if cfg_threshold and cfg_threshold>0 else 120
 
     for head, packet in packet_dict.items():
         time = head[0]
