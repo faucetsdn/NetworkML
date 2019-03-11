@@ -11,8 +11,8 @@ setup(
     license='Apache License 2.0',
     author='cglewis',
     author_email='clewis@iqt.org',
-    maintainer='Alice Chang',
-    maintainer_email='achang@iqt.org',
+    maintainer='cglewis',
+    maintainer_email='clewis@iqt.org',
     description=(
         'A utility package for extracting and analyzing features in network traffic.'),
     keywords='machine learning network analysis utilities',
