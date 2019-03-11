@@ -1,3 +1,9 @@
+# v0.2.9 (2019-03-08)
+
+ - Updated tensorflow from 1.12.0 to 1.13.1.
+ - Updated numpy from 1.16.1 to 1.16.2.
+ - Miscellaneous error checking and spacing corrections.
+
 # v0.2.8 (2019-02-22)
 
  - Updated pytest to 4.3.0 from 4.2.0.
