@@ -43,7 +43,7 @@ class Model:
         try:
             if 'LOG_LEVEL' in os.environ and os.environ['LOG_LEVEL'] != '':
                 self.logger.setLevel(os.environ['LOG_LEVEL'])
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             self.logger.error(
                 'Unable to set logging level because: {0} defaulting to INFO.'.format(str(e)))
 
@@ -285,14 +285,16 @@ class Model:
                             results_by_label[true_label] = {
                                 'tp': 0, 'fp': 0, 'fn': 0}
                     else:
-                        results_by_label[true_label] = {'tp': 0, 'fp': 0, 'fn': 0}
+                        results_by_label[true_label] = {
+                            'tp': 0, 'fp': 0, 'fn': 0}
 
                 for _, classification in indiv_results.items():
                     class_label = classification[0][0]
                     if class_label == 'Unknown' and ignore_unknown is True:
                         class_label = classification[1][0]
                     if class_label not in results_by_label:
-                        results_by_label[class_label] = {'tp': 0, 'fp': 0, 'fn': 0}
+                        results_by_label[class_label] = {
+                            'tp': 0, 'fp': 0, 'fn': 0}
                     if true_label != 'Unknown':
                         if class_label == true_label:
                             results_by_label[true_label]['tp'] += 1
@@ -333,7 +335,6 @@ class Model:
                     self.logger.info('F1 of {} for {}'.format(f1, label))
 
         self.logger.info('Mean F1: {}'.format(np.mean(f1s)))
-
 
     def classify_representation(self, representation):
         '''

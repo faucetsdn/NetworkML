@@ -14,3 +14,14 @@ def test_setup_logger():
 def test_setup_env():
     common = Common()
     common.setup_env()
+
+
+def test_connect_rabbit():
+    common = Common()
+    common.connect_rabbit()
+
+
+def test_get_address_info():
+    common = Common()
+    last_update = common.get_address_info('foo', 'bar')
+    assert last_update == None
