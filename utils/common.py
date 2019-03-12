@@ -61,7 +61,7 @@ class Common:
         try:
             self.r = StrictRedis(host=host, port=port, db=db,
                                  socket_connect_timeout=2)
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             self.logger.error(
                 'Failed connect to Redis because: {0}'.format(str(e)))
         return
@@ -71,10 +71,13 @@ class Common:
         self.exchange = 'topic-poseidon-internal'
         self.exchange_type = 'topic'
 
-        # Starting rabbit connection
-        self.connection = pika.BlockingConnection(
-            pika.ConnectionParameters(host='rabbit')
-        )
+        try:
+            # Starting rabbit connection
+            self.connection = pika.BlockingConnection(
+                pika.ConnectionParameters(host='rabbit')
+            )
+        except Exception as e:  # pragma: no cover
+            return
 
         self.channel = self.connection.channel()
         self.channel.exchange_declare(
