@@ -206,6 +206,6 @@ class OneLayerEval:
         return
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     instance = OneLayerEval()
     instance.main()

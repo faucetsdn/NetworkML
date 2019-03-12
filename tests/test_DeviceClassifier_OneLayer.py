@@ -29,3 +29,6 @@ def test_onelayereval_main():
     instance.main()
     sys.argv = ['foo', 'AUTHORS']
     instance.main()
+    sys.argv = ['foo', os.path.join(os.getcwd(), 'tests/test.pcap'), os.path.join(
+        os.getcwd(), 'DeviceClassifier/OneLayer/models/OneLayerModel.pkl')]
+    instance.main()
