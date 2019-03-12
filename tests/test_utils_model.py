@@ -10,3 +10,8 @@ def test_augment_data():
     a = ['label1', 'label2', 'label3']
     y = np.array(a)
     model._augment_data(x, y)
+
+
+def test_get_features():
+    model = Model(10, labels=['Unknown'])
+    model.get_features('tests/test.pcap')
