@@ -19,5 +19,7 @@ before_install:
   - sudo apt-get update
   - sudo apt-get install docker-ce
   - sudo pkill tcpdump
+  - mkdir -p /home/travis/build/$TRAVIS_REPO_SLUG/opts
+  - cp /home/travis/build/$TRAVIS_REPO_SLUG/DeviceClassifier/opts/config.json /home/travis/build/$TRAVIS_REPO_SLUG/opts/config.json
 after_success:
   - codecov
