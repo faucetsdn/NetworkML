@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 
 from utils.Model import Model
@@ -14,4 +16,6 @@ def test_augment_data():
 
 def test_get_features():
     model = Model(10, labels=['Unknown'])
+    with open('tests/test.pcap', 'a'):
+        os.utime('tests/test.pcap', None)
     model.get_features('tests/test.pcap')
