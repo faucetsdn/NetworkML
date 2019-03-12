@@ -39,7 +39,7 @@ class Common:
         try:
             if 'LOG_LEVEL' in os.environ and os.environ['LOG_LEVEL'] != '':
                 logger.setLevel(os.environ['LOG_LEVEL'])
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             logger.error(
                 'Unable to set logging level because: {0}, defaulting to INFO.'.format(str(e)))
         return logger
@@ -289,7 +289,8 @@ class Common:
             self.r.hmset(source_mac, redis_times)
             self.r.sadd('mac_addresses', source_mac)
         except (ConnectionError, TimeoutError) as e:
-            self.logger.debug('Could not store update time because: %s', str(e))
+            self.logger.debug(
+                'Could not store update time because: %s', str(e))
 
         return key
 

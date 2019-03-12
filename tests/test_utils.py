@@ -1,5 +1,7 @@
 import os
+
 from utils import train_SoSModel
+from utils.config import get_config
 from utils.eval_SoSModel import eval_pcap
 from utils.featurizer import extract_features
 from utils.iterator import BatchIterator
@@ -37,17 +39,16 @@ from utils.SoSmodel import scope_decorator
 from utils.SoSmodel import SoSModel
 from utils.SoSmodel import weight_variable
 from utils.training_utils import choose_regularization
+from utils.training_utils import get_labels
+from utils.training_utils import get_pcap_paths
+from utils.training_utils import get_true_label
 from utils.training_utils import read_data
 from utils.training_utils import select_features
 from utils.training_utils import whiten_features
-from utils.training_utils import get_labels
-from utils.training_utils import get_true_label
-from utils.training_utils import get_pcap_paths
-from utils.config import get_config
 
 
 def test_labels():
-    labels = get_labels('tests/test_labels.json') 
+    labels = get_labels('tests/test_labels.json')
     assert get_true_label('dev2', labels) == ('dev2', 'Device Two')
 
 
