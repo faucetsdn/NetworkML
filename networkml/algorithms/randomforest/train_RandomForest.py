@@ -48,5 +48,6 @@ def main():
     # Save the model to the specified path
     model.save(args.save)
 
+
 if __name__ == '__main__':
     main()

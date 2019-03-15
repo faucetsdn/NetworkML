@@ -17,7 +17,6 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__file__.split(os.path.sep)[-1])
 
 
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', '-c', default='opts/config.json',
@@ -59,7 +58,8 @@ def main():
 
     # Get the true label assignments
     logger.info('Getting label assignments')
-    label_assignments = utils.get_labels(args.labels, model_labels=model.labels)
+    label_assignments = utils.get_labels(
+        args.labels, model_labels=model.labels)
     if not label_assignments:
         logger.warn('Could not read label assignments; continuing anyway.')
 

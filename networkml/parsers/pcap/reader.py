@@ -3,11 +3,6 @@ import os
 import subprocess
 from collections import OrderedDict
 
-try:
-    from .config import get_config
-except SystemError:  # pragma: no cover
-    from config import get_config
-
 
 def parse_packet_head(line):
     '''
@@ -166,10 +161,14 @@ def sessionizer(path, duration=None, threshold_time=None):
     session_starts = OrderedDict()
 
     # Get threshold time from config
-    config = get_config()
+
+    # TODO commented out
+    #config = get_config()
+
     if not threshold_time or threshold_time < 1:
-        cfg_threshold = config.get('session threshold')
-        threshold_time = cfg_threshold if cfg_threshold and cfg_threshold>0 else 120
+        #cfg_threshold = config.get('session threshold')
+        cfg_threshold = None
+        threshold_time = cfg_threshold if cfg_threshold and cfg_threshold > 0 else 120
 
     for head, packet in packet_dict.items():
         time = head[0]

@@ -11,18 +11,13 @@ from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import cross_val_score
 
-try:
-    from .reader import sessionizer
-    from .pcap_utils import get_source
-    from .featurizer import extract_features
-except SystemError:  # pragma: no cover
-    from reader import sessionizer
-    from pcap_utils import get_source
-    from featurizer import extract_features
+from networkml.parsers.pcap.featurizer import extract_features
+from networkml.parsers.pcap.pcap_utils import get_source
+from networkml.parsers.pcap.reader import sessionizer
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__file__.split(os.path.sep)[-1])
-
 
 
 def get_labels(labels_file, model_labels=None):
@@ -47,10 +42,12 @@ def get_labels(labels_file, model_labels=None):
         for name in label_assignments:
             label = label_assignments[name]
             if label not in model_labels:
-                logger.warn('Label "'+label+'" was not accounted for in this model.')
+                logger.warn('Label "'+label +
+                            '" was not accounted for in this model.')
                 mismatch_ct += 1
         if mismatch_ct > 0:
-            logger.warn('A total of '+str(mismatch_ct)+' labels not covered by this model.')
+            logger.warn('A total of '+str(mismatch_ct) +
+                        ' labels not covered by this model.')
     return label_assignments
 
 

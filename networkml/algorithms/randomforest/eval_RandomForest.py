@@ -33,49 +33,6 @@ class RandomForestEval:
         self.skip_rabbit = self.common.skip_rabbit
 
     def main(self):
-        # path to the pcap to get the update from
-        pcaps = []
-        if len(sys.argv) < 2:
-            pcap_path = '/pcaps/eval.pcap'
-        else:
-            pcap_path = sys.argv[1]
-
-        if Path(pcap_path).is_dir():
-            for child in Path(pcap_path).iterdir():
-                if child.is_file() and \
-                        os.path.split(str(child))[-1].split('.')[-1] in {'pcap', 'dump', 'cap'}:
-                    pcaps.append(str(child))
-        elif Path(pcap_path).is_file() and \
-                os.path.split(str(pcap_path))[-1].split('.')[-1] in {'pcap', 'dump', 'cap'}:
-            pcaps.append(str(pcap_path))
-        else:
-            self.logger.error(
-                'Input \'%s\' was neither pcap nor directory.', str(pcap_path))
-            return
-
-        if not pcaps:
-            self.logger.error(
-                'Did not find pcap file(s) from \'%s\'.', str(pcap_path))
-            return
-
-        if not self.skip_rabbit:
-            self.common.connect_rabbit()
-
-        # Initialize and load the model
-        if len(sys.argv) > 2:
-            load_path = sys.argv[2]
-        else:
-            load_path = '/models/RandomForestModel.pkl'
-
-        # Compute model hash
-        with open(load_path, 'rb') as handle:
-            model_hash = hashlib.md5(handle.read()).hexdigest()
-
-        model = Model(duration=None, hidden_size=None,
-                      model_type='RandomForest')
-        model.load(load_path)
-        self.logger.debug('Loaded model from %s', load_path)
-
         for pcap in pcaps:
             self.logger.info('Processing {0}...'.format(pcap))
             source_mac = None

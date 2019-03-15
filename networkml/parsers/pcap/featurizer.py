@@ -1,22 +1,13 @@
 from collections import defaultdict
 
 import numpy as np
-try:
-    from .config import get_config
-    from .pcap_utils import extract_macs, \
-        is_private, \
-        is_external, \
-        is_protocol, \
-        get_source, \
-        get_ip_port
-except SystemError:  # pragma: no cover
-    from config import get_config
-    from pcap_utils import extract_macs, \
-        is_private, \
-        is_external, \
-        is_protocol, \
-        get_source, \
-        get_ip_port
+
+from networkml.parsers.pcap.pcap_utils import extract_macs
+from networkml.parsers.pcap.pcap_utils import get_ip_port
+from networkml.parsers.pcap.pcap_utils import get_source
+from networkml.parsers.pcap.pcap_utils import is_external
+from networkml.parsers.pcap.pcap_utils import is_private
+from networkml.parsers.pcap.pcap_utils import is_protocol
 
 
 def extract_features(session_dict, capture_source=None, max_port=None):
@@ -33,9 +24,13 @@ def extract_features(session_dict, capture_source=None, max_port=None):
     '''
 
     # Get featurization info from config
-    config = get_config()
-    address_type = config.get('source identifier', 'MAC')
-    max_port = config.get('max port', max_port) if not max_port else None
+
+    # TODO
+    #config = get_config()
+    #address_type = config.get('source identifier', 'MAC')
+    #max_port = config.get('max port', max_port) if not max_port else None
+    address_type = 'MAC'
+    max_port = 1
 
     # If the capture source isn't specified, default to the most used address
     if capture_source is None:

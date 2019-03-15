@@ -7,17 +7,9 @@ import tensorflow as tf
 from pkg_resources import Requirement
 from pkg_resources import working_set
 
-
-try:
-    from .config import get_config
-    from .SoSmodel import SoSModel
-    from .session_sequence import create_dataset
-    from .session_iterator import BatchIterator
-except SystemError:  # pragma: no cover
-    from config import get_config
-    from SoSmodel import SoSModel
-    from session_sequence import create_dataset
-    from session_iterator import BatchIterator
+from networkml.algorithms.sos.SoSmodel import SoSModel
+from networkml.parsers.pcap.session_iterator import BatchIterator
+from networkml.parsers.pcap.session_sequence import create_dataset
 
 
 logging.basicConfig(level=logging.INFO)
@@ -83,21 +75,3 @@ def eval_pcap(pcap, labels, time_const, label=None, rnn_size=100, model_path='/m
 
     logger.info(max_score)
     return max_score
-
-
-if __name__ == '__main__':
-    # Path to training data
-    pcap = sys.argv[1]
-    if len(sys.argv) == 3:
-        label = sys.argv[2]
-    else:
-        label = None
-
-    # Load info from config
-    config = get_config()
-    rnn_size = config['rnn size']
-    labels = config['labels']
-    time_const = config['time constant']
-
-    eval_pcap(pcap, labels, time_const,
-              label=label, rnn_size=rnn_size)

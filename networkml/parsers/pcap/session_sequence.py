@@ -11,14 +11,10 @@ import sys
 
 import numpy as np
 
-try:
-    from .pcap_utils import get_source
-    from .pcap_utils import featurize_session
-    from .Model import Model
-except SystemError:  # pragma: no cover
-    from pcap_utils import get_source
-    from pcap_utils import featurize_session
-    from Model import Model
+from networkml.parsers.pcap.pcap_utils import featurize_session
+from networkml.parsers.pcap.pcap_utils import get_source
+from networkml.utils.model import Model
+
 
 logging.basicConfig(level=logging.INFO)
 

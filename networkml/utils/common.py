@@ -7,11 +7,6 @@ import pika
 import tensorflow as tf
 from redis import StrictRedis
 
-try:
-    from .config import get_config as get_cfg
-except SystemError:  # pragma: no cover
-    from config import get_config as get_cfg
-
 
 class Common:
     """
@@ -31,7 +26,6 @@ class Common:
 
         self.logger = self.setup_logger(self.logger)
         self.setup_env()
-        self.get_config()
         self.connect_redis()
 
     @staticmethod
@@ -68,6 +62,7 @@ class Common:
 
     def connect_rabbit(self):
         # Rabbit settings
+        self.connection = None
         self.exchange = 'topic-poseidon-internal'
         self.exchange_type = 'topic'
 
@@ -340,20 +335,3 @@ class Common:
         }
         output[key] = id_dict
         return output
-
-    def get_config(self):
-        # Get time constant from config
-        try:
-            config = get_cfg()
-            self.time_const = config['time constant']
-            self.state_size = config['state size']
-            self.look_time = config['look time']
-            self.threshold = config['threshold']
-            self.conf_labels = config['labels']
-            self.rnn_size = config['rnn size']
-            #self.duration = config['duration']
-            #self.batch_size = config['batch size']
-        except Exception as e:  # pragma: no cover
-            self.logger.error(
-                "Unable to read 'opts/config.json' properly because: %s", str(e))
-        return

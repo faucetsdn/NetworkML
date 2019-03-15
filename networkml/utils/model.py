@@ -3,19 +3,13 @@ import os
 import pickle as pickle
 
 import numpy as np
-try:
-    from .reader import sessionizer
-    from .featurizer import extract_features
-    from .training_utils import read_data
-    from .training_utils import select_features
-except SystemError:  # pragma: no cover
-    from reader import sessionizer
-    from featurizer import extract_features
-    from training_utils import read_data
-    from training_utils import select_features
-
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
+from sklearn.model_selection import train_test_split
+
+from networkml.parsers.pcap.featurizer import extract_features
+from networkml.parsers.pcap.reader import sessionizer
+from networkml.utils.training_utils import read_data
+from networkml.utils.training_utils import select_features
 
 
 logging.basicConfig(level=logging.INFO)
@@ -238,11 +232,11 @@ class Model:
 
         probabilities = []
         representation = features
-        if self.model_type == 'RandomForest':
+        if self.model_type == 'randomforest':
             mean_rep = np.mean(representation, axis=0)
             probabilities = self.model.predict_proba(mean_rep.reshape(1, -1))
             probabilities = probabilities[0]
-        elif self.model_type == 'OneLayer':
+        elif self.model_type == 'onelayer':
             L1_weights = self.model.coefs_[0]
             L1_biases = self.model.intercepts_[0]
             representation = np.maximum(
@@ -341,11 +335,11 @@ class Model:
         Takes in a representation and produces a classification
         '''
         probabilities = []
-        if self.model_type == 'RandomForest':
+        if self.model_type == 'randomforest':
             probabilities = self.model.predict_proba(
                 representation.reshape(1, -1))
             probabilities = probabilities[0]
-        elif self.model_type == 'OneLayer':
+        elif self.model_type == 'onelayer':
             L2_weights = self.model.coefs_[1]
             L2_biases = self.model.intercepts_[1]
             probabilities = np.matmul(representation, L2_weights) + L2_biases

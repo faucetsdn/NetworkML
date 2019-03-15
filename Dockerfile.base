@@ -49,3 +49,4 @@ RUN set -ex; \
 COPY . /poseidonml
 WORKDIR /poseidonml
 RUN pip install .
+ENTRYPOINT ["python3", "/poseidonml/bin/networkml"]

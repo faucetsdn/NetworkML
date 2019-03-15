@@ -1,9 +1,0 @@
-{
-  "ActiveDirectoryController": "Active Directory controller",
-  "AdminServer": "Administrator server",
-  "AdminWorkstation": "Administrator workstation",
-  "BusinessWorkstation": "Business workstation",
-  "DevWorkstation": "Developer workstation",
-  "GPULaptop": "GPU laptop",
-  "PKIServer": "PKI server"
-}

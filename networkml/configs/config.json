@@ -1,16 +1,6 @@
 {
   "batch size": 32,
   "duration": 900,
-  "labels": [
-    "Administrator workstation",
-    "Administrator server",
-    "Business workstation",
-    "GPU laptop",
-    "PKI server",
-    "Developer workstation",
-    "Active Directory controller",
-    "Unknown"
-  ],
   "look time": 86400,
   "max port": 1024,
   "rnn size": 100,
