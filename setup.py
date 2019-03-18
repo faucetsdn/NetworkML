@@ -7,6 +7,7 @@ setup(
               'networkml.algorithms.sos', 'networkml.parsers', 'networkml.parsers.netflow', 'networkml.parsers.pcap', 'networkml.utils'],
     package_data={'networkml': ['trained_models/*', 'configs/*']},
     install_requires=open('requirements.txt', 'r').read().splitlines(),
+    scripts=['bin/networkml'],
     license='Apache License 2.0',
     author='cglewis',
     author_email='clewis@iqt.org',
