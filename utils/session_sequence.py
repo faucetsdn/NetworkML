@@ -79,8 +79,10 @@ def create_dataset(
     # Get and store the representations using the supplied model
     # Representations will be computed separately for each pcap
     representations = {}
+    count = 0
     for pcap in pcaps:
-        logger.debug('Working on %s', pcap)
+        count += 1
+        logger.info('Working on {0} ({1} bytes) ({2}/{3})'.format(pcap, os.path.getsize(pcap), str(count), len(pcaps)))
         reps, _, timestamps, _, _ = model.get_representation(
             pcap,
             mean=False
