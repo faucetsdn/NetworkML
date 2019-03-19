@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 def test_randomforesteval():
-    os.environ['SKIP_RABBIT'] = 'True'
+    os.environ['RABBIT'] = 'False'
     instance = RandomForestEval()
     # instance.main()
 
@@ -23,7 +23,7 @@ def test_randomforesteval():
 
 
 def test_randomforesteval_main():
-    os.environ['SKIP_RABBIT'] = 'True'
+    os.environ['RABBIT'] = 'False'
     instance = RandomForestEval()
 
     sys.argv = ['foo', '.']

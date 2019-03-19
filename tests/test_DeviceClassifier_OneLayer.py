@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 def test_onelayereval():
-    os.environ['SKIP_RABBIT'] = 'True'
+    os.environ['RABBIT'] = 'False'
     instance = OneLayerEval()
 
     last_update = instance.common.get_address_info('10.0.0.1', '1')
@@ -22,7 +22,7 @@ def test_onelayereval():
 
 
 def test_onelayereval_main():
-    os.environ['SKIP_RABBIT'] = 'True'
+    os.environ['RABBIT'] = 'False'
     instance = OneLayerEval()
 
     sys.argv = ['foo', '.']

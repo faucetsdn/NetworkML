@@ -30,7 +30,7 @@ class RandomForestEval:
         self.threshold = self.common.threshold
         self.conf_labels = self.common.conf_labels
         self.rnn_size = self.common.rnn_size
-        self.skip_rabbit = self.common.skip_rabbit
+        self.use_rabbit = self.common.use_rabbit
 
     def main(self):
         # path to the pcap to get the update from
@@ -58,7 +58,7 @@ class RandomForestEval:
                 'Did not find pcap file(s) from \'%s\'.', str(pcap_path))
             return
 
-        if not self.skip_rabbit:
+        if self.use_rabbit:
             self.common.connect_rabbit()
 
         # Initialize and load the model
@@ -105,7 +105,7 @@ class RandomForestEval:
                 message = json.dumps(message)
                 self.logger.info(
                     'Not enough sessions in pcap \'%s\'', str(pcap))
-                if not self.skip_rabbit:
+                if self.use_rabbit:
                     self.common.channel.basic_publish(exchange=self.common.exchange,
                                                       routing_key=self.common.routing_key,
                                                       body=message)
@@ -193,13 +193,13 @@ class RandomForestEval:
                 # Get json message
                 message = json.dumps(decision)
                 self.logger.info('Message: ' + message)
-                if not self.skip_rabbit:
+                if self.use_rabbit:
                     self.common.connect_rabbit()
                     self.common.channel.basic_publish(exchange=self.common.exchange,
                                                       routing_key=self.common.routing_key,
                                                       body=message)
 
-        if not self.skip_rabbit:
+        if self.use_rabbit:
             try:
                 self.common.connection.close()
             except Exception as e:
