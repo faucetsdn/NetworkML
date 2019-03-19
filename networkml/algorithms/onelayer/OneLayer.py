@@ -18,7 +18,7 @@ class OneLayer:
     the one layer feedforward model.
     """
 
-    def __init__(self, files=None, config=None, model=None):
+    def __init__(self, files=None, config=None, model=None, model_hash=None, model_path=None):
         self.logger = logging.getLogger(__name__)
         logging.basicConfig(level=logging.INFO)
 
@@ -41,6 +41,8 @@ class OneLayer:
 
         self.files = files if files else []
         self.model = model
+        self.model_hash = model_hash
+        self.model_path = model_path
 
     def eval(self):
         for fi in self.files:
@@ -102,7 +104,7 @@ class OneLayer:
                         timestamps,
                         preds,
                         others,
-                        model_hash
+                        self.model_hash
                     )
 
                 # Get the sessions that the model looked at
@@ -127,7 +129,7 @@ class OneLayer:
                 abnormality = 0
                 abnormality = eval_pcap(
                     str(fi), self.conf_labels, self.time_const, label=labels[0],
-                    rnn_size=self.rnn_size, model_path=load_path, model_type='OneLayer')
+                    rnn_size=self.rnn_size, model_path=self.model_path, model_type='OneLayer')
                 prev_s = self.common.get_address_info(
                     source_mac,
                     timestamp

@@ -32,7 +32,7 @@ class NetworkML():
             self.load_model()
             if self.args.algorithm == 'onelayer':
                 OneLayer(files=self.files, config=self.config,
-                         model=self.model).eval()
+                         model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).eval()
         elif self.args.operation == 'train':
             # TODO
             pass
@@ -107,7 +107,7 @@ class NetworkML():
     def load_model(self):
         # Compute model hash
         with open(self.args.trained_model, 'rb') as handle:
-            model_hash = hashlib.md5(handle.read()).hexdigest()
+            self.model_hash = hashlib.md5(handle.read()).hexdigest()
 
         self.model = Model(duration=None, hidden_size=None,
                            model_type=self.args.algorithm)

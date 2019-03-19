@@ -11,7 +11,7 @@ from networkml.parsers.pcap.session_sequence import create_dataset
 logging.basicConfig(level=logging.INFO)
 
 
-def eval_pcap(pcap, labels, time_const, label=None, rnn_size=100, model_path='/models/OneLayerModel.pkl', model_type='RandomForest'):
+def eval_pcap(pcap, labels, time_const, label=None, rnn_size=100, model_path='networkml/trained_models/onelayer/OneLayerModel.pkl', model_type='RandomForest'):
     logger = logging.getLogger(__name__)
     try:
         if 'LOG_LEVEL' in os.environ and os.environ['LOG_LEVEL'] != '':
@@ -30,7 +30,7 @@ def eval_pcap(pcap, labels, time_const, label=None, rnn_size=100, model_path='/m
     logger.debug('Created iterator')
     rnnmodel = SoSModel(rnn_size=rnn_size, label_size=len(labels))
     logger.debug('Created model')
-    rnnmodel.load('networkml/trained_models/sos')
+    rnnmodel.load('networkml/trained_models/sos/SoSmodel')
     logger.debug('Loaded model')
 
     X_list = iterator.X

@@ -27,7 +27,7 @@ eval_onelayer: build_onelayer run_redis eval_onelayer_nobuild
 eval_onelayer_nobuild:
 	@echo
 	@echo "Running OneLayer Eval on PCAP file $(PCAP)"
-	@docker run -it --rm -v "$(PCAP):/pcap/$(PCAP)" --link poseidonml-redis:redis -e SKIP_RABBIT=true -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) --entrypoint=python3 poseidonml:onelayer eval_OneLayer.py /pcap/$(PCAP)
+	@docker run -it --rm -v "$(PCAP):/pcaps/" --link poseidonml-redis:redis -e SKIP_RABBIT=true -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) poseidonml:onelayer
 	@docker rm -f poseidonml-redis > /dev/null
 	@echo
 test_onelayer: build_onelayer run_redis test_onelayer_nobuild
@@ -81,8 +81,6 @@ train_sosmodel_nobuild:
 	@echo
 run_redis:
 	@docker run -d --name poseidonml-redis redis:latest
-build_onelayer: build_base
-	@pushd DeviceClassifier/OneLayer && docker build -t poseidonml:onelayer . && popd
 build_randomforest: build_base
 	@pushd DeviceClassifier/RandomForest && docker build -t poseidonml:randomforest . && popd
 build_sosmodel: build_base
@@ -94,8 +92,8 @@ build_sosmodel: build_base
 test: build_base
 	docker build -t poseidonml-test -f Dockerfile.test .
 	docker run -it --rm poseidonml-test
-build_base: clean
-	@docker build -t cyberreboot/poseidonml:base -f Dockerfile.base .
+build_onelayer: clean
+	@docker build -t poseidonml:onelayer .
 clean:
 	docker rm -f poseidonml-redis || true
 install:
