@@ -10,7 +10,7 @@ from networkml.parsers.pcap.pcap_utils import is_private
 from networkml.parsers.pcap.pcap_utils import is_protocol
 
 
-def extract_features(session_dict, capture_source=None, max_port=None):
+def extract_features(session_dict, capture_source=None, max_port=1024):
     '''
     Extracts netflow level features from packet capture.
 
@@ -30,7 +30,6 @@ def extract_features(session_dict, capture_source=None, max_port=None):
     #address_type = config.get('source identifier', 'MAC')
     #max_port = config.get('max port', max_port) if not max_port else None
     address_type = 'MAC'
-    max_port = 1
 
     # If the capture source isn't specified, default to the most used address
     if capture_source is None:

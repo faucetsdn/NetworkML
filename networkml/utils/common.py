@@ -26,6 +26,8 @@ class Common:
 
         self.logger = self.setup_logger(self.logger)
         self.setup_env()
+        # TODO fix for rewrite
+        # self.get_config()
         self.connect_redis()
 
     @staticmethod
