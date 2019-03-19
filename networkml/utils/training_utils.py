@@ -111,6 +111,7 @@ def read_data(data_dir, duration=None, labels=None):
     y = []
     assigned_labels = []
 
+    # TODO needs to be fixed for rewrite
     label_assignments = get_labels('opts/label_assignments.json')
 
     # Get all the files in the directory

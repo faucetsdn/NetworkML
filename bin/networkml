@@ -24,17 +24,14 @@ class NetworkML():
 
         self.args = None
         self.read_args()
-        self.common = Common()
+        self.get_config()
+        self.common = Common(config=self.config)
         self.logger = Common().setup_logger(self.logger)
         self.get_files()
-        self.get_config()
         if self.args.operation == 'eval':
             self.load_model()
             if self.args.algorithm == 'onelayer':
-                OneLayer(files=self.files, time_const=self.time_const,
-                         state_size=self.state_size, look_time=self.look_time,
-                         threshold=self.threshold,
-                         conf_labels=self.conf_labels, rnn_size=self.rnn_size,
+                OneLayer(files=self.files, config=self.config,
                          model=self.model).eval()
         elif self.args.operation == 'train':
             # TODO
@@ -101,6 +98,7 @@ class NetworkML():
             for label in labels:
                 self.conf_labels.append(labels[label])
             self.conf_labels.append('Unknown')
+            self.config['conf labels'] = self.conf_labels
         except Exception as e:  # pragma: no cover
             self.logger.error(
                 "Unable to read '%s' properly because: %s", cfg_file, str(e))

@@ -8,12 +8,12 @@ python:
 install:
   - pip install codecov
 env:
-  - PYTHONPATH=/home/travis/build/$TRAVIS_REPO_SLUG/utils:$PYTHONPATH PYTHONPATH=/home/travis/build/$TRAVIS_REPO_SLUG/DeviceClassifier:$PYTHONPATH
+  - PYTHONPATH=/home/travis/build/$TRAVIS_REPO_SLUG/bin:$PYTHONPATH PYTHONPATH=/home/travis/build/$TRAVIS_REPO_SLUG/networkml:$PYTHONPATH
 jobs:
   include:
   - stage: test
     script: docker build -f Dockerfile.base -t cyberreboot/poseidonml:base . && docker build -f Dockerfile.test -t poseidonml-test . && docker run -it poseidonml-test
-  - script: find . -name requirements.txt -type f -exec pip3 install -r {} \; && pip3 uninstall -y poseidonml && pip3 install . && pytest -l -s -v --cov=tests/ --cov=utils/ --cov=DeviceClassifier/ --cov-report term-missing -c .coveragerc
+  - script: find . -name requirements.txt -type f -exec pip3 install -r {} \; && pip3 uninstall -y poseidonml && pip3 install . && pytest -l -s -v --cov=tests/ --cov=networkml/ --cov-report term-missing -c .coveragerc
 before_install:
   - sudo tcpdump -i ens4 -w /home/travis/build/$TRAVIS_REPO_SLUG/tests/test.pcap &
   - sudo apt-get update
@@ -21,6 +21,6 @@ before_install:
   - sudo pkill tcpdump
   - sudo chmod 777 /home/travis/build/$TRAVIS_REPO_SLUG/tests/test.pcap
   - mkdir -p /home/travis/build/$TRAVIS_REPO_SLUG/opts
-  - cp /home/travis/build/$TRAVIS_REPO_SLUG/DeviceClassifier/OneLayer/opts/config.json /home/travis/build/$TRAVIS_REPO_SLUG/opts/config.json
+  - cp /home/travis/build/$TRAVIS_REPO_SLUG/networkml/configs/config.json /home/travis/build/$TRAVIS_REPO_SLUG/networkml/configs/config.json
 after_success:
   - codecov

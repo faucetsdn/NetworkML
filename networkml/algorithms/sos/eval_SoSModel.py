@@ -1,11 +1,7 @@
 import logging
 import os
-import sys
 
 import numpy as np
-import tensorflow as tf
-from pkg_resources import Requirement
-from pkg_resources import working_set
 
 from networkml.algorithms.sos.SoSmodel import SoSModel
 from networkml.parsers.pcap.session_iterator import BatchIterator
@@ -13,8 +9,6 @@ from networkml.parsers.pcap.session_sequence import create_dataset
 
 
 logging.basicConfig(level=logging.INFO)
-tf.logging.set_verbosity(tf.logging.ERROR)
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
 def eval_pcap(pcap, labels, time_const, label=None, rnn_size=100, model_path='/models/OneLayerModel.pkl', model_type='RandomForest'):
@@ -36,8 +30,7 @@ def eval_pcap(pcap, labels, time_const, label=None, rnn_size=100, model_path='/m
     logger.debug('Created iterator')
     rnnmodel = SoSModel(rnn_size=rnn_size, label_size=len(labels))
     logger.debug('Created model')
-    rnnmodel.load(os.path.join(working_set.find(Requirement.parse(
-        'poseidonml')).location, 'poseidonml/models/SoSmodel'))
+    rnnmodel.load('networkml/trained_models/sos')
     logger.debug('Loaded model')
 
     X_list = iterator.X

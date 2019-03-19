@@ -160,13 +160,7 @@ def sessionizer(path, duration=None, threshold_time=None):
     first_packet_time = None
     session_starts = OrderedDict()
 
-    # Get threshold time from config
-
-    # TODO commented out
-    #config = get_config()
-
     if not threshold_time or threshold_time < 1:
-        #cfg_threshold = config.get('session threshold')
         cfg_threshold = None
         threshold_time = cfg_threshold if cfg_threshold and cfg_threshold > 0 else 120
 

@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 class Model:
-    def __init__(self, duration, hidden_size=None, labels=None, model=None, model_type=None):
+    def __init__(self, duration, hidden_size=None, labels=None, model=None, model_type=None, threshold_time=None):
         '''
         Initializes functions shared in various models.
 
@@ -32,6 +32,7 @@ class Model:
         self.model = model
         self.model_type = model_type
         self.labels = labels
+        self.threshold_time = threshold_time
         self.sessions = None
         self.logger = logging.getLogger(__name__)
         try:
@@ -84,7 +85,8 @@ class Model:
         # Read the capture into a feature array
         X = []
         timestamps = []
-        binned_sessions = sessionizer(filepath, duration=self.duration)
+        binned_sessions = sessionizer(
+            filepath, duration=self.duration, threshold_time=self.threshold_time)
         self.sessions = binned_sessions
 
         if len(binned_sessions) is 0:

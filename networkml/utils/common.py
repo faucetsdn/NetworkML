@@ -13,21 +13,25 @@ class Common:
     Common functions that are shared across models
     """
 
-    def __init__(self):
+    def __init__(self, config=None):
         self.logger = logging.getLogger(__name__)
         logging.basicConfig(level=logging.INFO)
         self.r = None
-        self.time_const = None
-        self.state_size = None
-        self.look_time = None
-        self.threshold = None
-        self.conf_labels = None
-        self.rnn_size = None
-
         self.logger = self.setup_logger(self.logger)
         self.setup_env()
-        # TODO fix for rewrite
-        # self.get_config()
+
+        if config:
+            try:
+                self.time_const = config['time constant']
+                self.state_size = config['state size']
+                self.look_time = config['look time']
+                self.threshold = config['threshold']
+                self.rnn_size = config['rnn size']
+                self.conf_labels = config['conf labels']
+            except Exception as e:  # pragma: no cover
+                self.logger.error(
+                    'Unable to read config properly because: %s', str(e))
+
         self.connect_redis()
 
     @staticmethod

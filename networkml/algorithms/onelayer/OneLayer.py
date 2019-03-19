@@ -18,23 +18,27 @@ class OneLayer:
     the one layer feedforward model.
     """
 
-    def __init__(self, files=None, time_const=None,
-                 state_size=None, look_time=None, threshold=None,
-                 conf_labels=None, rnn_size=None, model=None):
+    def __init__(self, files=None, config=None, model=None):
         self.logger = logging.getLogger(__name__)
         logging.basicConfig(level=logging.INFO)
 
         self.logger = Common().setup_logger(self.logger)
-        self.common = Common()
+        self.common = Common(config=config)
         if not self.common.skip_rabbit:
             self.common.connect_rabbit()
         self.r = self.common.r
-        self.time_const = time_const
-        self.state_size = state_size
-        self.look_time = look_time
-        self.threshold = threshold
-        self.conf_labels = conf_labels
-        self.rnn_size = rnn_size
+        if config:
+            try:
+                self.time_const = config['time constant']
+                self.state_size = config['state size']
+                self.look_time = config['look time']
+                self.threshold = config['threshold']
+                self.rnn_size = config['rnn size']
+                self.conf_labels = config['conf labels']
+            except Exception as e:  # pragma: no cover
+                self.logger.error(
+                    'Unable to read config properly because: %s', str(e))
+
         self.files = files if files else []
         self.model = model
 
@@ -121,7 +125,6 @@ class OneLayer:
                 timestamp = timestamps[0].timestamp()
                 labels, confs = zip(*preds)
                 abnormality = 0
-                # TODO needs to be fixed for rewrite
                 abnormality = eval_pcap(
                     str(fi), self.conf_labels, self.time_const, label=labels[0],
                     rnn_size=self.rnn_size, model_path=load_path, model_type='OneLayer')
@@ -192,7 +195,8 @@ class OneLayer:
             hidden_size=hidden_size,
             labels=labels,
             model=m,
-            model_type='OneLayer'
+            model_type='OneLayer',
+            threshold_time=self.threshold
         )
         # Train the model
         model.train(data_dir)
