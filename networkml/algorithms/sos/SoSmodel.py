@@ -127,7 +127,11 @@ class SoSModel:
         self.Y = tf.placeholder(tf.float32, [None])
 
         # Model methods
-        _ = self.network
+        # *IMPORTANT* these have to be here, despite them looking like they do nothing
+        self.network
+        self.cost
+        self.optimizer
+        self.get_output
 
         # Saver
         self.saver = tf.train.Saver()
