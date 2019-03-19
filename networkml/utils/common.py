@@ -48,12 +48,12 @@ class Common:
         tf.logging.set_verbosity(tf.logging.ERROR)
         os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-        # Get "SKIP_RABBIT" environment variable with a default value of false
-        self.skip_rabbit = os.getenv('SKIP_RABBIT', 'False')
+        # Get "RABBIT" environment variable with a default value of false
+        self.use_rabbit = os.getenv('RABBIT', 'False')
 
         # Convert our string into a boolean
-        self.skip_rabbit = self.skip_rabbit.lower() in ['true', 't', 'y', '1']
-        self.logger.debug('SKIP_RABBIT set to: %s', str(self.skip_rabbit))
+        self.use_rabbit = self.use_rabbit.lower() in ['true', 't', 'y', '1']
+        self.logger.debug('RABBIT flag set to: %s', str(self.use_rabbit))
         return
 
     def connect_redis(self, host='redis', port=6379, db=0):
