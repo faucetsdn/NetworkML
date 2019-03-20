@@ -30,8 +30,8 @@ class NetworkML():
         self.common = Common(config=self.config)
         self.logger = Common().setup_logger(self.logger)
         self.get_files()
+        self.load_model()
         if self.args.operation == 'eval':
-            self.load_model()
             if self.args.algorithm == 'onelayer':
                 OneLayer(files=self.files, config=self.config,
                          model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).eval()
@@ -46,11 +46,10 @@ class NetworkML():
         elif self.args.operation == 'train':
             if self.args.algorithm == 'onelayer':
                 OneLayer(files=self.files, config=self.config,
-                         model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).train()
+                         model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).train(self.args.path, self.args.save)
             elif self.args.algorithm == 'randomforest':
-                # TODO
                 RandomForest(files=self.files, config=self.config,
-                             model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).train()
+                             model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).train(self.args.path, self.args.save)
             elif self.args.algorithm == 'sos':
                 # TODO
                 SoSModel(files=self.files, config=self.config,
@@ -58,7 +57,6 @@ class NetworkML():
             else:
                 self.logger.error('Invalid algorithm choice.')
         elif self.args.operation == 'test':
-            self.load_model()
             if self.args.algorithm == 'onelayer':
                 OneLayer(files=self.files, config=self.config,
                          model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).test()
@@ -125,7 +123,7 @@ class NetworkML():
             self.look_time = self.config['look time']
             self.threshold = self.config['threshold']
             self.rnn_size = self.config['rnn size']
-            #self.duration = self.config['duration']
+            self.duration = self.config['duration']
             #self.batch_size = self.config['batch size']
             with open(labels_file, 'r') as label_file:
                 labels = json.load(label_file)

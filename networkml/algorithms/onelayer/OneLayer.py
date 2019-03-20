@@ -5,6 +5,7 @@ import os
 import sys
 
 from pathlib import Path
+from sklearn.neural_network import MLPClassifier
 
 from networkml.algorithms.sos.eval_SoSModel import eval_pcap
 from networkml.parsers.pcap.pcap_utils import clean_session_dict
@@ -35,6 +36,7 @@ class OneLayer:
                 self.threshold = config['threshold']
                 self.rnn_size = config['rnn size']
                 self.conf_labels = config['conf labels']
+                self.duration = config['duration']
             except Exception as e:  # pragma: no cover
                 self.logger.error(
                     'Unable to read config properly because: %s', str(e))
@@ -171,18 +173,9 @@ class OneLayer:
                     'Unable to close rabbit connection because: {0}'.format(str(e)))
         return
 
-    def train(self):
-        # Load model params from config
-        config = get_config(args.config)
-        duration = config['duration']
-        hidden_size = config['state size']
-        labels = config['labels']
-
-        # Get the data directory
-        data_dir = args.pcaps
-
+    def train(self, data_dir, save_path):
         m = MLPClassifier(
-            (hidden_size),
+            (self.state_size),
             alpha=0.1,
             activation='relu',
             max_iter=1000
@@ -190,9 +183,9 @@ class OneLayer:
 
         # Initialize the model
         model = Model(
-            duration=duration,
-            hidden_size=hidden_size,
-            labels=labels,
+            duration=self.duration,
+            hidden_size=self.state_size,
+            labels=self.conf_labels,
             model=m,
             model_type='OneLayer',
             threshold_time=self.threshold
@@ -200,7 +193,7 @@ class OneLayer:
         # Train the model
         model.train(data_dir)
         # Save the model to the specified path
-        model.save(args.save)
+        model.save(save_path)
 
     def test(self):
         data_dir = args.pcaps

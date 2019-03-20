@@ -5,6 +5,7 @@ import os
 import sys
 
 from pathlib import Path
+from sklearn.ensemble import RandomForestClassifier
 
 from networkml.algorithms.sos.eval_SoSModel import eval_pcap
 from networkml.parsers.pcap.pcap_utils import clean_session_dict
@@ -35,6 +36,7 @@ class RandomForest:
                 self.threshold = config['threshold']
                 self.rnn_size = config['rnn size']
                 self.conf_labels = config['conf labels']
+                self.duration = config['duration']
             except Exception as e:  # pragma: no cover
                 self.logger.error(
                     'Unable to read config properly because: %s', str(e))
@@ -172,15 +174,7 @@ class RandomForest:
                     'Unable to close rabbit connection because: {0}'.format(str(e)))
         return
 
-    def train(self):
-        # Load model params from config
-        config = get_config(args.config)
-        duration = config['duration']
-        labels = config['labels']
-
-        # Get the data directory
-        data_dir = args.pcaps
-
+    def train(self, data_dir, save_path):
         m = RandomForestClassifier(
             n_estimators=100,
             min_samples_split=5,
@@ -189,15 +183,15 @@ class RandomForest:
 
         # Initialize the model
         model = Model(
-            duration=duration,
-            labels=labels,
+            duration=self.duration,
+            labels=self.conf_labels,
             model=m,
             model_type='RandomForest'
         )
         # Train the model
         model.train(data_dir)
         # Save the model to the specified path
-        model.save(args.save)
+        model.save(save_path)
 
     def test(self):
         data_dir = args.pcaps

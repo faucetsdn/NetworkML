@@ -41,7 +41,7 @@ train_onelayer: build run_redis train_onelayer_nobuild
 train_onelayer_nobuild:
 	@echo
 	@echo "Running OneLayer Train on PCAP files $(PCAP)"
-	@docker run -it --rm -v "$(PCAP):/pcaps/" --link poseidonml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) poseidonml -o train
+	@docker run -it --rm -v "$(PCAP):/pcaps/" -v "$(PWD)/networkml/trained_models:/poseidonml/networkml/trained_models" --link poseidonml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) poseidonml -o train
 	@docker rm -f poseidonml-redis > /dev/null
 	@echo
 eval_randomforest: build run_redis eval_randomforest_nobuild
@@ -62,7 +62,7 @@ train_randomforest: build run_redis train_randomforest_nobuild
 train_randomforest_nobuild:
 	@echo
 	@echo "Running RandomForest Train on PCAP files $(PCAP)"
-	@docker run -it --rm -v "$(PCAP):/pcaps/" --link poseidonml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) poseidonml -o train -a randomforest -m networkml/trained_models/randomforest/RandomForestModel.pkl -w networkml/trained_models/randomforest/RandomForestModel.pkl
+	@docker run -it --rm -v "$(PCAP):/pcaps/" -v "$(PWD)/networkml/trained_models:/poseidonml/networkml/trained_models" --link poseidonml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) poseidonml -o train -a randomforest -m networkml/trained_models/randomforest/RandomForestModel.pkl -w networkml/trained_models/randomforest/RandomForestModel.pkl
 	@docker rm -f poseidonml-redis > /dev/null
 	@echo
 eval_sos: build run_redis eval_sos_nobuild
@@ -76,7 +76,6 @@ train_sos: build run_redis train_sos_nobuild
 train_sos_nobuild:
 	@echo
 	@echo "Running SoSModel Train on PCAP files $(PCAP)"
-	@docker run -it --rm -v "/tmp/models:/new_models" --link poseidonml-redis:redis -v "$(PCAP):/pcaps/" -e LOG_LEVEL=$(LOG_LEVEL) --entrypoint=python3 poseidonml:sosmodel train_SoSModel.py /pcaps/ /models/SoSModel.pkl
 	@docker rm -f poseidonml-redis > /dev/null
 	@echo
 run_redis:
