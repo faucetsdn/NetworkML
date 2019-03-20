@@ -10,6 +10,7 @@ from pathlib import Path
 from networkml.algorithms.onelayer.OneLayer import OneLayer
 from networkml.algorithms.randomforest.RandomForest import RandomForest
 from networkml.algorithms.sos.eval_SoSModel import eval_pcap
+from networkml.algorithms.sos.train_SoSModel import train
 from networkml.utils.common import Common
 from networkml.utils.model import Model
 
@@ -30,13 +31,14 @@ class NetworkML():
         self.common = Common(config=self.config)
         self.logger = Common().setup_logger(self.logger)
         self.get_files()
-        self.load_model()
+        self.model = Model(duration=None, hidden_size=None,
+                           model_type=self.args.algorithm)
         if self.args.operation == 'eval':
+            self.load_model()
             if self.args.algorithm == 'onelayer':
                 OneLayer(files=self.files, config=self.config,
                          model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).eval()
             elif self.args.algorithm == 'randomforest':
-                # TODO
                 RandomForest(files=self.files, config=self.config,
                              model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).eval()
             elif self.args.algorithm == 'sos':
@@ -51,13 +53,13 @@ class NetworkML():
                 RandomForest(files=self.files, config=self.config,
                              model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).train(self.args.path, self.args.save)
             elif self.args.algorithm == 'sos':
-                # TODO
-                SoSModel(files=self.files, config=self.config,
-                         model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).train()
+                train(self.args.path, self.time_const, self.rnn_size,
+                      self.conf_labels, self.args.save)
             else:
                 self.logger.error('Invalid algorithm choice.')
         elif self.args.operation == 'test':
             if self.args.algorithm == 'onelayer':
+                # TODO
                 OneLayer(files=self.files, config=self.config,
                          model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).test()
             elif self.args.algorithm == 'randomforest':
@@ -65,9 +67,8 @@ class NetworkML():
                 RandomForest(files=self.files, config=self.config,
                              model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).test()
             elif self.args.algorithm == 'sos':
-                # TODO
-                SoSModel(files=self.files, config=self.config,
-                         model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).test()
+                self.logger.info(
+                    'There is no testing operation for the SoSModel.')
             else:
                 self.logger.error('Invalid algorithm choice.')
         else:
@@ -142,8 +143,6 @@ class NetworkML():
         with open(self.args.trained_model, 'rb') as handle:
             self.model_hash = hashlib.md5(handle.read()).hexdigest()
 
-        self.model = Model(duration=None, hidden_size=None,
-                           model_type=self.args.algorithm)
         self.model.load(self.args.trained_model)
         self.logger.debug('Loaded model from %s', self.args.trained_model)
         return

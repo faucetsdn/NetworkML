@@ -76,6 +76,7 @@ train_sos: build run_redis train_sos_nobuild
 train_sos_nobuild:
 	@echo
 	@echo "Running SoSModel Train on PCAP files $(PCAP)"
+	@docker run -it --rm -v "$(PCAP):/pcaps/" -v "$(PWD)/networkml/trained_models:/poseidonml/networkml/trained_models" --link poseidonml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) poseidonml -o train -a sos -m networkml/trained_models/sos/SoSmodel -w networkml/trained_models/sos/SoSmodel.pkl
 	@docker rm -f poseidonml-redis > /dev/null
 	@echo
 run_redis:

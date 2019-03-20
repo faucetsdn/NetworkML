@@ -1,31 +1,18 @@
 import logging
 import os
 import pickle
-import sys
 import time
 
 import numpy as np
-import tensorflow as tf
 
-
-try:
-    from .config import get_config
-    from .SoSmodel import SoSModel
-    from .session_sequence import create_dataset
-    from .session_iterator import BatchIterator
-except SystemError:  # pragma: no cover
-    from config import get_config
-    from SoSmodel import SoSModel
-    from session_sequence import create_dataset
-    from session_iterator import BatchIterator
-
+from networkml.algorithms.sos.SoSmodel import SoSModel
+from networkml.parsers.pcap.session_iterator import BatchIterator
+from networkml.parsers.pcap.session_sequence import create_dataset
 
 logging.basicConfig(level=logging.INFO)
-tf.logging.set_verbosity(tf.logging.ERROR)
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
-if __name__ == '__main__':
+def train(data_dir, time_const, rnn_size, labels, save_path):
     logger = logging.getLogger(__name__)
     try:
         if 'LOG_LEVEL' in os.environ and os.environ['LOG_LEVEL'] != '':
@@ -34,23 +21,11 @@ if __name__ == '__main__':
         logger.error(
             'Unable to set logging level because: {0} defaulting to INFO.'.format(str(e)))
 
-    # Load info from config
-    config = get_config()
-    time_const = config['time constant']
-    rnn_size = config['rnn size']
-    labels = config['labels']
-
-    # Path to training data
-    data_dir = sys.argv[1]
+    data = create_dataset(data_dir, time_const)
     # Create the training data
-    if len(sys.argv) == 3:
-        data = create_dataset(data_dir, time_const)
-        write_dir = sys.argv[2]
-        logger.info('Saving data to %s', write_dir)
-        with open(write_dir, 'wb') as handle:
-            pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
-    else:
-        data = data_dir
+    logger.info('Saving data to %s', save_path)
+    with open(save_path, 'wb') as handle:
+        pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     logger.info('Loaded training data')
     # Create an iterator
@@ -63,7 +38,7 @@ if __name__ == '__main__':
     rnnmodel = SoSModel(rnn_size=100, label_size=len(labels))
     logger.info('Created model')
     try:
-        rnnmodel.load('/models/SoSmodel')
+        rnnmodel.load('networkml/trained_models/sos/SoSmodel')
         logger.info('Loaded model')
     except Exception as e:
         rnnmodel.initialize()
@@ -78,6 +53,8 @@ if __name__ == '__main__':
     out = rnnmodel.get_output(X_v, L_v)
 
     logger.info('Initial validation cost: %s', np.mean(cost))
+    rnnmodel.save('networkml/trained_models/sos/SoSmodel')
+    logger.info('Saving model at validation cost %s', cost)
     min_cost = cost
     last_save = 0
     for i in range(100000):
@@ -93,7 +70,7 @@ if __name__ == '__main__':
             logger.info('Validation cost after  %s batches: %s', i, cost)
             if cost < min_cost:
                 min_cost = cost
-                rnnmodel.save('/new_models/SoSmodel')
+                rnnmodel.save('networkml/trained_models/sos/SoSmodel')
                 last_save = 0
                 logger.info('Saving model at validation cost %s', cost)
             else:

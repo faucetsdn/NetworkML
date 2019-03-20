@@ -9,6 +9,8 @@ dist/
 poseidonml.egg-info/
 *.swo
 *.swp
+networkml/trained_models/sos/SoSmodel.pkl
+networkml/trained_models/sos/checkpoint
 
 # Unit test / coverage reports
 htmlcov/
