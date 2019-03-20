@@ -9,7 +9,7 @@ from pathlib import Path
 
 from networkml.algorithms.onelayer.OneLayer import OneLayer
 from networkml.algorithms.randomforest.RandomForest import RandomForest
-from networkml.algorithms.sos.SoSmodel import SoSModel
+from networkml.algorithms.sos.eval_SoSModel import eval_pcap
 from networkml.utils.common import Common
 from networkml.utils.model import Model
 
@@ -40,9 +40,7 @@ class NetworkML():
                 RandomForest(files=self.files, config=self.config,
                              model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).eval()
             elif self.args.algorithm == 'sos':
-                # TODO
-                SoSModel(files=self.files, config=self.config,
-                         model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).eval()
+                eval_pcap(self.args.path, self.conf_labels, self.time_const)
             else:
                 self.logger.error('Invalid algorithm choice.')
         elif self.args.operation == 'train':

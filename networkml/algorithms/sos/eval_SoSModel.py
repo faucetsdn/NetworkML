@@ -11,6 +11,7 @@ from networkml.parsers.pcap.session_sequence import create_dataset
 logging.basicConfig(level=logging.INFO)
 
 
+# TODO this should be re-written to follow patterns from onelayer/randomforest
 def eval_pcap(pcap, labels, time_const, label=None, rnn_size=100, model_path='networkml/trained_models/onelayer/OneLayerModel.pkl', model_type='RandomForest'):
     logger = logging.getLogger(__name__)
     try:

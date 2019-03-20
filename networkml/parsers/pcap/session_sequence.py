@@ -39,7 +39,7 @@ def average_representation(rep, timestamp, prev_rep, prev_time, time_const):
 def create_dataset(
     data_dir,
     time_const,
-    model_path='/models/OneLayerModel.pkl',
+    model_path='networkml/trained_models/onelayer/OneLayerModel.pkl',
     label=None,
     model_type='RandomForest'
 ):
@@ -78,7 +78,8 @@ def create_dataset(
     count = 0
     for pcap in pcaps:
         count += 1
-        logger.info('Working on {0} ({1} bytes) ({2}/{3})'.format(pcap, os.path.getsize(pcap), str(count), len(pcaps)))
+        logger.info('Working on {0} ({1} bytes) ({2}/{3})'.format(pcap,
+                                                                  os.path.getsize(pcap), str(count), len(pcaps)))
         reps, _, timestamps, _, _ = model.get_representation(
             pcap,
             mean=False
