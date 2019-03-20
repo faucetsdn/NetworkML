@@ -128,7 +128,7 @@ class RandomForest:
                 labels, confs = zip(*preds)
                 abnormality = eval_pcap(
                     str(fi), self.conf_labels, self.time_const, label=labels[0],
-                    rnn_size=self.rnn_size, model_path=self.model_path, model_type='RandomForest')
+                    rnn_size=self.rnn_size, model_path=self.model_path, model_type='randomforest')
                 prev_s = self.common.get_address_info(
                     source_mac,
                     timestamp
@@ -186,7 +186,7 @@ class RandomForest:
             duration=self.duration,
             labels=self.conf_labels,
             model=m,
-            model_type='RandomForest'
+            model_type='randomforest'
         )
         # Train the model
         model.train(data_dir)
@@ -200,7 +200,7 @@ class RandomForest:
         save_path = args.save
 
         model = Model(duration=None, hidden_size=None,
-                      model_type='RandomForest')
+                      model_type='randomforest')
         logger.info('Loading model from %s', model_path)
         model.load(model_path)
 

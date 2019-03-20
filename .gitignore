@@ -11,6 +11,8 @@ poseidonml.egg-info/
 *.swp
 networkml/trained_models/sos/SoSmodel.pkl
 networkml/trained_models/sos/checkpoint
+networkml/trained_models/onelayer/*.json
+networkml/trained_models/randomforest/*.json
 
 # Unit test / coverage reports
 htmlcov/

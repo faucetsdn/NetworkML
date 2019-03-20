@@ -31,6 +31,7 @@ class NetworkML():
         self.common = Common(config=self.config)
         self.logger = Common().setup_logger(self.logger)
         self.get_files()
+        self.model_hash = None
         self.model = Model(duration=None, hidden_size=None,
                            model_type=self.args.algorithm)
         if self.args.operation == 'eval':
@@ -58,10 +59,11 @@ class NetworkML():
             else:
                 self.logger.error('Invalid algorithm choice.')
         elif self.args.operation == 'test':
+            self.load_model()
             if self.args.algorithm == 'onelayer':
                 # TODO
                 OneLayer(files=self.files, config=self.config,
-                         model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).test()
+                         model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).test(self.args.path, self.args.save)
             elif self.args.algorithm == 'randomforest':
                 # TODO
                 RandomForest(files=self.files, config=self.config,

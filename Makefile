@@ -34,7 +34,7 @@ test_onelayer: build run_redis test_onelayer_nobuild
 test_onelayer_nobuild:
 	@echo
 	@echo "Running OneLayer Test on PCAP files $(PCAP)"
-	@docker run -it --rm -v "$(PCAP):/pcaps/" --link poseidonml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) poseidonml -o test
+	@docker run -it --rm -v "$(PCAP):/pcaps/" -v "$(PWD)/networkml/trained_models:/poseidonml/networkml/trained_models" --link poseidonml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) poseidonml -o test -w networkml/trained_models/onelayer/test_onelayer.json
 	@docker rm -f poseidonml-redis > /dev/null
 	@echo
 train_onelayer: build run_redis train_onelayer_nobuild

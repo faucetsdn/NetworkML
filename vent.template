@@ -1,5 +1,5 @@
 [info]
-name = DeviceClassifier Evaluate
+name = PoseidonML
 groups = pcap
 
 [settings]
@@ -10,3 +10,4 @@ process_from_tool = pcap node splitter
 [docker]
 links = {"Redis":"redis", "RabbitMQ":"rabbit"}
 environment = ["POSEIDON_PUBLIC_SESSIONS=1", "RABBIT=True"]
+cmd = -p

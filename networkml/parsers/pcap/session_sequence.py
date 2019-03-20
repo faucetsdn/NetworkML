@@ -41,7 +41,7 @@ def create_dataset(
     time_const,
     model_path='networkml/trained_models/onelayer/OneLayerModel.pkl',
     label=None,
-    model_type='RandomForest'
+    model_type='randomforest'
 ):
     logger = logging.getLogger(__name__)
     try:
