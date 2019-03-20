@@ -8,7 +8,7 @@ CONDA_DEV=posml-dev
 CONDAROOT=$(shell ${CONDA_EXE} info --base)/bin
 CONDA_ENV=$(shell ${CONDA_EXE} info --base)/envs/$(CONDA_DEV)/bin
 
-run: build_onelayer eval_onelayer
+run: eval_onelayer
 help:
 	@echo "make OPTION      (see below for description; requires setting PCAP environment variable)"
 	@echo
@@ -23,56 +23,56 @@ help:
 	@echo "DEV/STANDALONE OPTIONS:"
 	@echo "dev                                     Uses conda to create a contained python development environment"
 	@echo "rmdev                                   Removes the conda development environment"
-eval_onelayer: build_onelayer run_redis eval_onelayer_nobuild
+eval_onelayer: build run_redis eval_onelayer_nobuild
 eval_onelayer_nobuild:
 	@echo
 	@echo "Running OneLayer Eval on PCAP file $(PCAP)"
-	@docker run -it --rm -v "$(PCAP):/pcaps/" --link poseidonml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) poseidonml:onelayer
+	@docker run -it --rm -v "$(PCAP):/pcaps/" --link poseidonml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) poseidonml
 	@docker rm -f poseidonml-redis > /dev/null
 	@echo
-test_onelayer: build_onelayer run_redis test_onelayer_nobuild
+test_onelayer: build run_redis test_onelayer_nobuild
 test_onelayer_nobuild:
 	@echo
 	@echo "Running OneLayer Test on PCAP files $(PCAP)"
-	@docker run -it --rm -v "/tmp/models:/OneLayer/models" -v "$(PCAP):/pcaps/" --link poseidonml-redis:redis -e LOG_LEVEL=$(LOG_LEVEL) --entrypoint=python3 poseidonml:onelayer test_OneLayer.py
+	@docker run -it --rm -v "$(PCAP):/pcaps/" --link poseidonml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) poseidonml -o test
 	@docker rm -f poseidonml-redis > /dev/null
 	@echo
-train_onelayer: build_onelayer run_redis train_onelayer_nobuild
+train_onelayer: build run_redis train_onelayer_nobuild
 train_onelayer_nobuild:
 	@echo
 	@echo "Running OneLayer Train on PCAP files $(PCAP)"
-	@docker run -it --rm -v "/tmp/models:/OneLayer/models" -v "$(PCAP):/pcaps/" --link poseidonml-redis:redis -e LOG_LEVEL=$(LOG_LEVEL) --entrypoint=python3 poseidonml:onelayer train_OneLayer.py
+	@docker run -it --rm -v "$(PCAP):/pcaps/" --link poseidonml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) poseidonml -o train
 	@docker rm -f poseidonml-redis > /dev/null
 	@echo
-eval_randomforest: build_randomforest run_redis eval_randomforest_nobuild
+eval_randomforest: build run_redis eval_randomforest_nobuild
 eval_randomforest_nobuild:
 	@echo
 	@echo "Running RandomForest Eval on PCAP file $(PCAP)"
-	@docker run -it --rm -v "$(PCAP):/pcaps/$(PCAP)" --link poseidonml-redis:redis -e LOG_LEVEL=$(LOG_LEVEL) --entrypoint=python3 poseidonml:randomforest eval_RandomForest.py /pcaps/$(PCAP)
+	@docker run -it --rm -v "$(PCAP):/pcaps/" --link poseidonml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) poseidonml -a randomforest -m networkml/trained_models/randomforest/RandomForestModel.pkl -w networkml/trained_models/randomforest/RandomForestModel.pkl
 	@docker rm -f poseidonml-redis > /dev/null
 	@echo
-test_randomforest: build_randomforest run_redis test_randomforest_nobuild
+test_randomforest: build run_redis test_randomforest_nobuild
 test_randomforest_nobuild:
 	@echo
 	@echo "Running RandomForest Test on PCAP files $(PCAP)"
 	@docker run -it --rm -v "/tmp/models:/RandomForest/models" -v "$(PCAP):/pcaps/" --link poseidonml-redis:redis -e LOG_LEVEL=$(LOG_LEVEL) --entrypoint=python3 poseidonml:randomforest test_RandomForest.py
 	@docker rm -f poseidonml-redis > /dev/null
 	@echo
-train_randomforest: build_randomforest run_redis train_randomforest_nobuild
+train_randomforest: build run_redis train_randomforest_nobuild
 train_randomforest_nobuild:
 	@echo
 	@echo "Running RandomForest Train on PCAP files $(PCAP)"
 	@docker run -it --rm -v "/tmp/models:/RandomForest/models" -v "$(PCAP):/pcaps/" --link poseidonml-redis:redis -e LOG_LEVEL=$(LOG_LEVEL) --entrypoint=python3 poseidonml:randomforest train_RandomForest.py
 	@docker rm -f poseidonml-redis > /dev/null
 	@echo
-eval_sosmodel: build_sosmodel run_redis eval_sosmodel_nobuild
+eval_sosmodel: build run_redis eval_sosmodel_nobuild
 eval_sosmodel_nobuild:
 	@echo
 	@echo "Running SoSModel Eval on PCAP file $(PCAP)"
 	@docker run -it --rm -v "$(PCAP):/pcaps/$(PCAP)" --link poseidonml-redis:redis -e LOG_LEVEL=$(LOG_LEVEL) --entrypoint=python3 poseidonml:sosmodel eval_SoSModel.py /pcaps/$(PCAP)
 	@docker rm -f poseidonml-redis > /dev/null
 	@echo
-train_sosmodel: build_sosmodel run_redis train_sosmodel_nobuild
+train_sosmodel: build run_redis train_sosmodel_nobuild
 train_sosmodel_nobuild:
 	@echo
 	@echo "Running SoSModel Train on PCAP files $(PCAP)"
@@ -81,19 +81,11 @@ train_sosmodel_nobuild:
 	@echo
 run_redis:
 	@docker run -d --name poseidonml-redis redis:latest
-build_randomforest: build_base
-	@pushd DeviceClassifier/RandomForest && docker build -t poseidonml:randomforest . && popd
-build_sosmodel: build_base
-	@cp -R DeviceClassifier/OneLayer/opts utils/
-	@cp DeviceClassifier/OneLayer/models/OneLayerModel.pkl utils/models/
-	@pushd utils && docker build -f Dockerfile.sosmodel -t poseidonml:sosmodel . && popd
-	@rm -rf utils/opts
-	@rm -rf utils/models/OneLayerModel.pkl
-test: build_base
+test:
 	docker build -t poseidonml-test -f Dockerfile.test .
 	docker run -it --rm poseidonml-test
-build_onelayer: clean
-	@docker build -t poseidonml:onelayer .
+build: clean
+	@docker build -t poseidonml .
 clean:
 	docker rm -f poseidonml-redis || true
 install:

@@ -12,10 +12,10 @@ from networkml.utils.common import Common
 from networkml.utils.model import Model
 
 
-class OneLayer:
+class RandomForest:
     """
     Reads a pcap and updates the stored representation of the source using
-    the one layer feedforward model.
+    the randomforest model.
     """
 
     def __init__(self, files=None, config=None, model=None, model_hash=None, model_path=None):
@@ -126,7 +126,7 @@ class OneLayer:
                 labels, confs = zip(*preds)
                 abnormality = eval_pcap(
                     str(fi), self.conf_labels, self.time_const, label=labels[0],
-                    rnn_size=self.rnn_size, model_path=self.model_path, model_type='OneLayer')
+                    rnn_size=self.rnn_size, model_path=self.model_path, model_type='RandomForest')
                 prev_s = self.common.get_address_info(
                     source_mac,
                     timestamp
@@ -159,6 +159,7 @@ class OneLayer:
                 message = json.dumps(decision)
                 self.logger.info('Message: ' + message)
                 if self.common.use_rabbit:
+                    self.common.connect_rabbit()
                     self.common.channel.basic_publish(exchange=self.common.exchange,
                                                       routing_key=self.common.routing_key,
                                                       body=message)
@@ -175,27 +176,23 @@ class OneLayer:
         # Load model params from config
         config = get_config(args.config)
         duration = config['duration']
-        hidden_size = config['state size']
         labels = config['labels']
 
         # Get the data directory
         data_dir = args.pcaps
 
-        m = MLPClassifier(
-            (hidden_size),
-            alpha=0.1,
-            activation='relu',
-            max_iter=1000
+        m = RandomForestClassifier(
+            n_estimators=100,
+            min_samples_split=5,
+            class_weight='balanced'
         )
 
         # Initialize the model
         model = Model(
             duration=duration,
-            hidden_size=hidden_size,
             labels=labels,
             model=m,
-            model_type='OneLayer',
-            threshold_time=self.threshold
+            model_type='RandomForest'
         )
         # Train the model
         model.train(data_dir)
@@ -204,7 +201,14 @@ class OneLayer:
 
     def test(self):
         data_dir = args.pcaps
+        # Load model from specified path
+        model_path = args.model
         save_path = args.save
+
+        model = Model(duration=None, hidden_size=None,
+                      model_type='RandomForest')
+        logger.info('Loading model from %s', model_path)
+        model.load(model_path)
 
         # Initialize results dictionary
         results = {}

@@ -8,6 +8,8 @@ import os
 from pathlib import Path
 
 from networkml.algorithms.onelayer.OneLayer import OneLayer
+from networkml.algorithms.randomforest.RandomForest import RandomForest
+from networkml.algorithms.sos.SoSmodel import SoSModel
 from networkml.utils.common import Common
 from networkml.utils.model import Model
 
@@ -33,12 +35,47 @@ class NetworkML():
             if self.args.algorithm == 'onelayer':
                 OneLayer(files=self.files, config=self.config,
                          model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).eval()
+            elif self.args.algorithm == 'randomforest':
+                # TODO
+                RandomForest(files=self.files, config=self.config,
+                             model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).eval()
+            elif self.args.algorithm == 'sos':
+                # TODO
+                SoSModel(files=self.files, config=self.config,
+                         model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).eval()
+            else:
+                self.logger.error('Invalid algorithm choice.')
         elif self.args.operation == 'train':
-            # TODO
-            pass
+            if self.args.algorithm == 'onelayer':
+                OneLayer(files=self.files, config=self.config,
+                         model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).train()
+            elif self.args.algorithm == 'randomforest':
+                # TODO
+                RandomForest(files=self.files, config=self.config,
+                             model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).train()
+            elif self.args.algorithm == 'sos':
+                # TODO
+                SoSModel(files=self.files, config=self.config,
+                         model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).train()
+            else:
+                self.logger.error('Invalid algorithm choice.')
         elif self.args.operation == 'test':
-            # TODO
             self.load_model()
+            if self.args.algorithm == 'onelayer':
+                OneLayer(files=self.files, config=self.config,
+                         model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).test()
+            elif self.args.algorithm == 'randomforest':
+                # TODO
+                RandomForest(files=self.files, config=self.config,
+                             model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).test()
+            elif self.args.algorithm == 'sos':
+                # TODO
+                SoSModel(files=self.files, config=self.config,
+                         model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).test()
+            else:
+                self.logger.error('Invalid algorithm choice.')
+        else:
+            self.logger.error('Invalid operation choice.')
 
     def read_args(self):
         parser = argparse.ArgumentParser()

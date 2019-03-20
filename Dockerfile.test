@@ -1,6 +1,7 @@
-FROM cyberreboot/poseidonml:base
+FROM poseidonml
 LABEL maintainer="Charlie Lewis <clewis@iqt.org>"
 
+# TODO
 ENV PYTHONPATH=/poseidonml/utils:$PYTHONPATH
 ENV PYTHONPATH=/poseidonml/DeviceClassifier:$PYTHONPATH
 

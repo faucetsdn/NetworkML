@@ -17,9 +17,7 @@ ENV BUILD_PACKAGES="\
         python3 \
         python3-pip \
         tcpdump" \
-    PYTHON_VERSION=3.6.4 \
     PATH=/usr/local/bin:$PATH \
-    PYTHON_PIP_VERSION=9.0.1 \
     LANG=C.UTF-8
 
 COPY requirements.txt requirements.txt
@@ -33,8 +31,8 @@ RUN set -ex; \
     ln -s /usr/bin/python3 /usr/bin/python; \
     ln -s /usr/bin/python3-config /usr/bin/python-config; \
     ln -s /usr/bin/pip3 /usr/bin/pip; \
-    pip install -U -v setuptools wheel; \
-    pip install -U -v -r requirements.txt; \
+    pip install -U setuptools wheel; \
+    pip install -U -r requirements.txt; \
     apt-get remove --purge --auto-remove -y ${BUILD_PACKAGES}; \
     apt-get clean; \
     apt-get autoclean; \
