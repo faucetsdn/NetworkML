@@ -3,7 +3,7 @@ from shutil import copyfile
 
 import numpy as np
 
-from utils.Model import Model
+from networkml.utils.model import Model
 
 
 def test_augment_data():

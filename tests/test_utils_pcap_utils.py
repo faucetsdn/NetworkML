@@ -1,4 +1,4 @@
-from utils.pcap_utils import extract_macs
+from networkml.parsers.pcap.pcap_utils import extract_macs
 
 
 def test_extract_macs():
