@@ -79,7 +79,12 @@ class OneLayerEval:
 
         # Get the true label assignments
         self.logger.info('Getting label assignments')
-        label_assignments = utils.get_labels('opts/label_assignments.json', model_labels=model.labels)
+        label_assignments = []
+        try:
+            label_assignments = utils.get_labels('opts/label_assignments.json', model_labels=model.labels)
+        except Exception as e:  # pragma: no cover
+            self.logger.error('Unable to get label assignments because: {0}'.format(str(e)))
+
         if not label_assignments:
             self.logger.warn('Could not read label assignments; continuing anyway.')
 
