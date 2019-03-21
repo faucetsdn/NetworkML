@@ -21,6 +21,5 @@ before_install:
   - sudo pkill tcpdump
   - sudo chmod 777 /home/travis/build/$TRAVIS_REPO_SLUG/tests/test.pcap
   - mkdir -p /home/travis/build/$TRAVIS_REPO_SLUG/opts
-  - cp /home/travis/build/$TRAVIS_REPO_SLUG/networkml/configs/config.json /home/travis/build/$TRAVIS_REPO_SLUG/networkml/configs/config.json
 after_success:
   - codecov
