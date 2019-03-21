@@ -61,13 +61,11 @@ class NetworkML():
         elif self.args.operation == 'test':
             self.load_model()
             if self.args.algorithm == 'onelayer':
-                # TODO
                 OneLayer(files=self.files, config=self.config,
                          model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).test(self.args.path, self.args.save)
             elif self.args.algorithm == 'randomforest':
-                # TODO
                 RandomForest(files=self.files, config=self.config,
-                             model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).test()
+                             model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).test(self.args.path, self.args.save)
             elif self.args.algorithm == 'sos':
                 self.logger.info(
                     'There is no testing operation for the SoSModel.')

@@ -23,12 +23,6 @@ def extract_features(session_dict, capture_source=None, max_port=1024):
                         of the input pcap.
     '''
 
-    # Get featurization info from config
-
-    # TODO
-    #config = get_config()
-    #address_type = config.get('source identifier', 'MAC')
-    #max_port = config.get('max port', max_port) if not max_port else None
     address_type = 'MAC'
 
     # If the capture source isn't specified, default to the most used address

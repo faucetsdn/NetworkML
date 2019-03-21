@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import sys
+import time
 
 from pathlib import Path
 from sklearn.ensemble import RandomForestClassifier
@@ -11,6 +12,9 @@ from networkml.algorithms.sos.eval_SoSModel import eval_pcap
 from networkml.parsers.pcap.pcap_utils import clean_session_dict
 from networkml.utils.common import Common
 from networkml.utils.model import Model
+from networkml.utils.training_utils import get_labels
+from networkml.utils.training_utils import get_pcap_paths
+from networkml.utils.training_utils import get_true_label
 
 
 class RandomForest:
@@ -193,49 +197,41 @@ class RandomForest:
         # Save the model to the specified path
         model.save(save_path)
 
-    def test(self):
-        data_dir = args.pcaps
-        # Load model from specified path
-        model_path = args.model
-        save_path = args.save
-
-        model = Model(duration=None, hidden_size=None,
-                      model_type='randomforest')
-        logger.info('Loading model from %s', model_path)
-        model.load(model_path)
-
+    def test(self, data_dir, save_path):
         # Initialize results dictionary
         results = {}
-        results['labels'] = model.labels
+        results['labels'] = self.conf_labels
 
         # Get the true label assignments
-        logger.info('Getting label assignments')
-        label_assignments = utils.get_labels(
-            args.labels, model_labels=model.labels)
+        self.logger.info('Getting label assignments')
+        label_assignments = get_labels(
+            'networkml/configs/label_assignments.json', model_labels=self.model.labels)
         if not label_assignments:
-            logger.warn('Could not read label assignments; continuing anyway.')
+            self.logger.warn(
+                'Could not read label assignments; continuing anyway.')
 
         # Walk through testing directory and get all the pcaps
-        logger.info('Getting pcaps')
-        pcaps = utils.get_pcap_paths(data_dir)
+        self.logger.info('Getting pcaps')
+        pcaps = get_pcap_paths(data_dir)
         if not pcaps:
-            logger.error('No pcaps were found in data directory; exiting.')
+            self.logger.error(
+                'No pcaps were found in data directory; exiting.')
             return
 
         # Evaluate the model on each pcap
         file_size = 0
         file_num = 0
         time_slices = 0
-        logger.info('processing pcaps')
+        self.logger.info('processing pcaps')
         tick = time.clock()
         for pcap in pcaps:
             # Get the true label
-            name, label = utils.get_true_label(pcap, label_assignments)
+            name, label = get_true_label(pcap, label_assignments)
             single_result = {}
             single_result['label'] = label
-            logger.info('Reading ' + name + ' as ' + label)
+            self.logger.info('Reading ' + name + ' as ' + label)
             # Get the internal representations
-            representations, _, _, p, _ = model.get_representation(
+            representations, _, _, p, _ = self.model.get_representation(
                 pcap, mean=False)
             if representations is not None:
                 file_size += os.path.getsize(pcap)
@@ -245,9 +241,10 @@ class RandomForest:
                 single_result['aggregate'] = p
                 individual_dict = {}
                 # Classify each slice
-                logger.info('Computing classifications by slice')
+                self.logger.info('Computing classifications by slice')
                 for i in range(length):
-                    p_r = model.classify_representation(representations[i])
+                    p_r = self.model.classify_representation(
+                        representations[i])
                     individual_dict[i] = p_r
                 single_result['individual'] = individual_dict
                 results[pcap] = single_result
@@ -256,24 +253,25 @@ class RandomForest:
         # Save results to path specified by third argument
         with open(save_path, 'w') as output_file:
             json.dump(results, output_file)
-        logger.info('-'*80)
-        logger.info('Results with unknowns')
-        logger.info('-'*80)
-        model.calc_f1(results)
-        logger.info('-'*80)
-        logger.info('Results forcing decisions')
-        logger.info('-'*80)
-        model.calc_f1(results, ignore_unknown=True)
-        logger.info('-'*80)
-        logger.info('Analysis statistics')
-        logger.info('-'*80)
+        self.logger.info('-'*80)
+        self.logger.info('Results with unknowns')
+        self.logger.info('-'*80)
+        self.model.calc_f1(results)
+        self.logger.info('-'*80)
+        self.logger.info('Results forcing decisions')
+        self.logger.info('-'*80)
+        self.model.calc_f1(results, ignore_unknown=True)
+        self.logger.info('-'*80)
+        self.logger.info('Analysis statistics')
+        self.logger.info('-'*80)
         elapsed_time = tock - tick
         rate = file_size/(pow(10, 6)*elapsed_time)
-        logger.info('Evaluated {0} pcaps in {1} seconds'.format(
+        self.logger.info('Evaluated {0} pcaps in {1} seconds'.format(
             file_num, round(elapsed_time, 3)))
-        logger.info('Total data: {0} Mb'.format(file_size/pow(10, 6)))
-        logger.info('Total capture time: {0} hours'.format(time_slices/4))
-        logger.info('Data processing rate: {0} Mb per second'.format(rate))
-        logger.info('time per 15 minute capture {0} seconds'.format(
+        self.logger.info('Total data: {0} Mb'.format(file_size/pow(10, 6)))
+        self.logger.info('Total capture time: {0} hours'.format(time_slices/4))
+        self.logger.info(
+            'Data processing rate: {0} Mb per second'.format(rate))
+        self.logger.info('time per 15 minute capture {0} seconds'.format(
             (elapsed_time)/(time_slices)))
-        logger.info('-'*80)
+        self.logger.info('-'*80)
