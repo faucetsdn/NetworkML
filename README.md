@@ -30,23 +30,24 @@ machine learning models on network data; and the
 This repository contains the components necessary to build a docker container
 that can be used for training a number of ML models using network packet
 captures (pcaps). The repository includes scripts necessary to do the
-training (e.g. "train_OneLayer.py") as well as doing the evaluation once a
-model has been trained (e.g. "eval_OneLayer.py") These can be run from a
-shell.
+training as well as doing the evaluation once a model has been trained. These
+can be run from a shell once `poseidonml` is installed as a package or run in a
+Docker container using the `networkml` script.
 
 Additional algorithms and models will be added here as we delve more
 deeply into network security profiles via machine learning models. Feel
 free to use, discuss, and contribute!
 
 
-## Plugins
+## Algorithms
 
-The plugin (i.e., model) we currently have available is **DeviceClassifier**,
-which utilizes the OneLayer feedforward technique by default, but the
-RandomForest technique used in our Poseidon project is also included.
+The algorithms (i.e., untrained model) we currently have available are the
+OneLayer feedforward technique (default), the RandomForest technique as an
+alternative classifier and the SoS technique which is used for detecting
+abnormal behavior.
 
 For more information, check out the respective README file included within
-each plugin's folder.
+the `networkml/algorithms` folder.
 
 
 # Installation/Run
@@ -55,7 +56,7 @@ Our models can be executed via Vent, Docker, and in a standalone manner on a
 Linux host. We recommend deployment via Vent in conjunction with Poseidon if you
 are running an SDN (software-defined network). Otherwise, we recommend using Docker.
 
-See the [README](https://github.com/CyberReboot/PoseidonML/blob/master/DeviceClassifier/README.md) file included in the plugin's folder for specific instructions on deployment.
+See the [README](https://github.com/CyberReboot/PoseidonML/blob/master/networkml/algorithms/README.md) file included in the `networkml/algorithms` folder for specific instructions on deployment.
 
 
 # Develop/Standalone installation

@@ -14,15 +14,16 @@ help:
 	@echo
 	@echo Set the PCAP environment variable to the directory of pcaps or a single pcap file you want to work with
 	@echo
-	@echo "eval_[onelayer|randomforest|sosmodel]   Runs a directory of pcap files against specified model"
-	@echo "test_[onelayer|randomforest]            Tests directory of pcaps against specified model"
-	@echo "train_[onelayer|randomforest|sosmodel]  Trains directory of pcaps against specified model"
-	@echo "install                                 Installs the python library"
-	@echo "run                                     Equivalent to eval_onelayer"
+	@echo "eval_[onelayer|randomforest|sos]   Runs a directory of pcap files against specified model"
+	@echo "test_[onelayer|randomforest]       Tests directory of pcaps against specified model"
+	@echo "train_[onelayer|randomforest|sos]  Trains directory of pcaps against specified model"
+	@echo "install                            Installs the python library"
+	@echo "run                                Equivalent to eval_onelayer"
+	@echo "test"                              Run the code tests"
 	@echo
 	@echo "DEV/STANDALONE OPTIONS:"
-	@echo "dev                                     Uses conda to create a contained python development environment"
-	@echo "rmdev                                   Removes the conda development environment"
+	@echo "dev                                Uses conda to create a contained python development environment"
+	@echo "rmdev                              Removes the conda development environment"
 eval_onelayer: build run_redis eval_onelayer_nobuild
 eval_onelayer_nobuild:
 	@echo
