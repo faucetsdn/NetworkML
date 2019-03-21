@@ -12,7 +12,8 @@ env:
 jobs:
   include:
   - stage: test
-    script: docker build -f Dockerfile.base -t cyberreboot/poseidonml:base . && docker build -f Dockerfile.test -t poseidonml-test . && docker run -it poseidonml-test
+  - script: docker build -t poseidonml . && docker build -f Dockerfile.test -t poseidonml-test . && docker run -it poseidonml-test
+
   - script: find . -name requirements.txt -type f -exec pip3 install -r {} \; && pip3 uninstall -y poseidonml && pip3 install . && pytest -l -s -v --cov=tests/ --cov=networkml/ --cov-report term-missing -c .coveragerc
 before_install:
   - sudo tcpdump -i ens4 -w /home/travis/build/$TRAVIS_REPO_SLUG/tests/test.pcap &

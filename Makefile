@@ -81,9 +81,10 @@ train_sos_nobuild:
 	@echo
 run_redis:
 	@docker run -d --name poseidonml-redis redis:latest
-test:
-	docker build -t poseidonml-test -f Dockerfile.test .
-	docker run -it --rm poseidonml-test
+test: build run_redis
+	@docker build -t poseidonml-test -f Dockerfile.test .
+	@docker run -it --rm poseidonml-test
+	@docker rm -f poseidonml-redis > /dev/null
 build: clean
 	@docker build -t poseidonml .
 clean:
