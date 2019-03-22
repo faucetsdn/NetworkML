@@ -6,6 +6,7 @@
  - Updated versions of pika, pytest, redis, and scikit-learn
  - Fixed a bug that was preventing training the SoSModel
  - Added some more test coverage
+ - Updated the trained models and labels
 
 # v0.2.9 (2019-03-08)
 
