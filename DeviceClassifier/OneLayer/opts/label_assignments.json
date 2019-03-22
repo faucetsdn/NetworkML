@@ -5,5 +5,9 @@
   "BusinessWorkstation": "Business workstation",
   "DevWorkstation": "Developer workstation",
   "GPULaptop": "GPU laptop",
-  "PKIServer": "PKI server"
+  "PKIServer": "PKI server",
+  "ConfluenceServer": "Confluence server",
+  "DistrFileShare": "Distributed file share",
+  "ExchangeServer": "Exchange server",
+  "GithubRepo": "GitHub server"
 }

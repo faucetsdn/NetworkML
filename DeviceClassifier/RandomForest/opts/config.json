@@ -9,6 +9,10 @@
     "PKI server",
     "Developer workstation",
     "Active Directory controller",
+    "Confluence server",
+    "Distributed file share",
+    "Exchange server",
+    "GitHub server",
     "Unknown"
   ],
   "look time": 86400,
