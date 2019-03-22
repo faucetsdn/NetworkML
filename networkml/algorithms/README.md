@@ -1,7 +1,7 @@
-# DeviceClassifier
+# Algorithms
 
-Plugin to classify devices based on their network activity. This plugin is the
- original machine learning model used by Poseidon to identify device types (e.g.,
+Algorithms to classify devices based on their network activity. These algorithms
+are the machine learning models used by Poseidon to identify device types (e.g.,
  "developer workstation," "SSH server," etc.). For more information on this model,
  see our blog post [Using machine learning to classify devices on your network](https://blog.cyberreboot.org/using-machine-learning-to-classify-devices-on-your-network-e9bb98cbfdb6)
 
@@ -14,25 +14,23 @@ We currently have two different models available on Docker Hub -- RandomForest a
  directory to call `eval_[modelname]`, `test_[modelname]`, and `train_[modelname]`,
  respectively.
 
-At the moment, the eval versions of the models support one pcap at a time. To use
- this for device classification, you will first need to set a $PCAP environment
- variable before calling the respective `make` command from the root directory, like
- so:
+At the moment, the eval versions of the models support one pcap or a directory
+ of pcaps. To use this for device classification, you will first need to set a
+ $PCAP environment variable before calling the respective `make` command from
+ the root directory, like so:
 
 ```
 export PCAP=[path/to/pcap/file.pcap]
 make eval_onelayer
 ```
+
 By default, `make run` uses the eval_onelayer script.
 
 To use `eval`, you will supply a single PCAP from your local filesystem that can
  be mapped into the Docker container at runtime.  The `train` and `test` functions
  require a directory of PCAP files along with a `label_assignments.json` for
- those PCAPs. If the label_assignments don't line up with the ones in `config.json`
- under the `opts` directory, be sure to add them there as well.  Currently the
- models require that the number of labels in `config.json` be exactly 7, don't
- worry if you don't have data to train all of the labels, but note that you need
- to keep 7 there, even if you don't use them all. Models will be mapped to `/tmp/models`.
+ those PCAPs. If the label_assignments don't line up with the labels of the
+ pcaps you wish to train with, you'll need to update it.
 
 Here's an example of implicitly calling `eval_onelayer`:
 ```
@@ -48,7 +46,8 @@ make test_onelayer
 
 Use `make help` to see the possible options.
 
-Output is currently JSON to STDOUT.
+Output is currently JSON to STDOUT, or if training it will output to the models
+ directory under networkml.
 
 The logger level is set to INFO by default, if you'd like to override that to
  say DEBUG, you can export the `LOG_LEVEL` variable with the desired value
