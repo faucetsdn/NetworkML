@@ -9,6 +9,7 @@ from poseidonml.common import Common
 from poseidonml.eval_SoSModel import eval_pcap
 from poseidonml.Model import Model
 from poseidonml.pcap_utils import clean_session_dict
+import poseidonml.training_utils as utils
 
 
 class OneLayerEval:
@@ -30,7 +31,7 @@ class OneLayerEval:
         self.threshold = self.common.threshold
         self.conf_labels = self.common.conf_labels
         self.rnn_size = self.common.rnn_size
-        self.skip_rabbit = self.common.skip_rabbit
+        self.use_rabbit = self.common.use_rabbit
 
     def main(self):
         # path to pcap or directory to get update from
@@ -58,7 +59,7 @@ class OneLayerEval:
                 'Did not find pcap file(s) from \'%s\'.', str(pcap_path))
             return
 
-        if not self.skip_rabbit:
+        if self.use_rabbit:
             self.common.connect_rabbit()
 
         # Initialize and load the model
@@ -76,6 +77,18 @@ class OneLayerEval:
         model.load(load_path)
         self.logger.debug('Loaded model from %s', load_path)
 
+        # Get the true label assignments
+        self.logger.info('Getting label assignments')
+        label_assignments = []
+        try:
+            label_assignments = utils.get_labels('opts/label_assignments.json', model_labels=model.labels)
+        except Exception as e:  # pragma: no cover
+            self.logger.error('Unable to get label assignments because: {0}'.format(str(e)))
+
+        if not label_assignments:
+            self.logger.warn('Could not read label assignments; continuing anyway.')
+
+        pcap_results = {}
         for pcap in pcaps:
             self.logger.info('Processing {0}...'.format(pcap))
             source_mac = None
@@ -105,7 +118,7 @@ class OneLayerEval:
                 message = json.dumps(message)
                 self.logger.info(
                     'Not enough sessions in pcap \'%s\'', str(pcap))
-                if not self.skip_rabbit:
+                if self.use_rabbit:
                     self.common.channel.basic_publish(exchange=self.common.exchange,
                                                       routing_key=self.common.routing_key,
                                                       body=message)
@@ -189,15 +202,29 @@ class OneLayerEval:
                     self.logger.error(
                         'Failed to update keys in Redis because: {0}'.format(str(e)))
 
+                name, label = utils.get_true_label(pcap, label_assignments)
+
                 # Get json message
                 message = json.dumps(decision)
                 self.logger.info('Message: ' + message)
-                if not self.skip_rabbit:
+                if key is None:
+                    key = source_mac
+                if not label in pcap_results:
+                    pcap_results[label] ={'succeeded':0, 'failed':0, 'abnormal':0}
+
+                if label == decision[key]['classification']['labels'][0]:
+                    pcap_results[label]['succeeded'] += 1
+                else:
+                    pcap_results[label]['failed'] += 1
+                if decision[key]['decisions']['behavior'] == 'abnormal':
+                    pcap_results[label]['abnormal'] += 1
+                if self.use_rabbit:
                     self.common.channel.basic_publish(exchange=self.common.exchange,
                                                       routing_key=self.common.routing_key,
                                                       body=message)
 
-        if not self.skip_rabbit:
+        self.logger.info('Total results: {0}'.format(pcap_results))
+        if self.use_rabbit:
             try:
                 self.common.connection.close()
             except Exception as e:

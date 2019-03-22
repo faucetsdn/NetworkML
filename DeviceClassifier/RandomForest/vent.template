@@ -10,4 +10,4 @@ process_from_tool = pcap node splitter
 [docker]
 links = {"Redis":"redis", "RabbitMQ":"rabbit"}
 volumes = {"/tmp/models/": {"bind": "/RandomForest/models/", "mode": "ro"}}
-environment = ["POSEIDON_PUBLIC_SESSIONS=0"]
+environment = ["POSEIDON_PUBLIC_SESSIONS=0", "RABBIT=True"]
