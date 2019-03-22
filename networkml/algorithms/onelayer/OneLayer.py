@@ -88,12 +88,14 @@ class OneLayer:
                 last_update, prev_rep = self.common.get_previous_state(
                     source_mac, timestamps[0])
 
+               # TODO are these calls actually needed???
                 _, mean_rep = self.common.average_representation(
                     reps,
                     timestamps,
                     prev_representation=prev_rep,
                     last_update=last_update
                 )
+                mean_preds = self.model.classify_representation(mean_rep)
 
                 # Update the stored representation
                 if reps is not None:
