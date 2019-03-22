@@ -1,11 +1,8 @@
-import hashlib
 import json
 import logging
 import os
-import sys
 import time
 
-from pathlib import Path
 from sklearn.neural_network import MLPClassifier
 
 from networkml.algorithms.sos.eval_SoSModel import eval_pcap
@@ -97,7 +94,6 @@ class OneLayer:
                     prev_representation=prev_rep,
                     last_update=last_update
                 )
-                mean_preds = self.model.classify_representation(mean_rep)
 
                 # Update the stored representation
                 if reps is not None:

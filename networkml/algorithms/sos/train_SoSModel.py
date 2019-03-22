@@ -50,7 +50,6 @@ def train(data_dir, time_const, rnn_size, labels, save_path):
     )
 
     cost = rnnmodel.get_cost(X_v, L_v, Y_v)
-    out = rnnmodel.get_output(X_v, L_v)
 
     logger.info('Initial validation cost: %s', np.mean(cost))
     rnnmodel.save('networkml/trained_models/sos/SoSmodel')
@@ -58,12 +57,10 @@ def train(data_dir, time_const, rnn_size, labels, save_path):
     min_cost = cost
     last_save = 0
     for i in range(100000):
-        tick = time.clock()
         X, L, Y = iterator.gen_batch(
             split='train',
             batch_size=64
         )
-        tock = time.clock()
         _ = rnnmodel.train_on_batch(X, L, Y)
         if (i+1) % 100 == 0:
             cost = rnnmodel.get_cost(X_v, L_v, Y_v)
