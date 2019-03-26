@@ -1,3 +1,13 @@
+# v0.2.10 (2019-03-22)
+
+ - Changed the default for Rabbit to not be used
+ - Changed the environment variable for Rabbit from SKIP_RABBIT to RABBIT
+ - Improved logging output for summarizing evaluation results of multiple PCAPs
+ - Updated versions of pika, pytest, redis, and scikit-learn
+ - Fixed a bug that was preventing training the SoSModel
+ - Added some more test coverage
+ - Updated the trained models and labels
+
 # v0.2.9 (2019-03-08)
 
  - Updated tensorflow from 1.12.0 to 1.13.1.
