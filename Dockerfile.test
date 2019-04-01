@@ -1,8 +1,5 @@
-FROM cyberreboot/poseidonml:base
+FROM poseidonml
 LABEL maintainer="Charlie Lewis <clewis@iqt.org>"
 
-ENV PYTHONPATH=/poseidonml/utils:$PYTHONPATH
-ENV PYTHONPATH=/poseidonml/DeviceClassifier:$PYTHONPATH
-
 ENTRYPOINT ["pytest"]
-CMD ["-l", "-s", "-v", "--cov=tests/", "--cov=utils/", "--cov=DeviceClassifier/", "--cov-report", "term-missing", "-c", ".coveragerc"]
+CMD ["-l", "-s", "-v", "--cov=tests/", "--cov=networkml/", "--cov-report", "term-missing", "-c", ".coveragerc"]
