@@ -1,7 +1,7 @@
 import logging
 import os
 
-from utils.common import Common
+from networkml.utils.common import Common
 
 
 def test_setup_logger():

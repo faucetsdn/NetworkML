@@ -1,0 +1,13 @@
+{
+  "ActiveDirectoryController": "Active Directory controller",
+  "AdminServer": "Administrator server",
+  "AdminWorkstation": "Administrator workstation",
+  "BusinessWorkstation": "Business workstation",
+  "ConfluenceServer": "Confluence server",
+  "DevWorkstation": "Developer workstation",
+  "DistrFileShare": "Distributed file share",
+  "ExchangeServer": "Exchange server",
+  "GPULaptop": "GPU laptop",
+  "GithubRepo": "GitHub server",
+  "PKIServer": "PKI server"
+}

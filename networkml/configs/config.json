@@ -1,0 +1,12 @@
+{
+  "batch size": 32,
+  "duration": 900,
+  "look time": 86400,
+  "max port": 1024,
+  "rnn size": 100,
+  "session threshold": 5,
+  "source identifier": "MAC",
+  "state size": 32,
+  "threshold": 0.99,
+  "time constant": 86400
+}
