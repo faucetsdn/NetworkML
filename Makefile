@@ -28,56 +28,56 @@ eval_onelayer: build run_redis eval_onelayer_nobuild
 eval_onelayer_nobuild:
 	@echo
 	@echo "Running OneLayer Eval on PCAP files $(PCAP)"
-	@docker run -it --rm -v "$(PCAP):/pcaps/" --link poseidonml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) poseidonml
+	@docker run -it --rm -v "$(PCAP):/pcaps$(PCAP)" --link poseidonml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) poseidonml
 	@docker rm -f poseidonml-redis > /dev/null
 	@echo
 test_onelayer: build run_redis test_onelayer_nobuild
 test_onelayer_nobuild:
 	@echo
 	@echo "Running OneLayer Test on PCAP files $(PCAP)"
-	@docker run -it --rm -v "$(PCAP):/pcaps/" -v "$(PWD)/networkml/trained_models:/poseidonml/networkml/trained_models" --link poseidonml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) poseidonml -o test -w networkml/trained_models/onelayer/test_onelayer.json
+	@docker run -it --rm -v "$(PCAP):/pcaps$(PCAP)" -v "$(PWD)/networkml/trained_models:/poseidonml/networkml/trained_models" --link poseidonml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) poseidonml -o test -w networkml/trained_models/onelayer/test_onelayer.json
 	@docker rm -f poseidonml-redis > /dev/null
 	@echo
 train_onelayer: build run_redis train_onelayer_nobuild
 train_onelayer_nobuild:
 	@echo
 	@echo "Running OneLayer Train on PCAP files $(PCAP)"
-	@docker run -it --rm -v "$(PCAP):/pcaps/" -v "$(PWD)/networkml/trained_models:/poseidonml/networkml/trained_models" --link poseidonml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) poseidonml -o train
+	@docker run -it --rm -v "$(PCAP):/pcaps$(PCAP)" -v "$(PWD)/networkml/trained_models:/poseidonml/networkml/trained_models" --link poseidonml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) poseidonml -o train
 	@docker rm -f poseidonml-redis > /dev/null
 	@echo
 eval_randomforest: build run_redis eval_randomforest_nobuild
 eval_randomforest_nobuild:
 	@echo
 	@echo "Running RandomForest Eval on PCAP files $(PCAP)"
-	@docker run -it --rm -v "$(PCAP):/pcaps/" --link poseidonml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) poseidonml -a randomforest -m networkml/trained_models/randomforest/RandomForestModel.pkl -w networkml/trained_models/randomforest/RandomForestModel.pkl
+	@docker run -it --rm -v "$(PCAP):/pcaps$(PCAP)" --link poseidonml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) poseidonml -a randomforest -m networkml/trained_models/randomforest/RandomForestModel.pkl -w networkml/trained_models/randomforest/RandomForestModel.pkl
 	@docker rm -f poseidonml-redis > /dev/null
 	@echo
 test_randomforest: build run_redis test_randomforest_nobuild
 test_randomforest_nobuild:
 	@echo
 	@echo "Running RandomForest Test on PCAP files $(PCAP)"
-	@docker run -it --rm -v "$(PCAP):/pcaps/" --link poseidonml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) poseidonml -o test -a randomforest -m networkml/trained_models/randomforest/RandomForestModel.pkl -w networkml/trained_models/randomforest/RandomForestModel.pkl
+	@docker run -it --rm -v "$(PCAP):/pcaps$(PCAP)" --link poseidonml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) poseidonml -o test -a randomforest -m networkml/trained_models/randomforest/RandomForestModel.pkl -w networkml/trained_models/randomforest/RandomForestModel.pkl
 	@docker rm -f poseidonml-redis > /dev/null
 	@echo
 train_randomforest: build run_redis train_randomforest_nobuild
 train_randomforest_nobuild:
 	@echo
 	@echo "Running RandomForest Train on PCAP files $(PCAP)"
-	@docker run -it --rm -v "$(PCAP):/pcaps/" -v "$(PWD)/networkml/trained_models:/poseidonml/networkml/trained_models" --link poseidonml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) poseidonml -o train -a randomforest -m networkml/trained_models/randomforest/RandomForestModel.pkl -w networkml/trained_models/randomforest/RandomForestModel.pkl
+	@docker run -it --rm -v "$(PCAP):/pcaps$(PCAP)" -v "$(PWD)/networkml/trained_models:/poseidonml/networkml/trained_models" --link poseidonml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) poseidonml -o train -a randomforest -m networkml/trained_models/randomforest/RandomForestModel.pkl -w networkml/trained_models/randomforest/RandomForestModel.pkl
 	@docker rm -f poseidonml-redis > /dev/null
 	@echo
 eval_sos: build run_redis eval_sos_nobuild
 eval_sos_nobuild:
 	@echo
 	@echo "Running SoSModel Eval on PCAP files $(PCAP)"
-	@docker run -it --rm -v "$(PCAP):/pcaps/" --link poseidonml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) poseidonml -a sos
+	@docker run -it --rm -v "$(PCAP):/pcaps$(PCAP)" --link poseidonml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) poseidonml -a sos
 	@docker rm -f poseidonml-redis > /dev/null
 	@echo
 train_sos: build run_redis train_sos_nobuild
 train_sos_nobuild:
 	@echo
 	@echo "Running SoSModel Train on PCAP files $(PCAP)"
-	@docker run -it --rm -v "$(PCAP):/pcaps/" -v "$(PWD)/networkml/trained_models:/poseidonml/networkml/trained_models" --link poseidonml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) poseidonml -o train -a sos -m networkml/trained_models/sos/SoSmodel -w networkml/trained_models/sos/SoSmodel.pkl
+	@docker run -it --rm -v "$(PCAP):/pcaps$(PCAP)" -v "$(PWD)/networkml/trained_models:/poseidonml/networkml/trained_models" --link poseidonml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) poseidonml -o train -a sos -m networkml/trained_models/sos/SoSmodel -w networkml/trained_models/sos/SoSmodel.pkl
 	@docker rm -f poseidonml-redis > /dev/null
 	@echo
 run_redis:
@@ -96,8 +96,8 @@ install:
 
 dev:
 	${CONDA_EXE} env create --force -f $(CONDA_DEV).yml python=3.6
-	source $(CONDAROOT)/activate $(CONDA_DEV) ;	\
-	$(CONDA_ENV)/pip install --upgrade pip ;	\
+	source $(CONDAROOT)/activate $(CONDA_DEV) ; \
+	$(CONDA_ENV)/pip install --upgrade pip ; \
 	$(CONDA_ENV)/pip install .
 
 rmdev:

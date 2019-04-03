@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import argparse
+import fnmatch
 import hashlib
 import json
 import logging
@@ -99,10 +100,10 @@ class NetworkML():
         # TODO checking extensions here should be moved to parsers, and it should probably use 'magic' rather than extensions
         self.files = []
         if Path(self.args.path).is_dir():
-            for child in Path(self.args.path).iterdir():
-                if child.is_file() and \
-                        os.path.split(str(child))[-1].split('.')[-1] in {'pcap', 'dump', 'cap'}:
-                    self.files.append(str(child))
+            for root, dirnames, filenames in os.walk(self.args.path):
+                for extension in ['pcap', 'dump', 'cap']:
+                    for filename in fnmatch.filter(filenames, '*.' + extension):
+                        self.files.append(os.path.join(root, filename))
         elif Path(self.args.path).is_file() and \
                 os.path.split(str(self.args.path))[-1].split('.')[-1] in {'pcap', 'dump', 'cap'}:
             self.files.append(str(self.args.path))
