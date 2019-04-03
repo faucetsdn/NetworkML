@@ -66,7 +66,7 @@ class OneLayer:
                 continue
 
             # Get representations from the model
-            reps, source_mac, timestamps, preds, others = self.model.get_representation(
+            reps, source_mac, timestamps, preds, others, capture_ip_source = self.model.get_representation(
                 str(fi),
                 source_ip=source_mac,
                 mean=False
@@ -144,6 +144,7 @@ class OneLayer:
                     confs,
                     abnormality
                 )
+                decision[source_mac]['source_ip'] = capture_ip_source
                 self.logger.debug('Created message')
                 for i in range(3):
                     self.logger.info(
@@ -232,7 +233,7 @@ class OneLayer:
             single_result['label'] = label
             self.logger.info('Reading ' + name + ' as ' + label)
             # Get the internal representations
-            representations, _, _, p, _ = self.model.get_representation(
+            representations, _, _, p, _, _ = self.model.get_representation(
                 pcap, mean=False)
             if representations is not None:
                 file_size += os.path.getsize(pcap)
