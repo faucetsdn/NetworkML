@@ -10,4 +10,4 @@ process_from_tool = pcap node splitter
 [docker]
 links = {"Redis":"redis", "RabbitMQ":"rabbit"}
 environment = ["POSEIDON_PUBLIC_SESSIONS=1", "RABBIT=True"]
-cmd = -p
+command = -p
