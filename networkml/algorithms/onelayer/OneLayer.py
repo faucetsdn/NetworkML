@@ -167,7 +167,11 @@ class OneLayer:
                 # Get json message
                 message = json.dumps(decision)
                 self.logger.info('Message: ' + message)
+                self.logger.info('use rabbit: {0}'.format(
+                    self.common.use_rabbit))
                 if self.common.use_rabbit:
+                    self.logger.info('use rabbit inside: {0}'.format(
+                        self.common.use_rabbit))
                     self.common.channel.basic_publish(exchange=self.common.exchange,
                                                       routing_key=self.common.routing_key,
                                                       body=message)
