@@ -144,7 +144,10 @@ class OneLayer:
                     confs,
                     abnormality
                 )
-                decision[source_mac]['source_ip'] = capture_ip_source
+                if key in decision:
+                    decision[key]['source_ip'] = capture_ip_source
+                elif source_mac in decision:
+                    decision[source_mac]['source_ip'] = capture_ip_source
                 self.logger.debug('Created message')
                 for i in range(3):
                     self.logger.info(
