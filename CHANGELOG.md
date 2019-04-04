@@ -1,6 +1,6 @@
 # v0.3.0 (2019-04-04)
 
-- Major rewrite and restructing of the code base, but same functionality
+- Major rewrite and restructuring of the code base, but same functionality
 
 # v0.2.10 (2019-03-22)
 
