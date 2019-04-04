@@ -24,6 +24,7 @@ def extract_features(session_dict, capture_source=None, max_port=1024):
     '''
 
     address_type = 'MAC'
+    capture_ip_source = capture_source
 
     # If the capture source isn't specified, default to the most used address
     if capture_source is None:
