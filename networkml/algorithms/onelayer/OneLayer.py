@@ -23,6 +23,7 @@ class OneLayer:
     def __init__(self, files=None, config=None, model=None, model_hash=None, model_path=None):
         self.logger = logging.getLogger(__name__)
         logging.basicConfig(level=logging.INFO)
+        logging.getLogger('pika').setLevel(logging.WARNING)
 
         self.logger = Common().setup_logger(self.logger)
         self.common = Common(config=config)
