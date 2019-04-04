@@ -90,7 +90,7 @@ class Model:
         self.sessions = binned_sessions
 
         if len(binned_sessions) is 0:
-            return None, None, None, None
+            return None, None, None, None, None
 
         for session_dict in binned_sessions:
             if len(session_dict) > 0:
