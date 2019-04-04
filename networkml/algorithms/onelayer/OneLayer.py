@@ -147,8 +147,10 @@ class OneLayer:
                 )
                 if key in decision:
                     decision[key]['source_ip'] = capture_ip_source
+                    decision[key]['source_mac'] = source_mac
                 elif source_mac in decision:
                     decision[source_mac]['source_ip'] = capture_ip_source
+                    decision[source_mac]['source_mac'] = source_mac
                 self.logger.debug('Created message')
                 for i in range(3):
                     self.logger.info(
@@ -167,11 +169,7 @@ class OneLayer:
                 # Get json message
                 message = json.dumps(decision)
                 self.logger.info('Message: ' + message)
-                self.logger.info('use rabbit: {0}'.format(
-                    self.common.use_rabbit))
                 if self.common.use_rabbit:
-                    self.logger.info('use rabbit inside: {0}'.format(
-                        self.common.use_rabbit))
                     self.common.channel.basic_publish(exchange=self.common.exchange,
                                                       routing_key=self.common.routing_key,
                                                       body=message)
