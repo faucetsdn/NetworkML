@@ -145,7 +145,12 @@ class RandomForest:
                     confs,
                     abnormality
                 )
-                decision[source_mac]['source_ip'] = capture_ip_source
+                if key in decision:
+                    decision[key]['source_ip'] = capture_ip_source
+                    decision[key]['source_mac'] = source_mac
+                elif source_mac in decision:
+                    decision[source_mac]['source_ip'] = capture_ip_source
+                    decision[source_mac]['source_mac'] = source_mac
                 self.logger.debug('Created message')
                 for i in range(3):
                     self.logger.info(
