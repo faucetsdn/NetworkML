@@ -23,6 +23,7 @@ class RandomForest:
     def __init__(self, files=None, config=None, model=None, model_hash=None, model_path=None):
         self.logger = logging.getLogger(__name__)
         logging.basicConfig(level=logging.INFO)
+        logging.getLogger('pika').setLevel(logging.WARNING)
 
         self.logger = Common().setup_logger(self.logger)
         self.common = Common(config=config)
@@ -66,7 +67,7 @@ class RandomForest:
                 continue
 
             # Get representations from the model
-            reps, source_mac, timestamps, preds, others = self.model.get_representation(
+            reps, source_mac, timestamps, preds, others, capture_ip_source = self.model.get_representation(
                 str(fi),
                 source_ip=source_mac,
                 mean=False
@@ -144,6 +145,12 @@ class RandomForest:
                     confs,
                     abnormality
                 )
+                if key in decision:
+                    decision[key]['source_ip'] = capture_ip_source
+                    decision[key]['source_mac'] = source_mac
+                elif source_mac in decision:
+                    decision[source_mac]['source_ip'] = capture_ip_source
+                    decision[source_mac]['source_mac'] = source_mac
                 self.logger.debug('Created message')
                 for i in range(3):
                     self.logger.info(
@@ -229,7 +236,7 @@ class RandomForest:
             single_result['label'] = label
             self.logger.info('Reading ' + name + ' as ' + label)
             # Get the internal representations
-            representations, _, _, p, _ = self.model.get_representation(
+            representations, _, _, p, _, _ = self.model.get_representation(
                 pcap, mean=False)
             if representations is not None:
                 file_size += os.path.getsize(pcap)

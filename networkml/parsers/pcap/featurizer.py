@@ -28,6 +28,7 @@ def extract_features(session_dict, capture_source=None, max_port=1024):
     # If the capture source isn't specified, default to the most used address
     if capture_source is None:
         capture_source = get_source(session_dict, address_type=address_type)
+    capture_ip_source = get_source(session_dict, address_type='IP')
 
     # Initialize some counter variables
     num_sport_init = [0]*max_port
@@ -123,4 +124,4 @@ def extract_features(session_dict, capture_source=None, max_port=1024):
     extra_features[7] = num_icmp_sess_rec/num_sessions_rec
 
     feature_vector = np.concatenate((num_port_sess, extra_features), axis=0)
-    return feature_vector, capture_source, list(other_ips.keys())
+    return feature_vector, capture_source, list(other_ips.keys()), capture_ip_source
