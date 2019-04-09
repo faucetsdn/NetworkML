@@ -146,7 +146,7 @@ class SoSModel:
 
         # Embed the session sequence with an LSTM with attention
         with tf.variable_scope('session_rnn', reuse=None):
-            session_cell = tf.contrib.rnn.BasicLSTMCell(
+            session_cell = tf.nn.rnn_cell.LSTMCell(
                 self.rnn_size,
                 activation=tf.tanh
             )
