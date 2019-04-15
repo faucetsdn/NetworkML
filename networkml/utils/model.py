@@ -392,7 +392,10 @@ class Model:
         with open(load_path, 'rb') as handle:
             model_attributes = pickle.load(handle)
 
-        self.duration = model_attributes['duration']
+        if 'duration' in model_attributes:
+            self.duration = model_attributes['duration']
+        else:
+            self.duration = None
         self.hidden_size = model_attributes['hidden_size']
         self.means = model_attributes['means']
         self.stds = model_attributes['stds']
