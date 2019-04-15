@@ -34,11 +34,11 @@ def test_networkml_eval_sos():
 #    netml = NetworkML()
 #
 #
-# def test_networkml_train_sos():
-#    sys.argv = ['bin/networkml', '-p', 'tests/', '-o', 'train', '-a', 'sos']
-#    netml = NetworkML()
-#
-#
+def test_networkml_train_sos():
+    sys.argv = ['bin/networkml', '-p', 'tests/', '-o', 'train', '-a', 'sos']
+    netml = NetworkML()
+
+
 # def test_networkml_test_onelayer():
 #    sys.argv = ['bin/networkml', '-p', 'tests/', '-o', 'test']
 #    netml = NetworkML()
