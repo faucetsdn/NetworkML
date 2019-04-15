@@ -7,9 +7,10 @@ import logging
 import os
 
 from pathlib import Path
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.neural_network import MLPClassifier
 
-from networkml.algorithms.onelayer.OneLayer import OneLayer
-from networkml.algorithms.randomforest.RandomForest import RandomForest
+from networkml.algorithms.base import BaseAlgorithm
 from networkml.algorithms.sos.eval_SoSModel import eval_pcap
 from networkml.algorithms.sos.train_SoSModel import train
 from networkml.utils.common import Common
@@ -38,22 +39,35 @@ class NetworkML():
         if self.args.operation == 'eval':
             self.load_model()
             if self.args.algorithm == 'onelayer':
-                OneLayer(files=self.files, config=self.config,
-                         model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).eval()
+                BaseAlgorithm(files=self.files, config=self.config,
+                              model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).eval(self.args.algorithm)
             elif self.args.algorithm == 'randomforest':
-                RandomForest(files=self.files, config=self.config,
-                             model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).eval()
+                BaseAlgorithm(files=self.files, config=self.config,
+                              model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).eval(self.args.algorithm)
             elif self.args.algorithm == 'sos':
                 eval_pcap(self.args.path, self.conf_labels, self.time_const)
             else:
                 self.logger.error('Invalid algorithm choice.')
         elif self.args.operation == 'train':
             if self.args.algorithm == 'onelayer':
-                OneLayer(files=self.files, config=self.config,
-                         model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).train(self.args.path, self.args.save)
+                m = MLPClassifier(
+                    (self.state_size),
+                    alpha=0.1,
+                    activation='relu',
+                    max_iter=1000
+                )
+                BaseAlgorithm(files=self.files, config=self.config,
+                              model=self.model, model_hash=self.model_hash,
+                              model_path=self.args.trained_model).train(self.args.path, self.args.save, m, self.args.algorithm)
             elif self.args.algorithm == 'randomforest':
-                RandomForest(files=self.files, config=self.config,
-                             model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).train(self.args.path, self.args.save)
+                m = RandomForestClassifier(
+                    n_estimators=100,
+                    min_samples_split=5,
+                    class_weight='balanced'
+                )
+                BaseAlgorithm(files=self.files, config=self.config,
+                              model=self.model, model_hash=self.model_hash,
+                              model_path=self.args.trained_model).train(self.args.path, self.args.save, m, self.args.algorithm)
             elif self.args.algorithm == 'sos':
                 train(self.args.path, self.time_const, self.rnn_size,
                       self.conf_labels, self.args.save)
@@ -62,11 +76,11 @@ class NetworkML():
         elif self.args.operation == 'test':
             self.load_model()
             if self.args.algorithm == 'onelayer':
-                OneLayer(files=self.files, config=self.config,
-                         model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).test(self.args.path, self.args.save)
+                BaseAlgorithm(files=self.files, config=self.config,
+                              model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).test(self.args.path, self.args.save)
             elif self.args.algorithm == 'randomforest':
-                RandomForest(files=self.files, config=self.config,
-                             model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).test(self.args.path, self.args.save)
+                BaseAlgorithm(files=self.files, config=self.config,
+                              model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).test(self.args.path, self.args.save)
             elif self.args.algorithm == 'sos':
                 self.logger.info(
                     'There is no testing operation for the SoSModel.')

@@ -3,8 +3,9 @@ from setuptools import setup
 setup(
     name='poseidonml',
     version='0.3.1.dev',
-    packages=['networkml', 'networkml.algorithms', 'networkml.algorithms.onelayer', 'networkml.algorithms.randomforest',
-              'networkml.algorithms.sos', 'networkml.parsers', 'networkml.parsers.netflow', 'networkml.parsers.pcap', 'networkml.utils'],
+    packages=['networkml', 'networkml.algorithms', 'networkml.algorithms.sos',
+              'networkml.parsers', 'networkml.parsers.netflow',
+              'networkml.parsers.pcap', 'networkml.utils'],
     package_data={'networkml': ['trained_models/*', 'configs/*']},
     install_requires=open('requirements.txt', 'r').read().splitlines(),
     scripts=['bin/networkml'],
