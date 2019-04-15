@@ -60,3 +60,7 @@ def test_networkml_test_randomforest():
     sys.argv = ['bin/networkml', '-p', 'tests/',
                 '-o', 'test', '-a', 'randomforest', '-m', 'networkml/trained_models/randomforest/RandomForestModel.pkl']
     netml = NetworkML()
+
+
+def test_networkml_test_sos():
+    sys.argv = ['bin/networkml', '-p', 'tests/', '-o', 'test', '-a', 'sos']
