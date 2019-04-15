@@ -33,7 +33,7 @@ class NetworkML():
         self.logger = Common().setup_logger(self.logger)
         self.get_files()
         self.model_hash = None
-        self.model = Model(duration=None, hidden_size=None,
+        self.model = Model(duration=self.duration, hidden_size=None,
                            model_type=self.args.algorithm)
         if self.args.operation == 'eval':
             self.load_model()
