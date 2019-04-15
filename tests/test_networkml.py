@@ -1,6 +1,6 @@
 import sys
 
-from networkml.networkml import NetworkML
+from networkml.NetworkML import NetworkML
 
 
 def test_networkml():
