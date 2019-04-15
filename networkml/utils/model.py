@@ -400,8 +400,23 @@ class Model:
             self.hidden_size = model_attributes['hidden_size']
         else:
             self.hidden_size = None
-        self.means = model_attributes['means']
-        self.stds = model_attributes['stds']
-        self.feature_list = model_attributes['feature_list']
-        self.model = model_attributes['model']
-        self.labels = model_attributes['labels']
+        if 'means' in model_attributes:
+            self.means = model_attributes['means']
+        else:
+            self.means = None
+        if 'stds' in model_attributes:
+            self.stds = model_attributes['stds']
+        else:
+            self.stds = None
+        if 'feature_list' in model_attributes:
+            self.feature_list = model_attributes['feature_list']
+        else:
+            self.feature_list = None
+        if 'model' in model_attributes:
+            self.model = model_attributes['model']
+        else:
+            self.model = None
+        if 'labels' in model_attributes:
+            self.labels = model_attributes['labels']
+        else:
+            self.labels = None

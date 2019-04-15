@@ -62,10 +62,7 @@ def test_networkml_test_onelayer():
 def test_networkml_test_randomforest():
     sys.argv = ['bin/networkml', '-p', 'tests/',
                 '-o', 'test', '-a', 'randomforest', '-m', 'networkml/trained_models/randomforest/RandomForestModel.pkl']
-    with pytest.raises(SystemExit) as pytest_wrapped_e:
-        netml = NetworkML()
-    assert pytest_wrapped_e.type == SystemExit
-    assert pytest_wrapped_e.value.code == 1
+    netml = NetworkML()
 
 
 def test_networkml_test_sos():
