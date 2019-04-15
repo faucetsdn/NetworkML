@@ -396,7 +396,10 @@ class Model:
             self.duration = model_attributes['duration']
         else:
             self.duration = None
-        self.hidden_size = model_attributes['hidden_size']
+        if 'hidden_size' in model_attributes:
+            self.hidden_size = model_attributes['hidden_size']
+        else:
+            self.hidden_size = None
         self.means = model_attributes['means']
         self.stds = model_attributes['stds']
         self.feature_list = model_attributes['feature_list']

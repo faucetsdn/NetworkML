@@ -272,5 +272,5 @@ class BaseAlgorithm:
         self.logger.info(
             'Data processing rate: {0} Mb per second'.format(rate))
         self.logger.info('time per 15 minute capture {0} seconds'.format(
-            (elapsed_time)/(time_slices)))
+            (elapsed_time)/(time_slices+0.01)))
         self.logger.info('-'*80)

@@ -4,6 +4,7 @@ Contains utilities required for parsing pcaps into model training features
 import json
 import logging
 import os
+import sys
 
 import numpy as np
 from sklearn.decomposition import PCA
@@ -151,7 +152,11 @@ def read_data(data_dir, duration=None, labels=None):
         new_labels = assigned_labels + \
             [l for l in labels if l not in assigned_labels]
 
-    return np.stack(X), np.stack(y), new_labels
+    try:
+        return np.stack(X), np.stack(y), new_labels
+    except Exception as e:  # pragma: no cover
+        logger.error('Failed because {0}'.format(str(e)))
+        sys.exit(1)
 
 
 def select_features(X, y):
