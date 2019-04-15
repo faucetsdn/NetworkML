@@ -147,7 +147,7 @@ class NetworkML():
     def load_model(self):
         # Compute model hash
         with open(self.args.trained_model, 'rb') as handle:
-            self.model_hash = hashlib.md5(handle.read()).hexdigest()
+            self.model_hash = hashlib.sha224(handle.read()).hexdigest()
 
         self.model.load(self.args.trained_model)
         self.logger.debug('Loaded model from %s', self.args.trained_model)
