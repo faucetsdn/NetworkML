@@ -3,8 +3,6 @@ import logging
 import os
 import time
 
-from sklearn.neural_network import MLPClassifier
-
 from networkml.algorithms.sos.eval_SoSModel import eval_pcap
 from networkml.parsers.pcap.pcap_utils import clean_session_dict
 from networkml.utils.common import Common
@@ -14,10 +12,10 @@ from networkml.utils.training_utils import get_pcap_paths
 from networkml.utils.training_utils import get_true_label
 
 
-class OneLayer:
+class BaseAlgorithm:
     """
-    Reads a pcap and updates the stored representation of the source using
-    the one layer feedforward model.
+    Base algorithm that rreads a pcap and updates the stored representation of
+    the source, to be used by more specific algorithms.
     """
 
     def __init__(self, files=None, config=None, model=None, model_hash=None, model_path=None):
@@ -48,7 +46,7 @@ class OneLayer:
         self.model_hash = model_hash
         self.model_path = model_path
 
-    def eval(self):
+    def eval(self, algorithm):
         for fi in self.files:
             self.logger.info('Processing {0}...'.format(fi))
             source_mac = None
@@ -131,7 +129,7 @@ class OneLayer:
                 labels, confs = zip(*preds)
                 abnormality = eval_pcap(
                     str(fi), self.conf_labels, self.time_const, label=labels[0],
-                    rnn_size=self.rnn_size, model_path=self.model_path, model_type='onelayer')
+                    rnn_size=self.rnn_size, model_path=self.model_path, model_type=algorithm)
                 prev_s = self.common.get_address_info(
                     source_mac,
                     timestamp
@@ -182,21 +180,14 @@ class OneLayer:
                     'Unable to close rabbit connection because: {0}'.format(str(e)))
         return
 
-    def train(self, data_dir, save_path):
-        m = MLPClassifier(
-            (self.state_size),
-            alpha=0.1,
-            activation='relu',
-            max_iter=1000
-        )
-
+    def train(self, data_dir, save_path, m, algorithm):
         # Initialize the model
         model = Model(
             duration=self.duration,
             hidden_size=self.state_size,
             labels=self.conf_labels,
             model=m,
-            model_type='onelayer',
+            model_type=algorithm,
             threshold_time=self.threshold
         )
         # Train the model

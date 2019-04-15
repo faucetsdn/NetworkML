@@ -1,14 +1,14 @@
 import logging
 
-from networkml.algorithms.onelayer.OneLayer import OneLayer
+from networkml.algorithms.base import BaseAlgorithm
 
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def test_onelayer():
-    instance = OneLayer()
+def test_basealgorithm():
+    instance = BaseAlgorithm()
 
     last_update = instance.common.get_address_info('10.0.0.1', '1')
     last_update, previous_representation = instance.common.get_previous_state(
@@ -17,6 +17,7 @@ def test_onelayer():
     assert previous_representation == None
 
 
-def test_onelayer_eval():
-    instance = OneLayer()
-    instance.eval()
+def test_basealgorithm_eval():
+    instance = BaseAlgorithm()
+    instance.eval('onelayer')
+    instance.eval('randomforest')
