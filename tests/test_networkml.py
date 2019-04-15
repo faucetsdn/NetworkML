@@ -53,10 +53,7 @@ def test_networkml_train_sos():
 
 def test_networkml_test_onelayer():
     sys.argv = ['bin/networkml', '-p', 'tests/', '-o', 'test']
-    with pytest.raises(SystemExit) as pytest_wrapped_e:
-        netml = NetworkML()
-    assert pytest_wrapped_e.type == SystemExit
-    assert pytest_wrapped_e.value.code == 1
+    netml = NetworkML()
 
 
 def test_networkml_test_randomforest():
