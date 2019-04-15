@@ -63,12 +63,3 @@ def test_networkml_test_randomforest():
     sys.argv = ['bin/networkml', '-p', 'tests/',
                 '-o', 'test', '-a', 'randomforest', '-m', 'networkml/trained_models/randomforest/RandomForestModel.pkl']
     netml = NetworkML()
-
-
-def test_networkml_test_sos():
-    sys.argv = ['bin/networkml', '-p', 'tests/', '-o', 'test',
-                '-a', 'sos', '-m', 'networkml/trained_models/sos/SoSmodel']
-    with pytest.raises(SystemExit) as pytest_wrapped_e:
-        netml = NetworkML()
-    assert pytest_wrapped_e.type == SystemExit
-    assert pytest_wrapped_e.value.code == 1
