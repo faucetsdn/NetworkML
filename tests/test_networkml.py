@@ -1,5 +1,7 @@
 import sys
 
+import pytest
+
 from networkml.NetworkML import NetworkML
 
 
@@ -23,33 +25,51 @@ def test_networkml_eval_sos():
     netml = NetworkML()
 
 
-# def test_networkml_train_onelayer():
-#    sys.argv = ['bin/networkml', '-p', 'tests/', '-o', 'train']
-#    netml = NetworkML()
-#
-#
-# def test_networkml_train_randomforest():
-#    sys.argv = ['bin/networkml', '-p', 'tests/',
-#                '-o', 'train', '-a', 'randomforest']
-#    netml = NetworkML()
-#
-#
+def test_networkml_train_onelayer():
+    sys.argv = ['bin/networkml', '-p', 'tests/', '-o', 'train']
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        netml = NetworkML()
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == 1
+
+
+def test_networkml_train_randomforest():
+    sys.argv = ['bin/networkml', '-p', 'tests/',
+                '-o', 'train', '-a', 'randomforest']
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        netml = NetworkML()
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == 1
+
+
 def test_networkml_train_sos():
     sys.argv = ['bin/networkml', '-p', 'tests/', '-o', 'train', '-a', 'sos']
-    netml = NetworkML()
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        netml = NetworkML()
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == 1
 
 
-# def test_networkml_test_onelayer():
-#    sys.argv = ['bin/networkml', '-p', 'tests/', '-o', 'test']
-#    netml = NetworkML()
-#
-#
-# def test_networkml_test_randomforest():
-#    sys.argv = ['bin/networkml', '-p', 'tests/',
-#                '-o', 'test', '-a', 'randomforest']
-#    netml = NetworkML()
-#
-#
-# def test_networkml_test_sos():
-#    sys.argv = ['bin/networkml', '-p', 'tests/', '-o', 'test', '-a', 'sos']
-#    netml = NetworkML()
+def test_networkml_test_onelayer():
+    sys.argv = ['bin/networkml', '-p', 'tests/', '-o', 'test']
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        netml = NetworkML()
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == 1
+
+
+def test_networkml_test_randomforest():
+    sys.argv = ['bin/networkml', '-p', 'tests/',
+                '-o', 'test', '-a', 'randomforest']
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        netml = NetworkML()
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == 1
+
+
+def test_networkml_test_sos():
+    sys.argv = ['bin/networkml', '-p', 'tests/', '-o', 'test', '-a', 'sos']
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        netml = NetworkML()
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == 1

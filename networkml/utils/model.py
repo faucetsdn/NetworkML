@@ -1,6 +1,7 @@
 import logging
 import os
-import pickle as pickle
+import pickle
+import sys
 
 import numpy as np
 from sklearn.metrics import f1_score
@@ -177,7 +178,11 @@ class Model:
         # Fit the one layer model to the augmented training data
         X_input = X_aug[:, self.feature_list]
 
-        self.model.fit(X_input, y_aug)
+        try:
+            self.model.fit(X_input, y_aug)
+        except Exception as e:  # pragma: no cover
+            self.logger.error('Failed because: {0}'.format(str(e)))
+            sys.exit(1)
 
         # Evaulate the model on the augmented test data
         X_test_input = X_test - np.expand_dims(self.means, 0)

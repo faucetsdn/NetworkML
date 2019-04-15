@@ -2,6 +2,7 @@
 Contains iterator class for generating training batches from a canned dataset
 """
 import pickle
+import sys
 
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -240,22 +241,24 @@ class BatchIterator:
 
         X_list = []
         L_list = []
-        for _ in range(batch_size):
-            idx = np.random.choice(range(length))
-            X_chosen = X[idx]
-            #X_chosen -= self.means
-            #X_chosen /= self.stds
+        try:
+            for _ in range(batch_size):
+                idx = np.random.choice(range(length))
+                X_chosen = X[idx]
 
-            if perturb is True:
-                perturbation = np.random.choice(self.perturb_types)
-                if perturbation == 'port swap':
-                    X_chosen = self._swap_ports(X_chosen)
-                if perturbation == 'direction swap':
-                    X_chosen = self._switch_host(X_chosen)
-                if perturbation == 'random data':
-                    X_chosen = self._random_data(X_chosen)
-            X_list.append(X_chosen)
-            L_list.append(L[idx])
+                if perturb is True:
+                    perturbation = np.random.choice(self.perturb_types)
+                    if perturbation == 'port swap':
+                        X_chosen = self._swap_ports(X_chosen)
+                    if perturbation == 'direction swap':
+                        X_chosen = self._switch_host(X_chosen)
+                    if perturbation == 'random data':
+                        X_chosen = self._random_data(X_chosen)
+                X_list.append(X_chosen)
+                L_list.append(L[idx])
+        except Exception as e:  # pragma: no cover
+            print('Error, failed because: {0}'.format(str(e)))
+            sys.exit(1)
 
         return np.stack(X_list), np.stack(L_list)
 
