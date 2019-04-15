@@ -45,8 +45,6 @@ class NetworkML():
                               model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).eval(self.args.algorithm)
             elif self.args.algorithm == 'sos':
                 eval_pcap(self.args.path, self.conf_labels, self.time_const)
-            else:
-                self.logger.error('Invalid algorithm choice.')
         elif self.args.operation == 'train':
             if self.args.algorithm == 'onelayer':
                 m = MLPClassifier(
@@ -70,8 +68,6 @@ class NetworkML():
             elif self.args.algorithm == 'sos':
                 train(self.args.path, self.time_const, self.rnn_size,
                       self.conf_labels, self.args.save)
-            else:
-                self.logger.error('Invalid algorithm choice.')
         elif self.args.operation == 'test':
             self.load_model()
             if self.args.algorithm == 'onelayer':
@@ -83,10 +79,6 @@ class NetworkML():
             elif self.args.algorithm == 'sos':
                 self.logger.info(
                     'There is no testing operation for the SoSModel.')
-            else:
-                self.logger.error('Invalid algorithm choice.')
-        else:
-            self.logger.error('Invalid operation choice.')
 
     def read_args(self):
         parser = argparse.ArgumentParser()
