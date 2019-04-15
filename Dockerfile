@@ -23,7 +23,6 @@ ENV BUILD_PACKAGES="\
 COPY requirements.txt requirements.txt
 RUN set -ex; \
     apt-get update -y; \
-    apt-get upgrade -y; \
     apt-get install -y --no-install-recommends ${APT_PACKAGES}; \
     apt-get install -y --no-install-recommends ${BUILD_PACKAGES}; \
     ln -s /usr/bin/idle3 /usr/bin/idle; \
