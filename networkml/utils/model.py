@@ -1,6 +1,7 @@
 import logging
 import os
-import pickle as pickle
+import pickle
+import sys
 
 import numpy as np
 from sklearn.metrics import f1_score
@@ -177,7 +178,11 @@ class Model:
         # Fit the one layer model to the augmented training data
         X_input = X_aug[:, self.feature_list]
 
-        self.model.fit(X_input, y_aug)
+        try:
+            self.model.fit(X_input, y_aug)
+        except Exception as e:  # pragma: no cover
+            self.logger.error('Failed because: {0}'.format(str(e)))
+            sys.exit(1)
 
         # Evaulate the model on the augmented test data
         X_test_input = X_test - np.expand_dims(self.means, 0)
@@ -387,10 +392,31 @@ class Model:
         with open(load_path, 'rb') as handle:
             model_attributes = pickle.load(handle)
 
-        self.duration = model_attributes['duration']
-        self.hidden_size = model_attributes['hidden_size']
-        self.means = model_attributes['means']
-        self.stds = model_attributes['stds']
-        self.feature_list = model_attributes['feature_list']
-        self.model = model_attributes['model']
-        self.labels = model_attributes['labels']
+        if 'duration' in model_attributes:
+            self.duration = model_attributes['duration']
+        else:
+            self.duration = None
+        if 'hidden_size' in model_attributes:
+            self.hidden_size = model_attributes['hidden_size']
+        else:
+            self.hidden_size = None
+        if 'means' in model_attributes:
+            self.means = model_attributes['means']
+        else:
+            self.means = None
+        if 'stds' in model_attributes:
+            self.stds = model_attributes['stds']
+        else:
+            self.stds = None
+        if 'feature_list' in model_attributes:
+            self.feature_list = model_attributes['feature_list']
+        else:
+            self.feature_list = None
+        if 'model' in model_attributes:
+            self.model = model_attributes['model']
+        else:
+            self.model = None
+        if 'labels' in model_attributes:
+            self.labels = model_attributes['labels']
+        else:
+            self.labels = None

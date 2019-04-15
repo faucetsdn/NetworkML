@@ -33,7 +33,7 @@ class NetworkML():
         self.logger = Common().setup_logger(self.logger)
         self.get_files()
         self.model_hash = None
-        self.model = Model(duration=None, hidden_size=None,
+        self.model = Model(duration=self.duration, hidden_size=None,
                            model_type=self.args.algorithm)
         if self.args.operation == 'eval':
             self.load_model()
@@ -147,7 +147,7 @@ class NetworkML():
     def load_model(self):
         # Compute model hash
         with open(self.args.trained_model, 'rb') as handle:
-            self.model_hash = hashlib.md5(handle.read()).hexdigest()
+            self.model_hash = hashlib.sha224(handle.read()).hexdigest()
 
         self.model.load(self.args.trained_model)
         self.logger.debug('Loaded model from %s', self.args.trained_model)
