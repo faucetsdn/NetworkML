@@ -9,8 +9,7 @@ python:
 install:
   - pip install codecov
 env:
-  - PYTHONPATH=/home/travis/build/$TRAVIS_REPO_SLUG/bin:$PYTHONPATH PYTHONPATH=/home/travis/build/$TRAVIS_REPO_SLUG/networkml:$PYTHONPATH
-  - REDIS_HOST=localhost
+  - PYTHONPATH=/home/travis/build/$TRAVIS_REPO_SLUG/bin:$PYTHONPATH PYTHONPATH=/home/travis/build/$TRAVIS_REPO_SLUG/networkml:$PYTHONPATH REDIS_HOST=localhost
 jobs:
   include:
   - stage: test
