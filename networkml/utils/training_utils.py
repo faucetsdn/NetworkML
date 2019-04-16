@@ -105,7 +105,7 @@ def read_data(data_dir, duration=None, labels=None):
     try:
         if 'LOG_LEVEL' in os.environ and os.environ['LOG_LEVEL'] != '':
             logger.setLevel(os.environ['LOG_LEVEL'])
-    except Exception as e:
+    except Exception as e:  # pragma: no cover
         logger.error(
             'Unable to set logging level because: {0} defaulting to INFO.'.format(str(e)))
     X = []

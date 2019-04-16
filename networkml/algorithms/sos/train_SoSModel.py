@@ -16,7 +16,7 @@ def train(data_dir, time_const, rnn_size, labels, save_path):
     try:
         if 'LOG_LEVEL' in os.environ and os.environ['LOG_LEVEL'] != '':
             logger.setLevel(os.environ['LOG_LEVEL'])
-    except Exception as e:
+    except Exception as e:  # pragma: no cover
         logger.error(
             'Unable to set logging level because: {0} defaulting to INFO.'.format(str(e)))
 
@@ -39,9 +39,10 @@ def train(data_dir, time_const, rnn_size, labels, save_path):
     try:
         rnnmodel.load('networkml/trained_models/sos/SoSmodel')
         logger.info('Loaded model')
-    except Exception as e:
+    except Exception as e:  # pragma: no cover
         rnnmodel.initialize()
-        logger.info('Initialized model')
+        logger.info(
+            'Initialized model from scratch instead, because {0}'.format(str(e)))
 
     X_v, L_v, Y_v = iterator.gen_batch(
         split='validation',
