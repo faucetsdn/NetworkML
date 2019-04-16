@@ -78,6 +78,8 @@ class Common:
                 pika.ConnectionParameters(host='rabbit')
             )
         except Exception as e:  # pragma: no cover
+            self.logger.error(
+                'Failed to open RabbitMQ connection because: {0}'.format(str(e)))
             return
 
         self.channel = self.connection.channel()
@@ -100,7 +102,7 @@ class Common:
             updates = self.r.hgetall(address)
             timestamps = ast.literal_eval(
                 updates[b'timestamps'].decode('ascii'))
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             self.logger.debug(
                 'No timestamp found because: {0}, setting to None'.format(str(e)))
             timestamps = None
@@ -132,7 +134,7 @@ class Common:
         # Try to read the old updates, if there are none return Nones
         try:
             updates = self.r.hgetall(source_mac)
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             self.logger.warning(
                 'Unable to read old updates because: {0}, defaulting to None'.format(str(e)))
             return None, None
@@ -141,7 +143,7 @@ class Common:
         try:
             update_list = ast.literal_eval(
                 updates[b'timestamps'].decode('ascii'))
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             self.logger.debug(
                 'Empty update list because: {0} key not found'.format(str(e)))
             update_list = []
@@ -161,7 +163,9 @@ class Common:
             state = self.r.hgetall(key)
             previous_representation = ast.literal_eval(
                 state[b'representation'].decode('ascii'))
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
+            self.logger.error(
+                'Failed to get previous representation because: {0}'.format(str(e)))
             return None, None
         return last_update, previous_representation
 
@@ -276,9 +280,11 @@ class Common:
             updates = self.r.hgetall(source_mac)
             update_list = ast.literal_eval(
                 updates[b'timestamps'].decode('ascii'))
-            self.logger.debug('Got previous updates from %s', source_mac)
-        except:
-            self.logger.debug('No previous updates found for %s', source_mac)
+            self.logger.debug(
+                'Got previous updates from {0}'.format(source_mac))
+        except Exception as e:  # pragma: no cover
+            self.logger.debug(
+                'No previous updates found for {0} because: {1}'.format(source_mac, str(e)))
             update_list = []
 
         update_list.append(time)
@@ -292,7 +298,7 @@ class Common:
         try:
             self.r.hmset(source_mac, redis_times)
             self.r.sadd('mac_addresses', source_mac)
-        except (ConnectionError, TimeoutError) as e:
+        except (ConnectionError, TimeoutError) as e:  # pragma: no cover
             self.logger.debug(
                 'Could not store update time because: %s', str(e))
 

@@ -28,7 +28,7 @@ def parse_packet_head(line):
     date_str = data[0] + ' ' + data[1]
     try:
         date = datetime.datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S.%f')
-    except ValueError:
+    except ValueError:  # pragma: no cover
         return None
 
     # Parse out the source and destination addresses and ports
@@ -88,7 +88,7 @@ def parse_packet_data(line):
     raw_data = line.decode('utf-8')
     try:
         _, data = raw_data.split(':', 1)
-    except ValueError:
+    except ValueError:  # pragma: no cover
         return None
     packet_data = data.strip().replace(' ', '')
 

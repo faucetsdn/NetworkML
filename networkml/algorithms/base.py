@@ -57,7 +57,7 @@ class BaseAlgorithm:
                 split_path = split_path.split('.')
                 split_path = split_path[0].split('-')
                 key = split_path[0].split('_')[1]
-            except Exception as e:
+            except Exception as e:  # pragma: no cover
                 self.logger.debug('Could not get key because %s', str(e))
 
             # ignore misc files
@@ -160,7 +160,7 @@ class BaseAlgorithm:
                     redis_decision[k] = str(decision[k])
                 try:
                     self.r.hmset(r_key, redis_decision)
-                except Exception as e:
+                except Exception as e:  # pragma: no cover
                     self.logger.error(
                         'Failed to update keys in Redis because: {0}'.format(str(e)))
 
@@ -175,7 +175,7 @@ class BaseAlgorithm:
         if self.common.use_rabbit:
             try:
                 self.common.connection.close()
-            except Exception as e:
+            except Exception as e:  # pragma: no cover
                 self.logger.error(
                     'Unable to close rabbit connection because: {0}'.format(str(e)))
         return

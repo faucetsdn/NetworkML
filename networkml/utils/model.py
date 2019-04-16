@@ -317,7 +317,7 @@ class Model:
             try:
                 precision = tp/(tp + fp)
                 recall = tp/(tp + fn)
-            except Exception as e:
+            except Exception as e:  # pragma: no cover
                 self.logger.debug(
                     'Setting precision and recall to 0 because: {0}'.format(str(e)))
                 precision = 0

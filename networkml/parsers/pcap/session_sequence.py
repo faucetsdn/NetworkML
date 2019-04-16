@@ -47,7 +47,7 @@ def create_dataset(
     try:
         if 'LOG_LEVEL' in os.environ and os.environ['LOG_LEVEL'] != '':
             logger.setLevel(os.environ['LOG_LEVEL'])
-    except Exception as e:
+    except Exception as e:  # pragma: no cover
         logger.error(
             'Unable to set logging level because: {0} defaulting to INFO.'.format(str(e)))
 
@@ -63,7 +63,7 @@ def create_dataset(
         ext = os.path.splitext(data_dir)[-1]
         if ext == '.pcap':
             pcaps.append(data_dir)
-    except Exception as e:
+    except Exception as e:  # pragma: no cover
         logger.debug('Skipping {0} because: {1}'.format(data_dir, str(e)))
 
     for dirpath, _, filenames in os.walk(data_dir):
