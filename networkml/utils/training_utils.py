@@ -7,7 +7,6 @@ import os
 import sys
 
 import numpy as np
-from sklearn.decomposition import PCA
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import cross_val_score
@@ -213,59 +212,3 @@ def select_features(X, y):
 
     return [i for i, score in enumerate(selection_forest.feature_importances_)
             if score > threshold]
-
-
-def whiten_features(X):
-    '''
-    Fits the whitening transformation for the features X. and returns the
-    associated matrix.
-
-    Args:
-        X: numpy 2D array containing features
-
-    Returns:
-        whitening_transformation: Transformation to whiten features
-    '''
-
-    # Use PCA to create a whitening transformation fit to the training set
-    whitening_transformation = PCA(whiten=False)
-    whitening_transformation.fit(X)
-
-    return whitening_transformation
-
-
-def choose_regularization(X, y):
-    '''
-    Chooses a value for the regularization parameter using grid search and
-    cross validation.
-
-    Args:
-        X: numpy 2D array of model inputs
-        y: numpy 1D array of labels
-
-    Returns:
-        C: Selected value of the regulatization coefficient
-    '''
-
-    # Set up the grid search
-    max_C, step_size = 10, 5
-    best_score, C = 0, 0
-    trial_Cs = [i/step_size for i in range(1, max_C*step_size + 1)]
-
-    # Grid search with cross validation to get C
-    for trial in trial_Cs:
-        model = LogisticRegression(
-            C=trial,
-            multi_class='multinomial',
-            solver='newton-cg',
-            class_weight='balanced',
-            random_state=0,
-            max_iter=1000
-        )
-        scores = cross_val_score(model, X, y, cv=10)
-        score = scores.mean()
-        if score > best_score:
-            best_score = score,
-            C = trial
-
-    return C
