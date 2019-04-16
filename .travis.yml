@@ -2,6 +2,7 @@ dist: xenial
 
 services:
   - rabbitmq
+  - redis
 language: python
 python:
   - "3.5"
@@ -9,6 +10,7 @@ install:
   - pip install codecov
 env:
   - PYTHONPATH=/home/travis/build/$TRAVIS_REPO_SLUG/bin:$PYTHONPATH PYTHONPATH=/home/travis/build/$TRAVIS_REPO_SLUG/networkml:$PYTHONPATH
+  - REDIS_HOST=localhost
 jobs:
   include:
   - stage: test
