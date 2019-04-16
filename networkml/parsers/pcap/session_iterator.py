@@ -64,8 +64,6 @@ class BatchIterator:
         self.train_length = self.X_train.shape[0]
         self.validation_length = self.X_vala.shape[0]
         self.test_length = self.X_test.shape[0]
-        # self._normalize()
-
         self.perturb_types = perturb_types
 
     def _load_data(self):
@@ -162,18 +160,6 @@ class BatchIterator:
             y[self.labels.index(c[0])] = c[1]
 
         return X, y
-
-    def _normalize(self):
-        means = np.mean(self.X_train, axis=(0, 1))
-        stds = np.std(self.X_train, axis=(0, 1))
-
-        means[0:5] = 0
-        means[11:] = 0
-        stds[0:5] = 1
-        stds[11:] = 1
-
-        self.means = means
-        self.stds = stds
 
     def _swap_ports(self, X):
         '''
