@@ -18,7 +18,7 @@ def test_networkml_eval_onelayer():
 
 def test_networkml_eval_randomforest():
     sys.argv = ['bin/networkml', '-p', 'tests/', '-a', 'randomforest']
-    os.environ['POSEIDON_PUBLIC_SESSIONS'] = 0
+    os.environ['POSEIDON_PUBLIC_SESSIONS'] = ''
     netml = NetworkML()
 
 
@@ -38,7 +38,7 @@ def test_networkml_train_onelayer():
 def test_networkml_train_randomforest():
     sys.argv = ['bin/networkml', '-p', 'tests/',
                 '-o', 'train', '-a', 'randomforest', '-m', 'networkml/trained_models/randomforest/RandomForestModel.pkl']
-    os.environ['POSEIDON_PUBLIC_SESSIONS'] = 0
+    os.environ['POSEIDON_PUBLIC_SESSIONS'] = ''
     with pytest.raises(SystemExit) as pytest_wrapped_e:
         netml = NetworkML()
     assert pytest_wrapped_e.type == SystemExit
@@ -62,5 +62,5 @@ def test_networkml_test_onelayer():
 def test_networkml_test_randomforest():
     sys.argv = ['bin/networkml', '-p', 'tests/',
                 '-o', 'test', '-a', 'randomforest', '-m', 'networkml/trained_models/randomforest/RandomForestModel.pkl']
-    os.environ['POSEIDON_PUBLIC_SESSIONS'] = 0
+    os.environ['POSEIDON_PUBLIC_SESSIONS'] = ''
     netml = NetworkML()
