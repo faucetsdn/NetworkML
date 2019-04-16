@@ -177,7 +177,11 @@ def select_features(X, y):
     nb_trees = int(np.sqrt(X.shape[1]))
 
     selection_forest = ExtraTreesClassifier(nb_trees, random_state=3)
-    selection_forest.fit(X, y)
+    try:
+        selection_forest.fit(X, y)
+    except Exception as e:  # pragma: no cover
+        print('Error, failed because: {0}'.format(str(e)))
+        sys.exit(1)
 
     # Use a cross validated logistic regression to choose the importance
     # threshold at which a feature is included

@@ -2,20 +2,21 @@ dist: xenial
 
 services:
   - rabbitmq
+  - redis
 language: python
 python:
   - "3.5"
 install:
   - pip install codecov
 env:
-  - PYTHONPATH=/home/travis/build/$TRAVIS_REPO_SLUG/bin:$PYTHONPATH PYTHONPATH=/home/travis/build/$TRAVIS_REPO_SLUG/networkml:$PYTHONPATH
+  - PYTHONPATH=/home/travis/build/$TRAVIS_REPO_SLUG/bin:$PYTHONPATH PYTHONPATH=/home/travis/build/$TRAVIS_REPO_SLUG/networkml:$PYTHONPATH REDIS_HOST=localhost
 jobs:
   include:
   - stage: test
-    script: docker build -t poseidonml . && docker build -f Dockerfile.test -t poseidonml-test . && docker run -it poseidonml-test
+    script: make test
   - script: find . -name requirements.txt -type f -exec pip3 install -r {} \; && pip3 uninstall -y poseidonml && pip3 install . && pytest -l -s -v --cov=tests/ --cov=networkml/ --cov-report term-missing -c .coveragerc
 before_install:
-  - sudo tcpdump -i ens4 -w /home/travis/build/$TRAVIS_REPO_SLUG/tests/test.pcap &
+  - sudo tcpdump -i ens4 -w /home/travis/build/$TRAVIS_REPO_SLUG/tests/test3.pcap &
   - sudo apt-get update
   - sudo apt-get install docker-ce
   - sudo pkill tcpdump

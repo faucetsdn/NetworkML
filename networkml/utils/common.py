@@ -32,7 +32,10 @@ class Common:
                 self.logger.error(
                     'Unable to read config properly because: %s', str(e))
 
-        self.connect_redis()
+        redis_host = 'redis'
+        if 'REDIS_HOST' in os.environ and os.environ['REDIS_HOST'] != '':
+            redis_host = os.environ['REDIS_HOST']
+        self.connect_redis(host=redis_host)
 
     @staticmethod
     def setup_logger(logger):

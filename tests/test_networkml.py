@@ -45,15 +45,15 @@ def test_networkml_train_randomforest():
 def test_networkml_train_sos():
     sys.argv = ['bin/networkml', '-p', 'tests/', '-o', 'train',
                 '-a', 'sos', '-m', 'networkml/trained_models/sos/SoSmodel']
-    with pytest.raises(SystemExit) as pytest_wrapped_e:
-        netml = NetworkML()
-    assert pytest_wrapped_e.type == SystemExit
-    assert pytest_wrapped_e.value.code == 1
+    netml = NetworkML()
 
 
 def test_networkml_test_onelayer():
     sys.argv = ['bin/networkml', '-p', 'tests/', '-o', 'test']
-    netml = NetworkML()
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        netml = NetworkML()
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == 1
 
 
 def test_networkml_test_randomforest():

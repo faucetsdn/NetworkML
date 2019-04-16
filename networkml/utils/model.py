@@ -114,9 +114,13 @@ class Model:
         full_features = np.stack(X)
 
         # Mean normalize the features
-        full_features -= np.expand_dims(self.means, 0)
-        full_features /= np.expand_dims(self.stds, 0)
-        features = full_features[:, self.feature_list]
+        try:
+            full_features -= np.expand_dims(self.means, 0)
+            full_features /= np.expand_dims(self.stds, 0)
+            features = full_features[:, self.feature_list]
+        except Exception as e:  # pragma: no cover
+            self.logger.error('Failed because: {0}'.format(str(e)))
+            sys.exit(1)
         return features, source_ip, timestamps, other_ips, capture_source_ip
 
     def train(self, data_dir):
