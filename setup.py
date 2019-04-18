@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='poseidonml',
-    version='0.3.1.dev',
+    version='0.3.1',
     packages=['networkml', 'networkml.algorithms', 'networkml.algorithms.sos',
               'networkml.parsers', 'networkml.parsers.netflow',
               'networkml.parsers.pcap', 'networkml.utils'],

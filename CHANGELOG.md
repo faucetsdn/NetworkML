@@ -1,3 +1,12 @@
+# v0.3.1 (2019-04-18)
+
+- Updated Tensorflow imports for new deprecations
+- Updated pika to 1.0.1
+- Removed a bunch of duplicated code to keep the code base cleaner
+- Added a bunch of tests to get coverage up to 90%
+- Updated pytest to 4.4.1
+- Removed the use of md5 and replaced it with sha224
+
 # v0.3.0 (2019-04-04)
 
 - Major rewrite and restructuring of the code base, but same functionality
