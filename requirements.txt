@@ -3,5 +3,5 @@ pika==1.0.1
 pytest==4.4.2
 pytest-cov==2.7.1
 redis==3.2.1
-scikit-learn==0.20.3
+scikit-learn==0.21.0
 tensorflow==1.13.1
