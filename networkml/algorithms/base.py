@@ -127,9 +127,13 @@ class BaseAlgorithm:
                 # Make simple decisions based on vector differences and update times
                 timestamp = timestamps[0].timestamp()
                 labels, confs = zip(*preds)
-                abnormality = eval_pcap(
-                    str(fi), self.conf_labels, self.time_const, label=labels[0],
-                    rnn_size=self.rnn_size, model_path=self.model_path, model_type=algorithm)
+                abnormality = 0.0
+                try:
+                    abnormality = eval_pcap(
+                        str(fi), self.conf_labels, self.time_const, label=labels[0],
+                        rnn_size=self.rnn_size, model_path=self.model_path, model_type=algorithm)
+                except Exception as e:  # pragma: no cover
+                    self.logger.error(str(e))
                 prev_s = self.common.get_address_info(
                     source_mac,
                     timestamp
