@@ -3,7 +3,8 @@ import logging
 import os
 import time
 
-from networkml.algorithms.sos.eval_SoSModel import eval_pcap
+from cpuinfo import get_cpu_info
+
 from networkml.parsers.pcap.pcap_utils import clean_session_dict
 from networkml.utils.common import Common
 from networkml.utils.model import Model
@@ -128,12 +129,17 @@ class BaseAlgorithm:
                 timestamp = timestamps[0].timestamp()
                 labels, confs = zip(*preds)
                 abnormality = 0.0
-                try:
+                has_avx = False
+                if 'flags' in get_cpu_info() and ('avx' in get_cpu_info()['flags'] or 'avx2' in get_cpu_info()['flags']):
+                    has_avx = True
+                if has_avx:
+                    from networkml.algorithms.sos.eval_SoSModel import eval_pcap
                     abnormality = eval_pcap(
                         str(fi), self.conf_labels, self.time_const, label=labels[0],
                         rnn_size=self.rnn_size, model_path=self.model_path, model_type=algorithm)
-                except Exception as e:  # pragma: no cover
-                    self.logger.error(str(e))
+                else:
+                    self.logger.warning(
+                        "Can't run abnormality detection because this CPU doesn't support AVX")
                 prev_s = self.common.get_address_info(
                     source_mac,
                     timestamp
