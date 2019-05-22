@@ -23,7 +23,7 @@ def test_networkml_eval_randomforest():
 
 
 def test_networkml_eval_sos():
-    sys.argv = ['bin/networkml', '-p', 'tests/test.pcap', '-a', 'sos']
+    sys.argv = ['bin/networkml', '-p', 'tests/', '-a', 'sos']
     netml = NetworkML()
 
 
