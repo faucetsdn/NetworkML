@@ -4,7 +4,6 @@ import os
 
 import numpy as np
 import pika
-import tensorflow as tf
 from redis import StrictRedis
 
 
@@ -48,9 +47,6 @@ class Common:
         return logger
 
     def setup_env(self):
-        tf.logging.set_verbosity(tf.logging.ERROR)
-        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-
         # Get "RABBIT" environment variable with a default value of false
         self.use_rabbit = os.getenv('RABBIT', 'False')
 

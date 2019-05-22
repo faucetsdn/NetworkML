@@ -10,8 +10,6 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.neural_network import MLPClassifier
 
 from networkml.algorithms.base import BaseAlgorithm
-from networkml.algorithms.sos.eval_SoSModel import eval_pcap
-from networkml.algorithms.sos.train_SoSModel import train
 from networkml.utils.common import Common
 from networkml.utils.model import Model
 
@@ -44,6 +42,7 @@ class NetworkML():
                 BaseAlgorithm(files=self.files, config=self.config,
                               model=self.model, model_hash=self.model_hash, model_path=self.args.trained_model).eval(self.args.algorithm)
             elif self.args.algorithm == 'sos':
+                from networkml.algorithms.sos.eval_SoSModel import eval_pcap
                 eval_pcap(self.args.path, self.conf_labels, self.time_const)
         elif self.args.operation == 'train':
             if self.args.algorithm == 'onelayer':
@@ -66,6 +65,7 @@ class NetworkML():
                               model=self.model, model_hash=self.model_hash,
                               model_path=self.args.trained_model).train(self.args.path, self.args.save, m, self.args.algorithm)
             elif self.args.algorithm == 'sos':
+                from networkml.algorithms.sos.train_SoSModel import train
                 train(self.args.path, self.time_const, self.rnn_size,
                       self.conf_labels, self.args.save)
         elif self.args.operation == 'test':
