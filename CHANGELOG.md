@@ -1,3 +1,11 @@
+# v0.3.2 (2019-05-31)
+
+- Updated numpy to 1.16.3
+- Updated pytest-cov to 2.7.1
+- Updated pytest to 4.5.0
+- Reduce places that Tensorflow is imported
+- Made it possible to run classifications on CPUs that don't support AVX
+
 # v0.3.1 (2019-04-18)
 
 - Updated Tensorflow imports for new deprecations
