@@ -9,5 +9,6 @@
   "ExchangeServer": "Exchange server",
   "GPULaptop": "GPU laptop",
   "GithubRepo": "GitHub server",
-  "PKIServer": "PKI server"
+  "PKIServer": "PKI server",
+  "Printer": "Printer"
 }
