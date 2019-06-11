@@ -6,7 +6,7 @@ __init__.pyc
 .DS_Store
 build/
 dist/
-poseidonml.egg-info/
+networkml.egg-info/
 *.swo
 *.swp
 networkml/trained_models/sos/SoSmodel.pkl

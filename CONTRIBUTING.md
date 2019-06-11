@@ -1,6 +1,6 @@
-# Contributing to PoseidonML
+# Contributing to NetworkML
 
-Want to hack on PoseidonML? Awesome! Here are instructions to get you started.
+Want to hack on NetworkML? Awesome! Here are instructions to get you started.
 If you have any questions or find the instructions to be incomplete, please do
 open an issue to let us know about it.
 
@@ -16,15 +16,15 @@ If your pull request is not accepted on the first try, don't be
 discouraged! If there's a problem with the implementation, hopefully you
 received feedback on what to improve.
 
-We're trying very hard to keep PoseidonML lean and focused. We don't want it
+We're trying very hard to keep NetworkML lean and focused. We don't want it
 to do everything for everybody. This means that we might decide against
 incorporating a new feature. However, there might be a way to implement
-that feature *on top of* PoseidonML.
+that feature *on top of* NetworkML.
 
 ### Create issues...
 
 Any significant improvement should be documented as [a github
-issue](https://github.com/CyberReboot/PoseidonML/issues) before anybody
+issue](https://github.com/CyberReboot/NetworkML/issues) before anybody
 starts working on it.
 
 ### ...but check for existing issues first!
@@ -38,7 +38,7 @@ help prioritize the most common problems and requests.
 
 #### Project structure
 
-The PoseidonML project is currently structured to be a collection of
+The NetworkML project is currently structured to be a collection of
 models processing pcap traffic. Each model is contained within its own
 folder under the root directory. Code under root's `utils/` folder contains
 generic feature extraction and processing from raw pcap files, and can be
@@ -97,9 +97,9 @@ may result in your changes being overwritten.
 
 ### How are decisions made?
 
-Short answer: with pull requests to the PoseidonML repository.
+Short answer: with pull requests to the NetworkML repository.
 
-All decisions affecting PoseidonML, big and small, follow the same 3 steps:
+All decisions affecting NetworkML, big and small, follow the same 3 steps:
 
 * Step 1: Open a pull request. Anyone can do this.
 
@@ -121,7 +121,7 @@ You don't have to be a maintainer to make a difference on the project!
 It is every maintainer's responsibility to:
 
 * 1) Deliver prompt feedback and decisions on pull requests.
-* 2) Be available to anyone with questions, bug reports, criticism etc. on PoseidonML.
+* 2) Be available to anyone with questions, bug reports, criticism etc. on NetworkML.
 
 ### How is this process changed?
 

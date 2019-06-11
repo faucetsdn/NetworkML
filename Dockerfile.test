@@ -1,4 +1,4 @@
-FROM poseidonml
+FROM networkml
 LABEL maintainer="Charlie Lewis <clewis@iqt.org>"
 
 ENTRYPOINT ["pytest"]

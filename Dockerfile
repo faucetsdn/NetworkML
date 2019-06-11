@@ -43,7 +43,7 @@ RUN set -ex; \
         /var/cache/apt/*.bin; \
     rm -rf /root/.[acpw]*
 
-COPY . /poseidonml
-WORKDIR /poseidonml
+COPY . /networkml
+WORKDIR /networkml
 RUN pip install .
 ENTRYPOINT ["networkml"]
