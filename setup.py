@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(
-    name='poseidonml',
+    name='networkml',
     version='0.3.2',
     packages=['networkml', 'networkml.algorithms', 'networkml.algorithms.sos',
               'networkml.parsers', 'networkml.parsers.netflow',
@@ -17,5 +17,5 @@ setup(
     description=(
         'A utility package for extracting and analyzing features in network traffic.'),
     keywords='machine learning network analysis utilities',
-    url='https://github.com/CyberReboot/PoseidonML',
+    url='https://github.com/CyberReboot/NetworkML',
 )

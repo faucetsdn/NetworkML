@@ -2,10 +2,10 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Build Status](https://api.travis-ci.com/CyberReboot/NetworkML.svg?branch=master)](https://travis-ci.com/CyberReboot/NetworkML)
-[![PyPI version](https://badge.fury.io/py/poseidonml.svg)](https://badge.fury.io/py/poseidonml)
+[![PyPI version](https://badge.fury.io/py/networkml.svg)](https://badge.fury.io/py/networkml)
 [![codecov](https://codecov.io/gh/CyberReboot/NetworkML/branch/master/graph/badge.svg)](https://codecov.io/gh/CyberReboot/NetworkML)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/28bb6ce9fa154134b8dda35c5d5d7010)](https://www.codacy.com/app/CyberReboot/NetworkML?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=CyberReboot/NetworkML&amp;utm_campaign=Badge_Grade)
-[![Docker Hub Downloads](https://img.shields.io/docker/pulls/cyberreboot/poseidonml.svg)](https://hub.docker.com/r/cyberreboot/poseidonml/)
+[![Docker Hub Downloads](https://img.shields.io/docker/pulls/cyberreboot/networkml.svg)](https://hub.docker.com/r/cyberreboot/networkml/)
 
 ## Overview
 NetworkML is the Machine Learning portion of our [Poseidon](https://github.com/CyberReboot/poseidon) project that
@@ -30,7 +30,7 @@ This repository contains the components necessary to build a docker container
 that can be used for training a number of ML models using network packet
 captures (pcaps). The repository includes scripts necessary to do the
 training as well as doing the evaluation once a model has been trained. These
-can be run from a shell once `poseidonml` is installed as a package or run in a
+can be run from a shell once `networkml` is installed as a package or run in a
 Docker container using the `networkml` script.
 
 Additional algorithms and models will be added here as we delve more
