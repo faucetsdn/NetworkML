@@ -1,21 +1,20 @@
-# Poseidon: Machine Learning
+# Network Traffic: Machine Learning
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Build Status](https://api.travis-ci.com/CyberReboot/PoseidonML.svg?branch=master)](https://travis-ci.com/CyberReboot/PoseidonML)
+[![Build Status](https://api.travis-ci.com/CyberReboot/NetworkML.svg?branch=master)](https://travis-ci.com/CyberReboot/NetworkML)
 [![PyPI version](https://badge.fury.io/py/poseidonml.svg)](https://badge.fury.io/py/poseidonml)
-[![codecov](https://codecov.io/gh/CyberReboot/PoseidonML/branch/master/graph/badge.svg)](https://codecov.io/gh/CyberReboot/PoseidonML)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/28bb6ce9fa154134b8dda35c5d5d7010)](https://www.codacy.com/app/CyberReboot/PoseidonML?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=CyberReboot/PoseidonML&amp;utm_campaign=Badge_Grade)
+[![codecov](https://codecov.io/gh/CyberReboot/NetworkML/branch/master/graph/badge.svg)](https://codecov.io/gh/CyberReboot/NetworkML)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/28bb6ce9fa154134b8dda35c5d5d7010)](https://www.codacy.com/app/CyberReboot/NetworkML?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=CyberReboot/NetworkML&amp;utm_campaign=Badge_Grade)
 [![Docker Hub Downloads](https://img.shields.io/docker/pulls/cyberreboot/poseidonml.svg)](https://hub.docker.com/r/cyberreboot/poseidonml/)
 
 ## Overview
-PoseidonML is the Machine Learning portion of our (Poseidon) project that
+NetworkML is the Machine Learning portion of our [Poseidon](https://github.com/CyberReboot/poseidon) project that
 attempts to answer two questions:
   1. what type of device is in this packet capture (pcap)?
   2. is it behaving in an expected way?
 
-This repo is for the ML portion of the project, which can also be used
-in a "standalone" mode from the CLI. For more background and context on
-the macro project, please check out [the Poseidon project](https://www.cyberreboot.org/projects/poseidon/)
+This can also be used in a "standalone" mode from the CLI. For more background
+and context on the macro project, please check out [the Poseidon project](https://www.cyberreboot.org/projects/poseidon/)
 page on our website. This repo specifically covers the algorithms and
 models we deployed in our project.
 
@@ -56,7 +55,7 @@ Our models can be executed via Vent, Docker, and in a standalone manner on a
 Linux host. We recommend deployment via Vent in conjunction with Poseidon if you
 are running an SDN (software-defined network). Otherwise, we recommend using Docker.
 
-See the [README](https://github.com/CyberReboot/PoseidonML/blob/master/networkml/algorithms/README.md) file included in the `networkml/algorithms` folder for specific instructions on deployment.
+See the [README](https://github.com/CyberReboot/NetworkML/blob/master/networkml/algorithms/README.md) file included in the `networkml/algorithms` folder for specific instructions on deployment.
 
 
 # Develop/Standalone installation
