@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='networkml',
-    version='0.3.3',
+    version='0.3.4.dev',
     packages=['networkml', 'networkml.algorithms', 'networkml.algorithms.sos',
               'networkml.parsers', 'networkml.parsers.netflow',
               'networkml.parsers.pcap', 'networkml.utils'],
