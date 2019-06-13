@@ -1,3 +1,9 @@
+# v0.3.3 (2019-06-13)
+
+- Updated models and included printers
+- Renamed PoseidonML to NetworkML
+- Updated pytest to 4.6.3
+
 # v0.3.2 (2019-05-31)
 
 - Updated numpy to 1.16.3
