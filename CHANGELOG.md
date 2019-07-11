@@ -1,3 +1,10 @@
+# v0.3.4 (2019-07-11)
+
+- Updated to python3.7
+- Updated models
+- Updated tensorflow to 1.14.0
+- Updated pytest to 5.0.1
+
 # v0.3.3 (2019-06-13)
 
 - Updated models and included printers
