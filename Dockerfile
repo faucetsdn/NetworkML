@@ -7,7 +7,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     gcc \
     git \
-    linux-headers-4.9 \
     python3 \
     python3-dev \
     tcpdump \
@@ -17,7 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && curl -O https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-1.14.0-cp37-cp37m-linux_x86_64.whl \
     && pip3 install tensorflow-1.14.0-cp37-cp37m-linux_x86_64.whl \
     && rm -rf tensorflow-1.14.0-cp37-cp37m-linux_x86_64.whl \
-    && apt-get remove --purge --auto-remove -y curl gcc git linux-headers-4.9 python3-dev \
+    && apt-get remove --purge --auto-remove -y curl gcc git python3-dev \
     && apt-get clean \
     && apt-get autoclean \
     && apt-get autoremove \
