@@ -4,5 +4,5 @@ py-cpuinfo==5.0.0
 pytest==5.0.1
 pytest-cov==2.7.1
 redis==3.3.4
-scikit-learn==0.21.2
+scikit-learn==0.21.3
 tensorflow==1.14.0
