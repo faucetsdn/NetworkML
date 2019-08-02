@@ -1,3 +1,9 @@
+# v0.3.5 (2019-08-02)
+
+- Updated pika to 1.1.0
+- Got rid of outdated linux headers
+- Updated redis to 3.3.4
+
 # v0.3.4 (2019-07-11)
 
 - Updated to python3.7
