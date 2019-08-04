@@ -24,60 +24,55 @@ help:
 	@echo "DEV/STANDALONE OPTIONS:"
 	@echo "dev                                Uses conda to create a contained python development environment"
 	@echo "rmdev                              Removes the conda development environment"
-eval_onelayer: build run_redis eval_onelayer_nobuild
+eval_onelayer: build eval_onelayer_nobuild
 eval_onelayer_nobuild:
 	@echo
 	@echo "Running OneLayer Eval on PCAP files $(PCAP)"
-	@docker run -it --rm -v "$(PCAP):/pcaps$(PCAP)" --link networkml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) networkml
-	@docker rm -f networkml-redis > /dev/null
+	@docker run -it --rm -v "$(PCAP):/pcaps$(PCAP)" -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) networkml
 	@echo
-test_onelayer: build run_redis test_onelayer_nobuild
+test_onelayer: build test_onelayer_nobuild
 test_onelayer_nobuild:
 	@echo
 	@echo "Running OneLayer Test on PCAP files $(PCAP)"
-	@docker run -it --rm -v "$(PCAP):/pcaps$(PCAP)" -v "$(PWD)/networkml/trained_models:/networkml/networkml/trained_models" --link networkml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) networkml -o test -w networkml/trained_models/onelayer/test_onelayer.json
-	@docker rm -f networkml-redis > /dev/null
+	@docker run -it --rm -v "$(PCAP):/pcaps$(PCAP)" -v "$(PWD)/networkml/trained_models:/networkml/networkml/trained_models" -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) networkml -o test -w networkml/trained_models/onelayer/test_onelayer.json
 	@echo
 train_onelayer: build run_redis train_onelayer_nobuild
 train_onelayer_nobuild:
 	@echo
 	@echo "Running OneLayer Train on PCAP files $(PCAP)"
-	@docker run -it --rm -v "$(PCAP):/pcaps$(PCAP)" -v "$(PWD)/networkml/trained_models:/networkml/networkml/trained_models" --link networkml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) networkml -o train
+	@docker run -it --rm -v "$(PCAP):/pcaps$(PCAP)" -v "$(PWD)/networkml/trained_models:/networkml/networkml/trained_models" --link networkml-redis:redis -e REDIS=True -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) networkml -o train
 	@docker rm -f networkml-redis > /dev/null
 	@echo
-eval_randomforest: build run_redis eval_randomforest_nobuild
+eval_randomforest: build eval_randomforest_nobuild
 eval_randomforest_nobuild:
 	@echo
 	@echo "Running RandomForest Eval on PCAP files $(PCAP)"
-	@docker run -it --rm -v "$(PCAP):/pcaps$(PCAP)" --link networkml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) networkml -a randomforest -m networkml/trained_models/randomforest/RandomForestModel.pkl -w networkml/trained_models/randomforest/RandomForestModel.pkl
-	@docker rm -f networkml-redis > /dev/null
+	@docker run -it --rm -v "$(PCAP):/pcaps$(PCAP)" -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) networkml -a randomforest -m networkml/trained_models/randomforest/RandomForestModel.pkl -w networkml/trained_models/randomforest/RandomForestModel.pkl
 	@echo
-test_randomforest: build run_redis test_randomforest_nobuild
+test_randomforest: build test_randomforest_nobuild
 test_randomforest_nobuild:
 	@echo
 	@echo "Running RandomForest Test on PCAP files $(PCAP)"
-	@docker run -it --rm -v "$(PCAP):/pcaps$(PCAP)" --link networkml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) networkml -o test -a randomforest -m networkml/trained_models/randomforest/RandomForestModel.pkl -w networkml/trained_models/randomforest/RandomForestModel.pkl
-	@docker rm -f networkml-redis > /dev/null
+	@docker run -it --rm -v "$(PCAP):/pcaps$(PCAP)" -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) networkml -o test -a randomforest -m networkml/trained_models/randomforest/RandomForestModel.pkl -w networkml/trained_models/randomforest/RandomForestModel.pkl
 	@echo
 train_randomforest: build run_redis train_randomforest_nobuild
 train_randomforest_nobuild:
 	@echo
 	@echo "Running RandomForest Train on PCAP files $(PCAP)"
-	@docker run -it --rm -v "$(PCAP):/pcaps$(PCAP)" -v "$(PWD)/networkml/trained_models:/networkml/networkml/trained_models" --link networkml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) networkml -o train -a randomforest -m networkml/trained_models/randomforest/RandomForestModel.pkl -w networkml/trained_models/randomforest/RandomForestModel.pkl
+	@docker run -it --rm -v "$(PCAP):/pcaps$(PCAP)" -v "$(PWD)/networkml/trained_models:/networkml/networkml/trained_models" --link networkml-redis:redis -e REDIS=True -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) networkml -o train -a randomforest -m networkml/trained_models/randomforest/RandomForestModel.pkl -w networkml/trained_models/randomforest/RandomForestModel.pkl
 	@docker rm -f networkml-redis > /dev/null
 	@echo
-eval_sos: build run_redis eval_sos_nobuild
+eval_sos: build eval_sos_nobuild
 eval_sos_nobuild:
 	@echo
 	@echo "Running SoSModel Eval on PCAP files $(PCAP)"
-	@docker run -it --rm -v "$(PCAP):/pcaps$(PCAP)" --link networkml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) networkml -a sos
-	@docker rm -f networkml-redis > /dev/null
+	@docker run -it --rm -v "$(PCAP):/pcaps$(PCAP)" -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) networkml -a sos
 	@echo
 train_sos: build run_redis train_sos_nobuild
 train_sos_nobuild:
 	@echo
 	@echo "Running SoSModel Train on PCAP files $(PCAP)"
-	@docker run -it --rm -v "$(PCAP):/pcaps$(PCAP)" -v "$(PWD)/networkml/trained_models:/networkml/networkml/trained_models" --link networkml-redis:redis -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) networkml -o train -a sos -m networkml/trained_models/sos/SoSmodel -w networkml/trained_models/sos/SoSmodel.pkl
+	@docker run -it --rm -v "$(PCAP):/pcaps$(PCAP)" -v "$(PWD)/networkml/trained_models:/networkml/networkml/trained_models" --link networkml-redis:redis -e REDIS=True -e POSEIDON_PUBLIC_SESSIONS=1 -e LOG_LEVEL=$(LOG_LEVEL) networkml -o train -a sos -m networkml/trained_models/sos/SoSmodel -w networkml/trained_models/sos/SoSmodel.pkl
 	@docker rm -f networkml-redis > /dev/null
 	@echo
 run_redis:

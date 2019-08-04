@@ -28,7 +28,9 @@ class BaseAlgorithm:
         self.common = Common(config=config)
         if self.common.use_rabbit:
             self.common.connect_rabbit()
-        self.r = self.common.r
+        if self.common.use_redis:
+            self.common.connect_redis(host=self.common.redis_host)
+
         if config:
             try:
                 self.time_const = config['time constant']
@@ -165,14 +167,15 @@ class BaseAlgorithm:
                         labels[i] + ' : ' + str(round(confs[i], 3)))
 
                 # update Redis with decision
-                redis_decision = {}
-                for k in decision:
-                    redis_decision[k] = str(decision[k])
-                try:
-                    self.r.hmset(r_key, redis_decision)
-                except Exception as e:  # pragma: no cover
-                    self.logger.error(
-                        'Failed to update keys in Redis because: {0}'.format(str(e)))
+                if self.common.use_redis:
+                    redis_decision = {}
+                    for k in decision:
+                        redis_decision[k] = str(decision[k])
+                    try:
+                        self.common.r.hmset(r_key, redis_decision)
+                    except Exception as e:  # pragma: no cover
+                        self.logger.error(
+                            'Failed to update keys in Redis because: {0}'.format(str(e)))
 
                 # Get json message
                 message = json.dumps(decision)
