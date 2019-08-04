@@ -31,11 +31,6 @@ class Common:
                 self.logger.error(
                     'Unable to read config properly because: %s', str(e))
 
-        redis_host = 'redis'
-        if 'REDIS_HOST' in os.environ and os.environ['REDIS_HOST'] != '':
-            redis_host = os.environ['REDIS_HOST']
-        self.connect_redis(host=redis_host)
-
     @staticmethod
     def setup_logger(logger):
         try:
@@ -49,10 +44,17 @@ class Common:
     def setup_env(self):
         # Get "RABBIT" environment variable with a default value of false
         self.use_rabbit = os.getenv('RABBIT', 'False')
+        # Get "REDIS" environment variable with a default value of false
+        self.use_redis = os.getenv('REDIS', 'False')
+        self.redis_host = 'redis'
+        if 'REDIS_HOST' in os.environ and os.environ['REDIS_HOST'] != '':
+            self.redis_host = os.environ['REDIS_HOST']
 
         # Convert our string into a boolean
         self.use_rabbit = self.use_rabbit.lower() in ['true', 't', 'y', '1']
         self.logger.debug('RABBIT flag set to: %s', str(self.use_rabbit))
+        self.use_redis = self.use_redis.lower() in ['true', 't', 'y', '1']
+        self.logger.debug('REDIS flag set to: %s', str(self.use_redis))
         return
 
     def connect_redis(self, host='redis', port=6379, db=0):
@@ -97,13 +99,16 @@ class Common:
         Look up address information prior to the timestamp
         '''
         # Get the timestamps of the past updates for this address
-        try:
-            updates = self.r.hgetall(address)
-            timestamps = ast.literal_eval(
-                updates[b'timestamps'].decode('ascii'))
-        except Exception as e:  # pragma: no cover
-            self.logger.debug(
-                'No timestamp found because: {0}, setting to None'.format(str(e)))
+        if self.use_redis:
+            try:
+                updates = self.r.hgetall(address)
+                timestamps = ast.literal_eval(
+                    updates[b'timestamps'].decode('ascii'))
+            except Exception as e:  # pragma: no cover
+                self.logger.debug(
+                    'No timestamp found because: {0}, setting to None'.format(str(e)))
+                timestamps = None
+        else:
             timestamps = None
 
         # If there is a previous update, read out the state
@@ -131,11 +136,14 @@ class Common:
         '''
 
         # Try to read the old updates, if there are none return Nones
-        try:
-            updates = self.r.hgetall(source_mac)
-        except Exception as e:  # pragma: no cover
-            self.logger.warning(
-                'Unable to read old updates because: {0}, defaulting to None'.format(str(e)))
+        if self.use_redis:
+            try:
+                updates = self.r.hgetall(source_mac)
+            except Exception as e:  # pragma: no cover
+                self.logger.warning(
+                    'Unable to read old updates because: {0}, defaulting to None'.format(str(e)))
+                return None, None
+        else:
             return None, None
 
         # Get the most recent prior timestamp from the update list
@@ -267,39 +275,40 @@ class Common:
 
         self.logger.debug('created key %s', key)
         self.logger.debug(state)
-        redis_state = {}
-        for k in state:
-            redis_state[k] = str(state[k])
-        try:
-            self.logger.debug('Storing data')
-            self.r.hmset(key, redis_state)
-            self.r.sadd('mac_addresses', source_mac)
-            self.logger.debug('Storing update time')
-            # Add this update time to the list of updates
-            updates = self.r.hgetall(source_mac)
-            update_list = ast.literal_eval(
-                updates[b'timestamps'].decode('ascii'))
-            self.logger.debug(
-                'Got previous updates from {0}'.format(source_mac))
-        except Exception as e:  # pragma: no cover
-            self.logger.debug(
-                'No previous updates found for {0} because: {1}'.format(source_mac, str(e)))
-            update_list = []
+        if self.use_redis:
+            redis_state = {}
+            for k in state:
+                redis_state[k] = str(state[k])
+            try:
+                self.logger.debug('Storing data')
+                self.r.hmset(key, redis_state)
+                self.r.sadd('mac_addresses', source_mac)
+                self.logger.debug('Storing update time')
+                # Add this update time to the list of updates
+                updates = self.r.hgetall(source_mac)
+                update_list = ast.literal_eval(
+                    updates[b'timestamps'].decode('ascii'))
+                self.logger.debug(
+                    'Got previous updates from {0}'.format(source_mac))
+            except Exception as e:  # pragma: no cover
+                self.logger.debug(
+                    'No previous updates found for {0} because: {1}'.format(source_mac, str(e)))
+                update_list = []
 
-        update_list.append(time)
-        update_list = sorted(update_list)
-        times = {'timestamps': update_list}
-        self.logger.debug('Updating %s', source_mac)
-        self.logger.debug(times)
-        redis_times = {}
-        for k in times:
-            redis_times[k] = str(times[k])
-        try:
-            self.r.hmset(source_mac, redis_times)
-            self.r.sadd('mac_addresses', source_mac)
-        except (ConnectionError, TimeoutError) as e:  # pragma: no cover
-            self.logger.debug(
-                'Could not store update time because: %s', str(e))
+            update_list.append(time)
+            update_list = sorted(update_list)
+            times = {'timestamps': update_list}
+            self.logger.debug('Updating %s', source_mac)
+            self.logger.debug(times)
+            redis_times = {}
+            for k in times:
+                redis_times[k] = str(times[k])
+            try:
+                self.r.hmset(source_mac, redis_times)
+                self.r.sadd('mac_addresses', source_mac)
+            except (ConnectionError, TimeoutError) as e:  # pragma: no cover
+                self.logger.debug(
+                    'Could not store update time because: %s', str(e))
 
         return key
 
