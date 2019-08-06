@@ -44,6 +44,17 @@ class Common:
     def setup_env(self):
         # Get "RABBIT" environment variable with a default value of false
         self.use_rabbit = os.getenv('RABBIT', 'False')
+        self.rabbit_host = os.getenv('RABBIT_HOST', 'rabbit')
+        self.rabbit_port = int(os.getenv('RABBIT_PORT', '5672'))
+        self.rabbit_exchange = os.getenv(
+            'RABBIT_EXCHANGE', 'topic-poseidon-internal')
+        self.rabbit_routing_key = os.getenv(
+            'RABBIT_ROUTING_KEY', 'poseidon.algos.decider')
+        self.rabbit_queue = os.getenv('RABBIT_QUEUE', 'False')
+        self.rabbit_queue = self.rabbit_queue.lower() in [
+            'true', 't', 'y', '1']
+        self.rabbit_queue_name = os.getenv('RABBIT_QUEUE_NAME', '')
+
         # Get "REDIS" environment variable with a default value of false
         self.use_redis = os.getenv('REDIS', 'False')
         self.redis_host = 'redis'
@@ -67,16 +78,23 @@ class Common:
                 'Failed connect to Redis because: {0}'.format(str(e)))
         return
 
-    def connect_rabbit(self):
+    def connect_rabbit(self,
+                       host='rabbit',
+                       port=5672,
+                       exchange='topic-poseidon-internal',
+                       exchange_type='topic',
+                       routing_key='poseidon.algos.decider',
+                       queue=False,
+                       queue_name=''):
         # Rabbit settings
         self.connection = None
-        self.exchange = 'topic-poseidon-internal'
-        self.exchange_type = 'topic'
+        self.exchange = exchange
+        self.exchange_type = exchange_type
 
         try:
             # Starting rabbit connection
             self.connection = pika.BlockingConnection(
-                pika.ConnectionParameters(host='rabbit')
+                pika.ConnectionParameters(host=host, port=port)
             )
         except Exception as e:  # pragma: no cover
             self.logger.error(
@@ -84,11 +102,14 @@ class Common:
             return
 
         self.channel = self.connection.channel()
-        self.channel.exchange_declare(
-            exchange=self.exchange, exchange_type=self.exchange_type
-        )
+        if queue:
+            self.channel.queue_declare(queue=queue_name, durable=True)
+        else:
+            self.channel.exchange_declare(
+                exchange=self.exchange, exchange_type=self.exchange_type
+            )
 
-        self.routing_key = 'poseidon.algos.decider'
+        self.routing_key = routing_key
         self.logger.debug('Routing key: ' + self.routing_key)
         self.logger.debug('Exchange: ' + self.exchange)
 

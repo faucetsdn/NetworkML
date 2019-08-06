@@ -27,7 +27,8 @@ class BaseAlgorithm:
         self.logger = Common().setup_logger(self.logger)
         self.common = Common(config=config)
         if self.common.use_rabbit:
-            self.common.connect_rabbit()
+            self.common.connect_rabbit(host=self.common.rabbit_host, port=self.common.rabbit_port, exchange=self.common.rabbit_exchange,
+                                       routing_key=self.common.rabbit_routing_key, queue=self.common.rabbit_queue, queue_name=self.common.rabbit_queue_name)
         if self.common.use_redis:
             self.common.connect_redis(host=self.common.redis_host)
 
@@ -82,7 +83,9 @@ class BaseAlgorithm:
                 if self.common.use_rabbit:
                     self.common.channel.basic_publish(exchange=self.common.exchange,
                                                       routing_key=self.common.routing_key,
-                                                      body=message)
+                                                      body=message,
+                                                      properties=pika.BasicProperties(
+                                                          delivery_mode=2,))
                 continue
 
             else:
@@ -183,7 +186,9 @@ class BaseAlgorithm:
                 if self.common.use_rabbit:
                     self.common.channel.basic_publish(exchange=self.common.exchange,
                                                       routing_key=self.common.routing_key,
-                                                      body=message)
+                                                      body=message,
+                                                      properties=pika.BasicProperties(
+                                                          delivery_mode=2,))
 
         if self.common.use_rabbit:
             try:
