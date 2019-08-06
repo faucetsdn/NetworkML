@@ -3,6 +3,7 @@ import logging
 import os
 import time
 
+import pika
 from cpuinfo import get_cpu_info
 
 from networkml.parsers.pcap.pcap_utils import clean_session_dict
