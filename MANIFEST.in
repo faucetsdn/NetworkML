@@ -1,0 +1,9 @@
+include *.md
+include Dockerfile
+include Makefile
+include LICENSE
+include requirements.txt
+include bin/networkml
+include vent.template
+include VERSION
+recursive-include networkml *.py *.pkl *.json *.index *.meta SoSmodel.data-00000-of-00001 checkpoint
