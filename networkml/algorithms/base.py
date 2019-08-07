@@ -79,6 +79,10 @@ class BaseAlgorithm:
             if preds is None:
                 message = {}
                 message[key] = {'valid': False}
+                uid = os.getenv('id', 'None')
+                file_path = os.getenv('file_path', 'None')
+                message = {'id': uid, 'type': 'metadata', 'file_path': file_path, 'data': message,
+                           'results': {'tool': 'networkml', 'version': networkml.__version__}}
                 message = json.dumps(message)
                 self.logger.info(
                     'Not enough sessions in file \'%s\'', str(fi))
@@ -185,8 +189,9 @@ class BaseAlgorithm:
                 # Get json message
                 uid = os.getenv('id', 'None')
                 file_path = os.getenv('file_path', 'None')
-                message = {'id': uid, 'type': 'metadata', 'file_path': file_path, 'data': json.dumps(
-                    decision), 'results': {'tool': 'networkml', 'version': networkml.__version__}}
+                message = {'id': uid, 'type': 'metadata', 'file_path': file_path, 'data': decision,
+                           'results': {'tool': 'networkml', 'version': networkml.__version__}}
+                message = json.dumps(message)
                 self.logger.info('Message: ' + message)
                 if self.common.use_rabbit:
                     self.common.channel.basic_publish(exchange=self.common.exchange,
