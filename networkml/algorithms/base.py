@@ -6,6 +6,7 @@ import time
 import pika
 from cpuinfo import get_cpu_info
 
+import networkml
 from networkml.parsers.pcap.pcap_utils import clean_session_dict
 from networkml.utils.common import Common
 from networkml.utils.model import Model
@@ -182,7 +183,10 @@ class BaseAlgorithm:
                             'Failed to update keys in Redis because: {0}'.format(str(e)))
 
                 # Get json message
-                message = json.dumps(decision)
+                uid = os.getenv('id', 'None')
+                file_path = os.getenv('file_path', 'None')
+                message = {'id': uid, 'type': 'metadata', 'file_path': file_path, 'data': json.dumps(
+                    decision), 'results': {'tool': 'networkml', 'version': networkml.__version__}}
                 self.logger.info('Message: ' + message)
                 if self.common.use_rabbit:
                     self.common.channel.basic_publish(exchange=self.common.exchange,
