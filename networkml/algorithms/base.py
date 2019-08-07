@@ -78,7 +78,7 @@ class BaseAlgorithm:
             )
             if preds is None:
                 message = {}
-                message[key] = {'valid': False}
+                message[key] = {'valid': False, 'pcap': os.path.split(fi)[-1]}
                 uid = os.getenv('id', 'None')
                 file_path = os.getenv('file_path', 'None')
                 message = {'id': uid, 'type': 'metadata', 'file_path': file_path, 'data': message,
@@ -191,6 +191,7 @@ class BaseAlgorithm:
                 file_path = os.getenv('file_path', 'None')
                 message = {'id': uid, 'type': 'metadata', 'file_path': file_path, 'data': decision,
                            'results': {'tool': 'networkml', 'version': networkml.__version__}}
+                message['data']['pcap'] = os.path.split(fi)[-1]
                 message = json.dumps(message)
                 self.logger.info('Message: ' + message)
                 if self.common.use_rabbit:
@@ -200,7 +201,17 @@ class BaseAlgorithm:
                                                       properties=pika.BasicProperties(
                                                           delivery_mode=2,))
 
+        uid = os.getenv('id', 'None')
+        file_path = os.getenv('file_path', 'None')
+        message = {'id': uid, 'type': 'metadata', 'file_path': file_path, 'data': '',
+                   'results': {'tool': 'networkml', 'version': networkml.__version__}}
+        message = json.dumps(message)
         if self.common.use_rabbit:
+            self.common.channel.basic_publish(exchange=self.common.exchange,
+                                              routing_key=self.common.routing_key,
+                                              body=message,
+                                              properties=pika.BasicProperties(
+                                                  delivery_mode=2,))
             try:
                 self.common.connection.close()
             except Exception as e:  # pragma: no cover
