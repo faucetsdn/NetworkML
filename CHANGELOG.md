@@ -1,3 +1,10 @@
+# v0.3.6 (2019-08-15)
+
+- Updated redis to 3.3.7
+- Redis is now optional
+- RabbitMQ is now configurable, and has a cleaned up message format
+- Retrained models against numpy 1.17.0 and scikit-learn 0.21.3
+
 # v0.3.5 (2019-08-02)
 
 - Updated pika to 1.1.0
