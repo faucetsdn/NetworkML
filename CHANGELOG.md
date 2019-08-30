@@ -1,3 +1,8 @@
+# v0.3.7 (2019-08-30)
+
+- Updated redis to 3.3.8
+- Updated pytest to 5.1.1
+
 # v0.3.6 (2019-08-15)
 
 - Updated redis to 3.3.7
