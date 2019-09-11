@@ -19,7 +19,7 @@ help:
 	@echo "train_[onelayer|randomforest|sos]  Trains directory of pcaps against specified model"
 	@echo "install                            Installs the python library"
 	@echo "run                                Equivalent to eval_onelayer"
-	@echo "test"                              Run the code tests"
+	@echo "test                               Run the code tests"
 	@echo
 	@echo "DEV/STANDALONE OPTIONS:"
 	@echo "dev                                Uses conda to create a contained python development environment"
