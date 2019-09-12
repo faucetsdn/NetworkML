@@ -1,3 +1,9 @@
+# v0.3.8 (2019-09-12)
+
+- Updated pytest to 5.1.2
+- Updated numpy to 1.17.2
+- Fixed make help
+
 # v0.3.7 (2019-08-30)
 
 - Updated redis to 3.3.8
