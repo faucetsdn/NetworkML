@@ -5,8 +5,13 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.python.client import device_lib
 
+## TO DO: Make in this script code idiomatic to tensorflow2
+## .compat.v1 syntax ensures compatibility of tensorflow2 with this code
 
-tf.logging.set_verbosity(tf.logging.ERROR)
+## Turn off eager execution
+tf.compat.v1.disable_eager_execution()
+
+tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
@@ -21,7 +26,7 @@ def scope_decorator(function):
     @functools.wraps(function)
     def decorator(self):
         if not hasattr(self, attribute):
-            with tf.variable_scope(name):
+            with tf.compat.v1.variable_scope(name):
                 setattr(self, attribute, function(self))
         return getattr(self, attribute)
 
@@ -40,7 +45,7 @@ def weight_variable(shape, stddev):
         shape: list containing dimensionality of the desired output
         stddev: standard deviation to initialize with
     """
-    initial = tf.truncated_normal(shape, stddev=stddev)
+    initial = tf.random.truncated_normal(shape, stddev=stddev)
     return tf.Variable(initial)
 
 
@@ -85,11 +90,11 @@ class SoSModel:
                 self._build_model()
 
         # Session config
-        config = tf.ConfigProto()
+        config = tf.compat.v1.ConfigProto()
         config.gpu_options.allow_growth = True
 
         # Create a session to run this graph
-        self.sess = tf.Session(
+        self.sess = tf.compat.v1.Session(
             config=config,
             graph=self.graph
         )
@@ -105,26 +110,26 @@ class SoSModel:
         Initialize variables in the graph
         """
         with self.graph.as_default():
-            self.sess.run(tf.global_variables_initializer())
+            self.sess.run(tf.compat.v1.global_variables_initializer())
 
     def _build_model(self):
         """
         Build the model graph
         """
         # Placeholder for learning rate
-        self.lr = tf.placeholder(tf.float32)
+        self.lr = tf.compat.v1.placeholder(tf.float32)
 
         # Placeholder tensor for the input sessions
-        self.X = tf.placeholder(
+        self.X = tf.compat.v1.placeholder(
             tf.float32,
             [None, None, self.feature_size]
         )
 
         # Placeholder tensor for the input representations
-        self.L = tf.placeholder(tf.float32, [None, self.label_size])
+        self.L = tf.compat.v1.placeholder(tf.float32, [None, self.label_size])
 
         # Placeholder tensor for the labels/targets
-        self.Y = tf.placeholder(tf.float32, [None])
+        self.Y = tf.compat.v1.placeholder(tf.float32, [None])
 
         # Model methods
         # *IMPORTANT* these have to be here, despite them looking like they do nothing
@@ -134,7 +139,7 @@ class SoSModel:
         self.get_output
 
         # Saver
-        self.saver = tf.train.Saver()
+        self.saver = tf.compat.v1.train.Saver()
 
     @scope_decorator
     def network(self):
@@ -142,16 +147,16 @@ class SoSModel:
         Construct the network used for classifying sessions
         """
         # Get the shape of the input
-        shape = tf.shape(self.X)
+        shape = tf.shape(input=self.X)
 
         # Embed the session sequence with an LSTM with attention
-        with tf.variable_scope('session_rnn', reuse=None):
-            session_cell = tf.nn.rnn_cell.LSTMCell(
+        with tf.compat.v1.variable_scope('session_rnn', reuse=None):
+            session_cell = tf.compat.v1.nn.rnn_cell.LSTMCell(
                 self.rnn_size,
                 activation=tf.tanh
             )
 
-            session_vectors, _ = tf.nn.dynamic_rnn(
+            session_vectors, _ = tf.compat.v1.nn.dynamic_rnn(
                 session_cell,
                 self.X,
                 dtype=tf.float32
@@ -171,7 +176,7 @@ class SoSModel:
 
         # Compute the weighted average over the class vectors
         class_vectors = tf.expand_dims(self.L, axis=1)
-        weighted_average = tf.reduce_sum(layer_1*class_vectors, axis=2)
+        weighted_average = tf.reduce_sum(input_tensor=layer_1*class_vectors, axis=2)
 
         return weighted_average[:, -1], tf.sigmoid(weighted_average)
 
@@ -185,7 +190,7 @@ class SoSModel:
             labels=self.Y,
             logits=output
         )
-        return tf.reduce_mean(cost)
+        return tf.reduce_mean(input_tensor=cost)
 
     @scope_decorator
     def optimizer(self):
@@ -193,7 +198,7 @@ class SoSModel:
         Constructs the optimizer op used to train the network.
         Use gradient clipping.
         """
-        opt = tf.train.AdamOptimizer()
+        opt = tf.compat.v1.train.AdamOptimizer()
         #gradients, variables = zip(*opt.compute_gradients(self.cost))
         #gradients, _ = tf.clip_by_global_norm(gradients, 0.1)
         # return opt.apply_gradients(zip(gradients, variables))
