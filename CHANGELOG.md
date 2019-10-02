@@ -1,3 +1,9 @@
+# v0.3.9 (2019-10-02)
+
+- Updated pytest to 5.2.0
+- Updated tensorflow to 2.0.0
+- Fixed up old code using tensorflow1 to work with tensorflow2
+
 # v0.3.8 (2019-09-12)
 
 - Updated pytest to 5.1.2
