@@ -3,6 +3,6 @@ pika==1.1.0
 py-cpuinfo==5.0.0
 pytest==5.2.1
 pytest-cov==2.8.1
-redis==3.3.8
+redis==3.3.9
 scikit-learn==0.21.3
 tensorflow==2.0.0
