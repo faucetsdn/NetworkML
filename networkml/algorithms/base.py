@@ -17,25 +17,37 @@ from networkml.utils.training_utils import get_true_label
 
 class BaseAlgorithm:
     """
-    Base algorithm that rreads a pcap and updates the stored representation of
-    the source, to be used by more specific algorithms.
+    Base algorithm class that reads a PCAP (packet capture file) and updates the
+    stored representation of the source. The class can then be used by more
+    specific algorithms.
     """
 
     def __init__(self, files=None, config=None, model=None, model_hash=None, model_path=None):
+
+        ## Initiate logging information on this instance
         self.logger = logging.getLogger(__name__)
         logging.basicConfig(level=logging.INFO)
         logging.getLogger('pika').setLevel(logging.WARNING)
-
         self.logger = Common().setup_logger(self.logger)
         self.common = Common(config=config)
+
+        ## RabbitMQ acts as a message broker
         if self.common.use_rabbit:
-            self.common.connect_rabbit(host=self.common.rabbit_host, port=self.common.rabbit_port, exchange=self.common.rabbit_exchange,
-                                       routing_key=self.common.rabbit_routing_key, queue=self.common.rabbit_queue, queue_name=self.common.rabbit_queue_name)
+            self.common.connect_rabbit(host=self.common.rabbit_host,
+                                       port=self.common.rabbit_port,
+                                       exchange=self.common.rabbit_exchange,
+                                       routing_key=self.common.rabbit_routing_key,
+                                       queue=self.common.rabbit_queue,
+                                       queue_name=self.common.rabbit_queue_name)
+
+        ## Redis provides a storage capability
         if self.common.use_redis:
             self.common.connect_redis(host=self.common.redis_host)
 
         if config:
             try:
+                ## For description of these configuration values, see the
+                ## README.md file in the networkml/configs folder
                 self.time_const = config['time constant']
                 self.state_size = config['state size']
                 self.look_time = config['look time']
@@ -47,12 +59,31 @@ class BaseAlgorithm:
                 self.logger.error(
                     'Unable to read config properly because: %s', str(e))
 
-        self.files = files if files else []
+        self.files = files if files else [] ## Store network capture files
         self.model = model
         self.model_hash = model_hash
         self.model_path = model_path
 
     def eval(self, algorithm):
+        """
+        This operation uses a specified algorithm to predict--for particular
+        network traffic--what devices types are present and whether the device
+        is acting normally or abnormally. This is the function that should be
+        used in production when a user wants to actually employ networkML to
+        classify and assess traffic.
+
+        Args:
+            algorithm: type of algorithm (random forest, neural network, or
+            stochastic outlier selection (SOS).
+        """
+
+        ## The parsing operation below assumes a specific file naming
+        ## convention trace_DeviceName-deviceID-time-duration-flags.pcap
+        ## Explanation: All files coming from Poseidon have trace_ at their
+        ## beginning. The device name and deviceID colums are self explanatory.
+        ## Time refers to the day of the week and time of day. Duration refers
+        ## to the length of the network traffic capture. The flags aspect
+        ## refers to an unknown characteristic.
         for fi in self.files:
             self.logger.info('Processing {0}...'.format(fi))
             source_mac = None
@@ -66,22 +97,25 @@ class BaseAlgorithm:
             except Exception as e:  # pragma: no cover
                 self.logger.debug('Could not get key because %s', str(e))
 
-            # ignore misc files
+            ## Ignore misc files
             if (split_path[-1] == 'miscellaneous'):
                 continue
 
-            # Get representations from the model
+            ## Get representations from the model
             reps, source_mac, timestamps, preds, others, capture_ip_source = self.model.get_representation(
                 str(fi),
                 source_ip=source_mac,
                 mean=False
             )
+
+            ## If no predictions are made, send a message with explanation
             if preds is None:
                 message = {}
                 message[key] = {'valid': False, 'pcap': os.path.split(fi)[-1]}
                 uid = os.getenv('id', 'None')
                 file_path = os.getenv('file_path', 'None')
-                message = {'id': uid, 'type': 'metadata', 'file_path': file_path, 'data': message,
+                message = {'id': uid, 'type': 'metadata', 'file_path': file_path,
+                           'data': message,
                            'results': {'tool': 'networkml', 'version': networkml.__version__}}
                 message = json.dumps(message)
                 self.logger.info(
@@ -94,21 +128,12 @@ class BaseAlgorithm:
                                                           delivery_mode=2,))
                 continue
 
-            else:
+            else: ## If a prediction is made, send message with prediction
                 self.logger.debug('Generating predictions')
                 last_update, prev_rep = self.common.get_previous_state(
                     source_mac, timestamps[0])
 
-               # TODO are these calls actually needed???
-                _, mean_rep = self.common.average_representation(
-                    reps,
-                    timestamps,
-                    prev_representation=prev_rep,
-                    last_update=last_update
-                )
-                mean_preds = self.model.classify_representation(mean_rep)
-
-                # Update the stored representation
+                ## Update the stored representation
                 if reps is not None:
                     self.logger.debug('Updating stored data')
                     r_key = self.common.update_data(
@@ -120,9 +145,9 @@ class BaseAlgorithm:
                         self.model_hash
                     )
 
-                # Get the sessions that the model looked at
+                ## Get the sessions that the model looked at
                 sessions = self.model.sessions
-                # Clean the sessions
+                ## Clean the sessions
                 clean_sessions = []
                 inferred_mac = None
                 for session_dict in sessions:
@@ -136,11 +161,15 @@ class BaseAlgorithm:
                 if source_mac is None:
                     source_mac = inferred_mac
 
-                # Make simple decisions based on vector differences and update times
+                ## Make simple decisions based on vector differences and update
+                ## times
                 timestamp = timestamps[0].timestamp()
                 labels, confs = zip(*preds)
                 abnormality = 0.0
                 has_avx = False
+
+                ## Check if CPU supports AVX (advanced vector extension),
+                ## which speeds up certain calculations
                 if 'flags' in get_cpu_info() and ('avx' in get_cpu_info()['flags'] or 'avx2' in get_cpu_info()['flags']):
                     has_avx = True
                 if has_avx:
@@ -151,6 +180,8 @@ class BaseAlgorithm:
                 else:
                     self.logger.warning(
                         "Can't run abnormality detection because this CPU doesn't support AVX")
+
+                ##
                 prev_s = self.common.get_address_info(
                     source_mac,
                     timestamp
