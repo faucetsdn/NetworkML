@@ -22,7 +22,8 @@ class BaseAlgorithm:
     specific algorithms.
     """
 
-    def __init__(self, files=None, config=None, model=None, model_hash=None, model_path=None):
+    def __init__(self, files=None, config=None, model=None, model_hash=None,
+                 model_path=None):
 
         ## Initiate logging information on this instance
         self.logger = logging.getLogger(__name__)
