@@ -1,4 +1,4 @@
-import ast
+import ast ## Abstract syntax tree - this module helps in parsing code
 import logging
 import os
 
