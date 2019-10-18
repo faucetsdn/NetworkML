@@ -1,3 +1,4 @@
+
 import logging
 import os
 
@@ -10,16 +11,17 @@ def test_setup_logger():
     os.environ['LOG_LEVEL'] = 'DEBUG'
     Common.setup_logger(logger)
 
-
 def test_setup_env():
     common = Common()
     common.setup_env()
 
+def test_connect_redis():
+    common = Common()
+    common.connect_redis()
 
 def test_connect_rabbit():
     common = Common()
     common.connect_rabbit()
-
 
 def test_get_address_info():
     common = Common()
