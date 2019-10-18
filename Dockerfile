@@ -1,4 +1,4 @@
-FROM python:slim
+FROM python:3.7-slim
 LABEL maintainer="Charlie Lewis <clewis@iqt.org>"
 
 COPY requirements.txt requirements.txt
@@ -10,11 +10,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     python3-dev \
     tcpdump \
-    && pip3 install --no-cache-dir --upgrade pip==19.3 \
+    && pip3 install --no-cache-dir --upgrade pip==19.3.1 \
     && pip3 install wheel \
     && pip3 install --no-cache-dir -r requirements.txt\
-    && pip3 install tensorflow \
-    && rm -rf tensorflow-1.14.0-cp37-cp37m-linux_x86_64.whl \
     && apt-get remove --purge --auto-remove -y curl gcc git python3-dev \
     && apt-get clean \
     && apt-get autoclean \
