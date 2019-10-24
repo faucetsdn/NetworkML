@@ -1,3 +1,11 @@
+# v0.4.0 (2019-10-24)
+
+- Updated pytest-cov
+- Updated pytest
+- Updated redis
+- Added more documentation and tests
+- Updated the python image for the Dockerfile
+
 # v0.3.9 (2019-10-02)
 
 - Updated pytest to 5.2.0
