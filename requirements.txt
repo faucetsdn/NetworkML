@@ -1,7 +1,7 @@
 numpy==1.17.3
 pika==1.1.0
 py-cpuinfo==5.0.0
-pytest==5.2.1
+pytest==5.2.2
 pytest-cov==2.8.1
 redis==3.3.11
 scikit-learn==0.21.3
