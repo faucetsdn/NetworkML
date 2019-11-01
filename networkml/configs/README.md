@@ -13,7 +13,7 @@ adjustments to these variable values easier.
 
 1. Batch size - The number of training examples in a single pass. This is a
 parameter used to train the stochastic outlier selection model.
-2. Duration - This variable defines the time window of network traffic for which to computer information on features.
+2. Duration - This variable defines the time window of network traffic for which to compute information on features.
 3. Look time - This variable defines (in seconds) the minimum time between
 re-investigation of a potentially suspicious device.
 4. Max Port - This variable sets the maximum port number for feature creation.
@@ -26,7 +26,7 @@ model.
 session to be included in analysis.
 8. Source Identifier - Variable for how networkML determines what device is
 initiating a session.
-9. State Size - A variable for the number of neurons (or nodes)in the neural
+9. State Size - A variable for the number of neurons (or nodes) in the neural
 network model.
 10. Threshold - A percentage threshold for the confidence needed to deem a session
 bin abnormal. 99 is an arbitrary cut point.
