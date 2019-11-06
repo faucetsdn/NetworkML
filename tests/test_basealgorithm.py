@@ -7,7 +7,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def parse_pcap_name():
+def test_parse_pcap_name():
     instance = BaseAlgorithm()
     parse_pcap_name = instance.parse_pcap_name
     assert parse_pcap_name('notaposeidontracefile.pcap') == 'notaposeidontracefile'
