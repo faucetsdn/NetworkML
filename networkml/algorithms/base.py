@@ -76,11 +76,14 @@ class BaseAlgorithm:
         ## to the length of the network traffic capture. The flags aspect
         ## refers to an unknown characteristic.
         # TODO: tolerate tshark labels in the trace name, but do not parse them for now.
-        pcap_re = re.compile(r'^trace_([\da-f]+)_.+(client|server)-(.+).pcap$')
-        pcap_match = pcap_re.match(base_pcap)
-        if pcap_match:
-            return pcap_match.group(1)
-        return None
+        if base_cap.startswith('trace_'):
+            pcap_re = re.compile(r'^trace_([\da-f]+)_.+(client|server)-(.+).pcap$')
+            pcap_match = pcap_re.match(base_pcap)
+            if pcap_match:
+                return pcap_match.group(1)
+            return None
+        # Not a Poseidon trace file, return basename as key.
+        return base_cap.split('.')[0]
 
     def eval(self, algorithm):
         """
