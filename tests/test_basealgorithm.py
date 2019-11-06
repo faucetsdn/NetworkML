@@ -7,6 +7,15 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+def test_parse_pcap_name():
+    instance = BaseAlgorithm()
+    parse_pcap_name = instance.parse_pcap_name
+    assert parse_pcap_name('notaposeidontracefile.pcap') == 'notaposeidontracefile'
+    assert parse_pcap_name('trace_but_invalid') == None
+    assert parse_pcap_name('trace_ab12_2001-01-01_02_03-client-ip-1-2-3-4.pcap') == 'ab12'
+    assert parse_pcap_name('trace_ab12_2001-01-01_02_03-miscellaneous-stuff.pcap') == None
+
+
 def test_basealgorithm():
     instance = BaseAlgorithm()
 
