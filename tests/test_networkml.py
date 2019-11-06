@@ -9,22 +9,26 @@ from networkml.NetworkML import NetworkML
 def test_networml_nofiles():
     sys.argv = ['bin/networkml']
     netml = NetworkML()
+    assert netml.model.feature_list
 
 
 def test_networkml_eval_onelayer():
     sys.argv = ['bin/networkml', '-p', 'tests/']
     netml = NetworkML()
+    assert netml.model.feature_list
 
 
 def test_networkml_eval_randomforest():
     sys.argv = ['bin/networkml', '-p', 'tests/', '-a', 'randomforest']
     os.environ['POSEIDON_PUBLIC_SESSIONS'] = ''
     netml = NetworkML()
+    assert netml.model.feature_list
 
 
 def test_networkml_eval_sos():
-    sys.argv = ['bin/networkml', '-p', 'tests/test.pcap', '-a', 'sos']
+    sys.argv = ['bin/networkml', '-p', 'tests/trace_ab12_2001-01-01_02_03-client-ip-1-2-3-4.pcap', '-a', 'sos']
     netml = NetworkML()
+    assert netml.model.feature_list
 
 
 def test_networkml_train_onelayer():
@@ -49,6 +53,7 @@ def test_networkml_train_sos():
     sys.argv = ['bin/networkml', '-p', 'tests/', '-o', 'train',
                 '-a', 'sos', '-m', 'networkml/trained_models/sos/SoSmodel']
     netml = NetworkML()
+    assert not netml.model.feature_list
 
 
 def test_networkml_test_onelayer():
@@ -64,3 +69,4 @@ def test_networkml_test_randomforest():
                 '-o', 'test', '-a', 'randomforest', '-m', 'networkml/trained_models/randomforest/RandomForestModel.pkl']
     os.environ['POSEIDON_PUBLIC_SESSIONS'] = ''
     netml = NetworkML()
+    assert netml.model.feature_list

@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import re
 import time
 
 import pika
@@ -65,6 +66,22 @@ class BaseAlgorithm:
         self.model_hash = model_hash
         self.model_path = model_path
 
+    @staticmethod
+    def parse_pcap_name(base_pcap):
+        ## The parsing operation below assumes a specific file naming
+        ## convention trace_DeviceName-deviceID-time-duration-flags.pcap
+        ## Explanation: All files coming from Poseidon have trace_ at their
+        ## beginning. The device name and deviceID colums are self explanatory.
+        ## Time refers to the day of the week and time of day. Duration refers
+        ## to the length of the network traffic capture. The flags aspect
+        ## refers to an unknown characteristic.
+        # TODO: tolerate tshark labels in the trace name, but do not parse them for now.
+        pcap_re = re.compile(r'^trace_([\da-f]+)_.+(client|server)-(.+).pcap$')
+        pcap_match = pcap_re.match(base_pcap)
+        if pcap_match:
+            return pcap_match.group(1)
+        return None
+
     def eval(self, algorithm):
         """
         This operation uses a specified algorithm to predict--for particular
@@ -78,41 +95,25 @@ class BaseAlgorithm:
             stochastic outlier selection (SOS).
         """
 
-        ## The parsing operation below assumes a specific file naming
-        ## convention trace_DeviceName-deviceID-time-duration-flags.pcap
-        ## Explanation: All files coming from Poseidon have trace_ at their
-        ## beginning. The device name and deviceID colums are self explanatory.
-        ## Time refers to the day of the week and time of day. Duration refers
-        ## to the length of the network traffic capture. The flags aspect
-        ## refers to an unknown characteristic.
         for fi in self.files:
             self.logger.info('Processing {0}...'.format(fi))
-            source_mac = None
-            key = None
-            split_path = 'None'
-            try:
-                split_path = os.path.split(fi)[-1]
-                split_path = split_path.split('.')
-                split_path = split_path[0].split('-')
-                key = split_path[0].split('_')[1]
-            except Exception as e:  # pragma: no cover
-                self.logger.debug('Could not get key because %s', str(e))
-
-            ## Ignore misc files
-            if (split_path[-1] == 'miscellaneous'):
+            base_pcap = os.path.basename(fi)
+            key = self.parse_pcap_name(base_pcap)
+            if key is None:
+                self.logger.debug('Ignoring unknown pcap name %s', base_pcap)
                 continue
 
             ## Get representations from the model
             reps, source_mac, timestamps, preds, others, capture_ip_source = self.model.get_representation(
                 str(fi),
-                source_ip=source_mac,
+                source_ip=None,
                 mean=False
             )
 
             ## If no predictions are made, send a message with explanation
             if preds is None:
                 message = {}
-                message[key] = {'valid': False, 'pcap': os.path.split(fi)[-1]}
+                message[key] = {'valid': False, 'pcap': base_pcap}
                 uid = os.getenv('id', 'None')
                 file_path = os.getenv('file_path', 'None')
                 message = {'id': uid, 'type': 'metadata', 'file_path': file_path,
@@ -223,7 +224,7 @@ class BaseAlgorithm:
                 file_path = os.getenv('file_path', 'None')
                 message = {'id': uid, 'type': 'metadata', 'file_path': file_path, 'data': decision,
                            'results': {'tool': 'networkml', 'version': networkml.__version__}}
-                message['data']['pcap'] = os.path.split(fi)[-1]
+                message['data']['pcap'] = base_pcap
                 message = json.dumps(message)
                 self.logger.info('Message: ' + message)
                 if self.common.use_rabbit:
