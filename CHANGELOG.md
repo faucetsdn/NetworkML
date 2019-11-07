@@ -1,3 +1,11 @@
+
+# v0.4.1 (2019-11-07)
+
+- updated numpy to 1.17.3
+- updated pytest to 5.2.2
+- Added documentation
+- Added support for additional labels and filenames
+
 # v0.4.0 (2019-10-24)
 
 - Updated pytest-cov
