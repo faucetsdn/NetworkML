@@ -1,18 +1,44 @@
+# Byte-compiled / optimized / DLL files
 __pycache__/
+pytype_output/
+.pytype
+*.py[cod]
+*$py.class
 
-__init__.pyc
-*.pyc
+# C extensions
+*.so
 
-.DS_Store
+# Editor files
+*~
+
+# Distribution / packaging
+.Python
+env/
 build/
+develop-eggs/
 dist/
-networkml.egg-info/
-*.swo
-*.swp
-networkml/trained_models/sos/SoSmodel.pkl
-networkml/trained_models/sos/checkpoint
-networkml/trained_models/onelayer/*.json
-networkml/trained_models/randomforest/*.json
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
 
 # Unit test / coverage reports
 htmlcov/
@@ -25,3 +51,61 @@ coverage.xml
 *,cover
 .hypothesis/
 .pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# celery beat schedule file
+celerybeat-schedule
+
+# SageMath parsed files
+*.sage.py
+
+# dotenv
+.env
+
+# virtualenv
+.venv
+venv/
+ENV/
+
+# Spyder project settings
+.spyderproject
+
+# Rope project settings
+.ropeproject
+
+# vim temp files
+*.swp
+*.swo
+
+.mypy_cache
+
+# IntelliJ IDE files
+.idea/
+faucet.iml
+*.bak

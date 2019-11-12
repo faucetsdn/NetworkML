@@ -65,6 +65,16 @@ class BaseAlgorithm:
         self.model = model
         self.model_hash = model_hash
         self.model_path = model_path
+        self.has_avx = self.detect_avx
+
+    @staticmethod
+    def detect_avx():
+        ## Check if CPU supports AVX (advanced vector extension),
+        ## which speeds up certain calculations
+        if 'flags' in get_cpu_info() and (
+                'avx' in get_cpu_info()['flags'] or 'avx2' in get_cpu_info()['flags']):
+            return True
+        return False
 
     @staticmethod
     def parse_pcap_name(base_pcap):
@@ -84,6 +94,29 @@ class BaseAlgorithm:
             return None
         # Not a Poseidon trace file, return basename as key.
         return base_pcap.split('.')[0]
+
+    def publish_message(self, message, close=False):
+        if self.common.use_rabbit:
+            uid = os.getenv('id', 'None')
+            file_path = os.getenv('file_path', 'None')
+            message.update({
+                'uid': uid,
+                'file_path': file_path,
+                'type': 'metadata',
+                'results': {'tool': 'networkml', 'version': networkml.__version__}})
+            message = json.dumps(message)
+            self.logger.info('Message: ' + message)
+            self.common.channel.basic_publish(
+                exchange=self.common.exchange,
+                routing_key=self.common.routing_key,
+                body=message,
+                properties=pika.BasicProperties(delivery_mode=2,))
+            if close:
+                try:
+                    self.common.connection.close()
+                except Exception as e:  # pragma: no cover
+                    self.logger.error(
+                        'Unable to close rabbit connection because: {0}'.format(str(e)))
 
     def eval(self, algorithm):
         """
@@ -117,20 +150,10 @@ class BaseAlgorithm:
             if preds is None:
                 message = {}
                 message[key] = {'valid': False, 'pcap': base_pcap}
-                uid = os.getenv('id', 'None')
-                file_path = os.getenv('file_path', 'None')
-                message = {'id': uid, 'type': 'metadata', 'file_path': file_path,
-                           'data': message,
-                           'results': {'tool': 'networkml', 'version': networkml.__version__}}
-                message = json.dumps(message)
+                message = {'data': message}
                 self.logger.info(
                     'Not enough sessions in file \'%s\'', str(fi))
-                if self.common.use_rabbit:
-                    self.common.channel.basic_publish(exchange=self.common.exchange,
-                                                      routing_key=self.common.routing_key,
-                                                      body=message,
-                                                      properties=pika.BasicProperties(
-                                                          delivery_mode=2,))
+                self.publish_message(message)
                 continue
 
             else: ## If a prediction is made, send message with prediction
@@ -171,13 +194,7 @@ class BaseAlgorithm:
                 timestamp = timestamps[0].timestamp()
                 labels, confs = zip(*preds)
                 abnormality = 0.0
-                has_avx = False
-
-                ## Check if CPU supports AVX (advanced vector extension),
-                ## which speeds up certain calculations
-                if 'flags' in get_cpu_info() and ('avx' in get_cpu_info()['flags'] or 'avx2' in get_cpu_info()['flags']):
-                    has_avx = True
-                if has_avx:
+                if self.has_avx:
                     from networkml.algorithms.sos.eval_SoSModel import eval_pcap
                     abnormality = eval_pcap(
                         str(fi), self.conf_labels, self.time_const, label=labels[0],
@@ -222,38 +239,12 @@ class BaseAlgorithm:
                         self.logger.error(
                             'Failed to update keys in Redis because: {0}'.format(str(e)))
 
-                # Get json message
-                uid = os.getenv('id', 'None')
-                file_path = os.getenv('file_path', 'None')
-                message = {'id': uid, 'type': 'metadata', 'file_path': file_path, 'data': decision,
-                           'results': {'tool': 'networkml', 'version': networkml.__version__}}
+                message = {'data': decision}
                 message['data']['pcap'] = base_pcap
-                message = json.dumps(message)
-                self.logger.info('Message: ' + message)
-                if self.common.use_rabbit:
-                    self.common.channel.basic_publish(exchange=self.common.exchange,
-                                                      routing_key=self.common.routing_key,
-                                                      body=message,
-                                                      properties=pika.BasicProperties(
-                                                          delivery_mode=2,))
+                self.publish_message(message)
 
-        uid = os.getenv('id', 'None')
-        file_path = os.getenv('file_path', 'None')
-        message = {'id': uid, 'type': 'metadata', 'file_path': file_path, 'data': '',
-                   'results': {'tool': 'networkml', 'version': networkml.__version__}}
-        message = json.dumps(message)
-        if self.common.use_rabbit:
-            self.common.channel.basic_publish(exchange=self.common.exchange,
-                                              routing_key=self.common.routing_key,
-                                              body=message,
-                                              properties=pika.BasicProperties(
-                                                  delivery_mode=2,))
-            try:
-                self.common.connection.close()
-            except Exception as e:  # pragma: no cover
-                self.logger.error(
-                    'Unable to close rabbit connection because: {0}'.format(str(e)))
-        return
+        message = {'data': ''}
+        self.publish_message(message, close=True)
 
     def train(self, data_dir, save_path, m, algorithm):
         # Initialize the model
