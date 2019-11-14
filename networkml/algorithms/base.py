@@ -86,14 +86,18 @@ class BaseAlgorithm:
         ## to the length of the network traffic capture. The flags aspect
         ## refers to an unknown characteristic.
         # TODO: tolerate tshark labels in the trace name, but do not parse them for now.
+        pcap_key = None
+        pcap_labels = None
         if base_pcap.startswith('trace_'):
             pcap_re = re.compile(r'^trace_([\da-f]+)_.+(client|server)-(.+).pcap$')
             pcap_match = pcap_re.match(base_pcap)
             if pcap_match:
-                return pcap_match.group(1)
-            return None
-        # Not a Poseidon trace file, return basename as key.
-        return base_pcap.split('.')[0]
+                pcap_key = pcap_match.group(1)
+                pcap_labels = pcap_match.group(3)
+        else:
+            # Not a Poseidon trace file, return basename as key.
+            pcap_key = base_pcap.split('.')[0]
+        return (pcap_key, pcap_labels)
 
     def publish_message(self, message, close=False):
         if self.common.use_rabbit:
@@ -134,8 +138,8 @@ class BaseAlgorithm:
         for fi in self.files:
             self.logger.info('Processing {0}...'.format(fi))
             base_pcap = os.path.basename(fi)
-            key = self.parse_pcap_name(base_pcap)
-            if key is None:
+            pcap_key, pcap_labels = self.parse_pcap_name(base_pcap)
+            if pcap_key is None:
                 self.logger.debug('Ignoring unknown pcap name %s', base_pcap)
                 continue
 
@@ -149,7 +153,7 @@ class BaseAlgorithm:
             ## If no predictions are made, send a message with explanation
             if preds is None:
                 message = {}
-                message[key] = {'valid': False, 'pcap': base_pcap}
+                message[pcap_key] = {'valid': False, 'pcap': base_pcap}
                 message = {'data': message}
                 self.logger.info(
                     'Not enough sessions in file \'%s\'', str(fi))
@@ -209,7 +213,7 @@ class BaseAlgorithm:
                     timestamp
                 )
                 decision = self.common.basic_decision(
-                    key,
+                    pcap_key,
                     source_mac,
                     prev_s,
                     timestamp,
@@ -217,12 +221,15 @@ class BaseAlgorithm:
                     confs,
                     abnormality
                 )
-                if key in decision:
-                    decision[key]['source_ip'] = capture_ip_source
-                    decision[key]['source_mac'] = source_mac
+                sources = {
+                    'source_ip': capture_ip_source,
+                    'source_mac': source_mac,
+                    'pcap_labels': pcap_labels,
+                }
+                if pcap_key in decision:
+                    decision[pcap_key].update(sources)
                 elif source_mac in decision:
-                    decision[source_mac]['source_ip'] = capture_ip_source
-                    decision[source_mac]['source_mac'] = source_mac
+                    decision[source_mac].update(sources)
                 self.logger.debug('Created message')
                 for i in range(3):
                     self.logger.info(
