@@ -162,8 +162,6 @@ class BaseAlgorithm:
 
             else: ## If a prediction is made, send message with prediction
                 self.logger.debug('Generating predictions')
-                last_update, prev_rep = self.common.get_previous_state(
-                    source_mac, timestamps[0])
 
                 ## Update the stored representation
                 if reps is not None:
@@ -198,7 +196,7 @@ class BaseAlgorithm:
                 timestamp = timestamps[0].timestamp()
                 labels, confs = zip(*preds)
                 abnormality = 0.0
-                if self.has_avx:
+                if self.has_avx():
                     from networkml.algorithms.sos.eval_SoSModel import eval_pcap
                     abnormality = eval_pcap(
                         str(fi), self.conf_labels, self.time_const, label=labels[0],
@@ -207,7 +205,6 @@ class BaseAlgorithm:
                     self.logger.warning(
                         "Can't run abnormality detection because this CPU doesn't support AVX")
 
-                ##
                 prev_s = self.common.get_address_info(
                     source_mac,
                     timestamp
