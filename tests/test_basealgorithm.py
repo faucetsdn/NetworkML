@@ -20,6 +20,15 @@ def test_parse_pcap_name():
         None, None)
 
 
+def test_parse_pcap_labels():
+    instance = BaseAlgorithm()
+    for label_str, result in (
+         ('ip-8-8-8-8-192-168-254-254-8-8-8-8-ssl-ip-frame-wsshort-eth-tcp-port-443',
+             {'ip_lowest_port': '443', 'ip_proto': 'tcp', 'ip_version': 4, 'ip_app': 'ssl'}),
+         ('ip-17-253-110-125-17-253-110-125-192-168-3-2-wsshort-udp-ip-ntp-frame-eth-port-123',
+             {'ip_lowest_port': '123', 'ip_proto': 'udp', 'ip_version': 4, 'ip_app': 'ntp'})):
+        assert instance.parse_pcap_labels(label_str) == result
+
 def test_has_avx():
     instance = BaseAlgorithm()
     assert isinstance(instance.has_avx(), bool)

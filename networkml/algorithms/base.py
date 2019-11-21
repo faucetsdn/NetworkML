@@ -99,6 +99,29 @@ class BaseAlgorithm:
             pcap_key = base_pcap.split('.')[0]
         return (pcap_key, pcap_labels)
 
+    @staticmethod
+    def parse_pcap_labels(pcap_labels_str):
+        pcap_labels = {
+            'ip_lowest_port': None,
+            'ip_proto': None,
+            'ip_version': None,
+            'ip_app': None,
+        }
+        pcap_label_res = {
+            'ip_lowest_port': re.compile(r'.*port-(\d+).*'),
+            'ip_proto': re.compile(r'.+\-(arp|icmp|icmp6|udp|tcp)\-.+'),
+            'ip_app': re.compile(r'.+\-(bootp|dns|esp|ftp|http|ssl|ntp)\-.+'),
+        }
+        for field, label_re in pcap_label_res.items():
+            match = label_re.match(pcap_labels_str)
+            if match:
+                pcap_labels[field] = match.group(1)
+        if 'ipv6' in pcap_labels_str:
+            pcap_labels['ip_version'] = 6
+        elif pcap_labels['ip_proto'] is not None:
+            pcap_labels['ip_version'] = 4
+        return pcap_labels
+
     def publish_message(self, message, close=False):
         if self.common.use_rabbit:
             uid = os.getenv('id', 'None')
