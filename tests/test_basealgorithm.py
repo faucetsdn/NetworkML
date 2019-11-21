@@ -20,6 +20,11 @@ def test_parse_pcap_name():
         None, None)
 
 
+def test_has_avx():
+    instance = BaseAlgorithm()
+    assert isinstance(instance.has_avx(), bool)
+
+
 def test_basealgorithm():
     instance = BaseAlgorithm()
 
