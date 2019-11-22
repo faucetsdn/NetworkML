@@ -1,3 +1,11 @@
+# v0.4.2 (2019-11-22)
+
+- Updated numpy to 1.17.4
+- Updated pytest to 5.3
+- Edited .gitignore
+- Added tests for label extraction
+- Added test for avx check
+- Added pcap labels to decision
 
 # v0.4.1 (2019-11-07)
 
