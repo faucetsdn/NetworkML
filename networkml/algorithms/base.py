@@ -65,6 +65,16 @@ class BaseAlgorithm:
         self.model = model
         self.model_hash = model_hash
         self.model_path = model_path
+        self.has_avx = self.detect_avx
+
+    @staticmethod
+    def detect_avx():
+        ## Check if CPU supports AVX (advanced vector extension),
+        ## which speeds up certain calculations
+        if 'flags' in get_cpu_info() and (
+                'avx' in get_cpu_info()['flags'] or 'avx2' in get_cpu_info()['flags']):
+            return True
+        return False
 
     @staticmethod
     def parse_pcap_name(base_pcap):
@@ -76,14 +86,64 @@ class BaseAlgorithm:
         ## to the length of the network traffic capture. The flags aspect
         ## refers to an unknown characteristic.
         # TODO: tolerate tshark labels in the trace name, but do not parse them for now.
+        pcap_key = None
+        pcap_labels = None
         if base_pcap.startswith('trace_'):
             pcap_re = re.compile(r'^trace_([\da-f]+)_.+(client|server)-(.+).pcap$')
             pcap_match = pcap_re.match(base_pcap)
             if pcap_match:
-                return pcap_match.group(1)
-            return None
-        # Not a Poseidon trace file, return basename as key.
-        return base_pcap.split('.')[0]
+                pcap_key = pcap_match.group(1)
+                pcap_labels = pcap_match.group(3)
+        else:
+            # Not a Poseidon trace file, return basename as key.
+            pcap_key = base_pcap.split('.')[0]
+        return (pcap_key, pcap_labels)
+
+    @staticmethod
+    def parse_pcap_labels(pcap_labels_str):
+        pcap_labels = {
+            'ip_lowest_port': None,
+            'ip_proto': None,
+            'ip_version': None,
+            'ip_app': None,
+        }
+        pcap_label_res = {
+            'ip_lowest_port': re.compile(r'.*port-(\d+).*'),
+            'ip_proto': re.compile(r'.+\-(arp|icmp|icmp6|udp|tcp)\-.+'),
+            'ip_app': re.compile(r'.+\-(bootp|dns|esp|ftp|http|ssl|ntp)\-.+'),
+        }
+        for field, label_re in pcap_label_res.items():
+            match = label_re.match(pcap_labels_str)
+            if match:
+                pcap_labels[field] = match.group(1)
+        if 'ipv6' in pcap_labels_str:
+            pcap_labels['ip_version'] = 6
+        elif pcap_labels['ip_proto'] is not None:
+            pcap_labels['ip_version'] = 4
+        return pcap_labels
+
+    def publish_message(self, message, close=False):
+        if self.common.use_rabbit:
+            uid = os.getenv('id', 'None')
+            file_path = os.getenv('file_path', 'None')
+            message.update({
+                'uid': uid,
+                'file_path': file_path,
+                'type': 'metadata',
+                'results': {'tool': 'networkml', 'version': networkml.__version__}})
+            message = json.dumps(message)
+            self.logger.info('Message: ' + message)
+            self.common.channel.basic_publish(
+                exchange=self.common.exchange,
+                routing_key=self.common.routing_key,
+                body=message,
+                properties=pika.BasicProperties(delivery_mode=2,))
+            if close:
+                try:
+                    self.common.connection.close()
+                except Exception as e:  # pragma: no cover
+                    self.logger.error(
+                        'Unable to close rabbit connection because: {0}'.format(str(e)))
 
     def eval(self, algorithm):
         """
@@ -101,8 +161,8 @@ class BaseAlgorithm:
         for fi in self.files:
             self.logger.info('Processing {0}...'.format(fi))
             base_pcap = os.path.basename(fi)
-            key = self.parse_pcap_name(base_pcap)
-            if key is None:
+            pcap_key, pcap_labels = self.parse_pcap_name(base_pcap)
+            if pcap_key is None:
                 self.logger.debug('Ignoring unknown pcap name %s', base_pcap)
                 continue
 
@@ -116,27 +176,15 @@ class BaseAlgorithm:
             ## If no predictions are made, send a message with explanation
             if preds is None:
                 message = {}
-                message[key] = {'valid': False, 'pcap': base_pcap}
-                uid = os.getenv('id', 'None')
-                file_path = os.getenv('file_path', 'None')
-                message = {'id': uid, 'type': 'metadata', 'file_path': file_path,
-                           'data': message,
-                           'results': {'tool': 'networkml', 'version': networkml.__version__}}
-                message = json.dumps(message)
+                message[pcap_key] = {'valid': False, 'pcap': base_pcap}
+                message = {'data': message}
                 self.logger.info(
                     'Not enough sessions in file \'%s\'', str(fi))
-                if self.common.use_rabbit:
-                    self.common.channel.basic_publish(exchange=self.common.exchange,
-                                                      routing_key=self.common.routing_key,
-                                                      body=message,
-                                                      properties=pika.BasicProperties(
-                                                          delivery_mode=2,))
+                self.publish_message(message)
                 continue
 
             else: ## If a prediction is made, send message with prediction
                 self.logger.debug('Generating predictions')
-                last_update, prev_rep = self.common.get_previous_state(
-                    source_mac, timestamps[0])
 
                 ## Update the stored representation
                 if reps is not None:
@@ -171,13 +219,7 @@ class BaseAlgorithm:
                 timestamp = timestamps[0].timestamp()
                 labels, confs = zip(*preds)
                 abnormality = 0.0
-                has_avx = False
-
-                ## Check if CPU supports AVX (advanced vector extension),
-                ## which speeds up certain calculations
-                if 'flags' in get_cpu_info() and ('avx' in get_cpu_info()['flags'] or 'avx2' in get_cpu_info()['flags']):
-                    has_avx = True
-                if has_avx:
+                if self.has_avx():
                     from networkml.algorithms.sos.eval_SoSModel import eval_pcap
                     abnormality = eval_pcap(
                         str(fi), self.conf_labels, self.time_const, label=labels[0],
@@ -186,13 +228,12 @@ class BaseAlgorithm:
                     self.logger.warning(
                         "Can't run abnormality detection because this CPU doesn't support AVX")
 
-                ##
                 prev_s = self.common.get_address_info(
                     source_mac,
                     timestamp
                 )
                 decision = self.common.basic_decision(
-                    key,
+                    pcap_key,
                     source_mac,
                     prev_s,
                     timestamp,
@@ -200,12 +241,15 @@ class BaseAlgorithm:
                     confs,
                     abnormality
                 )
-                if key in decision:
-                    decision[key]['source_ip'] = capture_ip_source
-                    decision[key]['source_mac'] = source_mac
+                sources = {
+                    'source_ip': capture_ip_source,
+                    'source_mac': source_mac,
+                    'pcap_labels': pcap_labels,
+                }
+                if pcap_key in decision:
+                    decision[pcap_key].update(sources)
                 elif source_mac in decision:
-                    decision[source_mac]['source_ip'] = capture_ip_source
-                    decision[source_mac]['source_mac'] = source_mac
+                    decision[source_mac].update(sources)
                 self.logger.debug('Created message')
                 for i in range(3):
                     self.logger.info(
@@ -222,38 +266,12 @@ class BaseAlgorithm:
                         self.logger.error(
                             'Failed to update keys in Redis because: {0}'.format(str(e)))
 
-                # Get json message
-                uid = os.getenv('id', 'None')
-                file_path = os.getenv('file_path', 'None')
-                message = {'id': uid, 'type': 'metadata', 'file_path': file_path, 'data': decision,
-                           'results': {'tool': 'networkml', 'version': networkml.__version__}}
+                message = {'data': decision}
                 message['data']['pcap'] = base_pcap
-                message = json.dumps(message)
-                self.logger.info('Message: ' + message)
-                if self.common.use_rabbit:
-                    self.common.channel.basic_publish(exchange=self.common.exchange,
-                                                      routing_key=self.common.routing_key,
-                                                      body=message,
-                                                      properties=pika.BasicProperties(
-                                                          delivery_mode=2,))
+                self.publish_message(message)
 
-        uid = os.getenv('id', 'None')
-        file_path = os.getenv('file_path', 'None')
-        message = {'id': uid, 'type': 'metadata', 'file_path': file_path, 'data': '',
-                   'results': {'tool': 'networkml', 'version': networkml.__version__}}
-        message = json.dumps(message)
-        if self.common.use_rabbit:
-            self.common.channel.basic_publish(exchange=self.common.exchange,
-                                              routing_key=self.common.routing_key,
-                                              body=message,
-                                              properties=pika.BasicProperties(
-                                                  delivery_mode=2,))
-            try:
-                self.common.connection.close()
-            except Exception as e:  # pragma: no cover
-                self.logger.error(
-                    'Unable to close rabbit connection because: {0}'.format(str(e)))
-        return
+        message = {'data': ''}
+        self.publish_message(message, close=True)
 
     def train(self, data_dir, save_path, m, algorithm):
         # Initialize the model
