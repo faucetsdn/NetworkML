@@ -1,3 +1,8 @@
+# v0.4.3 (2019-12-4)
+
+- update pytest to 5.3.1
+- update scikit-learn to 0.22
+
 # v0.4.2 (2019-11-22)
 
 - Updated numpy to 1.17.4
