@@ -56,9 +56,8 @@ def packetizer(path):
     Returns:
         packet_dict: Dictionary of packets with keys formatted as above
     '''
-
     packet_dict = OrderedDict()
-    with pyshark.FileCapture(path, use_json=True, include_raw=True,
+    with pyshark.FileCapture(path, use_json=True, include_raw=True, keep_packets=False,
             custom_parameters={'-o': 'tcp.desegment_tcp_streams:false'}) as cap:
         for packet in cap:
             data = packet.get_raw_packet()
