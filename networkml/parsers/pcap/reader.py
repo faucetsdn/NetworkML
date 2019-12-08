@@ -1,10 +1,11 @@
 import datetime
+import json
 import os
 import subprocess
 from collections import OrderedDict
 
 
-def parse_packet_head(line):
+def parse_packet_head(layers_json):
     '''
     Parses the head of the packet to get the key tuple which contains
     the flow level data
@@ -15,66 +16,41 @@ def parse_packet_head(line):
     Returns:
         key: Tuple key which contains packet info
     '''
-
-    # Split the header line into its components
-    data = line.decode('utf8')
-    data = data.split(' ')
-
-    # Only generate a key if this packet contains IP information
-    if len(data) < 2:
-        return None
-
-    # Parse out the date and time the packet was seen
-    date_str = data[0] + ' ' + data[1]
+    # TODO: should be using utcfromtimestamp()
     try:
-        date = datetime.datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S.%f')
-    except ValueError:  # pragma: no cover
+        date = datetime.datetime.fromtimestamp(float(layers_json['frame']['frame.time_epoch']))
+    except (ValueError, KeyError):
         return None
 
-    # Parse out the source and destination addresses and ports
-    source_data = data[3].split('.')
-    destination_data = data[5].split('.')
-    destination_port = '0'
-    source_port = '0'
+    src_address = None
+    dst_address = None
 
-    # ipv4 packet
-    if data[2] == 'IP':
-        # if TCP or UDP set port
-        if len(source_data) >= 5:
-            source_port = source_data[4]
+    for ip_type in ('ip', 'ipv6'):
+        try:
+            src_address = layers_json[ip_type]['%s.src' % ip_type]
+            dst_address = layers_json[ip_type]['%s.dst' % ip_type]
+            break
+        except KeyError:
+            continue
 
-        source_str = '.'.join(source_data[0:4]) + ':' + source_port
-        if len(destination_data) < 5:
-            destination_str = '.'.join(destination_data[0:4])[0:-1] \
-                              + ':' \
-                              + destination_port
-        else:
-            destination_port = destination_data[4][0:-1]
-            destination_str = '.'.join(destination_data[0:4]) \
-                              + ':' \
-                              + destination_port
-    # ipv6 packet
-    elif data[2] == 'IP6':
-        # if TCP or UDP set port
-        if len(source_data) >= 2:
-            source_port = source_data[1]
+    src_port = '0'
+    dst_port = '0'
 
-        source_str = source_data[0] + ':' + source_port
-        if len(destination_data) < 2:
-            destination_str = destination_data[0][0:-
-                                                  1] + ':' + destination_port
-        else:
-            destination_port = destination_data[1][0:-1]
-            destination_str = destination_data[0] \
-                + ':' \
-                + destination_port
-    else:
-        return None
+    for ip_proto_type in ('tcp', 'udp'):
+        try:
+            src_port = layers_json[ip_proto_type]['%s.srcport' % ip_proto_type]
+            dst_port = layers_json[ip_proto_type]['%s.dstport' % ip_proto_type]
+            break
+        except KeyError:
+            continue
 
-    return date, source_str, destination_str
+    if src_address and dst_address:
+        return date, ':'.join((src_address, src_port)), ':'.join((dst_address, dst_port))
+
+    return None
 
 
-def parse_packet_data(line):
+def parse_packet_data(layers_json):
     '''
     Parses the hex data from a line in the packet and returns it as a
     string of characters in 0123456789abcdef.
@@ -85,14 +61,7 @@ def parse_packet_data(line):
     Returns:
         packet_data: String containing the packet data
     '''
-    raw_data = line.decode('utf-8')
-    try:
-        _, data = raw_data.split(':', 1)
-    except ValueError:  # pragma: no cover
-        return None
-    packet_data = data.strip().replace(' ', '')
-
-    return packet_data
+    return layers_json['frame_raw'][0]
 
 
 def packetizer(path):
@@ -108,27 +77,40 @@ def packetizer(path):
         packet_dict: Dictionary of packets with keys formatted as above
     '''
 
+    packet_dict = OrderedDict()
+
+    def parse_buf(buf):
+        if not buf:
+            return
+        packet_json = json.loads(buf)
+        try:
+            layers_json = packet_json['_source']['layers']
+        except KeyError:
+            return
+        head = parse_packet_head(layers_json)
+        data = parse_packet_data(layers_json)
+        if head is not None and data is not None:
+            packet_dict[head] = data
+
     # Read get the pcap info with tcpdump
     FNULL = open(os.devnull, 'w')
-    # TODO: yikes @ the shell=True + unvalidated user input
     proc = subprocess.Popen(
-        'tcpdump -nn -tttt -xx -r' + path,
-        shell=True,
+        ['tshark', '-n', '-T', 'json', '-x', '-r', path, '-o', 'tcp.desegment_tcp_streams:false'],
         stdout=subprocess.PIPE,
         stderr=FNULL
     )
-    head = None
     packet_dict = OrderedDict()
-    # Go through all the lines of the output
+    buf = ''
     for line in proc.stdout:
-        if not line.startswith(b'\t'):
-            head = parse_packet_head(line)
-            if head is not None:
-                packet_dict[head] = ''
-        elif head is not None:
-            data = parse_packet_data(line)
-            if data is not None:
-                packet_dict[head] += data
+        line = line.decode('utf-8')
+        if not line.startswith(' '):
+            continue
+        if line.startswith('  ,'):
+            continue
+        buf += line
+        if line.startswith('  }'):
+            parse_buf(buf)
+            buf = ''
     return packet_dict
 
 
