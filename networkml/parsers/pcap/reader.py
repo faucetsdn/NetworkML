@@ -39,7 +39,11 @@ def parse_packet_head(packet):
         dst_port = getattr(ip_fields, '%s.dstport' % ip_proto_type)
 
     if src_address and dst_address:
-        return date, ':'.join((src_address, src_port)), ':'.join((dst_address, dst_port))
+        src_key = ':'.join((src_address, src_port))
+        dst_key = ':'.join((dst_address, dst_port))
+        return (
+            (date, src_key, dst_key),
+            {src_key: packet.highest_layer, dst_key: packet.highest_layer})
 
     return None
 
@@ -57,14 +61,20 @@ def packetizer(path):
         packet_dict: Dictionary of packets with keys formatted as above
     '''
     packet_dict = OrderedDict()
+    highest_layers_dict = {}
     with pyshark.FileCapture(path, use_json=True, include_raw=True, keep_packets=False,
             custom_parameters={'-o': 'tcp.desegment_tcp_streams:false'}) as cap:
         for packet in cap:
             data = packet.get_raw_packet()
             head = parse_packet_head(packet)
             if head is not None:
-                packet_dict[head] = binascii.hexlify(data).decode('utf-8')
-    return packet_dict
+                keys, highest_layers = head
+                packet_dict[keys] = binascii.hexlify(data).decode('utf-8')
+                for key, highest_layer in highest_layers.items():
+                    if key not in highest_layers_dict:
+                        highest_layers_dict[key] = set()
+                    highest_layers_dict[key].update({highest_layer})
+    return packet_dict, highest_layers_dict
 
 
 def sessionizer(path, duration=None, threshold_time=None):
@@ -85,7 +95,7 @@ def sessionizer(path, duration=None, threshold_time=None):
     '''
 
     # Get the packets from the pcap
-    packet_dict = packetizer(path)
+    packet_dict, _ = packetizer(path)
 
     # Go through the packets one by one and add them to the session dict
     sessions = []
