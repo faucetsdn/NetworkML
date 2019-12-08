@@ -1,11 +1,10 @@
+import binascii
 import datetime
-import json
-import os
-import subprocess
+import pyshark
 from collections import OrderedDict
 
 
-def parse_packet_head(layers_json):
+def parse_packet_head(packet):
     '''
     Parses the head of the packet to get the key tuple which contains
     the flow level data
@@ -17,51 +16,32 @@ def parse_packet_head(layers_json):
         key: Tuple key which contains packet info
     '''
     # TODO: should be using utcfromtimestamp()
-    try:
-        date = datetime.datetime.fromtimestamp(float(layers_json['frame']['frame.time_epoch']))
-    except (ValueError, KeyError):
-        return None
+    date = datetime.datetime.fromtimestamp(float(packet.frame_info.time_epoch))
 
     src_address = None
     dst_address = None
-
     for ip_type in ('ip', 'ipv6'):
         try:
-            src_address = layers_json[ip_type]['%s.src' % ip_type]
-            dst_address = layers_json[ip_type]['%s.dst' % ip_type]
-            break
-        except KeyError:
+            ip_fields = getattr(packet, ip_type)
+        except AttributeError:
             continue
+        src_address = getattr(ip_fields, '%s.src' % ip_type)
+        dst_address = getattr(ip_fields, '%s.dst' % ip_type)
 
     src_port = '0'
     dst_port = '0'
-
     for ip_proto_type in ('tcp', 'udp'):
         try:
-            src_port = layers_json[ip_proto_type]['%s.srcport' % ip_proto_type]
-            dst_port = layers_json[ip_proto_type]['%s.dstport' % ip_proto_type]
-            break
-        except KeyError:
+            ip_fields = getattr(packet, ip_proto_type)
+        except AttributeError:
             continue
+        src_port = getattr(ip_fields, '%s.srcport' % ip_proto_type)
+        dst_port = getattr(ip_fields, '%s.dstport' % ip_proto_type)
 
     if src_address and dst_address:
         return date, ':'.join((src_address, src_port)), ':'.join((dst_address, dst_port))
 
     return None
-
-
-def parse_packet_data(layers_json):
-    '''
-    Parses the hex data from a line in the packet and returns it as a
-    string of characters in 0123456789abcdef.
-
-    Args:
-        line: Hex output from tcpdump
-
-    Returns:
-        packet_data: String containing the packet data
-    '''
-    return layers_json['frame_raw'][0]
 
 
 def packetizer(path):
@@ -78,39 +58,13 @@ def packetizer(path):
     '''
 
     packet_dict = OrderedDict()
-
-    def parse_buf(buf):
-        if not buf:
-            return
-        packet_json = json.loads(buf)
-        try:
-            layers_json = packet_json['_source']['layers']
-        except KeyError:
-            return
-        head = parse_packet_head(layers_json)
-        data = parse_packet_data(layers_json)
-        if head is not None and data is not None:
-            packet_dict[head] = data
-
-    # Read get the pcap info with tcpdump
-    FNULL = open(os.devnull, 'w')
-    proc = subprocess.Popen(
-        ['tshark', '-n', '-T', 'json', '-x', '-r', path, '-o', 'tcp.desegment_tcp_streams:false'],
-        stdout=subprocess.PIPE,
-        stderr=FNULL
-    )
-    packet_dict = OrderedDict()
-    buf = ''
-    for line in proc.stdout:
-        line = line.decode('utf-8')
-        if not line.startswith(' '):
-            continue
-        if line.startswith('  ,'):
-            continue
-        buf += line
-        if line.startswith('  }'):
-            parse_buf(buf)
-            buf = ''
+    with pyshark.FileCapture(path, use_json=True, include_raw=True,
+            custom_parameters={'-o': 'tcp.desegment_tcp_streams:false'}) as cap:
+        for packet in cap:
+            data = packet.get_raw_packet()
+            head = parse_packet_head(packet)
+            if head is not None:
+                packet_dict[head] = binascii.hexlify(data).decode('utf-8')
     return packet_dict
 
 

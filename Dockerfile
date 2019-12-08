@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     python3 \
     python3-dev \
-    tcpdump \
+    tshark \
     && pip3 install --no-cache-dir --upgrade pip==19.3.1 \
     && pip3 install wheel \
     && pip3 install --no-cache-dir -r requirements.txt\
