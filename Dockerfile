@@ -4,18 +4,16 @@ LABEL maintainer="Charlie Lewis <clewis@iqt.org>"
 COPY requirements.txt requirements.txt
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV BUILD_DEPS="curl gcc git python3.6-dev"
 
 RUN apt-get update && apt-get install -yq --no-install-recommends \
-    curl \
-    gcc \
-    git \
-    python3 \
-    python3-dev \
+    $BUILD_DEPS \
+    python3.6 \
     tshark \
     && pip3 install --no-cache-dir --upgrade pip==19.3.1 \
-    && pip3 install wheel \
+    && pip3 install wheel==0.33.6 \
     && pip3 install --no-cache-dir -r requirements.txt\
-    && apt-get remove --purge --auto-remove -y curl gcc git python3-dev \
+    && apt-get remove --purge --auto-remove -y $BUILD_DEPS \
     && apt-get clean \
     && apt-get autoclean \
     && apt-get autoremove \
