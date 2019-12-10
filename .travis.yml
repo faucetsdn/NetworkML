@@ -26,8 +26,8 @@ install:
   - pip3 uninstall -y networkml
   - pip3 install .
 script:
-  - pytest -l -s -v --cov=tests/ --cov=networkml/ --cov-report term-missing -c .coveragerc
   - make test
+  - pytest -l -s -v --cov=tests/ --cov=networkml/ --cov-report term-missing -c .coveragerc
 after_success:
   - codecov
 jobs:
