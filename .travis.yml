@@ -9,22 +9,27 @@ cache:
 python:
   - "3.7"
   - "3.6"
+env:
+  - DEBIAN_FRONTEND=noninteractive
+  - PYTHONPATH=/home/travis/build/$TRAVIS_REPO_SLUG/bin:$PYTHONPATH PYTHONPATH=/home/travis/build/$TRAVIS_REPO_SLUG/networkml:$PYTHONPATH REDIS_HOST=localhost POSEIDON_PUBLIC_SESSIONS=1
+before_install:
+  - sudo tcpdump -i ens4 -w /home/travis/build/$TRAVIS_REPO_SLUG/tests/trace_ab99_2001-01-01_02_03-client-ip-1-2-3-4.pcap &
+  - sudo apt-get update
+  - sudo apt-get install docker-ce tshark
+  - sudo pkill tcpdump
+  - sudo chmod 777 /home/travis/build/$TRAVIS_REPO_SLUG/tests/trace*.pcap
+  - mkdir -p /home/travis/build/$TRAVIS_REPO_SLUG/opts
 install:
   - pip install codecov
-env:
-  - PYTHONPATH=/home/travis/build/$TRAVIS_REPO_SLUG/bin:$PYTHONPATH PYTHONPATH=/home/travis/build/$TRAVIS_REPO_SLUG/networkml:$PYTHONPATH REDIS_HOST=localhost POSEIDON_PUBLIC_SESSIONS=1
+  - find . -name requirements.txt -type f -exec pip3 install -r {} \;
+  - pip3 uninstall -y networkml
+  - pip3 install .
+script:
+  - pytest -l -s -v --cov=tests/ --cov=networkml/ --cov-report term-missing -c .coveragerc
+  - make test
+after_success:
+  - codecov
 jobs:
   include:
   - stage: test
     script: make test
-  - script: find . -name requirements.txt -type f -exec pip3 install -r {} \; && pip3 uninstall -y networkml && pip3 install . && pytest -l -s -v --cov=tests/ --cov=networkml/ --cov-report term-missing -c .coveragerc
-before_install:
-  - sudo tcpdump -i ens4 -w /home/travis/build/$TRAVIS_REPO_SLUG/tests/trace_ab99_2001-01-01_02_03-client-ip-1-2-3-4.pcap &
-  - sudo apt-get update
-  - sudo apt-get install docker-ce
-  - DEBIAN_FRONTEND=noninteractive sudo apt-get install tshark
-  - sudo pkill tcpdump
-  - sudo chmod 777 /home/travis/build/$TRAVIS_REPO_SLUG/tests/trace*.pcap
-  - mkdir -p /home/travis/build/$TRAVIS_REPO_SLUG/opts
-after_success:
-  - codecov
