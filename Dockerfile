@@ -4,11 +4,10 @@ LABEL maintainer="Charlie Lewis <clewis@iqt.org>"
 COPY requirements.txt requirements.txt
 
 ENV DEBIAN_FRONTEND=noninteractive
-ENV BUILD_DEPS="curl gcc git python3.6-dev"
+ENV BUILD_DEPS="gcc git"
 
 RUN apt-get update && apt-get install -yq --no-install-recommends \
     $BUILD_DEPS \
-    python3.6 \
     tshark \
     && pip3 install --no-cache-dir --upgrade pip==19.3.1 \
     && pip3 install wheel==0.33.6 \
