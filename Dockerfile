@@ -4,7 +4,7 @@ LABEL maintainer="Charlie Lewis <clewis@iqt.org>"
 COPY requirements.txt requirements.txt
 
 ENV DEBIAN_FRONTEND=noninteractive
-ENV BUILD_DEPS="gcc git"
+ENV BUILD_DEPS="gcc git python3.7-dev"
 
 RUN apt-get update && apt-get install -yq --no-install-recommends \
     $BUILD_DEPS \
