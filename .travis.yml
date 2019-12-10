@@ -10,8 +10,9 @@ python:
   - "3.7"
   - "3.6"
 env:
-  - DEBIAN_FRONTEND=noninteractive
-  - PYTHONPATH=/home/travis/build/$TRAVIS_REPO_SLUG/bin:$PYTHONPATH PYTHONPATH=/home/travis/build/$TRAVIS_REPO_SLUG/networkml:$PYTHONPATH REDIS_HOST=localhost POSEIDON_PUBLIC_SESSIONS=1
+  global:
+    - DEBIAN_FRONTEND=noninteractive
+    - PYTHONPATH=/home/travis/build/$TRAVIS_REPO_SLUG/bin:$PYTHONPATH PYTHONPATH=/home/travis/build/$TRAVIS_REPO_SLUG/networkml:$PYTHONPATH REDIS_HOST=localhost POSEIDON_PUBLIC_SESSIONS=1
 before_install:
   - sudo tcpdump -i ens4 -w /home/travis/build/$TRAVIS_REPO_SLUG/tests/trace_ab99_2001-01-01_02_03-client-ip-1-2-3-4.pcap &
   - sudo apt-get update
