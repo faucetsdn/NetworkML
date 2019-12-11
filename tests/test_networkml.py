@@ -11,9 +11,9 @@ def run_networkml(args, expected_code=0):
     if expected_code:
         with pytest.raises(SystemExit) as pytest_wrapped_e:
             netml = NetworkML()
-        assert pytest_wrapped_e.type == SystemExit
-        assert pytest_wrapped_e.value.code == expected_code
-        return netml
+            assert pytest_wrapped_e.type == SystemExit
+            assert pytest_wrapped_e.value.code == expected_code
+            return netml
     else:
         return NetworkML()
 
