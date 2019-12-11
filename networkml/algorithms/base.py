@@ -127,7 +127,7 @@ class BaseAlgorithm:
             uid = os.getenv('id', 'None')
             file_path = os.getenv('file_path', 'None')
             message.update({
-                'uid': uid,
+                'id': uid,
                 'file_path': file_path,
                 'type': 'metadata',
                 'results': {'tool': 'networkml', 'version': networkml.__version__}})
@@ -221,9 +221,12 @@ class BaseAlgorithm:
                 abnormality = 0.0
                 if self.has_avx():
                     from networkml.algorithms.sos.eval_SoSModel import eval_pcap
-                    abnormality = eval_pcap(
-                        str(fi), self.conf_labels, self.time_const, label=labels[0],
-                        rnn_size=self.rnn_size, model_path=self.model_path, model_type=algorithm)
+                    try:
+                        abnormality = eval_pcap(
+                            str(fi), self.conf_labels, self.time_const, label=labels[0],
+                            rnn_size=self.rnn_size, model_path=self.model_path, model_type=algorithm)
+                    except ValueError:
+                        self.logger.warning("Can't run abnormality detection because not a big enough sample size")
                 else:
                     self.logger.warning(
                         "Can't run abnormality detection because this CPU doesn't support AVX")
