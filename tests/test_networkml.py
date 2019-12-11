@@ -1,12 +1,25 @@
 import os
+import shutil
 import sys
-
+import tempfile
 import pytest
 
 from networkml.NetworkML import NetworkML
 
 
-def run_networkml(args, expected_code=0):
+def copy_model(model, tempdir):
+    src_test_dir = os.path.dirname(model)
+    dst_test_dir = os.path.join(tempdir.name, os.path.basename(src_test_dir))
+    test_model = os.path.join(dst_test_dir, os.path.basename(model))
+    shutil.copytree(src_test_dir, dst_test_dir)
+    return test_model
+
+
+def run_networkml(args, expected_code=0, model=None):
+    tempdir = tempfile.TemporaryDirectory()
+    if model:
+        test_model = copy_model(model, tempdir)
+        args.extend(['-m', test_model])
     sys.argv = ['bin/networkml'] + args
     if expected_code:
         with pytest.raises(SystemExit) as pytest_wrapped_e:
@@ -48,9 +61,9 @@ def test_networkml_train_onelayer():
 def test_networkml_train_randomforest():
     run_networkml([
         '-p', 'tests/',
-        '-o', 'train', '-a', 'randomforest',
-        '-m', 'networkml/trained_models/randomforest/RandomForestModel.pkl'],
-        expected_code=1)
+        '-o', 'train', '-a', 'randomforest'],
+        expected_code=1,
+        model='networkml/trained_models/randomforest/RandomForestModel.pkl')
 
 
 def test_networkml_train_sos():
@@ -68,6 +81,6 @@ def test_networkml_test_randomforest():
     os.environ['POSEIDON_PUBLIC_SESSIONS'] = ''
     netml = run_networkml([
         '-p', 'tests/',
-        '-o', 'test', '-a', 'randomforest',
-        '-m', 'networkml/trained_models/randomforest/RandomForestModel.pkl'])
+        '-o', 'test', '-a', 'randomforest'],
+        model='networkml/trained_models/randomforest/RandomForestModel.pkl')
     assert netml.model.feature_list
