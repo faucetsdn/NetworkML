@@ -3,8 +3,13 @@ import networkml.parsers.pcap.reader
 
 
 def test_packetizer():
-    packet_dict = networkml.parsers.pcap.reader.packetizer(
+    packet_dict, highest_layers = networkml.parsers.pcap.reader.packetizer(
         'tests/trace_ab12_2001-01-01_02_03-client-ip-1-2-3-4.pcap')
+    assert {'BOOTP_RAW'} == highest_layers['172.16.0.1:67']
+    assert {'HTTP_RAW', 'IMAGE-JFIF_RAW', 'TCP_RAW'} == highest_layers['192.168.3.131:56255']
+    assert {'SSL_RAW', 'TCP_RAW'} == highest_layers['172.16.255.1:10659']
+    assert {'ICMP_RAW'} == highest_layers['67.215.65.132:0']
+    assert {'DNS_RAW'} == highest_layers['192.168.3.131:60629']
     assert len(packet_dict) == 14169
     packet_list = list(packet_dict.items())
     head, data = packet_list[0]

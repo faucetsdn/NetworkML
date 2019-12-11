@@ -3,17 +3,14 @@ LABEL maintainer="Charlie Lewis <clewis@iqt.org>"
 
 COPY requirements.txt requirements.txt
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    gcc \
-    git \
-    python3 \
-    python3-dev \
-    tcpdump \
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -yq --no-install-recommends \
+    gcc=4:8.3.0-1 git=1:2.20.1-2+deb10u1 python3.7-dev=3.7.3-2 tshark=2.6.8-1.1 \
     && pip3 install --no-cache-dir --upgrade pip==19.3.1 \
-    && pip3 install wheel \
-    && pip3 install --no-cache-dir -r requirements.txt\
-    && apt-get remove --purge --auto-remove -y curl gcc git python3-dev \
+    && pip3 install wheel==0.33.6 \
+    && pip3 install --no-cache-dir -r requirements.txt \
+    && apt-get remove --purge --auto-remove -y gcc git python3.7-dev \
     && apt-get clean \
     && apt-get autoclean \
     && apt-get autoremove \
@@ -26,5 +23,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY . /networkml
 WORKDIR /networkml
+
 RUN pip3 install .
+
 ENTRYPOINT ["networkml"]
