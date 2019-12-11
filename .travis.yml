@@ -6,9 +6,8 @@ services:
 language: python
 cache:
   pip: true
-python:
-  - "3.7"
-  - "3.6"
+stages:
+  - test
 env:
   global:
     - DEBIAN_FRONTEND=noninteractive
@@ -27,13 +26,23 @@ install:
   - pip3 install .
   - pip3 install pytype
 script:
-  - pytype .
-  - pytest -l -s -v --cov=tests/ --cov=networkml/ --cov-report term-missing -c .coveragerc
-  - git reset --hard
-  - make test
-after_success:
-  - codecov
+  - ./travis-tests.sh
+matrix:
+  include:
 jobs:
   include:
-  - stage: test
-    script: make test
+    - stage: test
+      language: python
+      python: 3.6
+      env:
+        - TESTTYPE=DOCKER
+    - stage: test
+      language: python
+      python: 3.6
+      env:
+        - TESTTYPE=UNIT
+    - stage: test
+      language: python
+      python: 3.7
+      env:
+        - TESTTYPE=UNIT
