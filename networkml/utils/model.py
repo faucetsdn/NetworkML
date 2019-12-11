@@ -94,7 +94,7 @@ class Model:
             return None, None, None, None, None
 
         for session_dict in binned_sessions:
-            if len(session_dict) > 0:
+            if session_dict is not None and len(session_dict) > 0:
                 if source_ip is None:
                     feature_list, source_ip, other_ips, capture_source_ip = extract_features(
                         session_dict

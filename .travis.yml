@@ -25,7 +25,9 @@ install:
   - find . -name requirements.txt -type f -exec pip3 install -r {} \;
   - pip3 uninstall -y networkml
   - pip3 install .
+  - pip3 install pytype
 script:
+  - pytype .
   - pytest -l -s -v --cov=tests/ --cov=networkml/ --cov-report term-missing -c .coveragerc
   - git reset --hard
   - make test
