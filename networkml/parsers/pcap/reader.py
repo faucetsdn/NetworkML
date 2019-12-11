@@ -1,10 +1,10 @@
+import binascii
 import datetime
-import os
-import subprocess
+import pyshark
 from collections import OrderedDict
 
 
-def parse_packet_head(line):
+def parse_packet_head(packet):
     '''
     Parses the head of the packet to get the key tuple which contains
     the flow level data
@@ -15,84 +15,37 @@ def parse_packet_head(line):
     Returns:
         key: Tuple key which contains packet info
     '''
+    # TODO: should be using utcfromtimestamp()
+    date = datetime.datetime.fromtimestamp(float(packet.frame_info.time_epoch))
 
-    # Split the header line into its components
-    data = line.decode('utf8')
-    data = data.split(' ')
+    src_address = None
+    dst_address = None
+    for ip_type in ('ip', 'ipv6'):
+        try:
+            ip_fields = getattr(packet, ip_type)
+        except AttributeError:
+            continue
+        src_address = getattr(ip_fields, '%s.src' % ip_type)
+        dst_address = getattr(ip_fields, '%s.dst' % ip_type)
 
-    # Only generate a key if this packet contains IP information
-    if len(data) < 2:
-        return None
+    src_port = '0'
+    dst_port = '0'
+    for ip_proto_type in ('tcp', 'udp'):
+        try:
+            ip_fields = getattr(packet, ip_proto_type)
+        except AttributeError:
+            continue
+        src_port = getattr(ip_fields, '%s.srcport' % ip_proto_type)
+        dst_port = getattr(ip_fields, '%s.dstport' % ip_proto_type)
 
-    # Parse out the date and time the packet was seen
-    date_str = data[0] + ' ' + data[1]
-    try:
-        date = datetime.datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S.%f')
-    except ValueError:  # pragma: no cover
-        return None
+    if src_address and dst_address:
+        src_key = ':'.join((src_address, src_port))
+        dst_key = ':'.join((dst_address, dst_port))
+        return (
+            (date, src_key, dst_key),
+            {src_key: packet.highest_layer, dst_key: packet.highest_layer})
 
-    # Parse out the source and destination addresses and ports
-    source_data = data[3].split('.')
-    destination_data = data[5].split('.')
-    destination_port = '0'
-    source_port = '0'
-
-    # ipv4 packet
-    if data[2] == 'IP':
-        # if TCP or UDP set port
-        if len(source_data) >= 5:
-            source_port = source_data[4]
-
-        source_str = '.'.join(source_data[0:4]) + ':' + source_port
-        if len(destination_data) < 5:
-            destination_str = '.'.join(destination_data[0:4])[0:-1] \
-                              + ':' \
-                              + destination_port
-        else:
-            destination_port = destination_data[4][0:-1]
-            destination_str = '.'.join(destination_data[0:4]) \
-                              + ':' \
-                              + destination_port
-    # ipv6 packet
-    elif data[2] == 'IP6':
-        # if TCP or UDP set port
-        if len(source_data) >= 2:
-            source_port = source_data[1]
-
-        source_str = source_data[0] + ':' + source_port
-        if len(destination_data) < 2:
-            destination_str = destination_data[0][0:-
-                                                  1] + ':' + destination_port
-        else:
-            destination_port = destination_data[1][0:-1]
-            destination_str = destination_data[0] \
-                + ':' \
-                + destination_port
-    else:
-        return None
-
-    return date, source_str, destination_str
-
-
-def parse_packet_data(line):
-    '''
-    Parses the hex data from a line in the packet and returns it as a
-    string of characters in 0123456789abcdef.
-
-    Args:
-        line: Hex output from tcpdump
-
-    Returns:
-        packet_data: String containing the packet data
-    '''
-    raw_data = line.decode('utf-8')
-    try:
-        _, data = raw_data.split(':', 1)
-    except ValueError:  # pragma: no cover
-        return None
-    packet_data = data.strip().replace(' ', '')
-
-    return packet_data
+    return None
 
 
 def packetizer(path):
@@ -107,29 +60,21 @@ def packetizer(path):
     Returns:
         packet_dict: Dictionary of packets with keys formatted as above
     '''
-
-    # Read get the pcap info with tcpdump
-    FNULL = open(os.devnull, 'w')
-    # TODO: yikes @ the shell=True + unvalidated user input
-    proc = subprocess.Popen(
-        'tcpdump -nn -tttt -xx -r' + path,
-        shell=True,
-        stdout=subprocess.PIPE,
-        stderr=FNULL
-    )
-    head = None
     packet_dict = OrderedDict()
-    # Go through all the lines of the output
-    for line in proc.stdout:
-        if not line.startswith(b'\t'):
-            head = parse_packet_head(line)
+    highest_layers_dict = {}
+    with pyshark.FileCapture(path, use_json=True, include_raw=True, keep_packets=False,
+            custom_parameters={'-o': 'tcp.desegment_tcp_streams:false'}) as cap:
+        for packet in cap:
+            data = packet.get_raw_packet()
+            head = parse_packet_head(packet)
             if head is not None:
-                packet_dict[head] = ''
-        elif head is not None:
-            data = parse_packet_data(line)
-            if data is not None:
-                packet_dict[head] += data
-    return packet_dict
+                keys, highest_layers = head
+                packet_dict[keys] = binascii.hexlify(data).decode('utf-8')
+                for key, highest_layer in highest_layers.items():
+                    if key not in highest_layers_dict:
+                        highest_layers_dict[key] = set()
+                    highest_layers_dict[key].update({highest_layer})
+    return packet_dict, highest_layers_dict
 
 
 def sessionizer(path, duration=None, threshold_time=None):
@@ -150,7 +95,7 @@ def sessionizer(path, duration=None, threshold_time=None):
     '''
 
     # Get the packets from the pcap
-    packet_dict = packetizer(path)
+    packet_dict, _ = packetizer(path)
 
     # Go through the packets one by one and add them to the session dict
     sessions = []
