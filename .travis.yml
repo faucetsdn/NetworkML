@@ -33,14 +33,9 @@ jobs:
   include:
     - stage: test
       language: python
-      python: 3.6
+      python: 3.7
       env:
         - TESTTYPE=DOCKER
-    - stage: test
-      language: python
-      python: 3.6
-      env:
-        - TESTTYPE=UNIT
     - stage: test
       language: python
       python: 3.7
