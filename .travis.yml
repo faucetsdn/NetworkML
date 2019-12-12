@@ -4,23 +4,40 @@ services:
   - rabbitmq
   - redis
 language: python
-python:
-  - "3.7"
-install:
-  - pip install codecov
+cache:
+  pip: true
+stages:
+  - test
 env:
-  - PYTHONPATH=/home/travis/build/$TRAVIS_REPO_SLUG/bin:$PYTHONPATH PYTHONPATH=/home/travis/build/$TRAVIS_REPO_SLUG/networkml:$PYTHONPATH REDIS_HOST=localhost POSEIDON_PUBLIC_SESSIONS=1
-jobs:
-  include:
-  - stage: test
-    script: make test
-  - script: find . -name requirements.txt -type f -exec pip3 install -r {} \; && pip3 uninstall -y networkml && pip3 install . && pytest -l -s -v --cov=tests/ --cov=networkml/ --cov-report term-missing -c .coveragerc
+  global:
+    - DEBIAN_FRONTEND=noninteractive
+    - PYTHONPATH=/home/travis/build/$TRAVIS_REPO_SLUG/bin:$PYTHONPATH PYTHONPATH=/home/travis/build/$TRAVIS_REPO_SLUG/networkml:$PYTHONPATH REDIS_HOST=localhost POSEIDON_PUBLIC_SESSIONS=1
 before_install:
   - sudo tcpdump -i ens4 -w /home/travis/build/$TRAVIS_REPO_SLUG/tests/trace_ab99_2001-01-01_02_03-client-ip-1-2-3-4.pcap &
   - sudo apt-get update
-  - sudo apt-get install docker-ce
+  - sudo apt-get install docker-ce tshark
   - sudo pkill tcpdump
   - sudo chmod 777 /home/travis/build/$TRAVIS_REPO_SLUG/tests/trace*.pcap
   - mkdir -p /home/travis/build/$TRAVIS_REPO_SLUG/opts
-after_success:
-  - codecov
+install:
+  - pip install codecov
+  - find . -name requirements.txt -type f -exec pip3 install -r {} \;
+  - pip3 uninstall -y networkml
+  - pip3 install .
+  - pip3 install pytype
+script:
+  - ./travis-tests.sh
+matrix:
+  include:
+jobs:
+  include:
+    - stage: test
+      language: python
+      python: 3.7
+      env:
+        - TESTTYPE=DOCKER
+    - stage: test
+      language: python
+      python: 3.7
+      env:
+        - TESTTYPE=UNIT

@@ -46,29 +46,27 @@ class NetworkML():
         self.model = Model(duration=self.duration, hidden_size=None,
                            model_type=self.args.algorithm)
 
+        def create_base_alg():
+            return BaseAlgorithm(
+                files=self.files, config=self.config,
+                model=self.model, model_hash=self.model_hash,
+                model_path=self.args.trained_model,
+                sos_model=self.args.sos_model)
+
         ## Check whether operation is evaluation, train, or test
         ## Evaluation returns predictions that are useful for the deployment
         ## of networkml in an operational environment.
         if self.args.operation == 'eval':
             self.load_model()
 
-            ## Check for model type specified
-            ## onelayer refers to a one-layer neural network
-            if self.args.algorithm == 'onelayer':
-                BaseAlgorithm(files=self.files, config=self.config,
-                              model=self.model, model_hash=self.model_hash,
-                              model_path=self.args.trained_model).eval(self.args.algorithm)
-
-            ## Random forests refers to a decision tree-based model
-            elif self.args.algorithm == 'randomforest':
-                BaseAlgorithm(files=self.files, config=self.config,
-                              model=self.model, model_hash=self.model_hash,
-                              model_path=self.args.trained_model).eval(self.args.algorithm)
+            if (self.args.algorithm == 'onelayer' or self.args.algorithm == 'randomforest'):
+                base_alg = create_base_alg()
+                base_alg.eval(self.args.algorithm)
 
             ## SOS refers to statistical outlier selection model
             elif self.args.algorithm == 'sos':
                 from networkml.algorithms.sos.eval_SoSModel import eval_pcap
-                eval_pcap(self.args.path, self.conf_labels, self.time_const)
+                eval_pcap(self.args.path, self.args.sos_model, self.conf_labels, self.time_const)
 
         ## Train entails training a new model on specific packet captures
         elif self.args.operation == 'train':
@@ -82,10 +80,8 @@ class NetworkML():
                     activation='relu',
                     max_iter=1000
                 )
-                BaseAlgorithm(files=self.files, config=self.config,
-                              model=self.model, model_hash=self.model_hash,
-                              model_path=self.args.trained_model).train(self.args.path,
-                                self.args.save, m, self.args.algorithm)
+                base_alg = create_base_alg()
+                base_alg.train(self.args.path, self.args.save, m, self.args.algorithm)
 
             ## Random forests refers to a decision tree-based model
             elif self.args.algorithm == 'randomforest':
@@ -94,15 +90,13 @@ class NetworkML():
                     min_samples_split=5,
                     class_weight='balanced'
                 )
-                BaseAlgorithm(files=self.files, config=self.config,
-                              model=self.model, model_hash=self.model_hash,
-                              model_path=self.args.trained_model).train(self.args.path,
-                                self.args.save, m, self.args.algorithm)
+                base_alg = create_base_alg()
+                base_alg.train(self.args.path, self.args.save, m, self.args.algorithm)
 
             ## SOS refers to statistical outlier selection model
             elif self.args.algorithm == 'sos':
                 from networkml.algorithms.sos.train_SoSModel import train
-                train(self.args.path, self.time_const, self.rnn_size,
+                train(self.args.path, self.args.sos_model, self.time_const, self.rnn_size,
                       self.conf_labels, self.args.save)
 
         ## Test is for checking overall performance of networkML models for
@@ -112,18 +106,10 @@ class NetworkML():
 
             ## Check for model type specified
             ## onelayer refers to a one-layer neural network
-            if self.args.algorithm == 'onelayer':
-                BaseAlgorithm(files=self.files, config=self.config,
-                              model=self.model, model_hash=self.model_hash,
-                              model_path=self.args.trained_model).test(self.args.path,
-                                self.args.save)
-
-            # Random forests refers to a decision tree-based model
-            elif self.args.algorithm == 'randomforest':
-                BaseAlgorithm(files=self.files, config=self.config,
-                              model=self.model, model_hash=self.model_hash,
-                              model_path=self.args.trained_model).test(self.args.path,
-                                self.args.save)
+            ## Random forests refers to a decision tree-based model
+            if (self.args.algorithm == 'onelayer' or self.args.algorithm == 'randomforest'):
+                base_alg = create_base_alg()
+                base_alg.test(self.args.path, self.args.save)
 
             ## SOS refers to statistical outlier selection model
             elif self.args.algorithm == 'sos':
@@ -144,6 +130,8 @@ class NetworkML():
         parser.add_argument('--operation', '-o', default='eval',
                             choices=['eval', 'train', 'test'],
                             help='which operation to run')
+        parser.add_argument('--sos_model', '-s', default='networkml/trained_models/sos/SoSmodel',
+                            help='path to SoSmodel')
         parser.add_argument('--trained_model', '-m', default='networkml/trained_models/onelayer/OneLayerModel.pkl',
                             help='path to the trained model file')
         parser.add_argument('--path', '-p', default='/pcaps',

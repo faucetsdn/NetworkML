@@ -11,7 +11,7 @@ from networkml.parsers.pcap.session_sequence import create_dataset
 logging.basicConfig(level=logging.INFO)
 
 
-def train(data_dir, time_const, rnn_size, labels, save_path):
+def train(data_dir, sos_model, time_const, rnn_size, labels, save_path):
     logger = logging.getLogger(__name__)
     try:
         if 'LOG_LEVEL' in os.environ and os.environ['LOG_LEVEL'] != '':
@@ -37,7 +37,7 @@ def train(data_dir, time_const, rnn_size, labels, save_path):
     rnnmodel = SoSModel(rnn_size=100, label_size=len(labels))
     logger.info('Created model')
     try:
-        rnnmodel.load('networkml/trained_models/sos/SoSmodel')
+        rnnmodel.load(sos_model)
         logger.info('Loaded model')
     except Exception as e:  # pragma: no cover
         rnnmodel.initialize()
@@ -52,7 +52,7 @@ def train(data_dir, time_const, rnn_size, labels, save_path):
     cost = rnnmodel.get_cost(X_v, L_v, Y_v)
 
     logger.info('Initial validation cost: %s', np.mean(cost))
-    rnnmodel.save('networkml/trained_models/sos/SoSmodel')
+    rnnmodel.save(sos_model)
     logger.info('Saving model at validation cost %s', cost)
     min_cost = cost
     last_save = 0
@@ -67,7 +67,7 @@ def train(data_dir, time_const, rnn_size, labels, save_path):
             logger.info('Validation cost after  %s batches: %s', i, cost)
             if cost < min_cost:
                 min_cost = cost
-                rnnmodel.save('networkml/trained_models/sos/SoSmodel')
+                rnnmodel.save(sos_model)
                 last_save = 0
                 logger.info('Saving model at validation cost %s', cost)
             else:
