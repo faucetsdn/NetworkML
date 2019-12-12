@@ -76,6 +76,7 @@ def test_networkml_train_randomforest():
 def test_networkml_train_sos():
     netml = run_networkml(
         ['-p', 'tests/', '-o', 'train', '-a', 'sos'],
+        savew=True,
         model='networkml/trained_models/sos/SoSmodel')
     assert not netml.model.feature_list
 
