@@ -11,15 +11,21 @@ def copy_model(model, tempdir):
     src_test_dir = os.path.dirname(model)
     dst_test_dir = os.path.join(tempdir.name, os.path.basename(src_test_dir))
     test_model = os.path.join(dst_test_dir, os.path.basename(model))
-    shutil.copytree(src_test_dir, dst_test_dir)
+    if not os.path.exists(dst_test_dir):
+        shutil.copytree(src_test_dir, dst_test_dir)
     return test_model
 
 
-def run_networkml(args, expected_code=0, model='networkml/trained_models/onelayer/OneLayerModel.pkl'):
+def run_networkml(args, expected_code=0,
+                  model='networkml/trained_models/onelayer/OneLayerModel.pkl',
+                  sos_model='networkml/trained_models/sos/SoSmodel'):
     tempdir = tempfile.TemporaryDirectory()
     if model:
         test_model = copy_model(model, tempdir)
         args.extend(['-m', test_model])
+    if sos_model:
+        test_model = copy_model(sos_model, tempdir)
+        args.extend(['-s', test_model])
     sys.argv = ['bin/networkml'] + args
     if expected_code:
         with pytest.raises(SystemExit) as pytest_wrapped_e:

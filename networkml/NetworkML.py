@@ -50,7 +50,8 @@ class NetworkML():
             return BaseAlgorithm(
                 files=self.files, config=self.config,
                 model=self.model, model_hash=self.model_hash,
-                model_path=self.args.trained_model)
+                model_path=self.args.trained_model,
+                sos_model=self.args.sos_model)
 
         ## Check whether operation is evaluation, train, or test
         ## Evaluation returns predictions that are useful for the deployment
@@ -65,7 +66,7 @@ class NetworkML():
             ## SOS refers to statistical outlier selection model
             elif self.args.algorithm == 'sos':
                 from networkml.algorithms.sos.eval_SoSModel import eval_pcap
-                eval_pcap(self.args.path, self.conf_labels, self.time_const)
+                eval_pcap(self.args.path, self.args.sos_model, self.conf_labels, self.time_const)
 
         ## Train entails training a new model on specific packet captures
         elif self.args.operation == 'train':
@@ -95,7 +96,7 @@ class NetworkML():
             ## SOS refers to statistical outlier selection model
             elif self.args.algorithm == 'sos':
                 from networkml.algorithms.sos.train_SoSModel import train
-                train(self.args.path, self.time_const, self.rnn_size,
+                train(self.args.path, self.args.sos_model, self.time_const, self.rnn_size,
                       self.conf_labels, self.args.save)
 
         ## Test is for checking overall performance of networkML models for
@@ -129,6 +130,8 @@ class NetworkML():
         parser.add_argument('--operation', '-o', default='eval',
                             choices=['eval', 'train', 'test'],
                             help='which operation to run')
+        parser.add_argument('--sos_model', '-s', default='networkml/trained_models/sos/SoSmodel',
+                            help='path to SoSmodel')
         parser.add_argument('--trained_model', '-m', default='networkml/trained_models/onelayer/OneLayerModel.pkl',
                             help='path to the trained model file')
         parser.add_argument('--path', '-p', default='/pcaps',

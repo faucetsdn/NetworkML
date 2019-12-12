@@ -24,7 +24,7 @@ class BaseAlgorithm:
     """
 
     def __init__(self, files=None, config=None, model=None, model_hash=None,
-                 model_path=None):
+                 model_path=None, sos_model=None):
 
         ## Initiate logging information on this instance
         self.logger = logging.getLogger(__name__)
@@ -32,6 +32,7 @@ class BaseAlgorithm:
         logging.getLogger('pika').setLevel(logging.WARNING)
         self.logger = Common().setup_logger(self.logger)
         self.common = Common(config=config)
+        self.sos_model = sos_model
 
         ## RabbitMQ acts as a message broker
         if self.common.use_rabbit:
@@ -222,7 +223,7 @@ class BaseAlgorithm:
                 if self.has_avx():
                     from networkml.algorithms.sos.eval_SoSModel import eval_pcap
                     abnormality = eval_pcap(
-                        str(fi), self.conf_labels, self.time_const, label=labels[0],
+                        str(fi), self.sos_model, self.conf_labels, self.time_const, label=labels[0],
                         rnn_size=self.rnn_size, model_path=self.model_path, model_type=algorithm)
                 else:
                     self.logger.warning(
