@@ -15,7 +15,7 @@ def copy_model(model, tempdir):
     return test_model
 
 
-def run_networkml(args, expected_code=0, model=None):
+def run_networkml(args, expected_code=0, model='networkml/trained_models/onelayer/OneLayerModel.pkl'):
     tempdir = tempfile.TemporaryDirectory()
     if model:
         test_model = copy_model(model, tempdir)
@@ -48,9 +48,8 @@ def test_networkml_eval_randomforest():
 
 
 def test_networkml_eval_sos():
-    netml = run_networkml([
-        '-p', 'tests/trace_ab12_2001-01-01_02_03-client-ip-1-2-3-4.pcap',
-        '-a', 'sos'])
+    netml = run_networkml(
+        ['-p', 'tests/trace_ab12_2001-01-01_02_03-client-ip-1-2-3-4.pcap', '-a', 'sos'])
     assert netml.model.feature_list
 
 
@@ -59,17 +58,16 @@ def test_networkml_train_onelayer():
 
 
 def test_networkml_train_randomforest():
-    run_networkml([
-        '-p', 'tests/',
-        '-o', 'train', '-a', 'randomforest'],
+    run_networkml(
+        ['-p', 'tests/', '-o', 'train', '-a', 'randomforest'],
         expected_code=1,
         model='networkml/trained_models/randomforest/RandomForestModel.pkl')
 
 
 def test_networkml_train_sos():
-    netml = run_networkml([
-        '-p', 'tests/', '-o', 'train',
-        '-a', 'sos', '-m', 'networkml/trained_models/sos/SoSmodel'])
+    netml = run_networkml(
+        ['-p', 'tests/', '-o', 'train', '-a', 'sos'],
+        model='networkml/trained_models/sos/SoSmodel')
     assert not netml.model.feature_list
 
 
@@ -79,8 +77,7 @@ def test_networkml_test_onelayer():
 
 def test_networkml_test_randomforest():
     os.environ['POSEIDON_PUBLIC_SESSIONS'] = ''
-    netml = run_networkml([
-        '-p', 'tests/',
-        '-o', 'test', '-a', 'randomforest'],
+    netml = run_networkml(
+        ['-p', 'tests/', '-o', 'test', '-a', 'randomforest'],
         model='networkml/trained_models/randomforest/RandomForestModel.pkl')
     assert netml.model.feature_list
