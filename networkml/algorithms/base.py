@@ -319,7 +319,7 @@ class BaseAlgorithm:
         file_num = 0
         time_slices = 0
         self.logger.info('processing pcaps')
-        tick = time.clock()
+        tick = time.perf_counter()
         for pcap in pcaps:
             # Get the true label
             name, label = get_true_label(pcap, label_assignments)
@@ -344,7 +344,7 @@ class BaseAlgorithm:
                     individual_dict[i] = p_r
                 single_result['individual'] = individual_dict
                 results[pcap] = single_result
-        tock = time.clock()
+        tock = time.perf_counter()
 
         # Save results to path specified by third argument
         with open(save_path, 'w') as output_file:
