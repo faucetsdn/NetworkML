@@ -1,6 +1,7 @@
 '''
 Utilities for preparing sessions for input into models
 '''
+import ipaddress
 import os
 from collections import Counter
 from collections import defaultdict
@@ -18,27 +19,7 @@ def is_private(address):
     Returns:
         True or False
     '''
-    if '.' in address:  # ipv4
-        pairs = address.split('.')
-    elif ':' in address:  # ipv6
-        pairs = address.split(':')
-    else:  # unknown
-        pairs = []
-
-    private = False
-    if pairs:
-        if pairs[0] == '10':
-            private = True
-        elif pairs[0] == '192' and pairs[1] == '168':
-            private = True
-        elif pairs[0] == '172' and 16 <= int(pairs[1]) <= 31:
-            private = True
-        elif pairs[0] == 'fe80':
-            private = True
-        elif pairs[0].startswith('fd'):
-            private = True
-
-    return private
+    return ipaddress.ip_address(address).is_private
 
 
 def extract_macs(packet):
