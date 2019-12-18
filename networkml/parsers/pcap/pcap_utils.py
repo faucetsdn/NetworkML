@@ -2,6 +2,7 @@
 Utilities for preparing sessions for input into models
 '''
 import ipaddress
+import netaddr
 import os
 from collections import Counter
 from collections import defaultdict
@@ -31,18 +32,11 @@ def extract_macs(packet):
         source_mac: Destination MAC address
         destination_mac: Destination MAC address
     '''
-
     source_mac = packet[12:24]
     dest_mac = packet[0:12]
-
-    source_mac = ':'.join(source_mac[i:i+2]
-                          for i in range(0, len(source_mac), 2)
-                          )
-    destination_mac = ':'.join(dest_mac[i:i+2]
-                               for i in range(0, len(dest_mac), 2)
-                               )
-
-    return source_mac, destination_mac
+    source_mac = str(netaddr.EUI(int(source_mac, 16), dialect=netaddr.mac_unix))
+    dest_mac = str(netaddr.EUI(int(dest_mac, 16), dialect=netaddr.mac_unix))
+    return source_mac, dest_mac
 
 
 def get_indiv_source(sessions, address_type='MAC'):
@@ -143,12 +137,10 @@ def packet_size(packet):
         size: Size in bytes of the IP packet, including data
     '''
 
-    size = packet[1][32:36]
     try:
-        size = int(size, 16)
+        return get_length(packet[1])
     except ValueError:  # pragma: no cover
-        size = 0
-    return size
+        return 0
 
 
 def extract_session_size(session):
@@ -211,11 +203,7 @@ def is_protocol(session, protocol):
     Returns:
         is_protocol: True or False indicating if this is a TCP session
     '''
-
-    p = extract_protocol(session)
-    if protocol == p:
-        return True
-    return False
+    return protocol == extract_protocol(session)
 
 
 def strip_macs(packet):
