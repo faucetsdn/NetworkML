@@ -2,4 +2,4 @@ FROM networkml
 LABEL maintainer="Charlie Lewis <clewis@iqt.org>"
 
 ENTRYPOINT ["pytest"]
-CMD ["-l", "-s", "-v", "-nauto", "--cov=tests/", "--cov=networkml/", "--cov-report", "term-missing", "-c", ".coveragerc"]
+CMD ["-l", "-s", "-v", "-n2", "--cov=tests/", "--cov=networkml/", "--cov-report", "term-missing", "-c", ".coveragerc"]
