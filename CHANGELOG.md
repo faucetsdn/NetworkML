@@ -1,3 +1,11 @@
+# v0.4.4 (2019-12-18)
+
+- Add pyshark wiring to get highest-level protocol
+- Make tests run in parallel
+- Update models for scikit-learn v0.22
+- Improve parsing speed
+- Add tests for pcap reader
+
 # v0.4.3 (2019-12-4)
 
 - update pytest to 5.3.1
