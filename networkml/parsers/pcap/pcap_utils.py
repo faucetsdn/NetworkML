@@ -28,6 +28,17 @@ def is_private(address):
     return address.is_private
 
 
+def mac_from_int(mac_int):
+    '''
+    Return Unix format MAC address from an integer.
+    Args:
+        mac_int: MAC address as integer.
+    Returns:
+        MAC address as Unix string format.
+    '''
+    return str(netaddr.EUI(mac_int, dialect=netaddr.mac_unix)).upper()
+
+
 def extract_macs(packet):
     '''
     Takes in hex representation of a packet header and extracts the
@@ -39,8 +50,8 @@ def extract_macs(packet):
     '''
     source_mac = packet[12:24]
     dest_mac = packet[0:12]
-    source_mac = str(netaddr.EUI(int(source_mac, 16), dialect=netaddr.mac_unix)).upper()
-    dest_mac = str(netaddr.EUI(int(dest_mac, 16), dialect=netaddr.mac_unix)).upper()
+    source_mac = mac_from_int(int(source_mac, 16))
+    dest_mac = mac_from_int(int(dest_mac, 16))
     return source_mac, dest_mac
 
 
@@ -125,7 +136,7 @@ def get_source(sessions, address_type='MAC'):
                 capture_source = ipaddress.ip_address(most_common_key[0])
         else:
             if address_type == 'MAC':
-                capture_source = str(netaddr.EUI(0, dialect=netaddr.mac_unix))
+                capture_source = mac_from_int(0)
             else:
                 capture_source = ipaddress.ip_address('0.0.0.0')
     else:
