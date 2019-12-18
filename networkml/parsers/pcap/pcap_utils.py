@@ -1,12 +1,12 @@
 '''
 Utilities for preparing sessions for input into models
 '''
+import ipaddress
 import os
 from collections import Counter
 from collections import defaultdict
 from collections import OrderedDict
-
-import numpy as np
+import netaddr
 
 
 def is_private(address):
@@ -18,27 +18,23 @@ def is_private(address):
     Returns:
         True or False
     '''
-    if '.' in address:  # ipv4
-        pairs = address.split('.')
-    elif ':' in address:  # ipv6
-        pairs = address.split(':')
-    else:  # unknown
-        pairs = []
+    if isinstance(address, str):
+        try:
+            return ipaddress.ip_address(address).is_private
+        except ValueError:
+            return False
+    return address.is_private
 
-    private = False
-    if pairs:
-        if pairs[0] == '10':
-            private = True
-        elif pairs[0] == '192' and pairs[1] == '168':
-            private = True
-        elif pairs[0] == '172' and 16 <= int(pairs[1]) <= 31:
-            private = True
-        elif pairs[0] == 'fe80':
-            private = True
-        elif pairs[0].startswith('fd'):
-            private = True
 
-    return private
+def mac_from_int(mac_int):
+    '''
+    Return Unix format MAC address from an integer.
+    Args:
+        mac_int: MAC address as integer.
+    Returns:
+        MAC address as Unix string format.
+    '''
+    return str(netaddr.EUI(mac_int, dialect=netaddr.mac_unix)).upper()
 
 
 def extract_macs(packet):
@@ -50,18 +46,11 @@ def extract_macs(packet):
         source_mac: Destination MAC address
         destination_mac: Destination MAC address
     '''
-
     source_mac = packet[12:24]
     dest_mac = packet[0:12]
-
-    source_mac = ':'.join(source_mac[i:i+2]
-                          for i in range(0, len(source_mac), 2)
-                          )
-    destination_mac = ':'.join(dest_mac[i:i+2]
-                               for i in range(0, len(dest_mac), 2)
-                               )
-
-    return source_mac, destination_mac
+    source_mac = mac_from_int(int(source_mac, 16))
+    dest_mac = mac_from_int(int(dest_mac, 16))
+    return source_mac, dest_mac
 
 
 def get_indiv_source(sessions, address_type='MAC'):
@@ -83,52 +72,38 @@ def get_indiv_source(sessions, address_type='MAC'):
     ip_mac_pairs = defaultdict(int)
 
     # Count the incoming/outgoing sessions for all addresses
-    for key in sessions:
+    for key, session in sessions.items():
         source_address, _ = get_ip_port(key[0])
         destination_address, _ = get_ip_port(key[1])
 
         # Get the first packet and grab the macs from it
-        first_packet = sessions[key][0][1]
+        first_packet = session[0][1]
         source_mac, destination_mac = extract_macs(first_packet)
+        pair_1 = '-'.join((str(source_address), source_mac))
+        pair_2 = '-'.join((str(destination_address), destination_mac))
 
         # Compute the IP/MAC address pairs
         if os.environ.get('POSEIDON_PUBLIC_SESSIONS'):
-            pair_1 = source_address + '-' + source_mac
-            pair_2 = destination_address + '-' + destination_mac
             ip_mac_pairs[pair_1] += 1
             ip_mac_pairs[pair_2] += 1
         else:
             # Only look at sessions with an internal IP address
             # This shouldn't actually be necessary at this stage
-            if is_private(source_address) or is_private(destination_address):
-                pair_1 = source_address + '-' + source_mac
-                pair_2 = destination_address + '-' + destination_mac
-                if is_private(source_address):
-                    ip_mac_pairs[pair_1] += 1
-                if is_private(destination_address):
-                    ip_mac_pairs[pair_2] += 1
+            if is_private(source_address):
+                ip_mac_pairs[pair_1] += 1
+            if is_private(destination_address):
+                ip_mac_pairs[pair_2] += 1
 
     # The address with the most sessions is the capture source
-    if len(sessions) == 0:
-        return None, ip_mac_pairs
-
-    sorted_sources = sorted(
-        ip_mac_pairs.keys(),
-        key=(lambda k: ip_mac_pairs[k]),
-        reverse=True
-    )
-    if address_type == 'MAC':
-        capture_source = '00:00:00:00:00:00'
-    else:
-        capture_source = '0.0.0.0'
-
-    if len(sorted_sources) > 0:
+    if sessions:
+        most_common_key = max(ip_mac_pairs, key=lambda k: ip_mac_pairs[k]).split('-')
         if address_type == 'MAC':
-            capture_source = sorted_sources[0].split('-')[1]
+            capture_source = most_common_key[1]
         else:
-            capture_source = sorted_sources[0].split('-')[0]
+            capture_source = most_common_key[0]
+        return capture_source, ip_mac_pairs
 
-    return capture_source, ip_mac_pairs
+    return None, ip_mac_pairs
 
 
 def get_source(sessions, address_type='MAC'):
@@ -146,30 +121,22 @@ def get_source(sessions, address_type='MAC'):
     if isinstance(sessions, list):
         all_pairs = Counter({})
         # Aggregate counts from all binned sessions
-        if address_type == 'MAC':
-            capture_source = '00:00:00:00:00:00'
-        else:
-            capture_source = '0.0.0.0'
-
         for session_dict in sessions:
             # Get the ip mac address pairs for each session dict
             _, ip_mac_pairs = get_indiv_source(session_dict)
             # Combine with previous stats
             all_pairs += Counter(ip_mac_pairs)
-
-        # Find the most common address
-        sorted_sources = sorted(
-            all_pairs.keys(),
-            key=(lambda k: all_pairs[k]),
-            reverse=True
-        )
-
-        if len(sorted_sources) > 0:
+        if all_pairs:
+            most_common_key = max(all_pairs, key=lambda k: all_pairs[k]).split('-')
             if address_type == 'MAC':
-                capture_source = sorted_sources[0].split('-')[1]
+                capture_source = most_common_key[1]
             else:
-                capture_source = sorted_sources[0].split('-')[0]
-
+                capture_source = ipaddress.ip_address(most_common_key[0])
+        else:
+            if address_type == 'MAC':
+                capture_source = mac_from_int(0)
+            else:
+                capture_source = ipaddress.ip_address(0)
     else:
         if address_type == 'MAC':
             capture_source, _ = get_indiv_source(sessions)
@@ -190,12 +157,10 @@ def packet_size(packet):
         size: Size in bytes of the IP packet, including data
     '''
 
-    size = packet[1][32:36]
     try:
-        size = int(size, 16)
+        return get_length(packet[1])
     except ValueError:  # pragma: no cover
-        size = 0
-    return size
+        return 0
 
 
 def extract_session_size(session):
@@ -209,8 +174,7 @@ def extract_session_size(session):
         session_size: Size of the session in bytes
     '''
 
-    session_size = sum([packet_size(p) for p in session])
-    return session_size
+    return sum([packet_size(p) for p in session])
 
 
 def extract_protocol(session):
@@ -224,8 +188,7 @@ def extract_protocol(session):
         protocol: Protocol number used in the session
     '''
 
-    protocol = session[0][1][46:48]
-    return protocol
+    return session[0][1][46:48]
 
 
 def is_external(address_1, address_2):
@@ -258,11 +221,7 @@ def is_protocol(session, protocol):
     Returns:
         is_protocol: True or False indicating if this is a TCP session
     '''
-
-    p = extract_protocol(session)
-    if protocol == p:
-        return True
-    return False
+    return protocol == extract_protocol(session)
 
 
 def strip_macs(packet):
@@ -305,12 +264,12 @@ def clean_session_dict(sessions, source_address=None):
             address_1 = get_ip_port(key[0])[0]
             address_2 = get_ip_port(key[1])[0]
 
-            first_packet = sessions[key][0][1]
+            first_packet = packets[0][1]
             source_mac, destination_mac = extract_macs(first_packet)
 
             if (address_1 == source_address
-                or source_mac == source_address
-                or address_2 == source_address
+                    or source_mac == source_address
+                    or address_2 == source_address
                     or destination_mac == source_address):
                 if os.environ.get('POSEIDON_PUBLIC_SESSIONS'):
                     cleaned_sessions[key] = [
@@ -326,9 +285,8 @@ def clean_session_dict(sessions, source_address=None):
         return cleaned_sessions
 
     if isinstance(sessions, list):
-        cleaned_sessions = []
-        for sess in sessions:
-            cleaned_sessions.append(clean_dict(sess, source_address))
+        cleaned_sessions = [
+            clean_dict(sess, source_address) for sess in sessions]
     else:
         cleaned_sessions = clean_dict(sessions, source_address)
 
@@ -339,19 +297,14 @@ def get_length(packet):
     """
     Gets the total length of the packet
     """
-    hex_str = '0123456789abcdef'
-    hex_length = packet[32:36]
-    length = 0
-    for i, c in enumerate(hex_length[::-1]):
-        length += pow(16, i)*hex_str.index(c)
-    return length
+    return int(packet[32:36], 16)
 
 
 def featurize_session(key, packets, source=None):
     # Global session properties
     address_1, _ = get_ip_port(key[0])
     address_2, _ = get_ip_port(key[1])
-    if address_1 == source or address_2 == source or source == None:
+    if address_1 == source or address_2 == source or source is None:
         initiated_by_source = None
         if address_1 == source:
             initiated_by_source = True
@@ -407,8 +360,7 @@ def featurize_session(key, packets, source=None):
             'destination frequency': freq_2,
         }
         return session_info
-    else:
-        return None
+    return None
 
 
 def get_ip_port(socket_str):
@@ -418,8 +370,6 @@ def get_ip_port(socket_str):
     :return:
     address, port
     """
-    splitter_index = socket_str.rindex(':')
-    address = socket_str[0:splitter_index]
-    port = socket_str[splitter_index + 1:]
-
+    address, port = socket_str.rsplit(':', 1)
+    address = ipaddress.ip_address(address)
     return address, port
