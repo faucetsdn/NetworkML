@@ -292,12 +292,7 @@ def get_length(packet):
     """
     Gets the total length of the packet
     """
-    hex_str = '0123456789abcdef'
-    hex_length = packet[32:36]
-    length = 0
-    for i, c in enumerate(hex_length[::-1]):
-        length += pow(16, i)*hex_str.index(c)
-    return length
+    return int(packet[32:36], 16)
 
 
 def featurize_session(key, packets, source=None):
