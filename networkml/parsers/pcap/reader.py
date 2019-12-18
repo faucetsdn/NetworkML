@@ -63,7 +63,7 @@ def packetizer(path):
     packet_dict = OrderedDict()
     highest_layers_dict = {}
     with pyshark.FileCapture(path, use_json=True, include_raw=True, keep_packets=False,
-            custom_parameters={'-o': 'tcp.desegment_tcp_streams:false'}) as cap:
+            custom_parameters=['-o', 'tcp.desegment_tcp_streams:false', '-n']) as cap:
         for packet in cap:
             data = packet.get_raw_packet()
             head = parse_packet_head(packet)
