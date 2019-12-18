@@ -87,26 +87,15 @@ def get_indiv_source(sessions, address_type='MAC'):
                 ip_mac_pairs[pair_2] += 1
 
     # The address with the most sessions is the capture source
-    if len(sessions) == 0:
-        return None, ip_mac_pairs
-
-    sorted_sources = sorted(
-        ip_mac_pairs.keys(),
-        key=(lambda k: ip_mac_pairs[k]),
-        reverse=True
-    )
-    if address_type == 'MAC':
-        capture_source = '00:00:00:00:00:00'
-    else:
-        capture_source = '0.0.0.0'
-
-    if len(sorted_sources) > 0:
+    if sessions:
+        most_common_key = max(ip_mac_pairs, key=lambda k: ip_mac_pairs[k]).split('-')
         if address_type == 'MAC':
-            capture_source = sorted_sources[0].split('-')[1]
+            capture_source = most_common_key[1]
         else:
-            capture_source = sorted_sources[0].split('-')[0]
+            capture_source = most_common_key[0]
+        return capture_source, ip_mac_pairs
 
-    return capture_source, ip_mac_pairs
+    return None, ip_mac_pairs
 
 
 def get_source(sessions, address_type='MAC'):
@@ -124,29 +113,16 @@ def get_source(sessions, address_type='MAC'):
     if isinstance(sessions, list):
         all_pairs = Counter({})
         # Aggregate counts from all binned sessions
-        if address_type == 'MAC':
-            capture_source = '00:00:00:00:00:00'
-        else:
-            capture_source = ipaddress.ip_address('0.0.0.0')
-
         for session_dict in sessions:
             # Get the ip mac address pairs for each session dict
             _, ip_mac_pairs = get_indiv_source(session_dict)
             # Combine with previous stats
             all_pairs += Counter(ip_mac_pairs)
-
-        # Find the most common address
-        sorted_sources = sorted(
-            all_pairs.keys(),
-            key=(lambda k: all_pairs[k]),
-            reverse=True
-        )
-
-        if len(sorted_sources) > 0:
-            if address_type == 'MAC':
-                capture_source = sorted_sources[0].split('-')[1]
-            else:
-                capture_source = ipaddress.ip_address(sorted_sources[0].split('-')[0])
+        most_common_key = max(all_pairs, key=lambda k: all_pairs[k]).split('-')
+        if address_type == 'MAC':
+            capture_source = most_common_key[1]
+        else:
+            capture_source = ipaddress.ip_address(most_common_key[0])
     else:
         if address_type == 'MAC':
             capture_source, _ = get_indiv_source(sessions)
