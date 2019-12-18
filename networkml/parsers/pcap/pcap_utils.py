@@ -20,6 +20,11 @@ def is_private(address):
     Returns:
         True or False
     '''
+    if isinstance(address, str):
+        try:
+            return ipaddress.ip_address(address).is_private
+        except ValueError:
+            return False
     return address.is_private
 
 
@@ -34,8 +39,8 @@ def extract_macs(packet):
     '''
     source_mac = packet[12:24]
     dest_mac = packet[0:12]
-    source_mac = str(netaddr.EUI(int(source_mac, 16), dialect=netaddr.mac_unix))
-    dest_mac = str(netaddr.EUI(int(dest_mac, 16), dialect=netaddr.mac_unix))
+    source_mac = str(netaddr.EUI(int(source_mac, 16), dialect=netaddr.mac_unix)).upper()
+    dest_mac = str(netaddr.EUI(int(dest_mac, 16), dialect=netaddr.mac_unix)).upper()
     return source_mac, dest_mac
 
 
@@ -112,11 +117,17 @@ def get_source(sessions, address_type='MAC'):
             _, ip_mac_pairs = get_indiv_source(session_dict)
             # Combine with previous stats
             all_pairs += Counter(ip_mac_pairs)
-        most_common_key = max(all_pairs, key=lambda k: all_pairs[k]).split('-')
-        if address_type == 'MAC':
-            capture_source = most_common_key[1]
+        if all_pairs:
+            most_common_key = max(all_pairs, key=lambda k: all_pairs[k]).split('-')
+            if address_type == 'MAC':
+                capture_source = most_common_key[1]
+            else:
+                capture_source = ipaddress.ip_address(most_common_key[0])
         else:
-            capture_source = ipaddress.ip_address(most_common_key[0])
+            if address_type == 'MAC':
+                capture_source = str(netaddr.EUI(0, dialect=netaddr.mac_unix))
+            else:
+                capture_source = ipaddress.ip_address('0.0.0.0')
     else:
         if address_type == 'MAC':
             capture_source, _ = get_indiv_source(sessions)
