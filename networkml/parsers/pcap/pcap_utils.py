@@ -72,12 +72,12 @@ def get_indiv_source(sessions, address_type='MAC'):
     ip_mac_pairs = defaultdict(int)
 
     # Count the incoming/outgoing sessions for all addresses
-    for key in sessions:
+    for key, session in sessions.items():
         source_address, _ = get_ip_port(key[0])
         destination_address, _ = get_ip_port(key[1])
 
         # Get the first packet and grab the macs from it
-        first_packet = sessions[key][0][1]
+        first_packet = session[0][1]
         source_mac, destination_mac = extract_macs(first_packet)
         pair_1 = '-'.join((str(source_address), source_mac))
         pair_2 = '-'.join((str(destination_address), destination_mac))
@@ -174,8 +174,7 @@ def extract_session_size(session):
         session_size: Size of the session in bytes
     '''
 
-    session_size = sum([packet_size(p) for p in session])
-    return session_size
+    return sum([packet_size(p) for p in session])
 
 
 def extract_protocol(session):
@@ -189,8 +188,7 @@ def extract_protocol(session):
         protocol: Protocol number used in the session
     '''
 
-    protocol = session[0][1][46:48]
-    return protocol
+    return session[0][1][46:48]
 
 
 def is_external(address_1, address_2):
@@ -266,7 +264,7 @@ def clean_session_dict(sessions, source_address=None):
             address_1 = get_ip_port(key[0])[0]
             address_2 = get_ip_port(key[1])[0]
 
-            first_packet = sessions[key][0][1]
+            first_packet = packets[0][1]
             source_mac, destination_mac = extract_macs(first_packet)
 
             if (address_1 == source_address
@@ -287,9 +285,8 @@ def clean_session_dict(sessions, source_address=None):
         return cleaned_sessions
 
     if isinstance(sessions, list):
-        cleaned_sessions = []
-        for sess in sessions:
-            cleaned_sessions.append(clean_dict(sess, source_address))
+        cleaned_sessions = [
+            clean_dict(sess, source_address) for sess in sessions]
     else:
         cleaned_sessions = clean_dict(sessions, source_address)
 
@@ -373,8 +370,6 @@ def get_ip_port(socket_str):
     :return:
     address, port
     """
-    splitter_index = socket_str.rindex(':')
-    address = ipaddress.ip_address(socket_str[0:splitter_index])
-    port = socket_str[splitter_index + 1:]
-
+    address, port = socket_str.rsplit(':', 1)
+    address = ipaddress.ip_address(address)
     return address, port
