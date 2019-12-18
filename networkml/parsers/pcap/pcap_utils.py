@@ -2,13 +2,11 @@
 Utilities for preparing sessions for input into models
 '''
 import ipaddress
-import netaddr
 import os
 from collections import Counter
 from collections import defaultdict
 from collections import OrderedDict
-
-import numpy as np
+import netaddr
 
 
 def is_private(address):
@@ -138,7 +136,7 @@ def get_source(sessions, address_type='MAC'):
             if address_type == 'MAC':
                 capture_source = mac_from_int(0)
             else:
-                capture_source = ipaddress.ip_address('0.0.0.0')
+                capture_source = ipaddress.ip_address(0)
     else:
         if address_type == 'MAC':
             capture_source, _ = get_indiv_source(sessions)
@@ -272,8 +270,8 @@ def clean_session_dict(sessions, source_address=None):
             source_mac, destination_mac = extract_macs(first_packet)
 
             if (address_1 == source_address
-                or source_mac == source_address
-                or address_2 == source_address
+                    or source_mac == source_address
+                    or address_2 == source_address
                     or destination_mac == source_address):
                 if os.environ.get('POSEIDON_PUBLIC_SESSIONS'):
                     cleaned_sessions[key] = [
@@ -309,7 +307,7 @@ def featurize_session(key, packets, source=None):
     # Global session properties
     address_1, _ = get_ip_port(key[0])
     address_2, _ = get_ip_port(key[1])
-    if address_1 == source or address_2 == source or source == None:
+    if address_1 == source or address_2 == source or source is None:
         initiated_by_source = None
         if address_1 == source:
             initiated_by_source = True
@@ -365,8 +363,7 @@ def featurize_session(key, packets, source=None):
             'destination frequency': freq_2,
         }
         return session_info
-    else:
-        return None
+    return None
 
 
 def get_ip_port(socket_str):
