@@ -71,23 +71,20 @@ def get_indiv_source(sessions, address_type='MAC'):
         # Get the first packet and grab the macs from it
         first_packet = sessions[key][0][1]
         source_mac, destination_mac = extract_macs(first_packet)
+        pair_1 = '-'.join((str(source_address), source_mac))
+        pair_2 = '-'.join((str(destination_address), destination_mac))
 
         # Compute the IP/MAC address pairs
         if os.environ.get('POSEIDON_PUBLIC_SESSIONS'):
-            pair_1 = str(source_address) + '-' + source_mac
-            pair_2 = str(destination_address) + '-' + destination_mac
             ip_mac_pairs[pair_1] += 1
             ip_mac_pairs[pair_2] += 1
         else:
             # Only look at sessions with an internal IP address
             # This shouldn't actually be necessary at this stage
-            if is_private(source_address) or is_private(destination_address):
-                pair_1 = str(source_address) + '-' + source_mac
-                pair_2 = str(destination_address) + '-' + destination_mac
-                if is_private(source_address):
-                    ip_mac_pairs[pair_1] += 1
-                if is_private(destination_address):
-                    ip_mac_pairs[pair_2] += 1
+            if is_private(source_address):
+                ip_mac_pairs[pair_1] += 1
+            if is_private(destination_address):
+                ip_mac_pairs[pair_2] += 1
 
     # The address with the most sessions is the capture source
     if len(sessions) == 0:
@@ -150,7 +147,6 @@ def get_source(sessions, address_type='MAC'):
                 capture_source = sorted_sources[0].split('-')[1]
             else:
                 capture_source = ipaddress.ip_address(sorted_sources[0].split('-')[0])
-
     else:
         if address_type == 'MAC':
             capture_source, _ = get_indiv_source(sessions)
