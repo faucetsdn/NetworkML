@@ -24,7 +24,7 @@ class BaseAlgorithm:
     """
 
     def __init__(self, files=None, config=None, model=None, model_hash=None,
-                 model_path=None):
+                 model_path=None, sos_model=None):
 
         ## Initiate logging information on this instance
         self.logger = logging.getLogger(__name__)
@@ -32,6 +32,7 @@ class BaseAlgorithm:
         logging.getLogger('pika').setLevel(logging.WARNING)
         self.logger = Common().setup_logger(self.logger)
         self.common = Common(config=config)
+        self.sos_model = sos_model
 
         ## RabbitMQ acts as a message broker
         if self.common.use_rabbit:
@@ -223,7 +224,7 @@ class BaseAlgorithm:
                     from networkml.algorithms.sos.eval_SoSModel import eval_pcap
                     try:
                         abnormality = eval_pcap(
-                            str(fi), self.conf_labels, self.time_const, label=labels[0],
+                            str(fi), self.sos_model, self.conf_labels, self.time_const, label=labels[0],
                             rnn_size=self.rnn_size, model_path=self.model_path, model_type=algorithm)
                     except ValueError:
                         self.logger.warning("Can't run abnormality detection because not a big enough sample size")
@@ -318,7 +319,7 @@ class BaseAlgorithm:
         file_num = 0
         time_slices = 0
         self.logger.info('processing pcaps')
-        tick = time.clock()
+        tick = time.perf_counter()
         for pcap in pcaps:
             # Get the true label
             name, label = get_true_label(pcap, label_assignments)
@@ -343,7 +344,7 @@ class BaseAlgorithm:
                     individual_dict[i] = p_r
                 single_result['individual'] = individual_dict
                 results[pcap] = single_result
-        tock = time.clock()
+        tock = time.perf_counter()
 
         # Save results to path specified by third argument
         with open(save_path, 'w') as output_file:

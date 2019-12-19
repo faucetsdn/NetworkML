@@ -12,7 +12,9 @@ logging.basicConfig(level=logging.INFO)
 
 
 # TODO this should be re-written to follow patterns from onelayer/randomforest
-def eval_pcap(pcap, labels, time_const, label=None, rnn_size=100, model_path='networkml/trained_models/onelayer/OneLayerModel.pkl', model_type='randomforest'):
+def eval_pcap(pcap, sos_model, labels, time_const, label=None, rnn_size=100,
+              model_path='networkml/trained_models/onelayer/OneLayerModel.pkl',
+              model_type='randomforest'):
     logger = logging.getLogger(__name__)
     try:
         if 'LOG_LEVEL' in os.environ and os.environ['LOG_LEVEL'] != '':
@@ -31,7 +33,7 @@ def eval_pcap(pcap, labels, time_const, label=None, rnn_size=100, model_path='ne
     logger.debug('Created iterator')
     rnnmodel = SoSModel(rnn_size=rnn_size, label_size=len(labels))
     logger.debug('Created model')
-    rnnmodel.load('networkml/trained_models/sos/SoSmodel')
+    rnnmodel.load(sos_model)
     logger.debug('Loaded model')
 
     X_list = iterator.X
