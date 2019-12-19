@@ -1,3 +1,4 @@
+# WARNING about imp deprecation because of setuptools
 from setuptools import setup
 
 setup(
