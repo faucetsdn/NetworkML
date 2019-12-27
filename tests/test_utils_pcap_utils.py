@@ -9,8 +9,11 @@ from networkml.parsers.pcap.pcap_utils import packet_size
 
 def test_extract_macs():
     source, dest = extract_macs('123456789ABCDEF123456780')
-    assert dest == '12:34:56:78:9A:BC'
-    assert source == 'DE:F1:23:45:67:80'
+    assert dest == '12:34:56:78:9a:bc'
+    assert source == 'de:f1:23:45:67:80'
+    source, dest = extract_macs('020406080A0C0E0103050700')
+    assert dest == '02:04:06:08:0a:0c'
+    assert source == '0e:01:03:05:07:00'
 
 
 def test_is_private():
