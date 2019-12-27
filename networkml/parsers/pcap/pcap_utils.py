@@ -32,9 +32,9 @@ def mac_from_int(mac_int):
     Args:
         mac_int: MAC address as integer.
     Returns:
-        MAC address as Unix string format.
+        MAC address as Unix string format (fully expanded and lowercase).
     '''
-    return str(netaddr.EUI(mac_int, dialect=netaddr.mac_unix)).upper()
+    return str(netaddr.EUI(mac_int, dialect=netaddr.mac_unix_expanded)).lower()
 
 
 def extract_macs(packet):
