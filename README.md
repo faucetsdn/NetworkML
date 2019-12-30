@@ -20,11 +20,9 @@ page on our website. This repository specifically covers the outputs, inputs,
 data processing, and machine learning models we deploy in networkML.
 
 While this repository and resulting docker container can be used completely
-independently, the code was written to support the Cyber Reboot Vent and
-Poseidon projects. See:
+independently, the code was written to support the Cyber Reboot Poseidon
+project. See:
 
-- [Vent](https://github.com/CyberReboot/vent) plugins for evaluating
-machine learning models on network data; and the
 - [Poseidon](https://github.com/CyberReboot/poseidon) SDN project.
 
 This repository contains the components necessary to build a docker container
@@ -130,9 +128,9 @@ the `networkml/algorithms` folder.
 
 # Installation/Run
 
-Our models can be executed via Vent, Docker, and in a standalone manner on a
-Linux host. We recommend deployment via Vent in conjunction with Poseidon if you
-are running an SDN (software-defined network). Otherwise, we recommend using Docker.
+Our models can be executed via Docker, and in a standalone manner on a
+Linux host. We recommend deployment via Poseidon if you are running an SDN
+(software-defined network). Otherwise, we recommend using Docker.
 
 See the [README](https://github.com/CyberReboot/NetworkML/blob/master/networkml/algorithms/README.md) file included in the `networkml/algorithms` folder for specific instructions on deployment.
 
