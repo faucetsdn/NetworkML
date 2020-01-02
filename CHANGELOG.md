@@ -1,3 +1,11 @@
+# v0.4.5 (2020-01-02)
+
+- Updated numpy to 1.18.0
+- updated pytest-xdist to 1.31.0
+- Updated test_extract_macs() test
+- Removed vent template
+- Added check for empty F1 score list
+
 # v0.4.4 (2019-12-18)
 
 - Add pyshark wiring to get highest-level protocol
