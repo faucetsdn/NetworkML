@@ -339,7 +339,11 @@ class Model:
                 if (tp + fn) > 0:
                     self.logger.info('F1 of {} for {}'.format(f1, label))
 
-        self.logger.info('Mean F1: {}'.format(np.mean(f1s)))
+        ## Check if f1s list is empty to avoid calculating mean of empty list
+        if not f1s:
+            self.logger.info('Mean F1: {}'.format("Empty list--no F1 scores available"))
+        else:
+            self.logger.info('Mean F1: {}'.format(np.mean(f1s)))
 
     def classify_representation(self, representation):
         '''
