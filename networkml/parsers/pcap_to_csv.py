@@ -123,6 +123,7 @@ def combine_csvs(out_paths, combined_path):
                 reader = csv.DictReader(f_in)
                 for line in reader:
                     writer.writerow(line)
+                cleanup_files([filename])
 
 def cleanup_files(paths):
     for fi in paths:
@@ -130,6 +131,7 @@ def cleanup_files(paths):
             os.remove(fi)
 
 def parse_file(in_file, out_file):
+    logger.debug(f'Processing {in_file}')
     dict_fp = get_pyshark_data(in_file)
     write_dict_to_csv(dict_fp, out_file)
     cleanup_files([dict_fp])
@@ -191,13 +193,12 @@ def main():
         else:
             out_paths.append(in_path + ".csv")
 
-    logger.info(f'Including the following layers in CSV: {PROTOCOLS}')
+    logger.info(f'Including the following layers in CSV (if they exist): {PROTOCOLS}')
     process_files(threads, in_paths, out_paths)
     if combined:
         combined_path = os.path.join(os.path.dirname(out_paths[0]), "combined.csv")
         logger.info(f'Combining CSVs into a single file: {combined_path}')
         combine_csvs(out_paths, combined_path)
-        cleanup_files(out_paths)
     else:
         logger.info(f'CSV file(s) written out to: {out_paths}')
 
