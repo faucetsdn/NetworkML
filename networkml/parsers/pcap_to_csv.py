@@ -1,4 +1,5 @@
 import argparse
+import ast
 import concurrent.futures
 import csv
 import datetime
@@ -6,6 +7,8 @@ import logging
 import ntpath
 import os
 import pathlib
+import random
+import string
 import sys
 import time
 
@@ -31,69 +34,73 @@ PROTOCOLS = ['<IP Layer>',
 def get_pyshark_data(pcap_file):
     all_protocols = set()
 
-    dict_objs = []
-    with pyshark.FileCapture(pcap_file,
-                             use_json=True,
-                             include_raw=True,
-                             keep_packets=False,
-                             custom_parameters=['-o', 'tcp.desegment_tcp_streams:false', '-n']) as cap:
-        for packet in cap:
-            packet_dict = {}
-            frame_info = packet.frame_info._all_fields
-            for key in frame_info:
-                packet_dict[key] = frame_info[key]
-            packet_dict['raw_packet'] = packet.get_raw_packet()
-            layers = str(packet.layers)
-            packet_dict['layers'] = layers
-            str_layers = layers[1:-1].split(', ')
-            for str_layer in str_layers:
-                # ignore raw layers
-                if 'RAW' not in str_layer:
-                    all_protocols.add(str_layer)
-                # only include specified protocols due to unknown parsing for some layers
-                if str_layer in PROTOCOLS:
-                    layer_info = getattr(packet, str_layer.split()[0][1:].lower())._all_fields
-                    # check for nested dicts, one level deep
-                    for key in layer_info:
-                        # DNS doesn't parse well
-                        if isinstance(layer_info[key], dict) and str_layer != '<DNS Layer>':
-                            for inner_key in layer_info[key]:
-                                packet_dict[inner_key] = layer_info[key][inner_key]
-                        else:
-                            packet_dict[key] = layer_info[key]
-            # clean up records
-            packet_dict_copy = deepcopy(packet_dict)
-            keys = packet_dict_copy.keys()
-            for key in keys:
-                if not key[0].isalpha():
-                    del packet_dict[key]
-            dict_objs.append(packet_dict)
+    dict_fp = '/tmp/networkml.' + ''.join([random.choice(string.ascii_letters + string.digits) for n in range(8)])
+    with open(dict_fp, 'w') as f:
+        with pyshark.FileCapture(pcap_file,
+                                 use_json=True,
+                                 include_raw=True,
+                                 keep_packets=False,
+                                 custom_parameters=['-o', 'tcp.desegment_tcp_streams:false', '-n']) as cap:
+            for packet in cap:
+                packet_dict = {}
+                frame_info = packet.frame_info._all_fields
+                for key in frame_info:
+                    packet_dict[key] = frame_info[key]
+                packet_dict['raw_packet'] = packet.get_raw_packet()
+                layers = str(packet.layers)
+                packet_dict['layers'] = layers
+                str_layers = layers[1:-1].split(', ')
+                for str_layer in str_layers:
+                    # ignore raw layers
+                    if 'RAW' not in str_layer:
+                        all_protocols.add(str_layer)
+                    # only include specified protocols due to unknown parsing for some layers
+                    if str_layer in PROTOCOLS:
+                        layer_info = getattr(packet, str_layer.split()[0][1:].lower())._all_fields
+                        # check for nested dicts, one level deep
+                        for key in layer_info:
+                            # DNS doesn't parse well
+                            if isinstance(layer_info[key], dict) and str_layer != '<DNS Layer>':
+                                for inner_key in layer_info[key]:
+                                    packet_dict[inner_key] = layer_info[key][inner_key]
+                            else:
+                                packet_dict[key] = layer_info[key]
+                # clean up records
+                packet_dict_copy = deepcopy(packet_dict)
+                keys = packet_dict_copy.keys()
+                for key in keys:
+                    if not key[0].isalpha():
+                        del packet_dict[key]
+                print(packet_dict, file=f)
 
     for protocol in PROTOCOLS:
         if protocol in all_protocols:
             all_protocols.remove(protocol)
     pcap_file_short = ntpath.basename(pcap_file)
-    logger.info(f'Found the following other layers in {pcap_file_short} that were not added to the CSV: {all_protocols}')
+    if all_protocols:
+        logger.warning(f'Found the following other layers in {pcap_file_short} that were not added to the CSV: {all_protocols}')
 
-    return dict_objs
+    return dict_fp
 
-def get_csv_header(dict_objs):
+def get_csv_header(dict_fp):
     header_all = set()
-    for obj in dict_objs:
-        header_all.update(obj.keys())
+    with open(dict_fp, 'r') as f:
+        for line in f:
+            header_all.update(ast.literal_eval(line.strip()).keys())
     header = []
     for key in header_all:
         if key[0].isalpha():
             header.append(key)
     return header
 
-def write_dict_to_csv(dict_objs, out_file):
-    header = get_csv_header(dict_objs)
+def write_dict_to_csv(dict_fp, out_file):
+    header = get_csv_header(dict_fp)
     with open(out_file, 'w') as f:
         w = csv.DictWriter(f, header)
         w.writeheader()
-        for record in dict_objs:
-            w.writerow(record)
+        with open(dict_fp, 'r') as f:
+            for line in f:
+                w.writerow(ast.literal_eval(line.strip()))
 
 def combine_csvs(out_paths, combined_path):
     # First determine the field names from the top line of each input file
@@ -116,14 +123,15 @@ def combine_csvs(out_paths, combined_path):
                 for line in reader:
                     writer.writerow(line)
 
-def cleanup_csvs(out_paths):
-    for fi in out_paths:
+def cleanup_files(paths):
+    for fi in paths:
         if os.path.exists(fi):
             os.remove(fi)
 
 def parse_file(in_file, out_file):
-    dict_objs = get_pyshark_data(in_file)
-    write_dict_to_csv(dict_objs, out_file)
+    dict_fp = get_pyshark_data(in_file)
+    write_dict_to_csv(dict_fp, out_file)
+    cleanup_files([dict_fp])
 
 def process_files(threads, in_paths, out_paths):
     num_files = len(in_paths)
@@ -188,7 +196,7 @@ def main():
         combined_path = os.path.join(os.path.dirname(out_paths[0]), "combined.csv")
         logger.info(f'Combining CSVs into a single file: {combined_path}')
         combine_csvs(out_paths, combined_path)
-        cleanup_csvs(out_paths)
+        cleanup_files(out_paths)
     else:
         logger.info(f'CSV file(s) written out to: {out_paths}')
 
