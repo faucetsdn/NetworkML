@@ -158,6 +158,8 @@ class BaseAlgorithm:
             algorithm: type of algorithm (random forest, neural network, or
             stochastic outlier selection (SOS).
         """
+        if self.files:
+            self.model.sessionize_pcaps(self.files)
 
         for fi in self.files:
             self.logger.info('Processing {0}...'.format(fi))
@@ -320,6 +322,7 @@ class BaseAlgorithm:
         time_slices = 0
         self.logger.info('processing pcaps')
         tick = time.perf_counter()
+        self.model.sessionize_pcaps(pcaps)
         for pcap in pcaps:
             # Get the true label
             name, label = get_true_label(pcap, label_assignments)
