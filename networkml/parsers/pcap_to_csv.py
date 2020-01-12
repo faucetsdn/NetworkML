@@ -34,6 +34,7 @@ PROTOCOLS = ['<IP Layer>',
 def get_pyshark_data(pcap_file):
     all_protocols = set()
 
+    pcap_file_short = ntpath.basename(pcap_file)
     dict_fp = '/tmp/networkml.' + ''.join([random.choice(string.ascii_letters + string.digits) for n in range(8)])
     with open(dict_fp, 'w') as f:
         with pyshark.FileCapture(pcap_file,
@@ -43,6 +44,7 @@ def get_pyshark_data(pcap_file):
                                  custom_parameters=['-o', 'tcp.desegment_tcp_streams:false', '-n']) as cap:
             for packet in cap:
                 packet_dict = {}
+                packet_dict['filename'] = pcap_file_short
                 frame_info = packet.frame_info._all_fields
                 for key in frame_info:
                     packet_dict[key] = frame_info[key]
@@ -76,7 +78,6 @@ def get_pyshark_data(pcap_file):
     for protocol in PROTOCOLS:
         if protocol in all_protocols:
             all_protocols.remove(protocol)
-    pcap_file_short = ntpath.basename(pcap_file)
     if all_protocols:
         logger.warning(f'Found the following other layers in {pcap_file_short} that were not added to the CSV: {all_protocols}')
 
