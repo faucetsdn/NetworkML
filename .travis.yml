@@ -25,6 +25,7 @@ install:
   - pip3 uninstall -y networkml
   - pip3 install .
   - pip3 install pytype
+  - pip3 install -U -e "git+https://github.com/KimiNewt/pyshark.git#egg=pyshark&subdirectory=src"
 script:
   - ./travis-tests.sh
 matrix:
