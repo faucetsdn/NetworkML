@@ -13,7 +13,7 @@ from sklearn.model_selection import cross_val_score
 
 from networkml.parsers.pcap.featurizer import extract_features
 from networkml.parsers.pcap.pcap_utils import get_source
-from networkml.parsers.pcap.reader import sessionizer
+from networkml.parsers.pcap.reader import parallel_sessionizer
 
 
 logging.basicConfig(level=logging.INFO)
@@ -118,6 +118,8 @@ def read_data(data_dir, duration=None, labels=None):
 
     # Go through all the files in the directory
     logger.info('Found {0} pcap files to read.'.format(len(files)))
+    pcap_file_sessions = parallel_sessionizer(files, duration=duration)
+
     count = 0
     for filename in files:
         count += 1
@@ -129,10 +131,7 @@ def read_data(data_dir, duration=None, labels=None):
         logger.info('Reading {0} ({1} bytes) as {2} ({3}/{4})'.format(
             name, os.path.getsize(filename), label, count, len(files)))
         # Bin the sessions with the specified time window
-        binned_sessions = sessionizer(
-            filename,
-            duration=duration
-        )
+        binned_sessions = pcap_file_sessions.get(filename, {})
         # Get the capture source from the binned sessions
         capture_source = get_source(binned_sessions)
 

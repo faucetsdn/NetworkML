@@ -8,7 +8,7 @@ from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
 
 from networkml.parsers.pcap.featurizer import extract_features
-from networkml.parsers.pcap.reader import sessionizer
+from networkml.parsers.pcap.reader import parallel_sessionizer
 from networkml.utils.training_utils import read_data
 from networkml.utils.training_utils import select_features
 
@@ -35,6 +35,7 @@ class Model:
         self.labels = labels
         self.threshold_time = threshold_time
         self.sessions = None
+        self.pcap_file_sessions = {}
         self.logger = logging.getLogger(__name__)
         try:
             if 'LOG_LEVEL' in os.environ and os.environ['LOG_LEVEL'] != '':
@@ -86,8 +87,9 @@ class Model:
         # Read the capture into a feature array
         X = []
         timestamps = []
-        binned_sessions = sessionizer(
-            filepath, duration=self.duration, threshold_time=self.threshold_time)
+        if filepath not in self.pcap_file_sessions:
+            self.sessionize_pcaps([filepath])
+        binned_sessions = self.pcap_file_sessions.get(filepath, {})
         self.sessions = binned_sessions
 
         if len(binned_sessions) is 0:
@@ -221,6 +223,10 @@ class Model:
         ]
         prediction = sorted(prediction, key=lambda x: x[1], reverse=True)
         return prediction
+
+    def sessionize_pcaps(self, pcap_files):
+        self.pcap_file_sessions.update(parallel_sessionizer(
+            pcap_files, duration=self.duration, threshold_time=self.threshold_time))
 
     def get_representation(self, filepath, mean=True, source_ip=None):
         '''

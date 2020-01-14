@@ -1,7 +1,9 @@
 import binascii
 import datetime
-import pyshark
+import os
 from collections import OrderedDict
+from concurrent.futures import ProcessPoolExecutor
+import pyshark
 
 
 def parse_packet_head(packet):
@@ -62,7 +64,8 @@ def packetizer(path):
     '''
     packet_dict = OrderedDict()
     highest_layers_dict = {}
-    with pyshark.FileCapture(path, use_json=True, include_raw=True, keep_packets=False,
+    with pyshark.FileCapture(
+            path, use_json=True, include_raw=True, keep_packets=False,
             custom_parameters=['-o', 'tcp.desegment_tcp_streams:false', '-n']) as cap:
         for packet in cap:
             data = packet.get_raw_packet()
@@ -162,3 +165,25 @@ def sessionizer(path, duration=None, threshold_time=None):
     if duration is None:
         sessions.append(working_dict)
     return sessions
+
+
+def parallel_sessionizer(pcap_files, duration=None, threshold_time=None):
+    '''
+    Run sessionizer() in parallel across many pcap files.
+
+    Args:
+        pcap_files: list of files to process.
+        duration and threshold_time: passed to sessionizer().
+
+    Returns:
+        dict of session_dicts, keyed by pcap filename.
+    '''
+    # Process smaller files first - many small files can be processed in parallel.
+    pcap_files = sorted(pcap_files, key=os.path.getsize, reverse=True)
+    with ProcessPoolExecutor() as executor:
+        futures = {
+            pcap_file: executor.submit(sessionizer, pcap_file, duration, threshold_time)
+            for pcap_file in pcap_files}
+        pcap_file_sessions = {
+            pcap_file: future.result() for pcap_file, future in futures.items()}
+        return pcap_file_sessions

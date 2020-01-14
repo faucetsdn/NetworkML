@@ -24,3 +24,17 @@ def test_packetizer():
     assert ('192.168.3.131:17500', '192.168.3.255:17500') == (key1, key2)
     assert 324 == len(data)
     assert 'ffffffffffff4061' == data[:16]
+
+
+def test_sessionizer():
+    pcap_file_sessions = networkml.parsers.pcap.reader.parallel_sessionizer(
+        ['tests/trace_ab12_2001-01-01_02_03-client-ip-1-2-3-4.pcap'])
+    binned_sessions = pcap_file_sessions.get(
+        'tests/trace_ab12_2001-01-01_02_03-client-ip-1-2-3-4.pcap', None)
+    assert binned_sessions is not None
+    first_session = binned_sessions[0]
+    packet_key = ('172.16.255.1:10670', '204.194.237.136:80')
+    first_data = first_session[packet_key][0]
+    timestamp, packet = first_data
+    assert packet is not None
+    assert isinstance(timestamp, datetime.datetime)
