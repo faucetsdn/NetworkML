@@ -1,4 +1,5 @@
 import datetime
+import logging
 import networkml.parsers.pcap.reader
 
 
@@ -27,7 +28,10 @@ def test_packetizer():
 
 
 def test_sessionizer():
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger('test')
     pcap_file_sessions = networkml.parsers.pcap.reader.parallel_sessionizer(
+        logger,
         ['tests/trace_ab12_2001-01-01_02_03-client-ip-1-2-3-4.pcap'])
     binned_sessions = pcap_file_sessions.get(
         'tests/trace_ab12_2001-01-01_02_03-client-ip-1-2-3-4.pcap', None)

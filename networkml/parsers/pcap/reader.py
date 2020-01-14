@@ -2,7 +2,7 @@ import binascii
 import datetime
 import os
 from collections import OrderedDict
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, as_completed
 import pyshark
 
 
@@ -167,11 +167,12 @@ def sessionizer(path, duration=None, threshold_time=None):
     return sessions
 
 
-def parallel_sessionizer(pcap_files, duration=None, threshold_time=None):
+def parallel_sessionizer(logger, pcap_files, duration=None, threshold_time=None):
     '''
     Run sessionizer() in parallel across many pcap files.
 
     Args:
+        logger: logger instance.
         pcap_files: list of files to process.
         duration and threshold_time: passed to sessionizer().
 
@@ -182,8 +183,16 @@ def parallel_sessionizer(pcap_files, duration=None, threshold_time=None):
     pcap_files = sorted(pcap_files, key=os.path.getsize, reverse=True)
     with ProcessPoolExecutor() as executor:
         futures = {
-            pcap_file: executor.submit(sessionizer, pcap_file, duration, threshold_time)
+            executor.submit(sessionizer, pcap_file, duration, threshold_time): pcap_file
             for pcap_file in pcap_files}
-        pcap_file_sessions = {
-            pcap_file: future.result() for pcap_file, future in futures.items()}
+        pcap_file_sessions = {}
+        for future in as_completed(futures):
+            pcap_file = futures.get(future, None)
+            if pcap_file:
+                logger.info('got sessionizer result from {0}'.format(pcap_file))
+                try:
+                    # 120 minute timeout per file.
+                    pcap_file_sessions[pcap_file] = future.result(timeout=(120*60))
+                except Exception as err:
+                    logger.error('exception processing {0}: {1}' % (pcap_File, err))
         return pcap_file_sessions
