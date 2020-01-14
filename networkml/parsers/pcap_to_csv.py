@@ -17,7 +17,6 @@ from copy import deepcopy
 import humanize
 import pyshark
 
-logging.basicConfig(level=logging.INFO)
 PROTOCOLS = ['<IP Layer>',
              '<ETH Layer>',
              '<TCP Layer>',
@@ -160,6 +159,8 @@ def ispcap(pathfile):
 def parse_args(parser):
     parser.add_argument('path', help='path to a single pcap file, or a directory of pcaps to parse')
     parser.add_argument('--combined', action='store_true', help='write out all records from all pcaps into a single csv file')
+    parser.add_argument('--level', choices=['packet', 'flow', 'pcap'], default='packet', help='level to make the output records (default=packets)')
+    parser.add_argument('--logging', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO', help='logging level (default=INFO)')
     parser.add_argument('--output', default=None, help='path to write out csv file or directory for csv files')
     parser.add_argument('--threads', default=1, type=int, help='number of async threads to use (default=1)')
     parsed_args = parser.parse_args()
@@ -171,6 +172,12 @@ def main():
     out_path = parsed_args.output
     combined = parsed_args.combined
     threads = parsed_args.threads
+    log_level = parsed_args.logging
+    level = parsed_args.level
+
+    log_levels = {'INFO': logging.INFO, 'DEBUG': logging.DEBUG, 'WARNING': logging.WARNING, 'ERROR': logging.ERROR}
+    logging.basicConfig(level=log_levels[log_level])
+
     in_paths = []
     out_paths = []
 
@@ -193,14 +200,21 @@ def main():
         else:
             out_paths.append(in_path + ".csv")
 
-    logger.info(f'Including the following layers in CSV (if they exist): {PROTOCOLS}')
-    process_files(threads, in_paths, out_paths)
-    if combined:
-        combined_path = os.path.join(os.path.dirname(out_paths[0]), "combined.csv")
-        logger.info(f'Combining CSVs into a single file: {combined_path}')
-        combine_csvs(out_paths, combined_path)
-    else:
-        logger.info(f'CSV file(s) written out to: {out_paths}')
+    if level == 'packet':
+        logger.info(f'Including the following layers in CSV (if they exist): {PROTOCOLS}')
+        process_files(threads, in_paths, out_paths)
+        if combined:
+            combined_path = os.path.join(os.path.dirname(out_paths[0]), "combined.csv")
+            logger.info(f'Combining CSVs into a single file: {combined_path}')
+            combine_csvs(out_paths, combined_path)
+        else:
+            logger.info(f'CSV file(s) written out to: {out_paths}')
+    elif level == 'flow':
+        # TODO using tshark conv,tcp and conv,udp filters (add a summary of other packets with protocols?)
+        pass
+    elif level == 'pcap':
+        # TODO unknown what should be in this, just the overarching tcp protocol?
+        pass
 
 if __name__ == '__main__':
     logger = logging.getLogger(__name__)
