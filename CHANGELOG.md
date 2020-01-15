@@ -1,3 +1,12 @@
+# v0.4.6 (2020-01-15)
+
+- Updated tensorflow
+- Updated pyshark
+- Made sessionizer parallel
+- Added 120 minute timeout for a pcap
+- Added sessionizer test
+- Updated license
+
 # v0.4.5 (2020-01-02)
 
 - Updated numpy to 1.18.0
