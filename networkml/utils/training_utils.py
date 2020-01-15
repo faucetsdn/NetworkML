@@ -118,7 +118,7 @@ def read_data(data_dir, duration=None, labels=None):
 
     # Go through all the files in the directory
     logger.info('Found {0} pcap files to read.'.format(len(files)))
-    pcap_file_sessions = parallel_sessionizer(files, duration=duration)
+    pcap_file_sessions = parallel_sessionizer(logger, files, duration=duration)
 
     count = 0
     for filename in files:

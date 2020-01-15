@@ -226,7 +226,7 @@ class Model:
 
     def sessionize_pcaps(self, pcap_files):
         self.pcap_file_sessions.update(parallel_sessionizer(
-            pcap_files, duration=self.duration, threshold_time=self.threshold_time))
+            self.logger, pcap_files, duration=self.duration, threshold_time=self.threshold_time))
 
     def get_representation(self, filepath, mean=True, source_ip=None):
         '''
