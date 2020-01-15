@@ -88,7 +88,7 @@ class Model:
         X = []
         timestamps = []
         if filepath not in self.pcap_file_sessions:
-            self.sessionize_pcaps(self.logger, [filepath])
+            self.sessionize_pcaps([filepath])
         binned_sessions = self.pcap_file_sessions.get(filepath, {})
         self.sessions = binned_sessions
 
