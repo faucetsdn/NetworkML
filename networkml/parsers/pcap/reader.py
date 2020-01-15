@@ -191,8 +191,8 @@ def parallel_sessionizer(logger, pcap_files, duration=None, threshold_time=None)
             if pcap_file:
                 logger.info('got sessionizer result from {0}'.format(pcap_file))
                 try:
-                    # 120 minute timeout per file.
-                    pcap_file_sessions[pcap_file] = future.result(timeout=(120*60))
+                    # 24h timeout per file.
+                    pcap_file_sessions[pcap_file] = future.result(timeout=(24 * 60 * 60))
                 except Exception as err:
-                    logger.error('exception processing {0}: {1}' % (pcap_File, err))
+                    logger.error('exception processing {0}: {1}'.format(pcap_file, err))
         return pcap_file_sessions
