@@ -265,7 +265,7 @@ def parallel_sessionizer(logger, pcap_files, duration=None, threshold_time=None,
         if csv_out_dir is not None:
             csv_dir = csv_out_dir
         else:
-            csv_dir = os.path.basename(pcap_file)
+            csv_dir = os.path.dirname(pcap_file)
         csv_file = pcap_filename_to_csv_filename(pcap_file, csv_dir)
         csv_filenames[pcap_file] = csv_file
 
