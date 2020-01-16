@@ -172,6 +172,10 @@ def sessionizer(path, duration=None, threshold_time=None):
     return sessions
 
 
+def csv_suffix():
+    return '.'.join(('session', 'csv', 'gz'))
+
+
 def pcap_filename_to_csv_filename(pcap_filename, out_dir):
     '''
     Convert pcap filename to CSV filename.
@@ -183,8 +187,7 @@ def pcap_filename_to_csv_filename(pcap_filename, out_dir):
         name of CSV file.
     '''
     csv_base = os.path.basename(pcap_filename)
-    csv_filename = os.path.join(
-        out_dir, '.'.join((csv_base[:csv_base.rfind('.')], '.'.join(('session', 'csv', 'gz')))))
+    csv_filename = os.path.join(out_dir, '.'.join((csv_base[:csv_base.rfind('.')], csv_suffix())))
     return csv_filename
 
 
@@ -251,16 +254,34 @@ def parallel_sessionizer(logger, pcap_files, duration=None, threshold_time=None,
         logger: logger instance.
         pcap_files: list of files to process.
         duration and threshold_time: passed to sessionizer().
-
+        csv_out_dir: where to cache CSVs of sessions (default is same dir as pcap).
     Returns:
         dict of session_dicts, keyed by pcap filename.
     '''
     # Process smaller files first - many small files can be processed in parallel.
     pcap_files = sorted(pcap_files, key=os.path.getsize, reverse=True)
+    csv_filenames = {}
+    for pcap_file in pcap_files:
+        if csv_out_dir is not None:
+            csv_dir = csv_out_dir
+        else:
+            csv_dir = os.path.basename(pcap_file)
+        csv_file = pcap_filename_to_csv_filename(pcap_file, csv_dir)
+        csv_filenames[pcap_file] = csv_file
+
     with ProcessPoolExecutor() as executor:
+        unparsed_pcaps = []
+        pcap_file_sessions = {}
+        # Retrieve pre-cached CSVs.
+        for pcap_file in pcap_files:
+            csv_file = csv_filenames[pcap_file]
+            if os.path.exists(csv_file):
+                pcap_file_sessions[pcap_file] = sessioncsv_to_sessions(csv_filename)
+            else:
+                unparsed_pcaps.append(pcap_file)
         futures = {
             executor.submit(sessionizer, pcap_file, duration, threshold_time): pcap_file
-            for pcap_file in pcap_files}
+            for pcap_file in unparsed_pcaps}
         pcap_file_sessions = {}
         for future in as_completed(futures):
             pcap_file = futures.get(future, None)
@@ -269,10 +290,8 @@ def parallel_sessionizer(logger, pcap_files, duration=None, threshold_time=None,
                 try:
                     # 24h timeout per file.
                     pcap_file_sessions[pcap_file] = future.result(timeout=(24 * 60 * 60))
+                    csv_file = csv_filenames[pcap_file]
+                    pcap_to_sessioncsv(os.path.dirname(csv_file), pcap_file, pcap_file_sessions[pcap_file])
                 except Exception as err:
                     logger.error('exception processing {0}: {1}'.format(pcap_file, err))
-
-        if csv_out_dir is not None:
-            for pcap_file, pcap_sessions in pcap_file_sessions.items():
-                pcap_to_sessioncsv(csv_out_dir, pcap_file, pcap_sessions)
         return pcap_file_sessions
