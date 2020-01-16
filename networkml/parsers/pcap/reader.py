@@ -282,7 +282,6 @@ def parallel_sessionizer(logger, pcap_files, duration=None, threshold_time=None,
         futures = {
             executor.submit(sessionizer, pcap_file, duration, threshold_time): pcap_file
             for pcap_file in unparsed_pcaps}
-        pcap_file_sessions = {}
         for future in as_completed(futures):
             pcap_file = futures.get(future, None)
             if pcap_file:
