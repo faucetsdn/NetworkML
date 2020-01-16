@@ -276,7 +276,7 @@ def parallel_sessionizer(logger, pcap_files, duration=None, threshold_time=None,
         for pcap_file in pcap_files:
             csv_file = csv_filenames[pcap_file]
             if os.path.exists(csv_file):
-                pcap_file_sessions[pcap_file] = sessioncsv_to_sessions(csv_filename)
+                pcap_file_sessions[pcap_file] = sessioncsv_to_sessions(csv_file)
             else:
                 unparsed_pcaps.append(pcap_file)
         futures = {
