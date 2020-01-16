@@ -1,9 +1,15 @@
 import binascii
+import csv
+import io
+import gzip
 import datetime
 import os
+import sys
 from collections import OrderedDict
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import pyshark
+
+CSV_FIELDS = ('session_no', 'key', 'timestamp', 'packet')
 
 
 def parse_packet_head(packet):
@@ -154,8 +160,7 @@ def sessionizer(path, duration=None, threshold_time=None):
             if (session_start - first_packet_time).total_seconds() > threshold_time:
                 working_dict[key] = []
 
-        # Add the session to the session dict if it's start time is after
-        # the cutoff
+        # Add the session to the session dict if its start time is after the cutoff
         if key in working_dict:
             working_dict[key].append((head[0], packet))
 
@@ -167,7 +172,78 @@ def sessionizer(path, duration=None, threshold_time=None):
     return sessions
 
 
-def parallel_sessionizer(logger, pcap_files, duration=None, threshold_time=None):
+def pcap_filename_to_csv_filename(pcap_filename, out_dir):
+    '''
+    Convert pcap filename to CSV filename.
+
+    Args:
+        pcap_filename: full path to pcap file.
+        out_dir: directory for new CSV file.
+    Returns:
+        name of CSV file.
+    '''
+    csv_base = os.path.basename(pcap_filename)
+    csv_filename = os.path.join(
+        out_dir, '.'.join((csv_base[:csv_base.rfind('.')], '.'.join(('session', 'csv', 'gz')))))
+    return csv_filename
+
+
+def pcap_to_sessioncsv(out_dir, pcap_filename, pcap_sessions):
+    '''
+    Write session dicts to gzipped CSV file (opposite of pcap_to_sessioncsv()).
+
+    Args:
+        out_dir: directory to write CSV file in.
+        pcap_filename: path to original pcap file.
+        pcap_sessions: list of session dicts.
+    '''
+    csv_filename = pcap_filename_to_csv_filename(pcap_filename, out_dir)
+    with gzip.open(csv_filename, 'wb') as csv_file:
+        writer = csv.DictWriter(
+            io.TextIOWrapper(csv_file, newline='', write_through=True), fieldnames=CSV_FIELDS)
+        writer.writeheader()
+        for session_no, pcap_session in enumerate(pcap_sessions):
+            for key, session_data in pcap_session.items():
+                for timestamp, packet in session_data:
+                    writer.writerow({
+                        'session_no': session_no,
+                        'key': '-'.join(key),
+                        'timestamp': timestamp.timestamp(),
+                        'packet': packet})
+
+
+def sessioncsv_to_sessions(csv_filename):
+    '''
+    Parse CSV file containing sessions (opposite of pcap_to_sessioncsv()).
+
+    Args:
+        csv_filename: full path to gzipped CSV.
+    Returns:
+        list of session dicts.
+    '''
+    sessions = []
+    last_session_no = None
+    with gzip.open(csv_filename) as csv_file:
+        reader = csv.DictReader(io.TextIOWrapper(csv_file, newline=''))
+        working_dict = OrderedDict()
+        for row in reader:
+            session_no = row['session_no']
+            if last_session_no != session_no:
+                if working_dict:
+                    sessions.append(working_dict)
+                    working_dict = OrderedDict()
+                last_session_no = session_no
+            key = tuple(row['key'].split('-'))
+            if key not in working_dict:
+                working_dict[key] = []
+            working_dict[key].append(
+                (datetime.datetime.fromtimestamp(float(row['timestamp'])), row['packet']))
+    if working_dict:
+        sessions.append(working_dict)
+    return sessions
+
+
+def parallel_sessionizer(logger, pcap_files, duration=None, threshold_time=None, csv_out_dir=None):
     '''
     Run sessionizer() in parallel across many pcap files.
 
@@ -195,4 +271,8 @@ def parallel_sessionizer(logger, pcap_files, duration=None, threshold_time=None)
                     pcap_file_sessions[pcap_file] = future.result(timeout=(24 * 60 * 60))
                 except Exception as err:
                     logger.error('exception processing {0}: {1}'.format(pcap_file, err))
+
+        if csv_out_dir is not None:
+            for pcap_file, pcap_sessions in pcap_file_sessions.items():
+                pcap_to_sessioncsv(csv_out_dir, pcap_file, pcap_sessions)
         return pcap_file_sessions

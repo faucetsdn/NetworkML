@@ -1,5 +1,8 @@
 import datetime
 import logging
+import tempfile
+import os
+import sys
 import networkml.parsers.pcap.reader
 
 
@@ -30,15 +33,25 @@ def test_packetizer():
 def test_sessionizer():
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger('test')
-    pcap_file_sessions = networkml.parsers.pcap.reader.parallel_sessionizer(
-        logger,
-        ['tests/trace_ab12_2001-01-01_02_03-client-ip-1-2-3-4.pcap'])
-    binned_sessions = pcap_file_sessions.get(
-        'tests/trace_ab12_2001-01-01_02_03-client-ip-1-2-3-4.pcap', None)
-    assert binned_sessions is not None
-    first_session = binned_sessions[0]
-    packet_key = ('172.16.255.1:10670', '204.194.237.136:80')
-    first_data = first_session[packet_key][0]
-    timestamp, packet = first_data
-    assert packet is not None
-    assert isinstance(timestamp, datetime.datetime)
+    pcap_file = 'trace_ab12_2001-01-01_02_03-client-ip-1-2-3-4.pcap'
+    with tempfile.TemporaryDirectory() as tempdir:
+        pcap_path = os.path.join('tests', pcap_file)
+        pcap_file_sessions = networkml.parsers.pcap.reader.parallel_sessionizer(
+            logger, [pcap_path], csv_out_dir=tempdir)
+        binned_sessions = pcap_file_sessions.get(pcap_path, None)
+        # smoke test - can read session from pcap
+        assert binned_sessions is not None
+        first_session = binned_sessions[0]
+        packet_key = ('172.16.255.1:10670', '204.194.237.136:80')
+        first_data = first_session[packet_key][0]
+        timestamp, packet = first_data
+        assert packet is not None
+        assert isinstance(timestamp, datetime.datetime)
+        # read CSV version of sessions back in.
+        csv_file = networkml.parsers.pcap.reader.pcap_filename_to_csv_filename(pcap_file, tempdir)
+        binned_sessions_from_csv = networkml.parsers.pcap.reader.sessioncsv_to_sessions(csv_file)
+        first_session_from_csv = binned_sessions_from_csv[0]
+        # CSV version should be the same as read from pcap.
+        assert len(first_session) == len(first_session_from_csv)
+        for pcap_items, csv_items in zip(first_session.items(), first_session_from_csv.items()):
+            assert pcap_items == csv_items
