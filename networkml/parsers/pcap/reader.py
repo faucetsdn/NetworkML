@@ -4,7 +4,6 @@ import io
 import gzip
 import datetime
 import os
-import sys
 from collections import OrderedDict
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import pyshark
