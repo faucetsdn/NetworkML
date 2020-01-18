@@ -82,6 +82,10 @@ def get_pyshark_data(pcap_file):
 
     return dict_fp
 
+def get_tshark_data(pcap_file):
+    # TODO
+    pass
+
 def get_csv_header(dict_fp):
     header_all = set()
     with open(dict_fp, 'r') as f:
@@ -95,8 +99,8 @@ def get_csv_header(dict_fp):
 
 def write_dict_to_csv(dict_fp, out_file):
     header = get_csv_header(dict_fp)
-    with open(out_file, 'w') as f:
-        w = csv.DictWriter(f, header)
+    with open(out_file, 'w', newline='') as f:
+        w = csv.DictWriter(f, fieldnames=header)
         w.writeheader()
         with open(dict_fp, 'r') as f:
             for line in f:
@@ -106,7 +110,7 @@ def combine_csvs(out_paths, combined_path):
     # First determine the field names from the top line of each input file
     fieldnames = []
     for filename in out_paths:
-        with open(filename, "r", newline="") as f_in:
+        with open(filename, 'r', newline='') as f_in:
             reader = csv.reader(f_in)
             headers = next(reader)
             for h in headers:
@@ -114,11 +118,11 @@ def combine_csvs(out_paths, combined_path):
                     fieldnames.append(h)
 
     # Then copy the data
-    with open(combined_path, "w", newline="") as f_out:
+    with open(combined_path, 'w', newline='') as f_out:
         writer = csv.DictWriter(f_out, fieldnames=fieldnames)
         writer.writeheader()
         for filename in out_paths:
-            with open(filename, "r", newline="") as f_in:
+            with open(filename, 'r', newline='') as f_in:
                 reader = csv.DictReader(f_in)
                 for line in reader:
                     writer.writerow(line)
@@ -129,17 +133,24 @@ def cleanup_files(paths):
         if os.path.exists(fi):
             os.remove(fi)
 
-def parse_file(in_file, out_file):
+def parse_file(level, in_file, out_file):
     logger.debug(f'Processing {in_file}')
-    dict_fp = get_pyshark_data(in_file)
+    if level == 'packet':
+        dict_fp = get_pyshark_data(in_file)
+    elif level == 'flow':
+        # TODO using tshark conv,tcp and conv,udp filters (add a summary of other packets with protocols?)
+        pass
+    elif level == 'pcap':
+        # TODO unknown what should be in this, just the overarching tcp protocol?
+        pass
     write_dict_to_csv(dict_fp, out_file)
     cleanup_files([dict_fp])
 
-def process_files(threads, in_paths, out_paths):
+def process_files(threads, level, in_paths, out_paths):
     num_files = len(in_paths)
     finished_files = 0
     with concurrent.futures.ProcessPoolExecutor(max_workers=threads) as executor:
-        future_to_parse = {executor.submit(parse_file, in_paths[i], out_paths[i]): i for i in range(len((in_paths)))}
+        future_to_parse = {executor.submit(parse_file, level, in_paths[i], out_paths[i]): i for i in range(len((in_paths)))}
         for future in concurrent.futures.as_completed(future_to_parse):
             path = future_to_parse[future]
             try:
@@ -202,19 +213,15 @@ def main():
 
     if level == 'packet':
         logger.info(f'Including the following layers in CSV (if they exist): {PROTOCOLS}')
-        process_files(threads, in_paths, out_paths)
-        if combined:
-            combined_path = os.path.join(os.path.dirname(out_paths[0]), "combined.csv")
-            logger.info(f'Combining CSVs into a single file: {combined_path}')
-            combine_csvs(out_paths, combined_path)
-        else:
-            logger.info(f'CSV file(s) written out to: {out_paths}')
-    elif level == 'flow':
-        # TODO using tshark conv,tcp and conv,udp filters (add a summary of other packets with protocols?)
-        pass
-    elif level == 'pcap':
-        # TODO unknown what should be in this, just the overarching tcp protocol?
-        pass
+
+    process_files(threads, level, in_paths, out_paths)
+
+    if combined:
+        combined_path = os.path.join(os.path.dirname(out_paths[0]), "combined.csv")
+        logger.info(f'Combining CSVs into a single file: {combined_path}')
+        combine_csvs(out_paths, combined_path)
+    else:
+        logger.info(f'CSV file(s) written out to: {out_paths}')
 
 if __name__ == '__main__':
     logger = logging.getLogger(__name__)
