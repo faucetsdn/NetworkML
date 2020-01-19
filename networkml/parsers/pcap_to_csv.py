@@ -10,7 +10,9 @@ import ntpath
 import os
 import pathlib
 import random
+import shlex
 import string
+import subprocess
 import sys
 import time
 
@@ -32,11 +34,10 @@ PROTOCOLS = ['<IP Layer>',
              '<IP6 Layer>',
              '<TLS Layer>']
 
-def get_pyshark_data(pcap_file):
+def get_pyshark_data(pcap_file, dict_fp):
     all_protocols = set()
 
     pcap_file_short = ntpath.basename(pcap_file)
-    dict_fp = '/tmp/networkml.' + ''.join([random.choice(string.ascii_letters + string.digits) for n in range(8)])
     with gzip.open(dict_fp, 'w') as f:
         f = io.TextIOWrapper(f, newline='', write_through=True)
         with pyshark.FileCapture(pcap_file,
@@ -85,9 +86,55 @@ def get_pyshark_data(pcap_file):
 
     return dict_fp
 
-def get_tshark_data(pcap_file):
-    # TODO
-    pass
+def get_tshark_data(pcap_file, dict_fp):
+    # TODO (add a summary of other packets with protocols?)
+    results = {}
+    output = ''
+    try:
+        options = '-n -q -z conv,tcp -z conv,udp'
+        output = subprocess.check_output(shlex.split(' '.join(['tshark', '-r', pcap_file, options])))
+        output = output.decode("utf-8")
+    except Exception as e:
+        print(str(e))
+
+    in_block = False
+    name = None
+    for line in output.split('\n'):
+        if line.startswith('==='):
+            if in_block:
+                in_block = False
+                name = None
+                continue
+            else:
+                in_block = True
+                continue
+        if in_block:
+            if not name:
+                name = ''.join(line.split(':')).strip()
+                results[name] = ''
+                continue
+            elif not line.startswith('Filter:') and line != '':
+                results[name] += line + '\n'
+
+    for result in results.keys():
+        if 'Conversations' in result:
+            # handle conversation parsing
+            conversations = []
+            for line in results[result].split('\n'):
+                if line == '' or line.startswith(' '):
+                    # header or padding, dicard
+                    continue
+                else:
+                    src, _, dst, frames_l, bytes_l, frames_r, bytes_r, frames_total, bytes_total, rel_start, duration = line.split()
+                    conv = {'Source': src, 'Destination': dst, 'Frames to Source': frames_l, 'Bytes to Source': bytes_l, 'Frames to Destination': frames_r, 'Bytes to Destination': bytes_r, 'Total Frames': frames_total, 'Total Bytes': bytes_total, 'Relative Start': rel_start, 'Duration': duration}
+                    if 'Ethernet' in result:
+                        conv['Source Vendor'] = get_ether_vendor(src)
+                        conv['Destination Vendor'] = get_ether_vendor(dst)
+                    conversations.append(conv)
+            results[result] = conversations
+
+    # TODO write out dict
+    print(results)
 
 def get_csv_header(dict_fp):
     header_all = set()
@@ -105,9 +152,12 @@ def write_dict_to_csv(dict_fp, out_file):
     with gzip.open(out_file, 'wb') as f:
         w = csv.DictWriter(io.TextIOWrapper(f, newline='', write_through=True), fieldnames=header)
         w.writeheader()
-        with gzip.open(dict_fp, 'rb') as f:
-            for line in io.TextIOWrapper(f, newline=''):
-                w.writerow(ast.literal_eval(line.strip()))
+        try:
+            with gzip.open(dict_fp, 'rb') as f:
+                for line in io.TextIOWrapper(f, newline=''):
+                    w.writerow(ast.literal_eval(line.strip()))
+        except Exception as e:
+            print(f'Failed to write to CSV because: {e}')
 
 def combine_csvs(out_paths, combined_path):
     # First determine the field names from the top line of each input file
@@ -138,11 +188,13 @@ def cleanup_files(paths):
 
 def parse_file(level, in_file, out_file):
     logger.debug(f'Processing {in_file}')
+    dict_fp = '/tmp/networkml.' + ''.join([random.choice(string.ascii_letters + string.digits) for n in range(8)])
     if level == 'packet':
-        dict_fp = get_pyshark_data(in_file)
+        # using pyshark to get everything possible
+        get_pyshark_data(in_file, dict_fp)
     elif level == 'flow':
-        # TODO using tshark conv,tcp and conv,udp filters (add a summary of other packets with protocols?)
-        pass
+        # using tshark conv,tcp and conv,udp filters
+        get_tshark_data(in_file, dict_fp)
     elif level == 'pcap':
         # TODO unknown what should be in this, just the overarching tcp protocol?
         pass
