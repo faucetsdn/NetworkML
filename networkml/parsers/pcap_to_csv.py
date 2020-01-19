@@ -3,6 +3,8 @@ import ast
 import concurrent.futures
 import csv
 import datetime
+import gzip
+import io
 import logging
 import ntpath
 import os
@@ -35,7 +37,8 @@ def get_pyshark_data(pcap_file):
 
     pcap_file_short = ntpath.basename(pcap_file)
     dict_fp = '/tmp/networkml.' + ''.join([random.choice(string.ascii_letters + string.digits) for n in range(8)])
-    with open(dict_fp, 'w') as f:
+    with gzip.open(dict_fp, 'w') as f:
+        f = io.TextIOWrapper(f, newline='', write_through=True)
         with pyshark.FileCapture(pcap_file,
                                  use_json=True,
                                  include_raw=True,
@@ -88,8 +91,8 @@ def get_tshark_data(pcap_file):
 
 def get_csv_header(dict_fp):
     header_all = set()
-    with open(dict_fp, 'r') as f:
-        for line in f:
+    with gzip.open(dict_fp, 'rb') as f:
+        for line in io.TextIOWrapper(f, newline=''):
             header_all.update(ast.literal_eval(line.strip()).keys())
     header = []
     for key in header_all:
@@ -99,31 +102,31 @@ def get_csv_header(dict_fp):
 
 def write_dict_to_csv(dict_fp, out_file):
     header = get_csv_header(dict_fp)
-    with open(out_file, 'w', newline='') as f:
-        w = csv.DictWriter(f, fieldnames=header)
+    with gzip.open(out_file, 'wb') as f:
+        w = csv.DictWriter(io.TextIOWrapper(f, newline='', write_through=True), fieldnames=header)
         w.writeheader()
-        with open(dict_fp, 'r') as f:
-            for line in f:
+        with gzip.open(dict_fp, 'rb') as f:
+            for line in io.TextIOWrapper(f, newline=''):
                 w.writerow(ast.literal_eval(line.strip()))
 
 def combine_csvs(out_paths, combined_path):
     # First determine the field names from the top line of each input file
     fieldnames = []
     for filename in out_paths:
-        with open(filename, 'r', newline='') as f_in:
-            reader = csv.reader(f_in)
+        with gzip.open(filename, 'rb') as f_in:
+            reader = csv.reader(io.TextIOWrapper(f_in, newline=''))
             headers = next(reader)
             for h in headers:
                 if h not in fieldnames:
                     fieldnames.append(h)
 
     # Then copy the data
-    with open(combined_path, 'w', newline='') as f_out:
-        writer = csv.DictWriter(f_out, fieldnames=fieldnames)
+    with gzip.open(combined_path, 'wb') as f_out:
+        writer = csv.DictWriter(io.TextIOWrapper(f_out, newline='', write_through=True), fieldnames=fieldnames)
         writer.writeheader()
         for filename in out_paths:
-            with open(filename, 'r', newline='') as f_in:
-                reader = csv.DictReader(f_in)
+            with gzip.open(filename, 'rb') as f_in:
+                reader = csv.DictReader(io.TextIOWrapper(f_in, newline=''))
                 for line in reader:
                     writer.writerow(line)
                 cleanup_files([filename])
@@ -169,10 +172,10 @@ def ispcap(pathfile):
 
 def parse_args(parser):
     parser.add_argument('path', help='path to a single pcap file, or a directory of pcaps to parse')
-    parser.add_argument('--combined', action='store_true', help='write out all records from all pcaps into a single csv file')
+    parser.add_argument('--combined', action='store_true', help='write out all records from all pcaps into a single gzipped csv file')
     parser.add_argument('--level', choices=['packet', 'flow', 'pcap'], default='packet', help='level to make the output records (default=packets)')
     parser.add_argument('--logging', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO', help='logging level (default=INFO)')
-    parser.add_argument('--output', default=None, help='path to write out csv file or directory for csv files')
+    parser.add_argument('--output', default=None, help='path to write out gzipped csv file or directory for gzipped csv files')
     parser.add_argument('--threads', default=1, type=int, help='number of async threads to use (default=1)')
     parsed_args = parser.parse_args()
     return parsed_args
@@ -201,15 +204,15 @@ def main():
                 if ispcap(pathfile):
                     in_paths.append(os.path.join(root, pathfile))
                     if out_path:
-                        out_paths.append(os.path.join(out_path, pathfile) + ".csv")
+                        out_paths.append(os.path.join(out_path, pathfile) + ".csv.gz")
                     else:
-                        out_paths.append(os.path.join(root, pathfile) + ".csv")
+                        out_paths.append(os.path.join(root, pathfile) + ".csv.gz")
     else:
         in_paths.append(in_path)
         if out_path:
             out_paths.append(out_path)
         else:
-            out_paths.append(in_path + ".csv")
+            out_paths.append(in_path + ".csv.gz")
 
     if level == 'packet':
         logger.info(f'Including the following layers in CSV (if they exist): {PROTOCOLS}')
@@ -217,11 +220,11 @@ def main():
     process_files(threads, level, in_paths, out_paths)
 
     if combined:
-        combined_path = os.path.join(os.path.dirname(out_paths[0]), "combined.csv")
+        combined_path = os.path.join(os.path.dirname(out_paths[0]), "combined.csv.gz")
         logger.info(f'Combining CSVs into a single file: {combined_path}')
         combine_csvs(out_paths, combined_path)
     else:
-        logger.info(f'CSV file(s) written out to: {out_paths}')
+        logger.info(f'GZipped CSV file(s) written out to: {out_paths}')
 
 if __name__ == '__main__':
     logger = logging.getLogger(__name__)
