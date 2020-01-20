@@ -21,12 +21,12 @@ def test_packetizer():
     # Migrate to UTC in the future.
     _, key1, key2 = head
     assert ('192.168.3.131:57011', '72.14.213.138:80') == (key1, key2)
-    assert 1994 == len(data)
+    assert 108 == len(data)
     assert '001a8c15f9804061' == data[:16]
     head, data = packet_list[-1]
     _, key1, key2 = head
     assert ('192.168.3.131:17500', '192.168.3.255:17500') == (key1, key2)
-    assert 324 == len(data)
+    assert 68 == len(data)
     assert 'ffffffffffff4061' == data[:16]
 
 

@@ -73,15 +73,28 @@ def packetizer(path):
             path, use_json=True, include_raw=True, keep_packets=False,
             custom_parameters=['-o', 'tcp.desegment_tcp_streams:false', '-n']) as cap:
         for packet in cap:
-            data = packet.get_raw_packet()
             head = parse_packet_head(packet)
-            if head is not None:
-                keys, highest_layers = head
-                packet_dict[keys] = binascii.hexlify(data).decode('utf-8')
-                for key, highest_layer in highest_layers.items():
-                    if key not in highest_layers_dict:
-                        highest_layers_dict[key] = set()
-                    highest_layers_dict[key].update({highest_layer})
+            if head is None:
+                continue
+            raw_packet = packet.get_raw_packet()
+            payload_offset = len(raw_packet)
+            transport_payload_size = 0
+            # Strip payload beyond transport layer, if any.
+            if packet.transport_layer:
+                transport_layer = packet[packet.transport_layer]
+                if hasattr(transport_layer, 'payload_raw'):
+                    transport_payload_size = int(transport_layer.payload_raw[2])
+                elif hasattr(transport_layer, 'length_raw'):
+                    transport_payload_size = int(transport_layer.length_raw[0], 16)
+            payload_offset = min(len(raw_packet) - transport_payload_size, 128)
+            keys, highest_layers = head
+            stripped_data = raw_packet[:payload_offset]
+            assert stripped_data
+            packet_dict[keys] = binascii.hexlify(stripped_data).decode('utf-8')
+            for key, highest_layer in highest_layers.items():
+                if key not in highest_layers_dict:
+                    highest_layers_dict[key] = set()
+                highest_layers_dict[key].update({highest_layer})
     return packet_dict, highest_layers_dict
 
 
