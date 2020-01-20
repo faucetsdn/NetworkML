@@ -89,7 +89,6 @@ def packetizer(path):
             payload_offset = min(len(raw_packet) - transport_payload_size, 128)
             keys, highest_layers = head
             stripped_data = raw_packet[:payload_offset]
-            assert stripped_data
             packet_dict[keys] = binascii.hexlify(stripped_data).decode('utf-8')
             for key, highest_layer in highest_layers.items():
                 if key not in highest_layers_dict:
