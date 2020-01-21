@@ -84,11 +84,8 @@ def get_pyshark_data(pcap_file, dict_fp):
     if all_protocols:
         logger.warning(f'Found the following other layers in {pcap_file_short} that were not added to the CSV: {all_protocols}')
 
-    return dict_fp
-
 def get_tshark_data(pcap_file, dict_fp):
     # TODO (add a summary of other packets with protocols?)
-    results = {}
     output = ''
     try:
         options = '-n -q -z conv,tcp -z conv,udp'
@@ -99,6 +96,7 @@ def get_tshark_data(pcap_file, dict_fp):
 
     in_block = False
     name = None
+    results = {}
     for line in output.split('\n'):
         if line.startswith('==='):
             if in_block:
@@ -116,25 +114,20 @@ def get_tshark_data(pcap_file, dict_fp):
             elif not line.startswith('Filter:') and line != '':
                 results[name] += line + '\n'
 
-    for result in results.keys():
-        if 'Conversations' in result:
-            # handle conversation parsing
-            conversations = []
-            for line in results[result].split('\n'):
-                if line == '' or line.startswith(' '):
-                    # header or padding, dicard
-                    continue
-                else:
-                    src, _, dst, frames_l, bytes_l, frames_r, bytes_r, frames_total, bytes_total, rel_start, duration = line.split()
-                    conv = {'Source': src, 'Destination': dst, 'Frames to Source': frames_l, 'Bytes to Source': bytes_l, 'Frames to Destination': frames_r, 'Bytes to Destination': bytes_r, 'Total Frames': frames_total, 'Total Bytes': bytes_total, 'Relative Start': rel_start, 'Duration': duration}
-                    if 'Ethernet' in result:
-                        conv['Source Vendor'] = get_ether_vendor(src)
-                        conv['Destination Vendor'] = get_ether_vendor(dst)
-                    conversations.append(conv)
-            results[result] = conversations
-
-    # TODO write out dict
-    print(results)
+    with gzip.open(dict_fp, 'w') as f:
+        f = io.TextIOWrapper(f, newline='', write_through=True)
+        for result in results.keys():
+            if 'Conversations' in result:
+                transport_proto = result.split()[0]
+                # handle conversation parsing
+                for line in results[result].split('\n'):
+                    if line == '' or line.startswith(' '):
+                        # header or padding, dicard
+                        continue
+                    else:
+                        src, _, dst, frames_l, bytes_l, frames_r, bytes_r, frames_total, bytes_total, rel_start, duration = line.split()
+                        conv = {'Source': src.rsplit(':', 1)[0], 'Source Port': src.rsplit(':', 1)[1], 'Destination': dst.rsplit(':', 1)[0], 'Destination Port': dst.rsplit(':', 1)[1], 'Transport Protocol': transport_proto, 'Frames to Source': frames_l, 'Bytes to Source': bytes_l, 'Frames to Destination': frames_r, 'Bytes to Destination': bytes_r, 'Total Frames': frames_total, 'Total Bytes': bytes_total, 'Relative Start': rel_start, 'Duration': duration}
+                        print(conv, file=f)
 
 def get_csv_header(dict_fp):
     header_all = set()
