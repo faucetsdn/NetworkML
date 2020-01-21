@@ -4,6 +4,7 @@ import tempfile
 import os
 import sys
 import networkml.parsers.pcap.reader
+from networkml.parsers.pcap.pcap_utils import extract_macs, packet_size
 
 
 def test_packetizer():
@@ -16,18 +17,22 @@ def test_packetizer():
     assert {'DNS_RAW'} == highest_layers['192.168.3.131:60629']
     assert len(packet_dict) == 14169
     packet_list = list(packet_dict.items())
-    head, data = packet_list[0]
     # We have to drop date from comparison because reader.py doesn't use UTC consistently.
     # Migrate to UTC in the future.
-    _, key1, key2 = head
-    assert ('192.168.3.131:57011', '72.14.213.138:80') == (key1, key2)
+    head, data = packet_list[0]
+    assert ('40:61:86:9a:f1:f5', '00:1a:8c:15:f9:80') == extract_macs(data)
+    assert 983 == packet_size([0, data])
     assert 108 == len(data)
     assert '001a8c15f9804061' == data[:16]
-    head, data = packet_list[-1]
     _, key1, key2 = head
-    assert ('192.168.3.131:17500', '192.168.3.255:17500') == (key1, key2)
+    assert ('192.168.3.131:57011', '72.14.213.138:80') == (key1, key2)
+    head, data = packet_list[-1]
+    assert ('40:61:86:9a:f1:f5', 'ff:ff:ff:ff:ff:ff') == extract_macs(data)
+    assert 148 == packet_size([0, data])
     assert 68 == len(data)
     assert 'ffffffffffff4061' == data[:16]
+    _, key1, key2 = head
+    assert ('192.168.3.131:17500', '192.168.3.255:17500') == (key1, key2)
 
 
 def test_sessionizer():
