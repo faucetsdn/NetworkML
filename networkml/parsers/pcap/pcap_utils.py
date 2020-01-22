@@ -7,8 +7,11 @@ from collections import Counter
 from collections import defaultdict
 from collections import OrderedDict
 from scapy.layers.l2 import Ether
-from scapy.layers.inet import IP
-from scapy.layers.inet6 import IPv6
+from scapy.layers.inet import IP, ICMP
+# TODO: IPv6 disabled for now.
+# from scapy.layers.inet6 import IPv6
+
+LAYERS = (IP, ICMP)
 
 
 def parse_packet(packet):
@@ -20,7 +23,7 @@ def parse_packet(packet):
 
 def parse_ip_packet(packet):
     ether = parse_packet(packet)
-    for transport in IP, IPv6:
+    for transport in LAYERS:
         try:
             return ether[transport]
         except (IndexError, AttributeError):
@@ -192,7 +195,10 @@ def extract_protocol(session):
         protocol: Protocol number used in the session
     '''
     ip_packet = parse_ip_packet(session[0][1])
-    return ip_packet.proto
+    if ip_packet is not None:
+        # TODO: return as a string for compatibility, but should just be an int.
+        return '%2.2u' % ip_packet.proto
+    return None
 
 
 def is_external(address_1, address_2):
