@@ -191,8 +191,8 @@ def extract_protocol(session):
     Returns:
         protocol: Protocol number used in the session
     '''
-
-    return session[0][1][46:48]
+    ip_packet = parse_ip_packet(session[0][1])
+    return ip_packet.proto
 
 
 def is_external(address_1, address_2):
