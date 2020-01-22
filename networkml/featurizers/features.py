@@ -10,6 +10,7 @@ class Features():
         """
         func = getattr(self, func_name, None)
         if not func:
+            print("Error: Not a function name that's been defined")
             return False
 
         ret = inspect.getargspec(func)

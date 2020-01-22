@@ -38,21 +38,37 @@ class Featurizer():
                 if inspect.isclass(cls) and name != "Features":
                     instance = cls()
                     #append an instance of the class to classes
-                    classes.append(instance)
+                    classes.append((instance, name))
                     print(f'Importing class: {name}')
 
         return classes
 
     def main(self, feature_choices, file_input, features_path="./networkml/featurizers/funcs"):
         results = []
+        functions = []
+        groups = ('default')
         classes = []
         classes = self.import_class(features_path, classes)
 
-        # TODO feature_choices parsing
+        if 'functions' in feature_choices:
+            functions = feature_choices['functions']
+        if 'groups' in feature_choices:
+            groups = feature_choices['groups']
+
+        run_methods = []
         for f in classes:
-            # TODO transform should be something passed in
-            methods = filter(lambda funcname: funcname.startswith('transform_'), dir(f))
-            for method in methods:
-                print(f'Running method: {f}/{method}')
-                results.append(f.run_func(method, file_input))
+            if groups:
+                methods = filter(lambda funcname: funcname.startswith(groups), dir(f[0]))
+                for method in methods:
+                    print(f'Running method: {f[1]}/{method}')
+                    results.append(f[0].run_func(method, file_input))
+                    run_methods.append((f[1], method))
+
+        # run remaining extras
+        for function in functions:
+            if function not in run_methods:
+                for f in classes:
+                    if f[1] == function[0]:
+                        print(f'Running method: {f[1]}/{function[1]}')
+                        results.append(f[0].run_func(function[1], file_input))
         return results
