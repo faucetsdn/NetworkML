@@ -88,6 +88,7 @@ def get_tshark_data(pcap_file, dict_fp):
     # TODO (add a summary of other packets with protocols?)
     output = ''
     try:
+        # TODO perhaps more than just tcp/udp in the future
         options = '-n -q -z conv,tcp -z conv,udp'
         output = subprocess.check_output(shlex.split(' '.join(['tshark', '-r', pcap_file, options])))
         output = output.decode("utf-8")
@@ -125,8 +126,21 @@ def get_tshark_data(pcap_file, dict_fp):
                         # header or padding, dicard
                         continue
                     else:
+                        # TODO perhaps additional features can be extracted for flows from tshark
                         src, _, dst, frames_l, bytes_l, frames_r, bytes_r, frames_total, bytes_total, rel_start, duration = line.split()
-                        conv = {'Source': src.rsplit(':', 1)[0], 'Source Port': src.rsplit(':', 1)[1], 'Destination': dst.rsplit(':', 1)[0], 'Destination Port': dst.rsplit(':', 1)[1], 'Transport Protocol': transport_proto, 'Frames to Source': frames_l, 'Bytes to Source': bytes_l, 'Frames to Destination': frames_r, 'Bytes to Destination': bytes_r, 'Total Frames': frames_total, 'Total Bytes': bytes_total, 'Relative Start': rel_start, 'Duration': duration}
+                        conv = {'Source': src.rsplit(':', 1)[0],
+                                'Source Port': src.rsplit(':', 1)[1],
+                                'Destination': dst.rsplit(':', 1)[0],
+                                'Destination Port': dst.rsplit(':', 1)[1],
+                                'Transport Protocol': transport_proto,
+                                'Frames to Source': frames_l,
+                                'Bytes to Source': bytes_l,
+                                'Frames to Destination': frames_r,
+                                'Bytes to Destination': bytes_r,
+                                'Total Frames': frames_total,
+                                'Total Bytes': bytes_total,
+                                'Relative Start': rel_start,
+                                'Duration': duration}
                         print(conv, file=f)
 
 def get_csv_header(dict_fp):
@@ -188,9 +202,9 @@ def parse_file(level, in_file, out_file):
     elif level == 'flow':
         # using tshark conv,tcp and conv,udp filters
         get_tshark_data(in_file, dict_fp)
-    elif level == 'pcap':
+    elif level == 'host':
         # TODO unknown what should be in this, just the overarching tcp protocol?
-        pass
+        raise NotImplementedError("To be implemented")
     write_dict_to_csv(dict_fp, out_file)
     cleanup_files([dict_fp])
 
@@ -218,7 +232,7 @@ def ispcap(pathfile):
 def parse_args(parser):
     parser.add_argument('path', help='path to a single pcap file, or a directory of pcaps to parse')
     parser.add_argument('--combined', action='store_true', help='write out all records from all pcaps into a single gzipped csv file')
-    parser.add_argument('--level', choices=['packet', 'flow', 'pcap'], default='packet', help='level to make the output records (default=packets)')
+    parser.add_argument('--level', choices=['packet', 'flow', 'host'], default='packet', help='level to make the output records (default=packets)')
     parser.add_argument('--logging', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO', help='logging level (default=INFO)')
     parser.add_argument('--output', default=None, help='path to write out gzipped csv file or directory for gzipped csv files')
     parser.add_argument('--threads', default=1, type=int, help='number of async threads to use (default=1)')
