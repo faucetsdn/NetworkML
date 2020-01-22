@@ -6,6 +6,7 @@ import os
 from collections import Counter
 from collections import defaultdict
 from collections import OrderedDict
+import netaddr
 from scapy.layers.l2 import Ether
 from scapy.layers.inet import IP, ICMP
 # TODO: IPv6 disabled for now.
@@ -46,6 +47,17 @@ def is_private(address):
         except ValueError:
             return False
     return address.is_private
+
+
+def mac_from_int(mac_int):
+    '''
+    Return Unix format MAC address from an integer.
+    Args:
+        mac_int: MAC address as integer.
+    Returns:
+        MAC address as Unix string format (fully expanded and lowercase).
+    '''
+    return str(netaddr.EUI(mac_int, dialect=netaddr.mac_unix_expanded)).lower()
 
 
 def extract_macs(packet):
