@@ -2,7 +2,7 @@ import inspect
 import os
 import sys
 
-class Featurizers():
+class Featurizer():
 
     def import_class(self, path, classes):
         """
@@ -15,7 +15,7 @@ class Featurizers():
         #make sure path exists
         if os.path.isdir(path) is False:
             print("Error: path {} does not exist".format(path))
-            return None
+            return classes
 
         #add the path to the PYTHONPATH
         sys.path.append(path)
@@ -35,7 +35,6 @@ class Featurizers():
             #import the module
             module = __import__(mod_name, locals(), globals())
             for name,cls in inspect.getmembers(module):
-                #check name comparison too since RedwoodFilter is a subclass of itself
                 if inspect.isclass(cls) and name != "Features":
                     instance = cls()
                     #append an instance of the class to classes
@@ -44,16 +43,16 @@ class Featurizers():
 
         return classes
 
+    def main(self, feature_choices, file_input, features_path="./networkml/featurizers/funcs"):
+        results = []
+        classes = []
+        classes = self.import_class(features_path, classes)
 
-if __name__ == "__main__":
-    classes = []
-    featurizers = Featurizers()
-    classes = featurizers.import_class("./networkml/featurizers/funcs", classes)
-
-    for f in classes:
-        # TODO transform should be something passed in
-        methods = filter(lambda funcname: funcname.startswith('transform_'), dir(f))
-        for method in methods:
-            print(f'Running method: {f}/{method}')
-            # TODO handle args
-            f.run_func(method)
+        # TODO feature_choices parsing
+        for f in classes:
+            # TODO transform should be something passed in
+            methods = filter(lambda funcname: funcname.startswith('transform_'), dir(f))
+            for method in methods:
+                print(f'Running method: {f}/{method}')
+                results.append(f.run_func(method, file_input))
+        return results
