@@ -7,6 +7,18 @@ import networkml.parsers.pcap.reader
 from networkml.parsers.pcap.pcap_utils import extract_macs, packet_size
 
 
+def test_ipv6_packetizer():
+    packet_dict, highest_layers = networkml.parsers.pcap.reader.packetizer(
+        'tests/trace_ab12_2001-01-01_02_03-client-ip6-1-2-3-4.pcap')
+    assert {'ICMPV6_RAW'} == highest_layers['::1:0']
+    assert {'DATA_RAW', 'TCP_RAW'} == highest_layers['::1:5201']
+    packet_list = list(packet_dict.items())
+    head, data = packet_list[0]
+    assert ('00:00:00:00:00:00', '00:00:00:00:00:00') == extract_macs(data)
+    assert 64 == packet_size([0, data])
+    assert 236 == len(data)
+
+
 def test_packetizer():
     packet_dict, highest_layers = networkml.parsers.pcap.reader.packetizer(
         'tests/trace_ab12_2001-01-01_02_03-client-ip-1-2-3-4.pcap')
