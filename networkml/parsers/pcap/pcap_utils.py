@@ -6,7 +6,26 @@ import os
 from collections import Counter
 from collections import defaultdict
 from collections import OrderedDict
-import netaddr
+from scapy.layers.l2 import Ether
+from scapy.layers.inet import IP
+from scapy.layers.inet6 import IPv6
+
+
+def parse_packet(packet):
+    '''
+    Takes in hex representation of an Ethernet packet header and returns a scapy-parsed version.
+    '''
+    return Ether(bytes.fromhex(packet))
+
+
+def parse_ip_packet(packet):
+    ether = parse_packet(packet)
+    for transport in IP, IPv6:
+        try:
+            return ether[transport]
+        except (IndexError, AttributeError):
+            continue
+    return None
 
 
 def is_private(address):
@@ -26,17 +45,6 @@ def is_private(address):
     return address.is_private
 
 
-def mac_from_int(mac_int):
-    '''
-    Return Unix format MAC address from an integer.
-    Args:
-        mac_int: MAC address as integer.
-    Returns:
-        MAC address as Unix string format (fully expanded and lowercase).
-    '''
-    return str(netaddr.EUI(mac_int, dialect=netaddr.mac_unix_expanded)).lower()
-
-
 def extract_macs(packet):
     '''
     Takes in hex representation of a packet header and extracts the
@@ -46,11 +54,8 @@ def extract_macs(packet):
         source_mac: Destination MAC address
         destination_mac: Destination MAC address
     '''
-    source_mac = packet[12:24]
-    dest_mac = packet[0:12]
-    source_mac = mac_from_int(int(source_mac, 16))
-    dest_mac = mac_from_int(int(dest_mac, 16))
-    return source_mac, dest_mac
+    ether = parse_packet(packet)
+    return (ether.src, ether.dst)
 
 
 def get_indiv_source(sessions, address_type='MAC'):
@@ -156,7 +161,6 @@ def packet_size(packet):
     Returns:
         size: Size in bytes of the IP packet, including data
     '''
-
     try:
         return get_length(packet[1])
     except ValueError:  # pragma: no cover
@@ -222,7 +226,6 @@ def is_protocol(session, protocol):
         is_protocol: True or False indicating if this is a TCP session
     '''
     return protocol == extract_protocol(session)
-
 
 def strip_macs(packet):
     '''
@@ -297,7 +300,10 @@ def get_length(packet):
     """
     Gets the total length of the packet
     """
-    return int(packet[32:36], 16)
+    ip_packet = parse_ip_packet(packet)
+    if ip_packet is not None:
+        return ip_packet.len
+    return 0
 
 
 def featurize_session(key, packets, source=None):
