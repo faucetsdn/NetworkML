@@ -9,10 +9,9 @@ from collections import OrderedDict
 import netaddr
 from scapy.layers.l2 import Ether
 from scapy.layers.inet import IP, ICMP
-# TODO: IPv6 disabled for now.
-# from scapy.layers.inet6 import IPv6
+import scapy.layers.inet6
 
-LAYERS = (IP, ICMP)
+LAYERS = (IP, ICMP, scapy.layers.inet6.IPv6)
 
 
 def parse_packet(packet):
@@ -209,7 +208,10 @@ def extract_protocol(session):
     ip_packet = parse_ip_packet(session[0][1])
     if ip_packet is not None:
         # TODO: return as a string for compatibility, but should just be an int.
-        return '%2.2u' % ip_packet.proto
+        if hasattr(ip_packet, 'proto'):
+            return '%2.2u' % ip_packet.proto
+        if hasattr(ip_packet, 'nh'):
+            return '%2.2u' % ip_packet.nh
     return None
 
 
@@ -320,7 +322,10 @@ def get_length(packet):
     """
     ip_packet = parse_ip_packet(packet)
     if ip_packet is not None:
-        return ip_packet.len
+        for len_attr in ('len', 'plen'):
+            plen = getattr(ip_packet, len_attr, None)
+            if plen is not None:
+                return plen
     return 0
 
 

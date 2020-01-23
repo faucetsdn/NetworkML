@@ -7,6 +7,36 @@ import networkml.parsers.pcap.reader
 from networkml.parsers.pcap.pcap_utils import extract_macs, packet_size
 
 
+def test_ipv6_packetizer():
+    packet_dict, highest_layers = networkml.parsers.pcap.reader.packetizer(
+        'tests/trace_ab12_2001-01-01_02_03-client-ip6-1-2-3-4.pcap')
+    assert {'ICMPV6_RAW'} == highest_layers['::1:0']
+    assert {'DATA_RAW', 'TCP_RAW'} == highest_layers['::1:5201']
+    packet_list = list(packet_dict.items())
+    head, data = packet_list[0]
+    assert ('00:00:00:00:00:00', '00:00:00:00:00:00') == extract_macs(data)
+    assert 40 == packet_size([0, data])
+    assert 188 == len(data)
+
+
+def test_ipv6_sessionizer():
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger('test')
+    pcap_file = 'trace_ab12_2001-01-01_02_03-client-ip6-1-2-3-4.pcap'
+    with tempfile.TemporaryDirectory() as tempdir:
+        pcap_path = os.path.join('tests', pcap_file)
+        pcap_file_sessions = networkml.parsers.pcap.reader.parallel_sessionizer(
+            logger, [pcap_path], csv_out_dir=tempdir)
+        binned_sessions = pcap_file_sessions.get(pcap_path, None)
+        assert binned_sessions is not None
+        first_session = binned_sessions[0]
+        packet_key = ('::1:35736', '::1:5201')
+        first_data = first_session[packet_key][0]
+        timestamp, packet = first_data
+        assert packet is not None
+        assert isinstance(timestamp, datetime.datetime)
+
+
 def test_packetizer():
     packet_dict, highest_layers = networkml.parsers.pcap.reader.packetizer(
         'tests/trace_ab12_2001-01-01_02_03-client-ip-1-2-3-4.pcap')

@@ -6,6 +6,7 @@ import sys
 
 import numpy as np
 from sklearn.model_selection import train_test_split
+from networkml.parsers.pcap.pcap_utils import get_ip_port
 
 
 class BatchIterator:
@@ -110,8 +111,8 @@ class BatchIterator:
 
         session_info = session['session info']
 
-        source_port = int(session_info['source'].split(':')[1])
-        destination_port = int(session_info['destination'].split(':')[1])
+        _, source_port = get_ip_port(session_info['source'])
+        _, destination_port = get_ip_port(session_info['destination'])
 
         # Feature for if the source initated the session
         if session_info['initiated by source']:
