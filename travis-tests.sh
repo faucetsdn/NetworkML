@@ -10,7 +10,8 @@ case ${TESTTYPE} in
     make test
     ;;
   *)
-    echo TESTTYPE not set.
+    echo TESTTYPE not set, default docker.
+    make test
     exit 1
     ;;
 esac
