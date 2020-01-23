@@ -12,6 +12,5 @@ case ${TESTTYPE} in
   *)
     echo TESTTYPE not set, default docker.
     make test
-    exit 1
     ;;
 esac
