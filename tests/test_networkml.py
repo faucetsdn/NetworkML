@@ -61,9 +61,6 @@ def test_networkml_eval_sos():
     netml = run_networkml(
         ['-p', 'tests/trace_ab12_2001-01-01_02_03-client-ip-1-2-3-4.pcap', '-a', 'sos'])
     assert netml.model.feature_list
-    netml = run_networkml(
-        ['-p', 'tests/trace_ab12_2001-01-01_02_03-client-ip6-1-2-3-4.pcap', '-a', 'sos'])
-    assert netml.model.feature_list
 
 
 def test_networkml_train_onelayer():
