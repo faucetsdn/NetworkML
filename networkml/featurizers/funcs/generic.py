@@ -1,6 +1,6 @@
 from networkml.featurizers.features import Features
 
-class Packet(Features):
+class Generic(Features):
 
-    def transform_ok(self, rows):
+    def all(self, rows):
         return rows
