@@ -3,7 +3,7 @@ netaddr==0.7.19
 numpy==1.18.0
 pika==1.1.0
 py-cpuinfo==5.0.0
-pyshark==0.4.2.9
+pyshark @ git+https://github.com/KimiNewt/pyshark.git#egg=pyshark&subdirectory=src
 pytest==5.3.2
 pytest-cov==2.8.1
 pytest-xdist==1.31.0
