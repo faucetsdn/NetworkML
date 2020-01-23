@@ -2,6 +2,8 @@ import inspect
 import os
 import sys
 
+# TODO move print statements to logging
+
 class Featurizer():
 
     def import_class(self, path, classes):
@@ -43,7 +45,7 @@ class Featurizer():
 
         return classes
 
-    def main(self, feature_choices, file_input, features_path="./networkml/featurizers/funcs"):
+    def main(self, feature_choices, rows, features_path):
         results = []
         functions = []
         groups = ('default')
@@ -55,13 +57,15 @@ class Featurizer():
         if 'groups' in feature_choices:
             groups = feature_choices['groups']
 
+        feature_rows = []
         run_methods = []
         for f in classes:
             if groups:
                 methods = filter(lambda funcname: funcname.startswith(groups), dir(f[0]))
                 for method in methods:
                     print(f'Running method: {f[1]}/{method}')
-                    results.append(f[0].run_func(method, file_input))
+                    feature_row = f[0].run_func(method, rows)
+                    feature_rows.append(feature_row)
                     run_methods.append((f[1], method))
 
         # run remaining extras
@@ -70,5 +74,6 @@ class Featurizer():
                 for f in classes:
                     if f[1] == function[0]:
                         print(f'Running method: {f[1]}/{function[1]}')
-                        results.append(f[0].run_func(function[1], file_input))
-        return results
+                        feature_row = f[0].run_func(function[1], rows)
+                        feature_rows.append(feature_row)
+        return feature_rows

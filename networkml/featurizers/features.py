@@ -28,5 +28,5 @@ class Features():
             print("Error: Incorrect number of args")
             return False
 
-        func(*args)
-        return True
+        results = func(*args)
+        return results

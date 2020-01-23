@@ -2,8 +2,8 @@ from networkml.featurizers.features import Features
 
 class Packet(Features):
 
-    def default_ok(self, file_input):
-        print(f'running default, ok {file_input}')
+    def all(self, rows):
+        return rows
 
-    def transform_ok(self, file_input):
-        print(f'it is ok {file_input}')
+    def transform_ok(self, rows):
+        return rows

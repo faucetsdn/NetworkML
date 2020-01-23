@@ -231,11 +231,11 @@ def ispcap(pathfile):
 
 def parse_args(parser):
     parser.add_argument('path', help='path to a single pcap file, or a directory of pcaps to parse')
-    parser.add_argument('--combined', action='store_true', help='write out all records from all pcaps into a single gzipped csv file')
-    parser.add_argument('--level', choices=['packet', 'flow', 'host'], default='packet', help='level to make the output records (default=packets)')
-    parser.add_argument('--logging', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO', help='logging level (default=INFO)')
-    parser.add_argument('--output', default=None, help='path to write out gzipped csv file or directory for gzipped csv files')
-    parser.add_argument('--threads', default=1, type=int, help='number of async threads to use (default=1)')
+    parser.add_argument('--combined', '-c', action='store_true', help='write out all records from all pcaps into a single gzipped csv file')
+    parser.add_argument('--level', '-e', choices=['packet', 'flow', 'host'], default='packet', help='level to make the output records (default=packets)')
+    parser.add_argument('--logging', '-l', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO', help='logging level (default=INFO)')
+    parser.add_argument('--output', '-o', default=None, help='path to write out gzipped csv file or directory for gzipped csv files')
+    parser.add_argument('--threads', '-t', default=1, type=int, help='number of async threads to use (default=1)')
     parsed_args = parser.parse_args()
     return parsed_args
 
