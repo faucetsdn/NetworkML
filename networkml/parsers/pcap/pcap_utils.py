@@ -208,7 +208,10 @@ def extract_protocol(session):
     ip_packet = parse_ip_packet(session[0][1])
     if ip_packet is not None:
         # TODO: return as a string for compatibility, but should just be an int.
-        return '%2.2u' % ip_packet.proto
+        if hasattr(ip_packet, 'proto'):
+            return '%2.2u' % ip_packet.proto
+        if hasattr(ip_packet, 'nh'):
+            return '%2.2u' % ip_packet.nh
     return None
 
 
