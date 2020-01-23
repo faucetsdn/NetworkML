@@ -9,9 +9,9 @@ from collections import OrderedDict
 import netaddr
 from scapy.layers.l2 import Ether
 from scapy.layers.inet import IP, ICMP
-from scapy.layers.inet6 import *
+import scapy.layers.inet6
 
-LAYERS = (IP, ICMP, IPv6)
+LAYERS = (IP, ICMP, scapy.layers.inet6.IPv6)
 
 
 def parse_packet(packet):
