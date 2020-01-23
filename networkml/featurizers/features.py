@@ -30,3 +30,13 @@ class Features():
 
         results = func(*args)
         return results
+
+    def get_columns(self, fields, rows):
+        new_rows = []
+        for row in rows:
+            new_row = {}
+            for field in fields:
+                if field in row and row[field]:
+                    new_row[field] = row[field]
+            new_rows.append(new_row)
+        return new_rows

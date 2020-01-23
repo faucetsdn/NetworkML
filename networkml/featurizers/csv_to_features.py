@@ -6,6 +6,7 @@ import gzip
 import humanize
 import io
 import logging
+import numpy as np
 import os
 import sys
 import time
@@ -32,9 +33,26 @@ def exec_features(features, in_file, out_file, features_path):
     featurizer = Featurizer()
     rows = featurizer.main(features, rows, features_path)
 
-    print(rows[0][0])
-    # TODO
-    header = None
+    header = set()
+    for row in rows:
+        for r in row:
+            header.update(r.keys())
+    header = list(header)
+
+    columns = []
+    for row in rows:
+        columns.append(np.array(row))
+    np_array = np.vstack(columns)
+
+    rows = None
+    for method in np_array:
+        if rows is None:
+            rows = method
+        else:
+            for i, row in enumerate(method):
+                rows[i].update(row)
+    rows = rows.tolist()
+
     if header and rows:
         write_features_to_csv(header, rows, out_file)
     else:
