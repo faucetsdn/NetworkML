@@ -85,6 +85,7 @@ class PCAPToCSV():
                     if h not in fieldnames:
                         fieldnames.append(h)
 
+        fieldnames.append('filename')
         # Then copy the data
         with gzip.open(combined_path, 'wb') as f_out:
             writer = csv.DictWriter(io.TextIOWrapper(f_out, newline='', write_through=True), fieldnames=fieldnames)
@@ -93,6 +94,7 @@ class PCAPToCSV():
                 with gzip.open(filename, 'rb') as f_in:
                     reader = csv.DictReader(io.TextIOWrapper(f_in, newline=''))
                     for line in reader:
+                        line['filename'] = filename.split('/')[-1].split('csv..gz')[0]
                         writer.writerow(line)
                     PCAPToCSV.cleanup_files([filename])
 

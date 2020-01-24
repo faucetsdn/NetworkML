@@ -55,6 +55,7 @@ class CSVToFeatures():
                         if h not in fieldnames:
                             fieldnames.append(h)
 
+        fieldnames.append('filename')
         # Then copy the data
         if gzip_opt in ['output', 'both']:
             with gzip.open(combined_path, 'wb') as f_out:
@@ -64,6 +65,7 @@ class CSVToFeatures():
                     with gzip.open(filename, 'rb') as f_in:
                         reader = csv.DictReader(io.TextIOWrapper(f_in, newline=''))
                         for line in reader:
+                            line['filename'] = filename.split('/')[-1].split('.features.gz')[0]
                             writer.writerow(line)
                         CSVToFeatures.cleanup_files([filename])
         else:
@@ -74,6 +76,7 @@ class CSVToFeatures():
                     with open(filename, 'r') as f_in:
                         reader = csv.DictReader(f_in)
                         for line in reader:
+                            line['filename'] = filename.split('/')[-1].split('.features')[0]
                             writer.writerow(line)
                         CSVToFeatures.cleanup_files([filename])
 
