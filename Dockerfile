@@ -10,7 +10,6 @@ RUN apt-get update && apt-get install -yq --no-install-recommends \
     && pip3 install --no-cache-dir --upgrade pip==19.3.1 \
     && pip3 install wheel==0.33.6 \
     && pip3 install --no-cache-dir -r requirements.txt \
-    && pip3 install -U -e "git+https://github.com/KimiNewt/pyshark.git#egg=pyshark&subdirectory=src" \
     && apt-get remove --purge --auto-remove -y gcc git python3.7-dev \
     && apt-get clean \
     && apt-get autoclean \
