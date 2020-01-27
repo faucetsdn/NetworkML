@@ -118,6 +118,7 @@ class CSVToFeatures():
         return parsed_args
 
     def exec_features(self, features, in_file, out_file, features_path, gzip_opt):
+        self.logger.info(f'Processing {in_file}')
         rows = CSVToFeatures.get_rows(in_file, gzip_opt)
         featurizer = Featurizer()
         rows = featurizer.main(features, rows, features_path)
@@ -151,23 +152,31 @@ class CSVToFeatures():
         num_files = len(in_paths)
         finished_files = 0
         # corner case so it works in jupyterlab
+        failed_paths = []
         if threads < 2:
             for i in range(len(in_paths)):
-                self.exec_features(features, in_paths[i], out_paths[i], features_path, gzip_opt)
-                finished_files += 1
-                self.logger.info(f'Finished {finished_files}/{num_files} CSVs.')
+                try:
+                    finished_files += 1
+                    self.exec_features(features, in_paths[i], out_paths[i], features_path, gzip_opt)
+                    self.logger.info(f'Finished {in_paths[i]}. {finished_files}/{num_files} CSVs done.')
+                except Exception as e:
+                    self.logger.error(f'{in_paths[i]} generated an exception: {e}')
+                    failed_paths.append(out_paths[i])
         else:
             with concurrent.futures.ProcessPoolExecutor(max_workers=threads) as executor:
                 future_to_parse = {executor.submit(self.exec_features, features, in_paths[i], out_paths[i], features_path, gzip_opt): i for i in range(len((in_paths)))}
                 for future in concurrent.futures.as_completed(future_to_parse):
                     path = future_to_parse[future]
                     try:
-                        future.result()
                         finished_files += 1
-                    except Exception as exc:
-                        self.logger.error(f'{path} generated an exception: {exc}')
+                        future.result()
+                    except Exception as e:
+                        self.logger.error(f'{in_paths[path]} generated an exception: {e}')
+                        failed_paths.append(out_paths[path])
                     else:
-                        self.logger.info(f'Finished {finished_files}/{num_files} CSVs.')
+                        self.logger.info(f'Finished {in_paths[path]}. {finished_files}/{num_files} CSVs done.')
+        return failed_paths
+
 
     def main(self):
         parsed_args = CSVToFeatures.parse_args(argparse.ArgumentParser())
@@ -225,7 +234,11 @@ class CSVToFeatures():
                 else:
                     out_paths.append(in_path + ".features.gz")
 
-        self.process_files(threads, features, features_path, in_paths, out_paths, gzip_opt)
+        failed_paths = self.process_files(threads, features, features_path, in_paths, out_paths, gzip_opt)
+
+        for failed_path in failed_paths:
+            if failed_path in out_paths:
+                out_paths.remove(failed_path)
 
         if combined:
             combined_path = os.path.join(os.path.dirname(out_paths[0]), "combined.csv.gz")

@@ -271,7 +271,7 @@ class PCAPToCSV():
 
 
     def parse_file(self, level, in_file, out_file, engine):
-        self.logger.debug(f'Processing {in_file}')
+        self.logger.info(f'Processing {in_file}')
         dict_fp = '/tmp/networkml.' + ''.join([random.choice(string.ascii_letters + string.digits) for n in range(8)])
         if level == 'packet':
             if engine == 'tshark':
@@ -296,21 +296,27 @@ class PCAPToCSV():
         # corner case so it works in jupyterlab
         if threads < 2:
             for i in range(len(in_paths)):
-                self.parse_file(level, in_paths[i], out_paths[i], engine)
-                finished_files += 1
-                self.logger.info(f'Finished {finished_files}/{num_files} PCAPs.')
+                try:
+                    finished_files += 1
+                    self.parse_file(level, in_paths[i], out_paths[i], engine)
+                    self.logger.info(f'Finished {in_paths[i]}. {finished_files}/{num_files} PCAPs done.')
+                except Exception as e:
+                    self.logger.error(f'{in_paths[i]} generated an exception: {e}')
+                    failed_paths.append(out_paths[i])
         else:
             with concurrent.futures.ProcessPoolExecutor(max_workers=threads) as executor:
                 future_to_parse = {executor.submit(self.parse_file, level, in_paths[i], out_paths[i], engine): i for i in range(len(in_paths))}
                 for future in concurrent.futures.as_completed(future_to_parse):
                     path = future_to_parse[future]
                     try:
-                        future.result()
                         finished_files += 1
+                        future.result()
                     except Exception as exc:
-                        self.logger.error(f'{path} generated an exception: {exc}')
+                        self.logger.error(f'{in_paths[path]} generated an exception: {exc}')
+                        failed_paths.append(out_paths[path])
                     else:
-                        self.logger.info(f'Finished {finished_files}/{num_files} PCAPs.')
+                        self.logger.info(f'Finished {in_paths[path]}. {finished_files}/{num_files} PCAPs done.')
+        return failed_paths
 
 
     def main(self):
@@ -351,7 +357,11 @@ class PCAPToCSV():
         if level == 'packet' and engine == 'pyshark':
             self.logger.info(f'Including the following layers in CSV (if they exist): {self.PROTOCOLS}')
 
-        self.process_files(threads, level, in_paths, out_paths, engine)
+        failed_paths = self.process_files(threads, level, in_paths, out_paths, engine)
+
+        for failed_path in failed_paths:
+            if failed_path in out_paths:
+                out_paths.remove(failed_path)
 
         if combined:
             combined_path = os.path.join(os.path.dirname(out_paths[0]), "combined.csv.gz")
