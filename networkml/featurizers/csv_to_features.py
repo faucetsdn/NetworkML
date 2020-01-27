@@ -154,6 +154,8 @@ class CSVToFeatures():
         if threads < 2:
             for i in range(len(in_paths)):
                 self.exec_features(features, in_paths[i], out_paths[i], features_path, gzip_opt)
+                finished_files += 1
+                self.logger.info(f'Finished {finished_files}/{num_files} CSVs.')
         else:
             with concurrent.futures.ProcessPoolExecutor(max_workers=threads) as executor:
                 future_to_parse = {executor.submit(self.exec_features, features, in_paths[i], out_paths[i], features_path, gzip_opt): i for i in range(len((in_paths)))}

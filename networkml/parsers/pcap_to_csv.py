@@ -297,6 +297,8 @@ class PCAPToCSV():
         if threads < 2:
             for i in range(len(in_paths)):
                 self.parse_file(level, in_paths[i], out_paths[i], engine)
+                finished_files += 1
+                self.logger.info(f'Finished {finished_files}/{num_files} PCAPs.')
         else:
             with concurrent.futures.ProcessPoolExecutor(max_workers=threads) as executor:
                 future_to_parse = {executor.submit(self.parse_file, level, in_paths[i], out_paths[i], engine): i for i in range(len(in_paths))}
@@ -346,7 +348,7 @@ class PCAPToCSV():
             else:
                 out_paths.append(in_path + ".csv.gz")
 
-        if level == 'packet':
+        if level == 'packet' and engine == 'pyshark':
             self.logger.info(f'Including the following layers in CSV (if they exist): {self.PROTOCOLS}')
 
         self.process_files(threads, level, in_paths, out_paths, engine)
