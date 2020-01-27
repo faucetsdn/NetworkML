@@ -8,6 +8,7 @@ import io
 import logging
 import numpy as np
 import os
+import pathlib
 import sys
 import time
 
@@ -141,18 +142,18 @@ class CSVToFeatures():
             else:
                 for i, row in enumerate(method):
                     rows[i].update(row)
-        rows = rows.tolist()
 
         if header and rows:
+            rows = rows.tolist()
             CSVToFeatures.write_features_to_csv(header, rows, out_file, gzip_opt)
         else:
             self.logger.warning(f'No results based on {features} for {in_file}')
 
     def process_files(self, threads, features, features_path, in_paths, out_paths, gzip_opt):
         num_files = len(in_paths)
+        failed_paths = []
         finished_files = 0
         # corner case so it works in jupyterlab
-        failed_paths = []
         if threads < 2:
             for i in range(len(in_paths)):
                 try:

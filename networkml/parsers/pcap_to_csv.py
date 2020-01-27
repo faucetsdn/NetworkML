@@ -292,6 +292,7 @@ class PCAPToCSV():
 
     def process_files(self, threads, level, in_paths, out_paths, engine):
         num_files = len(in_paths)
+        failed_paths = []
         finished_files = 0
         # corner case so it works in jupyterlab
         if threads < 2:
