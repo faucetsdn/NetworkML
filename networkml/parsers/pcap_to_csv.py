@@ -5,6 +5,7 @@ import csv
 import datetime
 import gzip
 import io
+import json
 import logging
 import ntpath
 import os
@@ -38,6 +39,7 @@ class PCAPToCSV():
                           '<ARP Layer>',
                           '<IP6 Layer>',
                           '<TLS Layer>']
+        self.flattened_dict = {}
 
 
     @staticmethod
@@ -52,7 +54,8 @@ class PCAPToCSV():
     def parse_args(parser):
         parser.add_argument('path', help='path to a single pcap file, or a directory of pcaps to parse')
         parser.add_argument('--combined', '-c', action='store_true', help='write out all records from all pcaps into a single gzipped csv file')
-        parser.add_argument('--level', '-e', choices=['packet', 'flow', 'host'], default='packet', help='level to make the output records (default=packets)')
+        parser.add_argument('--engine', '-e', choices=['pyshark', 'tshark', 'host'], default='tshark', help='engine to use to process the PCAP file (default=tshark)')
+        parser.add_argument('--level', '-v', choices=['packet', 'flow', 'host'], default='packet', help='level to make the output records (default=packet)')
         parser.add_argument('--logging', '-l', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO', help='logging level (default=INFO)')
         parser.add_argument('--output', '-o', default=None, help='path to write out gzipped csv file or directory for gzipped csv files')
         parser.add_argument('--threads', '-t', default=1, type=int, help='number of async threads to use (default=1)')
@@ -68,7 +71,7 @@ class PCAPToCSV():
                 header_all.update(ast.literal_eval(line.strip()).keys())
         header = []
         for key in header_all:
-            if key[0].isalpha():
+            if key[0].isalpha() or key[0] == '_':
                 header.append(key)
         return header
 
@@ -106,7 +109,7 @@ class PCAPToCSV():
                 os.remove(fi)
 
 
-    def get_pyshark_data(self, pcap_file, dict_fp):
+    def get_pyshark_packet_data(self, pcap_file, dict_fp):
         all_protocols = set()
 
         pcap_file_short = ntpath.basename(pcap_file)
@@ -157,7 +160,7 @@ class PCAPToCSV():
             self.logger.warning(f'Found the following other layers in {pcap_file_short} that were not added to the CSV: {all_protocols}')
 
 
-    def get_tshark_data(self, pcap_file, dict_fp):
+    def get_tshark_conv_data(self, pcap_file, dict_fp):
         # TODO (add a summary of other packets with protocols?)
         output = ''
         try:
@@ -217,6 +220,43 @@ class PCAPToCSV():
                             print(conv, file=f)
 
 
+    def flatten_json(self, key, value):
+        if isinstance(value, list):
+            i=0
+            for sub_item in value:
+                self.flatten_json(str(i), sub_item)
+                i=i+1
+        elif isinstance(value, dict):
+            sub_keys = value.keys()
+            for sub_key in sub_keys:
+                self.flatten_json(sub_key, value[sub_key])
+        else:
+            if key[0].isalpha() or key[0] == '_':
+                self.flattened_dict[key] = value
+
+
+    def get_tshark_packet_data(self, pcap_file, dict_fp):
+        output = ''
+        try:
+            options = '-n -V -Tjson'
+            output = subprocess.check_output(shlex.split(' '.join(['tshark', '-r', pcap_file, options])))
+        except Exception as e:  # pragma: no cover
+            self.logger.error(f'{e}')
+        output = json.loads(output.decode("utf-8", "ignore"))
+
+        with gzip.open(dict_fp, 'w') as f:
+            f = io.TextIOWrapper(f, newline='', write_through=True)
+            for item in output:
+                self.flattened_dict = {}
+                self.flatten_json('', item)
+                print(self.flattened_dict, file=f)
+
+
+    def get_tshark_host_data(self, pcap_file, dict_fp):
+        # TODO
+        raise NotImplementedError("To be implemented")
+
+
     def write_dict_to_csv(self, dict_fp, out_file):
         header = PCAPToCSV.get_csv_header(dict_fp)
         with gzip.open(out_file, 'wb') as f:
@@ -230,32 +270,36 @@ class PCAPToCSV():
                 self.logger.error(f'Failed to write to CSV because: {e}')
 
 
-    def parse_file(self, level, in_file, out_file):
+    def parse_file(self, level, in_file, out_file, engine):
         self.logger.debug(f'Processing {in_file}')
         dict_fp = '/tmp/networkml.' + ''.join([random.choice(string.ascii_letters + string.digits) for n in range(8)])
         if level == 'packet':
-            # using pyshark to get everything possible
-            self.get_pyshark_data(in_file, dict_fp)
+            if engine == 'tshark':
+                # option for tshark as it's much faster
+                self.get_tshark_packet_data(in_file, dict_fp)
+            elif engine == 'pyshark':
+                # using pyshark to get everything possible
+                self.get_pyshark_packet_data(in_file, dict_fp)
         elif level == 'flow':
             # using tshark conv,tcp and conv,udp filters
-            self.get_tshark_data(in_file, dict_fp)
+            self.get_tshark_conv_data(in_file, dict_fp)
         elif level == 'host':
-            # TODO unknown what should be in this, just the overarching tcp protocol?
+            # TODO unknown what should be in this, just the overarching stats?
             raise NotImplementedError("To be implemented")
         self.write_dict_to_csv(dict_fp, out_file)
         PCAPToCSV.cleanup_files([dict_fp])
 
 
-    def process_files(self, threads, level, in_paths, out_paths):
+    def process_files(self, threads, level, in_paths, out_paths, engine):
         num_files = len(in_paths)
         finished_files = 0
         # corner case so it works in jupyterlab
         if threads < 2:
             for i in range(len(in_paths)):
-                self.parse_file(level, in_paths[i], out_paths[i])
+                self.parse_file(level, in_paths[i], out_paths[i], engine)
         else:
             with concurrent.futures.ProcessPoolExecutor(max_workers=threads) as executor:
-                future_to_parse = {executor.submit(self.parse_file, level, in_paths[i], out_paths[i]): i for i in range(len(in_paths))}
+                future_to_parse = {executor.submit(self.parse_file, level, in_paths[i], out_paths[i], engine): i for i in range(len(in_paths))}
                 for future in concurrent.futures.as_completed(future_to_parse):
                     path = future_to_parse[future]
                     try:
@@ -272,6 +316,7 @@ class PCAPToCSV():
         in_path = parsed_args.path
         out_path = parsed_args.output
         combined = parsed_args.combined
+        engine = parsed_args.engine
         threads = parsed_args.threads
         log_level = parsed_args.logging
         level = parsed_args.level
@@ -304,7 +349,7 @@ class PCAPToCSV():
         if level == 'packet':
             self.logger.info(f'Including the following layers in CSV (if they exist): {self.PROTOCOLS}')
 
-        self.process_files(threads, level, in_paths, out_paths)
+        self.process_files(threads, level, in_paths, out_paths, engine)
 
         if combined:
             combined_path = os.path.join(os.path.dirname(out_paths[0]), "combined.csv.gz")
