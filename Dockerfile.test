@@ -1,6 +1,5 @@
 FROM networkml
 LABEL maintainer="Charlie Lewis <clewis@iqt.org>"
 
-USER nobody
 ENTRYPOINT ["pytest"]
 CMD ["-l", "-s", "-v", "-n2", "--cov=tests/", "--cov=networkml/", "--cov-report", "term-missing", "-c", ".coveragerc"]
