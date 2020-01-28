@@ -15,7 +15,7 @@ class Host(Features):
     def pyshark_ipv6(self, rows):
         new_rows = [{'IPv6': 0}]
         for row in rows:
-            if 'layers' in row and '<IP6 Layer>' in row['layers']:
+            if 'layers' in row and '<IPV6 Layer>' in row['layers']:
                 new_rows[0]['IPv6'] = 1
         return new_rows
 
