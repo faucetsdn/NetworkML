@@ -150,7 +150,7 @@ class PCAPToCSV():
                     packet_dict_copy = deepcopy(packet_dict)
                     keys = packet_dict_copy.keys()
                     for key in keys:
-                        if not key[0].isalpha():
+                        if not key[0].isalpha() or key == 'tcp.payload_raw' or key == 'tcp.payload':
                             del packet_dict[key]
                     print(packet_dict, file=f)
 
