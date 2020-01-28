@@ -32,12 +32,12 @@ class PCAPToCSV():
                           '<TCP Layer>',
                           '<UDP Layer>',
                           '<ICMP Layer>',
-                          '<ICMPv6 Layer>',
+                          '<ICMPV6 Layer>',
                           '<DNS Layer>',
                           '<DHCP Layer>',
                           '<DHCPv6 Layer>',
                           '<ARP Layer>',
-                          '<IP6 Layer>',
+                          '<IPV6 Layer>',
                           '<TLS Layer>']
         self.flattened_dict = {}
 
