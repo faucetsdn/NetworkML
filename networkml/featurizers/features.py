@@ -1,5 +1,3 @@
-import inspect
-
 class Features():
 
     def run_func(self, func_name, *args):
@@ -11,21 +9,6 @@ class Features():
         func = getattr(self, func_name, None)
         if not func:
             print("Error: Not a function name that's been defined")
-            return False
-
-        ret = inspect.signature(func)
-        #subtract one for the "self"
-        upper_num_args = len(ret.args) - 1
-
-        if ret.defaults is not None:
-            lower_num_args = upper_num_args - len(ret.defaults)
-        else:
-            lower_num_args = upper_num_args
-
-        actual_args = len(args)
-
-        if actual_args > upper_num_args or actual_args < lower_num_args:
-            print("Error: Incorrect number of args")
             return False
 
         results = func(*args)
