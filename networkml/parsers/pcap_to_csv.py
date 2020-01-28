@@ -364,7 +364,7 @@ class PCAPToCSV():
 
         failed_paths = self.process_files(threads, level, in_paths, out_paths, engine)
 
-        for failed_path in failed_paths:
+        for failed_path in failed_paths:  # pragma: no cover
             if failed_path in out_paths:
                 out_paths.remove(failed_path)
 

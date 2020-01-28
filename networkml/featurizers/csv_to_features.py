@@ -237,7 +237,7 @@ class CSVToFeatures():
 
         failed_paths = self.process_files(threads, features, features_path, in_paths, out_paths, gzip_opt)
 
-        for failed_path in failed_paths:
+        for failed_path in failed_paths:  # pragma: no cover
             if failed_path in out_paths:
                 out_paths.remove(failed_path)
 
