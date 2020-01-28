@@ -287,8 +287,10 @@ def parallel_sessionizer(logger, pcap_files, duration=None, threshold_time=None,
         for pcap_file in pcap_files:
             csv_file = csv_filenames[pcap_file]
             if os.path.exists(csv_file):
+                logger.info(f'found cached sessions pulling up {csv_file}')
                 pcap_file_sessions[pcap_file] = sessioncsv_to_sessions(csv_file)
             else:
+                logger.info(f'no cache found, adding {pcap_file} to be sessionized')
                 unparsed_pcaps.append(pcap_file)
         futures = {
             executor.submit(sessionizer, pcap_file, duration, threshold_time): pcap_file
