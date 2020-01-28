@@ -376,7 +376,7 @@ class PCAPToCSV():
             self.logger.info(f'GZipped CSV file(s) written out to: {out_paths}')
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     start = time.time()
     instance = PCAPToCSV()
     instance.main()
