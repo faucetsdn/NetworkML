@@ -114,6 +114,7 @@ def sessionizer(path, duration=None, threshold_time=None):
                       (sourceIP:sourcePort, destIP:destPort)
     '''
 
+    print(f'sessionizing {path}')
     # Get the packets from the pcap
     packet_dict, _ = packetizer(path)
 
