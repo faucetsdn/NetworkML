@@ -111,7 +111,7 @@ class CSVToFeatures():
         parser.add_argument('--features_path', '-p', default='./networkml/featurizers/funcs', help='path to featurizer functions (default="./networkml/featurizers/funcs")')
         parser.add_argument('--functions', '-f', default='', help='comma separated list of <class>:<function> to featurize (default=None)')
         parser.add_argument('--groups', '-g', default='default', help='comma separated list of groups of functions to featurize (default=default)')
-        parser.add_argument('--gzip', '-z', choices=['input', 'output', 'both', 'neither'], default='both', help='gzip the input/output file, both other neither (default=both)')
+        parser.add_argument('--gzip', '-z', choices=['input', 'output', 'both', 'neither'], default='both', help='gzip the input/output file, both or neither (default=both)')
         parser.add_argument('--logging', '-l', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO', help='logging level (default=INFO)')
         parser.add_argument('--output', '-o', default=None, help='path to write out gzipped csv file or directory for gzipped csv files')
         parser.add_argument('--threads', '-t', default=1, type=int, help='number of async threads to use (default=1)')
@@ -143,7 +143,7 @@ class CSVToFeatures():
                 for i, row in enumerate(method):
                     rows[i].update(row)
 
-        if header and rows:
+        if header and rows is not None:
             rows = rows.tolist()
             CSVToFeatures.write_features_to_csv(header, rows, out_file, gzip_opt)
         else:

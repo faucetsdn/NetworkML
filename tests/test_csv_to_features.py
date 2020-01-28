@@ -23,10 +23,10 @@ def test_CSVToFeatures_dir():
 
 
 def test_CSVToFeatures_generic():
-    sys.argv = ['pcap_to_csv.py', '-e', 'tshark', '-o', '/tmp/foo', './tests']
+    sys.argv = ['pcap_to_csv.py', '-e', 'tshark', '-o', '/tmp/foo1', './tests']
     instance = PCAPToCSV()
     instance.main()
-    sys.argv = ['csv_to_features.py', '-c', '-z', 'input', '-f', 'Generic:all', '/tmp/foo']
+    sys.argv = ['csv_to_features.py', '-c', '-z', 'input', '-f', 'Generic:all', '/tmp/foo1']
     instance2 = CSVToFeatures()
     instance2.main()
 
