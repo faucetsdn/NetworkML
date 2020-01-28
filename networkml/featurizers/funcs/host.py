@@ -61,10 +61,13 @@ class Host(Features):
     def tshark_avg_time_delta(self, rows):
         avg_time = 0.0
         new_rows = [{'average_time_delta': avg_time}]
+        defective = 0
         for row in rows:
             if 'frame.time_delta_displayed' in row:
                 avg_time += float(row['frame.time_delta_displayed'])
-        avg_time /= len(rows)
+            else:
+                defective += 1
+        avg_time /= len(rows)-defective
         new_rows[0]['average_time_delta'] = avg_time
         return new_rows
 
