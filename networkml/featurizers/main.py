@@ -14,7 +14,7 @@ class Featurizer():
         :param classes: existing class instances
         :return list of newly add class instances
         """
-        #make sure path exists
+        # make sure path exists
         if os.path.isdir(path) is False:
             print("Error: path {} does not exist".format(path))
             return classes
