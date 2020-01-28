@@ -14,10 +14,18 @@ def test_CSVToFeatures():
 
 
 def test_CSVToFeatures_dir():
-    sys.argv = ['pcap_to_csv.py', '-e', 'tshark', '-o', '/tmp/foo', './tests']
+    sys.argv = ['pcap_to_csv.py', '-e', 'tshark', '-o', '/tmp/foo2', './tests']
     instance = PCAPToCSV()
     instance.main()
-    sys.argv = ['csv_to_features.py', '-c', '-g', 'tshark', '/tmp/foo']
+    sys.argv = ['csv_to_features.py', '-t', '2', '-c', '-g', 'tshark', '/tmp/foo2']
     instance2 = CSVToFeatures()
     instance2.main()
 
+
+def test_CSVToFeatures_dir():
+    sys.argv = ['pcap_to_csv.py', '-e', 'tshark', '-o', '/tmp/foo', './tests']
+    instance = PCAPToCSV()
+    instance.main()
+    sys.argv = ['csv_to_features.py', '-z', 'input', '-f', 'Generic:all', '/tmp/foo']
+    instance2 = CSVToFeatures()
+    instance2.main()

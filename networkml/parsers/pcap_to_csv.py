@@ -270,7 +270,7 @@ class PCAPToCSV():
                 with gzip.open(dict_fp, 'rb') as f:
                     for line in io.TextIOWrapper(f, newline=''):
                         w.writerow(ast.literal_eval(line.strip()))
-            except Exception as e:
+            except Exception as e:  # pragma: no cover
                 self.logger.error(f'Failed to write to CSV because: {e}')
 
 
@@ -305,7 +305,7 @@ class PCAPToCSV():
                     finished_files += 1
                     self.parse_file(level, in_paths[i], out_paths[i], engine)
                     self.logger.info(f'Finished {in_paths[i]}. {finished_files}/{num_files} PCAPs done.')
-                except Exception as e:
+                except Exception as e:  # pragma: no cover
                     self.logger.error(f'{in_paths[i]} generated an exception: {e}')
                     failed_paths.append(out_paths[i])
         else:
@@ -316,8 +316,8 @@ class PCAPToCSV():
                     try:
                         finished_files += 1
                         future.result()
-                    except Exception as exc:
-                        self.logger.error(f'{in_paths[path]} generated an exception: {exc}')
+                    except Exception as e:  # pragma: no cover
+                        self.logger.error(f'{in_paths[path]} generated an exception: {e}')
                         failed_paths.append(out_paths[path])
                     else:
                         self.logger.info(f'Finished {in_paths[path]}. {finished_files}/{num_files} PCAPs done.')
