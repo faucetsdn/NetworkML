@@ -97,7 +97,7 @@ def packetizer(path):
     return packet_dict, highest_layers_dict
 
 
-def sessionizer(path, duration=None, threshold_time=None):
+def sessionizer(logger, path, duration=None, threshold_time=None):
     '''
     Reads a pcap specified by the path and parses out the sessions.
     Sessions are defined as flows with matching sourceIP:sourcePort
@@ -114,7 +114,7 @@ def sessionizer(path, duration=None, threshold_time=None):
                       (sourceIP:sourcePort, destIP:destPort)
     '''
 
-    print(f'sessionizing {path}')
+    logger.info(f'sessionizing {path}')
     # Get the packets from the pcap
     packet_dict, _ = packetizer(path)
 
@@ -294,7 +294,7 @@ def parallel_sessionizer(logger, pcap_files, duration=None, threshold_time=None,
                 logger.info(f'no cache found, adding {pcap_file} to be sessionized')
                 unparsed_pcaps.append(pcap_file)
         futures = {
-            executor.submit(sessionizer, pcap_file, duration, threshold_time): pcap_file
+            executor.submit(sessionizer, logger, pcap_file, duration, threshold_time): pcap_file
             for pcap_file in unparsed_pcaps}
         for future in as_completed(futures):
             pcap_file = futures.get(future, None)
