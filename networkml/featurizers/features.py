@@ -13,7 +13,7 @@ class Features():
             print("Error: Not a function name that's been defined")
             return False
 
-        ret = inspect.getargspec(func)
+        ret = inspect.signature(func)
         #subtract one for the "self"
         upper_num_args = len(ret.args) - 1
 

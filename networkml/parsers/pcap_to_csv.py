@@ -97,7 +97,7 @@ class PCAPToCSV():
                 with gzip.open(filename, 'rb') as f_in:
                     reader = csv.DictReader(io.TextIOWrapper(f_in, newline=''))
                     for line in reader:
-                        line['filename'] = filename.split('/')[-1].split('csv..gz')[0]
+                        line['filename'] = filename.split('/')[-1].split('csv.gz')[0]
                         writer.writerow(line)
                     PCAPToCSV.cleanup_files([filename])
 
@@ -126,7 +126,8 @@ class PCAPToCSV():
                     frame_info = packet.frame_info._all_fields
                     for key in frame_info:
                         packet_dict[key] = frame_info[key]
-                    packet_dict['raw_packet'] = packet.get_raw_packet()
+                    # can overflow the field size for csv
+                    #packet_dict['raw_packet'] = packet.get_raw_packet()
                     layers = str(packet.layers)
                     packet_dict['layers'] = layers
                     str_layers = layers[1:-1].split(', ')
@@ -231,12 +232,15 @@ class PCAPToCSV():
             for sub_key in sub_keys:
                 self.flatten_json(sub_key, value[sub_key])
         else:
-            if key[0].isalpha() or key[0] == '_':
-                self.flattened_dict[key] = value
+            # remove junk
+            if (key[0].isalpha() or key[0] == '_') and ';' not in key and '(' not in key and '\\' not in key and '{' not in key and '<' not in key and '+' not in key:
+                # limit field size for csv
+                if (value and len(value) < 131072) or not value:
+                    self.flattened_dict[key] = value
 
 
     def get_tshark_packet_data(self, pcap_file, dict_fp):
-        output = ''
+        output = b'[]'
         try:
             options = '-n -V -Tjson'
             output = subprocess.check_output(shlex.split(' '.join(['tshark', '-r', pcap_file, options])))
