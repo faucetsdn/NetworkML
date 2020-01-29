@@ -358,7 +358,7 @@ def featurize_session(key, packets, source=None):
 
         macs = extract_macs(packets[0][1])
         if macs is None:
-            continue
+            return None
         mac_1, mac_2 = macs
         protocol = extract_protocol(packets)
         external = is_external(address_1, address_2)
