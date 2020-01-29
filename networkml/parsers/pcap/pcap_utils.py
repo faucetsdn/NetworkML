@@ -128,7 +128,10 @@ def get_indiv_source(sessions, address_type='MAC'):
 
     # The address with the most sessions is the capture source
     if sessions:
-        most_common_key = max(ip_mac_pairs, key=lambda k: ip_mac_pairs[k]).split('-')
+        try:
+            most_common_key = max(ip_mac_pairs, key=lambda k: ip_mac_pairs[k]).split('-')
+        except ValueError:
+            return None, ip_mac_pairs
         if address_type == 'MAC':
             capture_source = most_common_key[1]
         else:
