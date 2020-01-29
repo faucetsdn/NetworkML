@@ -4,7 +4,11 @@ import tempfile
 import os
 import sys
 import networkml.parsers.pcap.reader
-from networkml.parsers.pcap.pcap_utils import extract_macs, packet_size
+from networkml.parsers.pcap.pcap_utils import extract_macs, packet_size, parse_packet
+
+
+def test_parse_packet():
+    assert parse_packet('01005e0000fc0050') == None
 
 
 def test_ipv6_packetizer():
