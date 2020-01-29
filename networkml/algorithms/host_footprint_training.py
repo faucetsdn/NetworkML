@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 import pandas as pd
 from sklearn import preprocessing
@@ -38,7 +40,11 @@ def train(input_path):
                          ## which creates a list
     y = y.str[0] ## Extract first element of list
                  ## which is the role name
-        
+    
+    ## Replace string features with dummy (0/1) features
+    ## This is "one hot encoding"
+    X = stringFeatureCheck(X)
+    
     ## Normalize X features before training
     scaler = preprocessing.MinMaxScaler()
     X = scaler.fit_transform(X)
@@ -59,3 +65,46 @@ def train(input_path):
     
     ## Returns trained model and label encoder
     return model, le
+
+def stringFeatureCheck(X):
+    """
+    This function takes a pandas dataframe that contains the
+    features for a model and checks if any of the features are
+    strings (or "objects" in the pandas ontology). If any of the
+    features are strings, then that feature is expanded into dummy
+    features, i.e. a series of 0/1 features for each category within
+    that object feature. The function then removes the original feature.
+    
+    INPUTS:
+    --X: a pandas dataframe with only the training features
+    
+    OUPUTS:
+    --X: a pandas dataframe expanded with dummy features
+    
+    """
+
+    ## loop through columns in X
+    for col in X.columns:
+        
+        ## Check if the feature's data type is string
+        ## Object is the datatype pandas uses for storing strings
+        if X[col].dtype == "object":
+            
+            ## log warning
+            ## TODO: JOHN SPEED NEEDS HELP USING THE PROPER SYNTAX
+            #logging.info(f'String object found in column {col}')
+            
+            ## Expand object feature into "dummy" feature, i.e. 0/1
+            ## features. This is "one hot encoding"
+            new_features = pd.get_dummies(X[col])
+            
+            ## Add new features onto X dataframe
+            X = pd.concat([X, new_features], axis=1)
+            
+            ## Remove original non-expanded feature from X
+            X = X.drop(col, axis=1)
+            
+        else: ## Ignore if not a string
+            pass
+    
+    return X
