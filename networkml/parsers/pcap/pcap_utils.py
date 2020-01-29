@@ -2,11 +2,41 @@
 Utilities for preparing sessions for input into models
 '''
 import ipaddress
+import struct
 import os
 from collections import Counter
 from collections import defaultdict
 from collections import OrderedDict
 import netaddr
+from scapy.layers.l2 import Ether
+from scapy.layers.inet import IP, ICMP
+import scapy.layers.inet6
+
+LAYERS = (IP, ICMP, scapy.layers.inet6.IPv6)
+
+
+def parse_packet(packet):
+    '''
+    Takes in hex representation of an Ethernet packet header and returns a scapy-parsed version.
+    '''
+    if (len(packet) / 2) < 20:
+        # Under min IPv4 packet size per https://en.wikipedia.org/wiki/IPv4.
+        return None
+    try:
+        return Ether(bytes.fromhex(packet))
+    except struct.error:
+        return None
+
+
+def parse_ip_packet(packet):
+    ether = parse_packet(packet)
+    if ether:
+        for transport in LAYERS:
+            try:
+                return ether[transport]
+            except (IndexError, AttributeError):
+                continue
+    return None
 
 
 def is_private(address):
@@ -46,11 +76,10 @@ def extract_macs(packet):
         source_mac: Destination MAC address
         destination_mac: Destination MAC address
     '''
-    source_mac = packet[12:24]
-    dest_mac = packet[0:12]
-    source_mac = mac_from_int(int(source_mac, 16))
-    dest_mac = mac_from_int(int(dest_mac, 16))
-    return source_mac, dest_mac
+    ether = parse_packet(packet)
+    if ether:
+        return (ether.src, ether.dst)
+    return None
 
 
 def get_indiv_source(sessions, address_type='MAC'):
@@ -78,7 +107,10 @@ def get_indiv_source(sessions, address_type='MAC'):
 
         # Get the first packet and grab the macs from it
         first_packet = session[0][1]
-        source_mac, destination_mac = extract_macs(first_packet)
+        macs = extract_macs(first_packet)
+        if macs is None:
+            continue
+        source_mac, destination_mac = macs
         pair_1 = '-'.join((str(source_address), source_mac))
         pair_2 = '-'.join((str(destination_address), destination_mac))
 
@@ -156,7 +188,6 @@ def packet_size(packet):
     Returns:
         size: Size in bytes of the IP packet, including data
     '''
-
     try:
         return get_length(packet[1])
     except ValueError:  # pragma: no cover
@@ -187,8 +218,14 @@ def extract_protocol(session):
     Returns:
         protocol: Protocol number used in the session
     '''
-
-    return session[0][1][46:48]
+    ip_packet = parse_ip_packet(session[0][1])
+    if ip_packet is not None:
+        # TODO: return as a string for compatibility, but should just be an int.
+        if hasattr(ip_packet, 'proto'):
+            return '%2.2u' % ip_packet.proto
+        if hasattr(ip_packet, 'nh'):
+            return '%2.2u' % ip_packet.nh
+    return None
 
 
 def is_external(address_1, address_2):
@@ -222,7 +259,6 @@ def is_protocol(session, protocol):
         is_protocol: True or False indicating if this is a TCP session
     '''
     return protocol == extract_protocol(session)
-
 
 def strip_macs(packet):
     '''
@@ -265,7 +301,10 @@ def clean_session_dict(sessions, source_address=None):
             address_2 = get_ip_port(key[1])[0]
 
             first_packet = packets[0][1]
-            source_mac, destination_mac = extract_macs(first_packet)
+            macs = extract_macs(first_packet)
+            if macs is None:
+                continue
+            source_mac, destination_mac = macs
 
             if (address_1 == source_address
                     or source_mac == source_address
@@ -297,7 +336,13 @@ def get_length(packet):
     """
     Gets the total length of the packet
     """
-    return int(packet[32:36], 16)
+    ip_packet = parse_ip_packet(packet)
+    if ip_packet is not None:
+        for len_attr in ('len', 'plen'):
+            plen = getattr(ip_packet, len_attr, None)
+            if plen is not None:
+                return plen
+    return 0
 
 
 def featurize_session(key, packets, source=None):
@@ -311,7 +356,10 @@ def featurize_session(key, packets, source=None):
         if address_2 == source:
             initiated_by_source = False
 
-        mac_1, mac_2 = extract_macs(packets[0][1])
+        macs = extract_macs(packets[0][1])
+        if macs is None:
+            return None
+        mac_1, mac_2 = macs
         protocol = extract_protocol(packets)
         external = is_external(address_1, address_2)
 
@@ -325,7 +373,10 @@ def featurize_session(key, packets, source=None):
         num_sent_by_1 = 0
         num_sent_by_2 = 0
         for packet in packets:
-            source_mac, _ = extract_macs(packet[1])
+            macs = extract_macs(packet[1])
+            if macs is None:
+                continue
+            source_mac, _ = macs
 
             if source_mac == mac_1:
                 size_to_2 = get_length(packet[1])

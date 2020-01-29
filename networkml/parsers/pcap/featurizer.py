@@ -56,7 +56,10 @@ def extract_features(session_dict, capture_source=None, max_port=1024):
 
         # Get the first packet and grab the macs from it
         first_packet = session[0][1]
-        source_mac, destination_mac = extract_macs(first_packet)
+        macs = extract_macs(first_packet)
+        if macs is None:
+            continue
+        source_mac, destination_mac = macs
 
         # If the source is the cpature source
         if (source_mac == capture_source

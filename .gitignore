@@ -109,3 +109,5 @@ ENV/
 .idea/
 faucet.iml
 *.bak
+
+*gz
