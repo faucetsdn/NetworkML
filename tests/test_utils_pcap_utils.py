@@ -20,6 +20,8 @@ def test_extract_macs():
     source, dest = extract_macs('020406080A0C0E0103050700')
     assert dest == '02:04:06:08:0a:0c'
     assert source == '0e:01:03:05:07:00'
+    assert None == extract_macs('0000')
+    assert None == ('01005e0000fc0050')
 
 
 def test_is_private():
