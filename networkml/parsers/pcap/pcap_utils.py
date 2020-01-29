@@ -303,7 +303,7 @@ def clean_session_dict(sessions, source_address=None):
             first_packet = packets[0][1]
             macs = extract_macs(first_packet)
             if macs is None:
-                continue`
+                continue
             source_mac, destination_mac = macs
 
             if (address_1 == source_address
