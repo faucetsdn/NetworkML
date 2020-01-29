@@ -14,14 +14,15 @@ TEST_IP_DATA = bytes(Ether()/IP(len=99,proto=6)/TCP()).hex()
 
 
 def test_extract_macs():
-    source, dest = extract_macs('123456789ABCDEF123456780')
+    test_payload = '00' * 20
+    source, dest = extract_macs('123456789ABCDEF123456780' + test_payload)
     assert dest == '12:34:56:78:9a:bc'
     assert source == 'de:f1:23:45:67:80'
-    source, dest = extract_macs('020406080A0C0E0103050700')
+    source, dest = extract_macs('020406080A0C0E0103050700' + test_payload)
     assert dest == '02:04:06:08:0a:0c'
     assert source == '0e:01:03:05:07:00'
     assert None == extract_macs('0000')
-    assert None == ('01005e0000fc0050')
+    assert None == extract_macs('01005e0000fc0050')
 
 
 def test_is_private():
