@@ -14,9 +14,11 @@ class Host(Features):
         except (ValueError, statistics.StatisticsError):
             return 0
 
+
     @staticmethod
     def _tshark_ipversions(rows):
         return {int(row['ip.version']) for row in rows if row.get('ip.version', None)}
+
 
     @staticmethod
     def _pyshark_row_layers(rows):
@@ -62,7 +64,8 @@ class Host(Features):
         return new_rows
 
 
-    def tshark_last_protocols(self, rows):
+    @staticmethod
+    def tshark_last_protocols(rows):
         protocols = ''
         for row in rows:
             row_protocols = row.get('frame.protocols', None)
@@ -85,50 +88,60 @@ class Host(Features):
 
 
     def tshark_avg_time_delta(self, rows):
-        new_rows = [{'average_time_delta': self._stat_row_field(statistics.mean, 'frame.time_delta_displayed', rows)}]
+        new_rows = [
+            {'average_time_delta': self._stat_row_field(statistics.mean, 'frame.time_delta_displayed', rows)}]
         return new_rows
 
 
     def tshark_min_time_delta(self, rows):
-        new_rows = [{'min_time_delta': self._stat_row_field(min, 'frame.time_delta_displayed', rows)}]
+        new_rows = [
+            {'min_time_delta': self._stat_row_field(min, 'frame.time_delta_displayed', rows)}]
         return new_rows
 
 
     def tshark_max_time_delta(self, rows):
-        new_rows = [{'max_time_delta': self._stat_row_field(max, 'frame.time_delta_displayed', rows)}]
+        new_rows = [
+            {'max_time_delta': self._stat_row_field(max, 'frame.time_delta_displayed', rows)}]
         return new_rows
 
 
     def tshark_avg_frame_len(self, rows):
-        new_rows = [{'average_frame_len': self._stat_row_field(statistics.mean, 'frame.len', rows)}]
+        new_rows = [
+            {'average_frame_len': self._stat_row_field(statistics.mean, 'frame.len', rows)}]
         return new_rows
 
 
     def tshark_min_frame_len(self, rows):
-        new_rows = [{'min_frame_len': self._stat_row_field(min, 'frame.len', rows)}]
+        new_rows = [
+            {'min_frame_len': self._stat_row_field(min, 'frame.len', rows)}]
         return new_rows
 
 
     def tshark_max_frame_len(self, rows):
-        new_rows = [{'max_frame_len': self._stat_row_field(max, 'frame.len', rows)}]
+        new_rows = [
+            {'max_frame_len': self._stat_row_field(max, 'frame.len', rows)}]
         return new_rows
 
 
     def tshark_median_frame_len(self, rows):
-        new_rows = [{'median_frame_len': self._stat_row_field(statistics.median, 'frame.len', rows)}]
+        new_rows = [
+            {'median_frame_len': self._stat_row_field(statistics.median, 'frame.len', rows)}]
         return new_rows
 
 
     def tshark_variance_frame_len(self, rows):
-        new_rows = [{'variance_frame_len': self._stat_row_field(statistics.variance, 'frame.len', rows)}]
+        new_rows = [
+            {'variance_frame_len': self._stat_row_field(statistics.variance, 'frame.len', rows)}]
         return new_rows
 
 
     def tshark_25q_frame_len(self, rows):
-        new_rows = [{'25q_frame_len': self._stat_row_field(lambda x: percentile(x, 25), 'frame.len', rows)}]
+        new_rows = [
+            {'25q_frame_len': self._stat_row_field(lambda x: percentile(x, 25), 'frame.len', rows)}]
         return new_rows
 
 
     def tshark_75q_frame_len(self, rows):
-        new_rows = [{'75q_frame_len': self._stat_row_field(lambda x: percentile(x, 75), 'frame.len', rows)}]
+        new_rows = [
+            {'75q_frame_len': self._stat_row_field(lambda x: percentile(x, 75), 'frame.len', rows)}]
         return new_rows
