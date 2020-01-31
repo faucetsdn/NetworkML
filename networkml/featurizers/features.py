@@ -1,3 +1,6 @@
+import statistics
+
+
 class Features():
 
     def run_func(self, func_name, *args):
@@ -14,12 +17,28 @@ class Features():
         results = func(*args)
         return results
 
-    def get_columns(self, fields, rows):
-        new_rows = []
-        for row in rows:
-            new_row = {}
-            for field in fields:
-                if field in row and row[field]:
-                    new_row[field] = row[field]
-            new_rows.append(new_row)
+
+    @staticmethod
+    def get_columns(fields, rows):
+        # Terse but efficient.
+        new_rows = [{field: row[field] for field in fields if row.get(field, None)} for row in rows]
         return new_rows
+
+
+    @staticmethod
+    def _stat_row_field(statfunc, field, rows):
+        # apply a statistical function, to all rows with a given field.
+        try:
+            return statfunc([float(row[field]) for row in filter(lambda row: field in row, rows)])
+        except (ValueError, statistics.StatisticsError):
+            return 0
+
+
+    @staticmethod
+    def _tshark_ipversions(rows):
+        return {int(row['ip.version']) for row in rows if row.get('ip.version', None)}
+
+
+    @staticmethod
+    def _pyshark_row_layers(rows):
+        return filter(lambda row: 'layers' in row, rows)
