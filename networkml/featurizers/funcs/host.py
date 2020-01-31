@@ -127,3 +127,19 @@ class Host(Features):
         new_rows = [
             {'75q_frame_len': self._stat_row_field(lambda x: percentile(x, 75), 'frame.len', rows)}]
         return new_rows
+
+
+    def tshark_avg_frame_len_in(self, rows):
+        src_mac = self._tshark_input_mac(rows)
+        rows_filter = filter(lambda row: row.get('eth.dst', None) == src_mac, rows)
+        new_rows = [
+            {'average_frame_len_in': self._stat_row_field(statistics.mean, 'frame.len', rows_filter)}]
+        return new_rows
+
+
+    def tshark_avg_frame_len_out(self, rows):
+        src_mac = self._tshark_input_mac(rows)
+        rows_filter = filter(lambda row: row.get('eth.src', None) == src_mac, rows)
+        new_rows = [
+            {'average_frame_len_out': self._stat_row_field(statistics.mean, 'frame.len', rows_filter)}]
+        return new_rows
