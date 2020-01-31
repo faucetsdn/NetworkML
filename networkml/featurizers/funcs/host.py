@@ -6,24 +6,6 @@ from networkml.featurizers.features import Features
 
 class Host(Features):
 
-    @staticmethod
-    def _stat_row_field(statfunc, field, rows):
-        # apply a statistical function, to all rows with a given field.
-        try:
-            return statfunc([float(row[field]) for row in filter(lambda row: field in row, rows)])
-        except (ValueError, statistics.StatisticsError):
-            return 0
-
-
-    @staticmethod
-    def _tshark_ipversions(rows):
-        return {int(row['ip.version']) for row in rows if row.get('ip.version', None)}
-
-
-    @staticmethod
-    def _pyshark_row_layers(rows):
-        return filter(lambda row: 'layers' in row, rows)
-
 
     def _pyshark_ipversions(self, rows):
         ipversions = set()
