@@ -63,6 +63,16 @@ class Features():
         return None
 
 
+    def _select_mac_direction(self, rows, output=True):
+        '''Return filter expression selecting input or output rows.'''
+        src_mac = self._tshark_input_mac(rows)
+        if output:
+            # Select all rows where traffic originated by inferred source MAC
+            return filter(lambda row: row.get('eth.src', None) == src_mac, rows)
+        # Select all rows where traffic not originated by inferred source MAC.
+        return filter(lambda row: row.get('eth.src', None) != src_mac, rows)
+
+
     @staticmethod
     def _tshark_ipversions(rows):
         return {int(row['ip.version']) for row in rows if row.get('ip.version', None)}
