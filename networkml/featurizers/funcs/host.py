@@ -133,8 +133,8 @@ class Host(Features):
 
 
     def tshark_avg_frame_len_in(self, rows):
-        return self._calc_tshark_field('average_frame_len_in', 'frame.len', rows_filter)
+        return self._calc_tshark_field('average_frame_len_in', 'frame.len', rows)
 
 
     def tshark_avg_frame_len_out(self, rows):
-        return self._calc_tshark_field('average_frame_len_out', 'frame.len', rows_filter)
+        return self._calc_tshark_field('average_frame_len_out', 'frame.len', rows)
