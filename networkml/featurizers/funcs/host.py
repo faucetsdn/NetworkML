@@ -23,7 +23,7 @@ class Host(Features):
         field_prefix = field_parts[0]
         field_suffix = field_parts[-1]
         stat = self.NAME_TO_STAT.get(field_prefix, None)
-        assert stat is not None
+        assert stat is not None, field_prefix
         rows_filter = rows
         if field_suffix == 'in':
             rows_filter = self._select_mac_direction(rows, output=False)
