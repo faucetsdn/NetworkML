@@ -199,3 +199,59 @@ class Host(Features):
 
     def tshark_min_frame_len_out(self, rows):
         return self._calc_tshark_field('min_frame_len_out', 'frame.len', rows)
+
+
+    def tshark_min_time_delta_in(self, rows):
+        return self._calc_tshark_field('min_time_delta_in', 'frame.time_delta_displayed', rows)
+
+
+    def tshark_min_time_delta_out(self, rows):
+        return self._calc_tshark_field('min_time_delta_out', 'frame.time_delta_displayed', rows)
+
+
+    def tshark_25q_time_delta_in(self, rows):
+        return self._calc_tshark_field('25q_time_delta_in', 'frame.time_delta_displayed', rows)
+
+
+    def tshark_25q_time_delta_out(self, rows):
+        return self._calc_tshark_field('25q_time_delta_out', 'frame.time_delta_displayed', rows)
+
+
+    def tshark_median_time_delta_in(self, rows):
+        return self._calc_tshark_field('median_time_delta_in', 'frame.time_delta_displayed', rows)
+
+
+    def tshark_median_time_delta_out(self, rows):
+        return self._calc_tshark_field('median_time_delta_out', 'frame.time_delta_displayed', rows)
+
+
+    def tshark_average_time_delta_in(self, rows):
+        return self._calc_tshark_field('average_time_delta_in', 'frame.time_delta_displayed', rows)
+
+
+    def tshark_average_time_delta_out(self, rows):
+        return self._calc_tshark_field('average_time_delta_out', 'frame.time_delta_displayed', rows)
+
+
+    def tshark_75q_time_delta_in(self, rows):
+        return self._calc_tshark_field('75q_time_delta_in', 'frame.time_delta_displayed', rows)
+
+
+    def tshark_75q_time_delta_out(self, rows):
+        return self._calc_tshark_field('75q_time_delta_out', 'frame.time_delta_displayed', rows)
+
+
+    def tshark_max_time_delta_in(self, rows):
+        return self._calc_tshark_field('max_time_delta_in', 'frame.time_delta_displayed', rows)
+
+
+    def tshark_max_time_delta_out(self, rows):
+        return self._calc_tshark_field('max_time_delta_out', 'frame.time_delta_displayed', rows)
+
+
+    def tshark_variance_time_delta_in(self, rows):
+        return self._calc_tshark_field('variance_time_delta_in', 'frame.time_delta_displayed', rows)
+
+
+    def tshark_variance_time_delta_out(self, rows):
+        return self._calc_tshark_field('variance_time_delta_out', 'frame.time_delta_displayed', rows)
