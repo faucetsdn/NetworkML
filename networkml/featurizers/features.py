@@ -56,11 +56,24 @@ class Features():
                 all_eths[eth_dst] += 1
 
         common_eth = set(eth_srcs).union(eth_dsts)
-        if common_eth:
+        if len(common_eth) > 1:
             common_count = [(eth, all_eths[eth]) for eth in common_eth]
             max_eth = sorted(common_count, key=lambda x: x[1])[-1][0]
             return max_eth
         return None
+
+
+    def _select_mac_direction(self, rows, output=True):
+        '''Return filter expression selecting input or output rows.'''
+        src_mac = self._tshark_input_mac(rows)
+        # Select all if can't infer direction.
+        if src_mac is None:
+            return rows
+        if output:
+            # Select all rows where traffic originated by inferred source MAC
+            return filter(lambda row: row.get('eth.src', None) == src_mac, rows)
+        # Select all rows where traffic not originated by inferred source MAC.
+        return filter(lambda row: row.get('eth.src', None) != src_mac, rows)
 
 
     @staticmethod
