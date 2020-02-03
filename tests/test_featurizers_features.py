@@ -28,4 +28,4 @@ def test_select_mac_direction():
     rows = [{'eth.src': 1, 'eth.dst': 2}, {'eth.src': 2, 'eth.dst': 1}, {'eth.src': 1, 'eth.dst': 99}]
     instance = Features()
     assert [{'eth.dst': 1, 'eth.src': 2}] == list(instance._select_mac_direction(rows, output=False))
-    assert [{'eth.dst': 2, 'eth.src': 1}, {'eth.dst': 99, 'eth.src': 1} == list(instance._select_mac_direction(rows, output=True))
+    assert [{'eth.dst': 2, 'eth.src': 1}, {'eth.dst': 99, 'eth.src': 1}] == list(instance._select_mac_direction(rows, output=True))
