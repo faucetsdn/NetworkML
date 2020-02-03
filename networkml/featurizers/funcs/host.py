@@ -7,6 +7,7 @@ from networkml.featurizers.features import Features
 class Host(Features):
 
     NAME_TO_STAT = {
+        'count': len,
         'max': max,
         'min': min,
         'average': statistics.mean,
@@ -94,164 +95,182 @@ class Host(Features):
             return [{'IPv6': 1}]
         return [{'IPv6': 0}]
 
+
+    def _calc_time_delta(self, field, rows):
+        assert 'time_delta' in field
+        return self._calc_tshark_field(field, 'frame.time_delta_displayed', rows)
+
+
+    def _calc_framelen(self, field, rows):
+        assert 'frame_len' in field
+        return self._calc_tshark_field(field, 'frame.len', rows)
+
     # Directionless.
 
-    def tshark_avg_time_delta(self, rows):
-        return self._calc_tshark_field('average_time_delta', 'frame.time_delta_displayed', rows)
+    def tshark_average_time_delta(self, rows):
+        return self._calc_time_delta('average_time_delta', rows)
 
 
     def tshark_min_time_delta(self, rows):
-        return self._calc_tshark_field('min_time_delta', 'frame.time_delta_displayed', rows)
+        return self._calc_time_delta('min_time_delta', rows)
 
 
     def tshark_max_time_delta(self, rows):
-        return self._calc_tshark_field('max_time_delta', 'frame.time_delta_displayed', rows)
+        return self._calc_time_delta('max_time_delta', rows)
 
 
-    def tshark_avg_frame_len(self, rows):
-        return self._calc_tshark_field('average_frame_len', 'frame.len', rows)
+    def tshark_average_frame_len(self, rows):
+        return self._calc_framelen('average_frame_len', rows)
 
 
     def tshark_min_frame_len(self, rows):
-        return self._calc_tshark_field('min_frame_len', 'frame.len', rows)
+        return self._calc_framelen('min_frame_len', rows)
 
 
     def tshark_max_frame_len(self, rows):
-        return self._calc_tshark_field('max_frame_len', 'frame.len', rows)
+        return self._calc_framelen('max_frame_len', rows)
 
 
     def tshark_median_frame_len(self, rows):
-        return self._calc_tshark_field('median_frame_len', 'frame.len', rows)
+        return self._calc_framelen('median_frame_len', rows)
 
 
     def tshark_variance_frame_len(self, rows):
-        return self._calc_tshark_field('variance_frame_len', 'frame.len', rows)
+        return self._calc_framelen('variance_frame_len', rows)
 
 
     def tshark_25q_frame_len(self, rows):
-        return self._calc_tshark_field('25q_frame_len', 'frame.len', rows)
+        return self._calc_framelen('25q_frame_len', rows)
 
 
     def tshark_75q_frame_len(self, rows):
-        return self._calc_tshark_field('75q_frame_len', 'frame.len', rows)
+        return self._calc_framelen('75q_frame_len', rows)
 
     # By direction
 
+    def tshark_count_frame_len_in(self, rows):
+        return self._calc_framelen('count_frame_len_in', rows)
+
+
+    def tshark_count_frame_len_out(self, rows):
+        return self._calc_framelen('count_frame_len_out', rows)
+
+
     def tshark_total_frame_len_in(self, rows):
-        return self._calc_tshark_field('total_frame_len_in', 'frame.len', rows)
+        return self._calc_framelen('total_frame_len_in', rows)
 
 
     def tshark_total_frame_len_out(self, rows):
-        return self._calc_tshark_field('total_frame_len_out', 'frame.len', rows)
+        return self._calc_framelen('total_frame_len_out', rows)
 
 
-    def tshark_avg_frame_len_in(self, rows):
-        return self._calc_tshark_field('average_frame_len_in', 'frame.len', rows)
+    def tshark_average_frame_len_in(self, rows):
+        return self._calc_framelen('average_frame_len_in', rows)
 
 
-    def tshark_avg_frame_len_out(self, rows):
-        return self._calc_tshark_field('average_frame_len_out', 'frame.len', rows)
+    def tshark_average_frame_len_out(self, rows):
+        return self._calc_framelen('average_frame_len_out', rows)
 
 
     def tshark_25q_frame_len_in(self, rows):
-        return self._calc_tshark_field('25q_frame_len_in', 'frame.len', rows)
+        return self._calc_framelen('25q_frame_len_in', rows)
 
 
     def tshark_25q_frame_len_out(self, rows):
-        return self._calc_tshark_field('25q_frame_len_out', 'frame.len', rows)
+        return self._calc_framelen('25q_frame_len_out', rows)
 
 
     def tshark_75q_frame_len_in(self, rows):
-        return self._calc_tshark_field('75q_frame_len_in', 'frame.len', rows)
+        return self._calc_framelen('75q_frame_len_in', rows)
 
 
     def tshark_75q_frame_len_out(self, rows):
-        return self._calc_tshark_field('75q_frame_len_out', 'frame.len', rows)
+        return self._calc_framelen('75q_frame_len_out', rows)
 
 
     def tshark_median_frame_len_in(self, rows):
-        return self._calc_tshark_field('median_frame_len_in', 'frame.len', rows)
+        return self._calc_framelen('median_frame_len_in', rows)
 
 
     def tshark_median_frame_len_out(self, rows):
-        return self._calc_tshark_field('median_frame_len_out', 'frame.len', rows)
+        return self._calc_framelen('median_frame_len_out', rows)
 
 
     def tshark_variance_frame_len_in(self, rows):
-        return self._calc_tshark_field('variance_frame_len_in', 'frame.len', rows)
+        return self._calc_framelen('variance_frame_len_in', rows)
 
 
     def tshark_variance_frame_len_out(self, rows):
-        return self._calc_tshark_field('variance_frame_len_out', 'frame.len', rows)
+        return self._calc_framelen('variance_frame_len_out', rows)
 
 
     def tshark_max_frame_len_in(self, rows):
-        return self._calc_tshark_field('max_frame_len_in', 'frame.len', rows)
+        return self._calc_framelen('max_frame_len_in', rows)
 
 
     def tshark_max_frame_len_out(self, rows):
-        return self._calc_tshark_field('max_frame_len_out', 'frame.len', rows)
+        return self._calc_framelen('max_frame_len_out', rows)
 
 
     def tshark_min_frame_len_in(self, rows):
-        return self._calc_tshark_field('min_frame_len_in', 'frame.len', rows)
+        return self._calc_framelen('min_frame_len_in', rows)
 
 
     def tshark_min_frame_len_out(self, rows):
-        return self._calc_tshark_field('min_frame_len_out', 'frame.len', rows)
+        return self._calc_framelen('min_frame_len_out', rows)
 
 
     def tshark_min_time_delta_in(self, rows):
-        return self._calc_tshark_field('min_time_delta_in', 'frame.time_delta_displayed', rows)
+        return self._calc_time_delta('min_time_delta_in', rows)
 
 
     def tshark_min_time_delta_out(self, rows):
-        return self._calc_tshark_field('min_time_delta_out', 'frame.time_delta_displayed', rows)
+        return self._calc_time_delta('min_time_delta_out', rows)
 
 
     def tshark_25q_time_delta_in(self, rows):
-        return self._calc_tshark_field('25q_time_delta_in', 'frame.time_delta_displayed', rows)
+        return self._calc_time_delta('25q_time_delta_in', rows)
 
 
     def tshark_25q_time_delta_out(self, rows):
-        return self._calc_tshark_field('25q_time_delta_out', 'frame.time_delta_displayed', rows)
+        return self._calc_time_delta('25q_time_delta_out', rows)
 
 
     def tshark_median_time_delta_in(self, rows):
-        return self._calc_tshark_field('median_time_delta_in', 'frame.time_delta_displayed', rows)
+        return self._calc_time_delta('median_time_delta_in', rows)
 
 
     def tshark_median_time_delta_out(self, rows):
-        return self._calc_tshark_field('median_time_delta_out', 'frame.time_delta_displayed', rows)
+        return self._calc_time_delta('median_time_delta_out', rows)
 
 
     def tshark_average_time_delta_in(self, rows):
-        return self._calc_tshark_field('average_time_delta_in', 'frame.time_delta_displayed', rows)
+        return self._calc_time_delta('average_time_delta_in', rows)
 
 
     def tshark_average_time_delta_out(self, rows):
-        return self._calc_tshark_field('average_time_delta_out', 'frame.time_delta_displayed', rows)
+        return self._calc_time_delta('average_time_delta_out', rows)
 
 
     def tshark_75q_time_delta_in(self, rows):
-        return self._calc_tshark_field('75q_time_delta_in', 'frame.time_delta_displayed', rows)
+        return self._calc_time_delta('75q_time_delta_in', rows)
 
 
     def tshark_75q_time_delta_out(self, rows):
-        return self._calc_tshark_field('75q_time_delta_out', 'frame.time_delta_displayed', rows)
+        return self._calc_time_delta('75q_time_delta_out', rows)
 
 
     def tshark_max_time_delta_in(self, rows):
-        return self._calc_tshark_field('max_time_delta_in', 'frame.time_delta_displayed', rows)
+        return self._calc_time_delta('max_time_delta_in', rows)
 
 
     def tshark_max_time_delta_out(self, rows):
-        return self._calc_tshark_field('max_time_delta_out', 'frame.time_delta_displayed', rows)
+        return self._calc_time_delta('max_time_delta_out', rows)
 
 
     def tshark_variance_time_delta_in(self, rows):
-        return self._calc_tshark_field('variance_time_delta_in', 'frame.time_delta_displayed', rows)
+        return self._calc_time_delta('variance_time_delta_in', rows)
 
 
     def tshark_variance_time_delta_out(self, rows):
-        return self._calc_tshark_field('variance_time_delta_out', 'frame.time_delta_displayed', rows)
+        return self._calc_time_delta('variance_time_delta_out', rows)
