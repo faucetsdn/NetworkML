@@ -22,6 +22,7 @@ def train(input_path):
     OUTPUTS:
     --model: a trained model
     --le: a label encoder to transform predictions into business roles
+    --scaler: a scaler used to transform features, needed for predict module
     """
     
     ## Load data from host footprint .csv
@@ -47,7 +48,8 @@ def train(input_path):
     
     ## Normalize X features before training
     scaler = preprocessing.MinMaxScaler()
-    X = scaler.fit_transform(X)
+    scaler_fitted = scaler.fit(X)
+    X = scaler_fitted.transform(X)
     
     ## Convert y into categorical/numerical feature
     le = preprocessing.LabelEncoder()
@@ -62,9 +64,10 @@ def train(input_path):
                         random_state=1999)
     
     model = clf.fit(X, y)
+
     
-    ## Returns trained model and label encoder
-    return model, le
+    ## Returns trained model, label encoder, and scaler
+    return model, le, scaler_fitted
 
 def stringFeatureCheck(X):
     """
@@ -94,8 +97,8 @@ def stringFeatureCheck(X):
             ## TODO: JOHN SPEED NEEDS HELP USING THE PROPER SYNTAX
             #logging.info(f'String object found in column {col}')
             
-            ## Expand object feature into "dummy" feature, i.e. 0/1
-            ## features. This is "one hot encoding"
+            ## Expand features into "dummy", i.e. 0/1
+            ## features
             new_features = pd.get_dummies(X[col])
             
             ## Add new features onto X dataframe
