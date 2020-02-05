@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import json
-from sklearn.preprocessing import MinMaxScaler
+from sklearn import preprocessing
 
 def predict(input_path, model, label_encoder, scaler_fitted):
     """
