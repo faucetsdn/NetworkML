@@ -90,7 +90,9 @@ class Host(Features):
                 protocol for protocol in self.tshark_last_protocols(rows)[0]['Protocols'].split(':') if protocol}
         except IndexError:
             return []
-        protocols = protocols - set(['eth', 'ethertype'])
+        protocols = protocols - set(['ethertype'])
+        # Can't return empty dict.
+        protocols.add('eth')
         return [{'protocol_%s' % protocol: 1 for protocol in protocols}]
 
 
