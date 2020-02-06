@@ -91,8 +91,6 @@ class Host(Features):
         except IndexError:
             return []
         protocols = protocols - set(['ethertype'])
-        # Can't return empty dict.
-        protocols.add('eth')
         return [{'protocol_%s' % protocol: 1 for protocol in protocols}]
 
 
