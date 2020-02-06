@@ -86,7 +86,8 @@ class Host(Features):
 
     def tshark_last_protocols_array(self, rows):
         try:
-            protocols = set(self.tshark_last_protocols(rows)[0]['Protocols'].split(':'))
+            protocols = {
+                protocol for protocol in self.tshark_last_protocols(rows)[0]['Protocols'].split(':') if protocol}
         except IndexError:
             return []
         protocols = protocols - set(['eth', 'ethertype'])
