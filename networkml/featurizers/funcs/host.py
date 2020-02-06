@@ -84,6 +84,16 @@ class Host(Features):
         return new_rows
 
 
+    def tshark_last_protocols_array(self, rows):
+        try:
+            protocols = {
+                protocol for protocol in self.tshark_last_protocols(rows)[0]['Protocols'].split(':') if protocol}
+        except IndexError:
+            return []
+        protocols = protocols - set(['eth', 'ethertype'])
+        return [{'protocol_%s' % protocol: 1 for protocol in protocols}]
+
+
     def tshark_ipv4(self, rows):
         if 4 in self._tshark_ipversions(rows):
             return [{'IPv4': 1}]
