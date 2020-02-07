@@ -84,18 +84,14 @@ class CSVToFeatures():
 
     @staticmethod
     def get_rows(in_file, gzip_opt):
-        rows = []
         if gzip_opt in ['input', 'both']:
             with gzip.open(in_file, 'rb') as f_in:
                 reader = csv.DictReader(io.TextIOWrapper(f_in, newline=''))
-                for line in reader:
-                    rows.append(dict(line))
-        else:
-            with open(in_file, 'r') as f_in:
-                reader = csv.DictReader(f_in)
-                for line in reader:
-                    rows.append(dict(line))
-        return rows
+                return [dict(line) for line in reader]
+
+        with open(in_file, 'r') as f_in:
+            reader = csv.DictReader(f_in)
+            return [dict(line) for line in reader]
 
     @staticmethod
     def parse_args(parser):
