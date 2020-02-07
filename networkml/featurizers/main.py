@@ -45,18 +45,8 @@ class Featurizer():
 
         return classes
 
-    def main(self, feature_choices, rows, features_path):
-        results = []
-        functions = []
-        groups = ('default')
-        classes = []
-        classes = self.import_class(features_path, classes)
 
-        if 'functions' in feature_choices:
-            functions = feature_choices['functions']
-        if 'groups' in feature_choices:
-            groups = feature_choices['groups']
-
+    def run_all_funcs(self, functions, groups, classes, rows):
         feature_rows = []
         run_methods = []
         for f in classes:
@@ -77,3 +67,17 @@ class Featurizer():
                         feature_row = f[0].run_func(function[1], rows)
                         feature_rows.append(feature_row)
         return feature_rows
+
+
+    def main(self, feature_choices, rows, features_path):
+        functions = []
+        groups = ('default')
+        classes = []
+        classes = self.import_class(features_path, classes)
+
+        if 'functions' in feature_choices:
+            functions = feature_choices['functions']
+        if 'groups' in feature_choices:
+            groups = feature_choices['groups']
+
+        return self.run_all_funcs(functions, groups, classes, rows)

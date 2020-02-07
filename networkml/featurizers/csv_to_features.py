@@ -3,14 +3,14 @@ import csv
 import concurrent.futures
 import datetime
 import gzip
-import humanize
 import io
 import logging
-import numpy as np
 import os
 import pathlib
-import sys
 import time
+import humanize
+import numpy as np
+
 
 from networkml.featurizers.main import Featurizer
 
@@ -39,24 +39,17 @@ class CSVToFeatures():
     @staticmethod
     def combine_csvs(out_paths, combined_path, gzip_opt):
         # First determine the field names from the top line of each input file
-        fieldnames = []
+        fieldnames = {'filename'}
         for filename in out_paths:
             if gzip_opt in ['output', 'both']:
                 with gzip.open(filename, 'rb') as f_in:
                     reader = csv.reader(io.TextIOWrapper(f_in, newline=''))
-                    headers = next(reader)
-                    for h in headers:
-                        if h not in fieldnames:
-                            fieldnames.append(h)
+                    fieldnames.update({header for header in next(reader)})
             else:
                 with open(filename, 'r') as f_in:
                     reader = csv.reader(f_in)
-                    headers = next(reader)
-                    for h in headers:
-                        if h not in fieldnames:
-                            fieldnames.append(h)
+                    fieldnames.update({header for header in next(reader)})
 
-        fieldnames.append('filename')
         # Then copy the data
         if gzip_opt in ['output', 'both']:
             with gzip.open(combined_path, 'wb') as f_out:
@@ -91,18 +84,14 @@ class CSVToFeatures():
 
     @staticmethod
     def get_rows(in_file, gzip_opt):
-        rows = []
         if gzip_opt in ['input', 'both']:
             with gzip.open(in_file, 'rb') as f_in:
                 reader = csv.DictReader(io.TextIOWrapper(f_in, newline=''))
-                for line in reader:
-                    rows.append(dict(line))
-        else:
-            with open(in_file, 'r') as f_in:
-                reader = csv.DictReader(f_in)
-                for line in reader:
-                    rows.append(dict(line))
-        return rows
+                return [dict(line) for line in reader]
+
+        with open(in_file, 'r') as f_in:
+            reader = csv.DictReader(f_in)
+            return [dict(line) for line in reader]
 
     @staticmethod
     def parse_args(parser):
@@ -130,9 +119,7 @@ class CSVToFeatures():
                 header.update(r.keys())
         header = list(header)
 
-        columns = []
-        for row in rows:
-            columns.append(np.array(row))
+        columns = [np.array(row) for row in rows]
         np_array = np.vstack(columns)
 
         rows = None
