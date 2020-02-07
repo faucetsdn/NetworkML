@@ -74,7 +74,7 @@ class Host(Features):
 
 
     @staticmethod
-    def tshark_last_protocols(rows):
+    def last_protocols(rows):
         protocols = ''
         for row in rows:
             row_protocols = row.get('frame.protocols', None)
@@ -87,7 +87,7 @@ class Host(Features):
     def tshark_last_protocols_array(self, rows):
         try:
             protocols = {
-                protocol for protocol in self.tshark_last_protocols(rows)[0]['Protocols'].split(':') if protocol}
+                protocol for protocol in self.last_protocols(rows)[0]['Protocols'].split(':') if protocol}
         except IndexError:
             return []
         protocols = protocols - set(['ethertype'])
