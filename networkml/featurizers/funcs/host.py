@@ -1,7 +1,12 @@
+import ipaddress
 import statistics
 from numpy import percentile
 from networkml.featurizers.features import Features
 
+ETH_TYPE_ARP = 0x806
+ETH_TYPE_IP = 0x800
+ETH_TYPE_IPV6 = 0x86DD
+ETH_IP_TYPES = frozenset((ETH_TYPE_ARP, ETH_TYPE_IP, ETH_TYPE_IPV6))
 
 
 class Host(Features):
@@ -115,7 +120,61 @@ class Host(Features):
         assert 'frame_len' in field
         return self._calc_tshark_field(field, 'frame.len', rows)
 
+
+    @staticmethod
+    def _get_ips(row):
+        ip_src = None
+        for src_field in ('ip.src', 'ip.src_host'):
+            ip_src = row.get(src_field, None)
+            if ip_src:
+                break
+        ip_dst = None
+        for dst_field in ('ip.dst', 'ip.dst_host'):
+            ip_dst = row.get(dst_field, None)
+            if ip_dst:
+                break
+        if ip_src and ip_dst:
+            ip_src = ipaddress.ip_address(ip_src)
+            ip_dst = ipaddress.ip_address(ip_dst)
+        return (ip_src, ip_dst)
+
+
     # Directionless.
+
+    def tshark_both_private_ip(self, rows):
+        both_private = 0
+        if rows:
+            both_private = 1
+            for row in rows:
+                ip_src, ip_dst = self._get_ips(row)
+                if ip_src and ip_dst:
+                    if not (ip_src.is_private and ip_dst.is_private):
+                        both_private = 0
+                        break
+        return [{'tshark_both_private_ip': both_private}]
+
+
+    def tshark_ipv4_multicast(self, rows):
+        multicast = 0
+        if rows:
+            for row in rows:
+                _, ip_dst = self._get_ips(row)
+                if ip_dst.version == 4 and ip_dst.is_multicast:
+                    multicast = 1
+                    break
+        return [{'tshark_ipv4_multicast': multicast}]
+
+
+    def tshark_non_ip(self, rows):
+        non_ip = 1
+        if rows:
+            non_ip = 0
+            for row in rows:
+                if row.get('eth.type', None) not in ETH_IP_TYPES:
+                    non_ip = 1
+                    break
+        return [{'tshark_non_ip': non_ip}]
+
 
     def tshark_average_time_delta(self, rows):
         return self._calc_time_delta('average_time_delta', rows)
