@@ -6,6 +6,7 @@ from networkml.featurizers.features import Features
 ETH_TYPE_ARP = 0x806
 ETH_TYPE_IP = 0x800
 ETH_TYPE_IPV6 = 0x86DD
+ETH_TYPE_IPX = 0x8137
 ETH_IP_TYPES = frozenset((ETH_TYPE_ARP, ETH_TYPE_IP, ETH_TYPE_IPV6))
 
 
@@ -139,7 +140,35 @@ class Host(Features):
         return (ip_src, ip_dst)
 
 
+    @staticmethod
+    def _get_proto_eth_type(row):
+        for eth_field in ('vlan.etype', 'eth.type'):
+            eth_type = row.get(eth_field, None)
+            if eth_type:
+                return eth_type
+        return None
+
+
     # Directionless.
+
+    @staticmethod
+    def tshark_vlan_id(rows):
+        vlan_id = 0
+        for row in rows:
+            vlan_id = row.get('vlan.id', 0)
+            if vlan_id:
+                break
+        return [{'tshark_vlan_id': vlan_id}]
+
+
+    def tshark_ipx(self, rows):
+        ipx = 0
+        for row in rows:
+            if self._get_proto_eth_type(row) == ETH_TYPE_IPX:
+                ipx = 1
+                break
+        return [{'tshark_ipx': ipx}]
+
 
     def tshark_both_private_ip(self, rows):
         both_private = 0
@@ -170,7 +199,7 @@ class Host(Features):
         if rows:
             non_ip = 0
             for row in rows:
-                if row.get('eth.type', None) not in ETH_IP_TYPES:
+                if self._get_proto_eth_type(row) not in ETH_IP_TYPES:
                     non_ip = 1
                     break
         return [{'tshark_non_ip': non_ip}]
