@@ -149,7 +149,40 @@ class Host(Features):
         return None
 
 
+    @staticmethod
+    def _get_ip_proto_ports(row, ip_proto):
+        src_port = row.get('.'.join((ip_proto, 'srcport')), None)
+        dst_port = row.get('.'.join((ip_proto, 'dstport')), None)
+        return (src_port, dst_port)
+
+
+    def _priv_ip_proto_ports(self, rows, ip_proto):
+        priv_ports = set()
+        for row in rows:
+            src_port, dst_port = self._get_ip_proto_ports(row, ip_proto)
+            if src_port and dst_port:
+                min_port = min(src_port, dst_port)
+                if min_port < 1024:
+                    priv_ports.add(min_port)
+        return priv_ports
+
+
     # Directionless.
+
+
+    def tshark_priv_tcp_ports(self, rows):
+        priv_ports = self._priv_ip_proto_ports(rows, 'tcp')
+        if priv_ports:
+            return [{'tshark_tcp_priv_port_%u' % port: 1 for port in priv_ports}]
+        return [{}]
+
+
+    def tshark_priv_udp_ports(self, rows):
+        priv_ports = self._priv_ip_proto_ports(rows, 'udp')
+        if priv_ports:
+            return [{'tshark_udp_priv_port_%u' % port: 1 for port in priv_ports}]
+        return [{}]
+
 
     @staticmethod
     def tshark_vlan_id(rows):
@@ -188,7 +221,7 @@ class Host(Features):
         if rows:
             for row in rows:
                 _, ip_dst = self._get_ips(row)
-                if ip_dst.version == 4 and ip_dst.is_multicast:
+                if ip_dst and ip_dst.version == 4 and ip_dst.is_multicast:
                     multicast = 1
                     break
         return [{'tshark_ipv4_multicast': multicast}]

@@ -29,3 +29,9 @@ def test_ipv4_multicast():
         {'tshark_ipv4_multicast': 1}]
     assert instance.tshark_ipv4_multicast([{'ip.src': '192.168.0.1', 'ip.dst': '10.0.0.2'}]) == [
         {'tshark_ipv4_multicast': 0}]
+
+
+def test_tcp_priv_ports():
+    instance = Host()
+    assert instance.tshark_priv_tcp_ports([{'tcp.srcport': 1025, 'tcp.dstport': 80}]) == [
+        {'tshark_tcp_priv_port_80': 1}]
