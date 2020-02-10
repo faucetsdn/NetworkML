@@ -33,8 +33,20 @@ def test_ipv4_multicast():
 
 def test_tcp_flags():
     instance = Host()
-    assert instance.tshark_tcp_flags_out([{'tcp.flags': 123}]) == [{'tshark_tcp_flag_123_out': 1}]
-    assert instance.tshark_tcp_flags_in([{'tcp.flags': 123}]) == [{'tshark_tcp_flag_123_in': 1}]
+    assert instance.tshark_tcp_flags_out([{'tcp.flags': 123}]) == [{'tshark_tcp_flags_123_out': 1}]
+    assert instance.tshark_tcp_flags_in([{'tcp.flags': 123}]) == [{'tshark_tcp_flags_123_in': 1}]
+
+
+def test_ip_flags():
+    instance = Host()
+    assert instance.tshark_ip_flags_out([{'ip.flags': 0x00004000}]) == [{'tshark_ip_flags_16384_out': 1}]
+    assert instance.tshark_ip_flags_in([{'ip.flags': 0x00004000}]) == [{'tshark_ip_flags_16384_in': 1}]
+
+
+def test_ip_dsfield_flags():
+    instance = Host()
+    assert instance.tshark_ip_dsfield_out([{'ip.dsfield': 0x00000010}]) == [{'tshark_ip_dsfield_16_out': 1}]
+    assert instance.tshark_ip_dsfield_in([{'ip.dsfield': 0x00000010}]) == [{'tshark_ip_dsfield_16_in': 1}]
 
 
 def test_tcp_priv_ports():
