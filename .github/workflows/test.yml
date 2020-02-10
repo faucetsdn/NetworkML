@@ -12,12 +12,11 @@ jobs:
     - name: test
       run: |
         sudo apt-get update && \
-        sudo apt-get install -y python3-dev python3-setuptools tcpdump && \
+        sudo apt-get install -y python3-dev python3-setuptools && \
         pip3 install -U pip && \
         pip3 install codecov pytype && \
         find . -name requirements.txt -type f -exec pip3 install -r {} \; && \
         pip3 install . && \
-        sudo pkill tcpdump && \
         export PATH=/home/runner/.local/bin:$PATH && \
         export REDIS_HOST=localhost && \
         export POSEIDON_PUBLIC_SESSIONS=1 && \
