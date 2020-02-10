@@ -31,6 +31,12 @@ def test_ipv4_multicast():
         {'tshark_ipv4_multicast': 0}]
 
 
+def test_tcp_flags():
+    instance = Host()
+    assert instance.tshark_tcp_flags_out([{'tcp.flags': 123}]) == [{'tshark_tcp_flag_123_out': 1}]
+    assert instance.tshark_tcp_flags_in([{'tcp.flags': 123}]) == [{'tshark_tcp_flag_123_in': 1}]
+
+
 def test_tcp_priv_ports():
     instance = Host()
     assert instance.tshark_priv_tcp_ports([{'tcp.srcport': 1025, 'tcp.dstport': 80}]) == [

@@ -1,3 +1,4 @@
+from collections import Counter
 import ipaddress
 import statistics
 from numpy import percentile
@@ -210,9 +211,23 @@ class Host(Features):
         return [{'tshark_nonpriv_udp_ports': nonpriv}]
 
 
-    def tshark_tcp_flags(self, rows):
-        tcp_flags = {row.get('tcp.flags', None) for row in rows} - {None}
-        return [{'tshark_tcp_flag_%u' % tcp_flag: 1 for tcp_flag in tcp_flags}]
+    def _get_tcp_flags(self, rows, suffix):
+        tcp_flags_counter = Counter()
+        for row in rows:
+            tcp_flags_counter[row.get('tcp.flags', None)] += 1
+        del tcp_flags_counter[None]
+        return [{'tshark_tcp_flag_%u_%s' % (tcp_flag, suffix): val
+            for tcp_flag, val in tcp_flags_counter.items()}]
+
+
+    def tshark_tcp_flags_in(self, rows):
+        rows_filter = self._select_mac_direction(rows, output=False)
+        return self._get_tcp_flags(rows_filter, 'in')
+
+
+    def tshark_tcp_flags_out(self, rows):
+        rows_filter = self._select_mac_direction(rows, output=True)
+        return self._get_tcp_flags(rows_filter, 'out')
 
 
     def tshark_wk_ip_protos(self, rows):
