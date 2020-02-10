@@ -154,7 +154,9 @@ class Host(Features):
     def _safe_int(maybeint):
         if isinstance(maybeint, int) or maybeint is None:
             return maybeint
-        return int(maybeint, 0)
+        if maybeint:
+            return int(maybeint, 0)
+        return None
 
 
     def _get_ip_proto_ports(self, row, ip_proto):
