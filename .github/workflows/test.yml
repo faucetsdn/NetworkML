@@ -13,7 +13,6 @@ jobs:
       run: |
         sudo apt-get update && \
         sudo apt-get install -y python3-dev python3-setuptools tcpdump && \
-        sudo tcpdump -i ens4 -w tests/trace_ab99_2001-01-01_02_03-client-ip-1-2-3-4.pcap & && \
         pip3 install -U pip && \
         pip3 install codecov pytype && \
         find . -name requirements.txt -type f -exec pip3 install -r {} \; && \
