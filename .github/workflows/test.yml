@@ -22,7 +22,7 @@ jobs:
         find . -name requirements.txt -type f -exec pip3 install -r {} \; && \
         pip3 install . && \
         export PATH=/home/runner/.local/bin:$PATH && \
-        pytype . && pytest -l -s -n 2 -v --cov=tests/ --cov=networkml/ --cov-report term-missing -c .coveragerc && coverage
+        pytype . && pytest -l -s -n 2 -v --cov=tests/ --cov=networkml/ --cov-report term-missing -c .coveragerc && coverage report && coverage xml
     - name: Test make
       run: |
         export REDIS_HOST=localhost && \
