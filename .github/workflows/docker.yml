@@ -35,7 +35,7 @@ jobs:
         DOCKER_CLI_EXPERIMENTAL: enabled
       run: |
         docker buildx build \
-          --platform linux/amd64,linux/arm/v7,linux/arm64 \
+          --platform linux/amd64 \
           --push \
           -t cyberreboot/networkml:${{ steps.change_version.outputs.VERSION }} .
       if: github.repository == 'cyberreboot/networkml' && github.event_name == 'push'
