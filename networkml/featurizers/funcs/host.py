@@ -156,15 +156,25 @@ class Host(Features):
         return (src_port, dst_port)
 
 
-    def _priv_ip_proto_ports(self, rows, ip_proto):
-        priv_ports = set()
+    def _lowest_ip_proto_ports(self, rows, ip_proto):
+        lowest_ports = set()
         for row in rows:
             src_port, dst_port = self._get_ip_proto_ports(row, ip_proto)
             if src_port and dst_port:
                 min_port = min(src_port, dst_port)
-                if min_port < 1024:
-                    priv_ports.add(min_port)
-        return priv_ports
+                lowest_ports.add(min_port)
+        return lowest_ports
+
+
+    def _priv_ip_proto_ports(self, rows, ip_proto):
+        lowest_ports = self._lowest_ip_proto_ports(rows, ip_proto)
+        return {port for port in lowest_ports if port < 1024}
+
+
+    def _nonpriv_ip_proto_ports(self, rows, ip_proto):
+        lowest_ports = self._lowest_ip_proto_ports(rows, ip_proto)
+        non_priv_ports = {port for port in lowest_ports if port >= 1024}
+        return non_priv_ports
 
 
     # Directionless.
@@ -182,6 +192,22 @@ class Host(Features):
         if priv_ports:
             return [{'tshark_udp_priv_port_%u' % port: 1 for port in priv_ports}]
         return [{}]
+
+
+    def tshark_nonpriv_tcp_ports(self, rows):
+        nonpriv = 0
+        if rows:
+            if self._nonpriv_ip_proto_ports(rows, 'tcp'):
+                nonpriv = 1
+        return [{'tshark_nonpriv_tcp_ports': nonpriv}]
+
+
+    def tshark_nonpriv_udp_ports(self, rows):
+        nonpriv = 0
+        if rows:
+            if self._nonpriv_ip_proto_ports(rows, 'udp'):
+                nonpriv = 1
+        return [{'tshark_nonpriv_udp_ports': nonpriv}]
 
 
     @staticmethod

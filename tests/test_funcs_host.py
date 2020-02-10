@@ -35,3 +35,10 @@ def test_tcp_priv_ports():
     instance = Host()
     assert instance.tshark_priv_tcp_ports([{'tcp.srcport': 1025, 'tcp.dstport': 80}]) == [
         {'tshark_tcp_priv_port_80': 1}]
+
+
+def test_tcp_nonpriv_ports():
+    instance = Host()
+    assert instance.tshark_nonpriv_tcp_ports([{'tcp.srcport': 1025, 'tcp.dstport': 9999}]) == [
+        {'tshark_nonpriv_tcp_ports': 1}]
+
