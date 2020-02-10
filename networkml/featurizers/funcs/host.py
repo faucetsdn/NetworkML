@@ -151,13 +151,15 @@ class Host(Features):
 
 
     @staticmethod
-    def _get_ip_proto_ports(row, ip_proto):
-        try:
-            src_port = int(row.get('.'.join((ip_proto, 'srcport')), None), 0)
-            dst_port = int(row.get('.'.join((ip_proto, 'dstport')), None), 0)
-        except ValueError:
-            src_port = None
-            dst_port = None
+    def _safe_int(maybeint):
+        if isinstance(maybeint, int) or maybeint is None:
+            return maybeint
+        return int(maybeint, 0)
+
+
+    def _get_ip_proto_ports(self, row, ip_proto):
+        src_port = self._safe_int(row.get('.'.join((ip_proto, 'srcport')), None))
+        dst_port = self._safe_int(row.get('.'.join((ip_proto, 'dstport')), None))
         return (src_port, dst_port)
 
 
@@ -240,9 +242,9 @@ class Host(Features):
     def _get_tcp_flags(self, rows, suffix):
         tcp_flags_counter = Counter()
         for row in rows:
-            tcp_flag = row.get('tcp.flags', None)
+            tcp_flag = self._safe_int(row.get('tcp.flags', None))
             if tcp_flag:
-                tcp_flags_counter[int(tcp_flag, 0)] += 1
+                tcp_flags_counter[tcp_flag] += 1
         return [{'tshark_tcp_flag_%u_%s' % (tcp_flag, suffix): val
             for tcp_flag, val in tcp_flags_counter.items()}]
 
