@@ -17,7 +17,7 @@ jobs:
       run: |
         sudo apt-get update && \
         sudo apt-get install -yq --no-install-recommends python3.7 python3.7-dev python3-setuptools && \
-        python3 setup.py sdist bdist_wheel
+        python3 setup.py sdist
       if: github.repository == 'cyberreboot/networkml' && github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
     - name: Publish package
       if: github.repository == 'cyberreboot/networkml' && github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
