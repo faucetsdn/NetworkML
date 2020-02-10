@@ -152,8 +152,8 @@ class Host(Features):
 
     @staticmethod
     def _get_ip_proto_ports(row, ip_proto):
-        src_port = row.get('.'.join((ip_proto, 'srcport')), None)
-        dst_port = row.get('.'.join((ip_proto, 'dstport')), None)
+        src_port = int(row.get('.'.join((ip_proto, 'srcport')), 0))
+        dst_port = int(row.get('.'.join((ip_proto, 'dstport')), 0))
         return (src_port, dst_port)
 
 
