@@ -178,37 +178,59 @@ class Host(Features):
         return non_priv_ports
 
 
-    # Directionless.
-
-
-    def tshark_priv_tcp_ports(self, rows):
-        priv_ports = self._priv_ip_proto_ports(rows, 'tcp')
+    def _get_priv_ports(self, rows, ip_proto, suffix):
+        priv_ports = self._priv_ip_proto_ports(rows, ip_proto)
         if priv_ports:
-            return [{'tshark_tcp_priv_port_%u' % port: 1 for port in priv_ports}]
+            return [{'tshark_%s_priv_port_%u_%s' % (ip_proto, port, suffix): 1 for port in priv_ports}]
         return [{}]
 
 
-    def tshark_priv_udp_ports(self, rows):
-        priv_ports = self._priv_ip_proto_ports(rows, 'udp')
-        if priv_ports:
-            return [{'tshark_udp_priv_port_%u' % port: 1 for port in priv_ports}]
-        return [{}]
+    def tshark_priv_tcp_ports_in(self, rows):
+        rows = self._select_mac_direction(rows, output=False)
+        return self._get_priv_ports(rows, 'tcp', 'in')
 
 
-    def tshark_nonpriv_tcp_ports(self, rows):
+    def tshark_priv_tcp_ports_out(self, rows):
+        rows = self._select_mac_direction(rows, output=True)
+        return self._get_priv_ports(rows, 'tcp', 'out')
+
+
+    def tshark_priv_udp_ports_in(self, rows):
+        rows = self._select_mac_direction(rows, output=False)
+        return self._get_priv_ports(rows, 'udp', 'in')
+
+
+    def tshark_priv_udp_ports_out(self, rows):
+        rows = self._select_mac_direction(rows, output=True)
+        return self._get_priv_ports(rows, 'udp', 'out')
+
+
+    def _get_nonpriv_ports(self, rows, ip_proto, suffix):
         nonpriv = 0
         if rows:
-            if self._nonpriv_ip_proto_ports(rows, 'tcp'):
+            if self._nonpriv_ip_proto_ports(rows, ip_proto):
                 nonpriv = 1
-        return [{'tshark_nonpriv_tcp_ports': nonpriv}]
+        return [{'tshark_nonpriv_%s_ports_%s' % (ip_proto, suffix): nonpriv}]
 
 
-    def tshark_nonpriv_udp_ports(self, rows):
-        nonpriv = 0
-        if rows:
-            if self._nonpriv_ip_proto_ports(rows, 'udp'):
-                nonpriv = 1
-        return [{'tshark_nonpriv_udp_ports': nonpriv}]
+    def tshark_nonpriv_tcp_ports_in(self, rows):
+        rows = self._select_mac_direction(rows, output=False)
+        return self._get_nonpriv_ports(rows, 'tcp', 'in')
+
+
+    def tshark_nonpriv_tcp_ports_out(self, rows):
+        rows = self._select_mac_direction(rows, output=True)
+        return self._get_nonpriv_ports(rows, 'tcp', 'out')
+
+
+    def tshark_nonpriv_udp_ports_in(self, rows):
+        rows = self._select_mac_direction(rows, output=False)
+        return self._get_nonpriv_ports(rows, 'udp', 'in')
+
+
+    def tshark_nonpriv_udp_ports_out(self, rows):
+        rows = self._select_mac_direction(rows, output=True)
+        return self._get_nonpriv_ports(rows, 'udp', 'out')
 
 
     def _get_tcp_flags(self, rows, suffix):

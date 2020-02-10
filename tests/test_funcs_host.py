@@ -39,14 +39,26 @@ def test_tcp_flags():
 
 def test_tcp_priv_ports():
     instance = Host()
-    assert instance.tshark_priv_tcp_ports([{'tcp.srcport': 1025, 'tcp.dstport': 80}]) == [
-        {'tshark_tcp_priv_port_80': 1}]
+    assert instance.tshark_priv_tcp_ports_in([{'tcp.srcport': 1025, 'tcp.dstport': 80}]) == [
+        {'tshark_tcp_priv_port_80_in': 1}]
+    assert instance.tshark_priv_tcp_ports_out([{'tcp.srcport': 1025, 'tcp.dstport': 80}]) == [
+        {'tshark_tcp_priv_port_80_out': 1}]
+
+
+def test_udp_priv_ports():
+    instance = Host()
+    assert instance.tshark_priv_udp_ports_in([{'udp.srcport': 1025, 'udp.dstport': 123}]) == [
+        {'tshark_udp_priv_port_123_in': 1}]
+    assert instance.tshark_priv_udp_ports_out([{'udp.srcport': 1025, 'udp.dstport': 123}]) == [
+        {'tshark_udp_priv_port_123_out': 1}]
 
 
 def test_tcp_nonpriv_ports():
     instance = Host()
-    assert instance.tshark_nonpriv_tcp_ports([{'tcp.srcport': 1025, 'tcp.dstport': 9999}]) == [
-        {'tshark_nonpriv_tcp_ports': 1}]
+    assert instance.tshark_nonpriv_tcp_ports_in([{'tcp.srcport': 1025, 'tcp.dstport': 9999}]) == [
+        {'tshark_nonpriv_tcp_ports_in': 1}]
+    assert instance.tshark_nonpriv_tcp_ports_out([{'tcp.srcport': 1025, 'tcp.dstport': 9999}]) == [
+        {'tshark_nonpriv_tcp_ports_out': 1}]
 
 
 def test_wk_ip_protos():
