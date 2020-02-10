@@ -17,7 +17,7 @@ jobs:
       run: python3 setup.py sdist bdist_wheel
       if: github.repository == 'cyberreboot/networkml' && github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
     - name: Publish package
-      if: ggithub.repository == 'cyberreboot/networkml' && github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+      if: github.repository == 'cyberreboot/networkml' && github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
       uses: pypa/gh-action-pypi-publish@master
       with:
         user: ${{ secrets.PYPI_USERNAME }}
