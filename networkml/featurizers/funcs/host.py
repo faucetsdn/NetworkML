@@ -210,6 +210,23 @@ class Host(Features):
         return [{'tshark_nonpriv_udp_ports': nonpriv}]
 
 
+    def tshark_tcp_flags(self, rows):
+        tcp_flags = {row.get('tcp.flags', None) for row in rows} - {None}
+        return [{'tshark_tcp_flag_%u' % tcp_flag: 1 for tcp_flag in tcp_flags}]
+
+
+    def tshark_wk_ip_protos(self, rows):
+        wk_protos = set()
+        ref_wk_protos = frozenset(('tcp', 'udp', 'icmp', 'icmp6', 'arp'))
+        for row in rows:
+            wk_proto = set(row.keys()).intersection(ref_wk_protos)
+            if wk_proto:
+                wk_protos.add(list(wk_proto)[0])
+            else:
+                wk_protos.add('other')
+        return [{'tshark_wk_ip_proto_%s' % wk_proto: 1 for wk_proto in wk_protos}]
+
+
     @staticmethod
     def tshark_vlan_id(rows):
         vlan_id = 0
