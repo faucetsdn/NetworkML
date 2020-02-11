@@ -1,7 +1,7 @@
 # Machine Learning for Computer Network Traffic
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Build Status](https://api.travis-ci.com/CyberReboot/NetworkML.svg?branch=master)](https://travis-ci.com/CyberReboot/NetworkML)
+[![Build Status](https://github.com/cyberreboot/networkml/workflows/test/badge.svg)
 [![PyPI version](https://badge.fury.io/py/networkml.svg)](https://badge.fury.io/py/networkml)
 [![codecov](https://codecov.io/gh/CyberReboot/NetworkML/branch/master/graph/badge.svg)](https://codecov.io/gh/CyberReboot/NetworkML)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/28bb6ce9fa154134b8dda35c5d5d7010)](https://www.codacy.com/app/CyberReboot/NetworkML?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=CyberReboot/NetworkML&amp;utm_campaign=Badge_Grade)
