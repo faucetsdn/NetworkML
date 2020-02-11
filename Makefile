@@ -79,7 +79,7 @@ run_redis:
 	@docker run -d --name networkml-redis redis:latest
 test: build run_redis
 	@docker build -t networkml-test -f Dockerfile.test .
-	@docker run -it --rm --link networkml-redis:redis networkml-test
+	@docker run --rm --link networkml-redis:redis networkml-test
 	@docker rm -f networkml-redis > /dev/null
 build: clean
 	@docker build -t networkml .

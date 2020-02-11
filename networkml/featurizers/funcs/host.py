@@ -241,14 +241,19 @@ class Host(Features):
         return self._get_nonpriv_ports(rows, 'udp', 'out')
 
 
-    def _get_tcp_flags(self, rows, suffix):
-        tcp_flags_counter = Counter()
+    def _get_flags(self, rows, suffix, flags_field):
+        flags_counter = Counter()
         for row in rows:
-            tcp_flag = self._safe_int(row.get('tcp.flags', None))
-            if tcp_flag:
-                tcp_flags_counter[tcp_flag] += 1
-        return [{'tshark_tcp_flag_%u_%s' % (tcp_flag, suffix): val
-            for tcp_flag, val in tcp_flags_counter.items()}]
+            flag = self._safe_int(row.get(flags_field, None))
+            if flag:
+                flags_counter[flag] += 1
+        return [{'tshark_%s_%u_%s' % (
+            flags_field.replace('.', '_'), flag, suffix): val
+                for flag, val in flags_counter.items()}]
+
+
+    def _get_tcp_flags(self, rows, suffix):
+        return self._get_flags(rows, suffix, 'tcp.flags')
 
 
     def tshark_tcp_flags_in(self, rows):
@@ -259,6 +264,34 @@ class Host(Features):
     def tshark_tcp_flags_out(self, rows):
         rows_filter = self._select_mac_direction(rows, output=True)
         return self._get_tcp_flags(rows_filter, 'out')
+
+
+    def _get_ip_flags(self, rows, suffix):
+        return self._get_flags(rows, suffix, 'ip.flags')
+
+
+    def tshark_ip_flags_in(self, rows):
+        rows_filter = self._select_mac_direction(rows, output=False)
+        return self._get_ip_flags(rows_filter, 'in')
+
+
+    def tshark_ip_flags_out(self, rows):
+        rows_filter = self._select_mac_direction(rows, output=True)
+        return self._get_ip_flags(rows_filter, 'out')
+
+
+    def _get_ip_dsfield(self, rows, suffix):
+        return self._get_flags(rows, suffix, 'ip.dsfield')
+
+
+    def tshark_ip_dsfield_in(self, rows):
+        rows_filter = self._select_mac_direction(rows, output=False)
+        return self._get_ip_dsfield(rows_filter, 'in')
+
+
+    def tshark_ip_dsfield_out(self, rows):
+        rows_filter = self._select_mac_direction(rows, output=True)
+        return self._get_ip_dsfield(rows_filter, 'out')
 
 
     def tshark_wk_ip_protos(self, rows):

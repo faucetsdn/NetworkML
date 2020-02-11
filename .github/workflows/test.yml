@@ -1,0 +1,41 @@
+name: test
+
+on: [push, pull_request]
+
+jobs:
+  test:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: test
+      run: |
+        export DEBIAN_FRONTEND=noninteractive && \
+        echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections && \
+        sudo apt-get update && \
+        sudo apt-get install -yq --no-install-recommends python3.7 python3.7-dev python3-setuptools dialog apt-utils tshark && \
+        sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 1 && \
+        sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 2 && \
+        pip3 install -U pip && \
+        pip3 install codecov pytype && \
+        find . -name requirements.txt -type f -exec pip3 install -r {} \; && \
+        pip3 install . && \
+        export PATH=/home/runner/.local/bin:$PATH && \
+        pytype . && pytest -l -s -n 2 -v --cov=tests/ --cov=networkml/ --cov-report term-missing -c .coveragerc && coverage report && coverage xml
+    - name: Test make
+      run: |
+        export REDIS_HOST=localhost && \
+        export POSEIDON_PUBLIC_SESSIONS=1 && \
+        export PCAP=test
+        make test
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v1.0.5
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+      if: github.repository == 'cyberreboot/networkml' && github.event_name == 'push'
+    - name: docker-test
+      run: |
+        docker build -f Dockerfile -t cyberreboot/networkml .
