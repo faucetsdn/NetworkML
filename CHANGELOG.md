@@ -1,3 +1,12 @@
+# v0.4.7 (2020-02-12)
+
+- Added session caching
+- Updated pytest to v5.3.4
+- Added scapy packet parsing
+- Added IPv6 capability to networkML
+- Updated redis to v.3.4.1
+- Added automation for pypi
+
 # v0.4.6 (2020-01-15)
 
 - Updated tensorflow
