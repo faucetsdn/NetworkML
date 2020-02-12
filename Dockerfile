@@ -20,7 +20,6 @@ RUN apk upgrade --no-cache && \
     tshark && \
     pip3 install --no-cache-dir --upgrade pip==20.0.2 && \
     pip3 install --no-cache-dir --upgrade -r requirements.txt && \
-    pip3 list && \
     apk del build-base \
     cython \
     gcc \
@@ -35,5 +34,4 @@ COPY . /networkml
 WORKDIR /networkml
 
 RUN pip3 install .
-RUN pip3 list
 ENTRYPOINT ["networkml"]
