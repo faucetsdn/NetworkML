@@ -20,12 +20,12 @@ jobs:
         pip3 install -U pip && \
         pip3 install codecov pytype && \
         find . -name requirements.txt -type f -exec pip3 install -r {} \; && \
+        find . -name test-requirements.txt -type f -exec pip3 install -r {} \; && \
         pip3 install . && \
         export PATH=/home/runner/.local/bin:$PATH && \
         pytype . && pytest -l -s -n 2 -v --cov=tests/ --cov=networkml/ --cov-report term-missing -c .coveragerc && coverage report && coverage xml
     - name: Test make
       run: |
-        export REDIS_HOST=localhost && \
         export POSEIDON_PUBLIC_SESSIONS=1 && \
         export PCAP=test
         make test
