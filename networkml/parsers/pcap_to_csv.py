@@ -79,16 +79,12 @@ class PCAPToCSV():
     @staticmethod
     def combine_csvs(out_paths, combined_path):
         # First determine the field names from the top line of each input file
-        fieldnames = []
+        fieldnames = {'filename'}
         for filename in out_paths:
             with gzip.open(filename, 'rb') as f_in:
                 reader = csv.reader(io.TextIOWrapper(f_in, newline=''))
-                headers = next(reader)
-                for h in headers:
-                    if h not in fieldnames:
-                        fieldnames.append(h)
+                fieldnames.update({header for header in next(reader)})
 
-        fieldnames.append('filename')
         # Then copy the data
         with gzip.open(combined_path, 'wb') as f_out:
             writer = csv.DictWriter(io.TextIOWrapper(f_out, newline='', write_through=True), fieldnames=fieldnames)
@@ -369,7 +365,10 @@ class PCAPToCSV():
                 out_paths.remove(failed_path)
 
         if combined:
-            combined_path = os.path.join(os.path.dirname(out_paths[0]), "combined.csv.gz")
+            if out_paths:
+                combined_path = os.path.join(os.path.dirname(out_paths[0]), "combined.csv.gz")
+            else:
+                combined_path = "combined.csv.gz"
             self.logger.info(f'Combining CSVs into a single file: {combined_path}')
             PCAPToCSV.combine_csvs(out_paths, combined_path)
         else:

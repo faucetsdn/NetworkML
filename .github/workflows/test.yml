@@ -25,7 +25,6 @@ jobs:
         pytype . && pytest -l -s -n 2 -v --cov=tests/ --cov=networkml/ --cov-report term-missing -c .coveragerc && coverage report && coverage xml
     - name: Test make
       run: |
-        export REDIS_HOST=localhost && \
         export POSEIDON_PUBLIC_SESSIONS=1 && \
         export PCAP=test
         make test
