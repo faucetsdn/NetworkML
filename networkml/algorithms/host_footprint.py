@@ -1,3 +1,4 @@
+import argparse
 import json
 import logging
 import sys
@@ -11,23 +12,23 @@ from sklearn.neural_network import MLPClassifier
 class HostFootprint():
 
 
-    def __init__(self, path, operation, model=None, le=None, scaler_fitted=None):
+    def __init__(self, model=None, le=None, scaler_fitted=None):
         self.logger = logging.getLogger(__name__)
-        self.path = path
-        self.operation = operation
         self.model = model
         self.le = le
         self.scaler_fitted = scaler_fitted
-        if self.operation == 'train':
-            self.train()
-            print(f'{self.model} {self.le} {self.scaler_fitted}')
-        elif self.operation == 'predict':
-            self.train()
-            role_prediction = self.predict()
-            print(f'{role_prediction}')
-        else:
-            self.logger.error('Unknown operation choice')
+        self.main()
         return
+
+
+    @staticmethod
+    def parse_args(parser):
+        parser.add_argument('path', help='path to a single csv file')
+        parser.add_argument('--operation', choices=['train', 'predict'], default='predict', help='choose which operation task to perform, train or predict (default=predict)')
+        parser.add_argument('--output', '-o', default=None, help='path to write out trained model parameters (required only for train, ignored for predict)')
+        parser.add_argument('--verbose', '-v', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO', help='logging level (default=INFO)')
+        parsed_args = parser.parse_args()
+        return parsed_args
 
 
     def train(self):
@@ -137,12 +138,6 @@ class HostFootprint():
         ## Load data from host footprint .csv
         df = pd.read_csv(self.path)
 
-        ## Check if there is greater than 1 row, there should
-        ## only be one row
-        if df.shape[0] > 1:
-            ## log warning
-            self.logger.error(f'More than one row found in predict_input csv')
-
         ## Split dataframe into X (the input features or predictors)
         ## and y (the target or outcome or dependent variable)
         ## This drop function should work even if there is no column
@@ -184,12 +179,25 @@ class HostFootprint():
         return all_predictions
 
 
-if __name__ == "__main__":
-    if len(sys.argv) == 3:
-        path = sys.argv[1]
-        operation = sys.argv[2]
-    else:
-        logging.error('No path provided, and/or no operation chosen')
-        sys.exit(1)
+    def main(self):
+        parsed_args = HostFootprint.parse_args(argparse.ArgumentParser())
+        self.path = parsed_args.path
+        self.out_path = parsed_args.output
+        operation = parsed_args.operation
+        log_level = parsed_args.verbose
 
-    host_footprint = HostFootprint(path, operation)
+        log_levels = {'INFO': logging.INFO, 'DEBUG': logging.DEBUG, 'WARNING': logging.WARNING, 'ERROR': logging.ERROR}
+        logging.basicConfig(level=log_levels[log_level])
+
+        if operation == 'train':
+            self.train()
+            print(f'{self.model} {self.le} {self.scaler_fitted}')
+        elif operation == 'predict':
+            # TODO this shouldn't actually train first, need to save/load model instead
+            self.train()
+            role_prediction = self.predict()
+            print(f'{role_prediction}')
+
+
+if __name__ == "__main__":
+    host_footprint = HostFootprint()
