@@ -1,5 +1,5 @@
 """
-A class to perform machine learning operations on computer network traffi
+A class to perform machine learning operations on computer network traffic
 """
 import argparse
 import json
