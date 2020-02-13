@@ -1,7 +1,14 @@
+from collections import Counter
+import ipaddress
 import statistics
 from numpy import percentile
 from networkml.featurizers.features import Features
 
+ETH_TYPE_ARP = 0x806
+ETH_TYPE_IP = 0x800
+ETH_TYPE_IPV6 = 0x86DD
+ETH_TYPE_IPX = 0x8137
+ETH_IP_TYPES = frozenset((ETH_TYPE_ARP, ETH_TYPE_IP, ETH_TYPE_IPV6))
 
 
 class Host(Features):
@@ -74,7 +81,7 @@ class Host(Features):
 
 
     @staticmethod
-    def tshark_last_protocols(rows):
+    def last_protocols(rows):
         protocols = ''
         for row in rows:
             row_protocols = row.get('frame.protocols', None)
@@ -82,6 +89,16 @@ class Host(Features):
                 protocols = row_protocols
         new_rows = [{'Protocols': protocols}]
         return new_rows
+
+
+    def tshark_last_protocols_array(self, rows):
+        try:
+            protocols = {
+                protocol for protocol in self.last_protocols(rows)[0]['Protocols'].split(':') if protocol}
+        except IndexError:
+            return []
+        protocols = protocols - set(['ethertype'])
+        return [{'protocol_%s' % protocol: 1 for protocol in protocols}]
 
 
     def tshark_ipv4(self, rows):
@@ -105,7 +122,243 @@ class Host(Features):
         assert 'frame_len' in field
         return self._calc_tshark_field(field, 'frame.len', rows)
 
-    # Directionless.
+
+    @staticmethod
+    def _get_ips(row):
+        ip_src = None
+        for src_field in ('ip.src', 'ip.src_host'):
+            ip_src = row.get(src_field, None)
+            if ip_src:
+                break
+        ip_dst = None
+        for dst_field in ('ip.dst', 'ip.dst_host'):
+            ip_dst = row.get(dst_field, None)
+            if ip_dst:
+                break
+        if ip_src and ip_dst:
+            ip_src = ipaddress.ip_address(ip_src)
+            ip_dst = ipaddress.ip_address(ip_dst)
+        return (ip_src, ip_dst)
+
+
+    @staticmethod
+    def _get_proto_eth_type(row):
+        for eth_field in ('vlan.etype', 'eth.type'):
+            eth_type = row.get(eth_field, None)
+            if eth_type:
+                return eth_type
+        return None
+
+
+    @staticmethod
+    def _safe_int(maybeint):
+        if isinstance(maybeint, int) or maybeint is None:
+            return maybeint
+        if maybeint:
+            return int(maybeint, 0)
+        return None
+
+
+    def _get_ip_proto_ports(self, row, ip_proto):
+        src_port = self._safe_int(row.get('.'.join((ip_proto, 'srcport')), None))
+        dst_port = self._safe_int(row.get('.'.join((ip_proto, 'dstport')), None))
+        return (src_port, dst_port)
+
+
+    def _lowest_ip_proto_ports(self, rows, ip_proto):
+        lowest_ports = set()
+        for row in rows:
+            src_port, dst_port = self._get_ip_proto_ports(row, ip_proto)
+            if src_port and dst_port:
+                min_port = min(src_port, dst_port)
+                lowest_ports.add(min_port)
+        return lowest_ports
+
+
+    def _priv_ip_proto_ports(self, rows, ip_proto):
+        lowest_ports = self._lowest_ip_proto_ports(rows, ip_proto)
+        return {port for port in lowest_ports if port < 1024}
+
+
+    def _nonpriv_ip_proto_ports(self, rows, ip_proto):
+        lowest_ports = self._lowest_ip_proto_ports(rows, ip_proto)
+        non_priv_ports = {port for port in lowest_ports if port >= 1024}
+        return non_priv_ports
+
+
+    def _get_priv_ports(self, rows, ip_proto, suffix):
+        priv_ports = self._priv_ip_proto_ports(rows, ip_proto)
+        if priv_ports:
+            return [{'tshark_%s_priv_port_%u_%s' % (ip_proto, port, suffix): 1 for port in priv_ports}]
+        return [{}]
+
+
+    def tshark_priv_tcp_ports_in(self, rows):
+        rows = self._select_mac_direction(rows, output=False)
+        return self._get_priv_ports(rows, 'tcp', 'in')
+
+
+    def tshark_priv_tcp_ports_out(self, rows):
+        rows = self._select_mac_direction(rows, output=True)
+        return self._get_priv_ports(rows, 'tcp', 'out')
+
+
+    def tshark_priv_udp_ports_in(self, rows):
+        rows = self._select_mac_direction(rows, output=False)
+        return self._get_priv_ports(rows, 'udp', 'in')
+
+
+    def tshark_priv_udp_ports_out(self, rows):
+        rows = self._select_mac_direction(rows, output=True)
+        return self._get_priv_ports(rows, 'udp', 'out')
+
+
+    def _get_nonpriv_ports(self, rows, ip_proto, suffix):
+        nonpriv = 0
+        if rows:
+            if self._nonpriv_ip_proto_ports(rows, ip_proto):
+                nonpriv = 1
+        return [{'tshark_nonpriv_%s_ports_%s' % (ip_proto, suffix): nonpriv}]
+
+
+    def tshark_nonpriv_tcp_ports_in(self, rows):
+        rows = self._select_mac_direction(rows, output=False)
+        return self._get_nonpriv_ports(rows, 'tcp', 'in')
+
+
+    def tshark_nonpriv_tcp_ports_out(self, rows):
+        rows = self._select_mac_direction(rows, output=True)
+        return self._get_nonpriv_ports(rows, 'tcp', 'out')
+
+
+    def tshark_nonpriv_udp_ports_in(self, rows):
+        rows = self._select_mac_direction(rows, output=False)
+        return self._get_nonpriv_ports(rows, 'udp', 'in')
+
+
+    def tshark_nonpriv_udp_ports_out(self, rows):
+        rows = self._select_mac_direction(rows, output=True)
+        return self._get_nonpriv_ports(rows, 'udp', 'out')
+
+
+    def _get_flags(self, rows, suffix, flags_field):
+        flags_counter = Counter()
+        for row in rows:
+            flag = self._safe_int(row.get(flags_field, None))
+            if flag:
+                flags_counter[flag] += 1
+        return [{'tshark_%s_%u_%s' % (
+            flags_field.replace('.', '_'), flag, suffix): val
+                for flag, val in flags_counter.items()}]
+
+
+    def _get_tcp_flags(self, rows, suffix):
+        return self._get_flags(rows, suffix, 'tcp.flags')
+
+
+    def tshark_tcp_flags_in(self, rows):
+        rows_filter = self._select_mac_direction(rows, output=False)
+        return self._get_tcp_flags(rows_filter, 'in')
+
+
+    def tshark_tcp_flags_out(self, rows):
+        rows_filter = self._select_mac_direction(rows, output=True)
+        return self._get_tcp_flags(rows_filter, 'out')
+
+
+    def _get_ip_flags(self, rows, suffix):
+        return self._get_flags(rows, suffix, 'ip.flags')
+
+
+    def tshark_ip_flags_in(self, rows):
+        rows_filter = self._select_mac_direction(rows, output=False)
+        return self._get_ip_flags(rows_filter, 'in')
+
+
+    def tshark_ip_flags_out(self, rows):
+        rows_filter = self._select_mac_direction(rows, output=True)
+        return self._get_ip_flags(rows_filter, 'out')
+
+
+    def _get_ip_dsfield(self, rows, suffix):
+        return self._get_flags(rows, suffix, 'ip.dsfield')
+
+
+    def tshark_ip_dsfield_in(self, rows):
+        rows_filter = self._select_mac_direction(rows, output=False)
+        return self._get_ip_dsfield(rows_filter, 'in')
+
+
+    def tshark_ip_dsfield_out(self, rows):
+        rows_filter = self._select_mac_direction(rows, output=True)
+        return self._get_ip_dsfield(rows_filter, 'out')
+
+
+    def tshark_wk_ip_protos(self, rows):
+        wk_protos = set()
+        ref_wk_protos = frozenset(('tcp', 'udp', 'icmp', 'icmp6', 'arp'))
+        for row in rows:
+            wk_proto = set(row.keys()).intersection(ref_wk_protos)
+            if wk_proto:
+                wk_protos.add(list(wk_proto)[0])
+            else:
+                wk_protos.add('other')
+        return [{'tshark_wk_ip_proto_%s' % wk_proto: 1 for wk_proto in wk_protos}]
+
+
+    @staticmethod
+    def tshark_vlan_id(rows):
+        vlan_id = 0
+        for row in rows:
+            vlan_id = row.get('vlan.id', 0)
+            if vlan_id:
+                break
+        return [{'tshark_vlan_id': vlan_id}]
+
+
+    def tshark_ipx(self, rows):
+        ipx = 0
+        for row in rows:
+            if self._get_proto_eth_type(row) == ETH_TYPE_IPX:
+                ipx = 1
+                break
+        return [{'tshark_ipx': ipx}]
+
+
+    def tshark_both_private_ip(self, rows):
+        both_private = 0
+        if rows:
+            both_private = 1
+            for row in rows:
+                ip_src, ip_dst = self._get_ips(row)
+                if ip_src and ip_dst:
+                    if not (ip_src.is_private and ip_dst.is_private):
+                        both_private = 0
+                        break
+        return [{'tshark_both_private_ip': both_private}]
+
+
+    def tshark_ipv4_multicast(self, rows):
+        multicast = 0
+        if rows:
+            for row in rows:
+                _, ip_dst = self._get_ips(row)
+                if ip_dst and ip_dst.version == 4 and ip_dst.is_multicast:
+                    multicast = 1
+                    break
+        return [{'tshark_ipv4_multicast': multicast}]
+
+
+    def tshark_non_ip(self, rows):
+        non_ip = 1
+        if rows:
+            non_ip = 0
+            for row in rows:
+                if self._get_proto_eth_type(row) not in ETH_IP_TYPES:
+                    non_ip = 1
+                    break
+        return [{'tshark_non_ip': non_ip}]
+
 
     def tshark_average_time_delta(self, rows):
         return self._calc_time_delta('average_time_delta', rows)

@@ -55,10 +55,10 @@ class PCAPToCSV():
         parser.add_argument('path', help='path to a single pcap file, or a directory of pcaps to parse')
         parser.add_argument('--combined', '-c', action='store_true', help='write out all records from all pcaps into a single gzipped csv file')
         parser.add_argument('--engine', '-e', choices=['pyshark', 'tshark', 'host'], default='tshark', help='engine to use to process the PCAP file (default=tshark)')
-        parser.add_argument('--level', '-v', choices=['packet', 'flow', 'host'], default='packet', help='level to make the output records (default=packet)')
-        parser.add_argument('--logging', '-l', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO', help='logging level (default=INFO)')
+        parser.add_argument('--level', '-l', choices=['packet', 'flow', 'host'], default='packet', help='level to make the output records (default=packet)')
         parser.add_argument('--output', '-o', default=None, help='path to write out gzipped csv file or directory for gzipped csv files')
         parser.add_argument('--threads', '-t', default=1, type=int, help='number of async threads to use (default=1)')
+        parser.add_argument('--verbose', '-v', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO', help='logging level (default=INFO)')
         parsed_args = parser.parse_args()
         return parsed_args
 
@@ -79,16 +79,12 @@ class PCAPToCSV():
     @staticmethod
     def combine_csvs(out_paths, combined_path):
         # First determine the field names from the top line of each input file
-        fieldnames = []
+        fieldnames = {'filename'}
         for filename in out_paths:
             with gzip.open(filename, 'rb') as f_in:
                 reader = csv.reader(io.TextIOWrapper(f_in, newline=''))
-                headers = next(reader)
-                for h in headers:
-                    if h not in fieldnames:
-                        fieldnames.append(h)
+                fieldnames.update({header for header in next(reader)})
 
-        fieldnames.append('filename')
         # Then copy the data
         with gzip.open(combined_path, 'wb') as f_out:
             writer = csv.DictWriter(io.TextIOWrapper(f_out, newline='', write_through=True), fieldnames=fieldnames)
@@ -331,7 +327,7 @@ class PCAPToCSV():
         combined = parsed_args.combined
         engine = parsed_args.engine
         threads = parsed_args.threads
-        log_level = parsed_args.logging
+        log_level = parsed_args.verbose
         level = parsed_args.level
 
         log_levels = {'INFO': logging.INFO, 'DEBUG': logging.DEBUG, 'WARNING': logging.WARNING, 'ERROR': logging.ERROR}
@@ -369,7 +365,10 @@ class PCAPToCSV():
                 out_paths.remove(failed_path)
 
         if combined:
-            combined_path = os.path.join(os.path.dirname(out_paths[0]), "combined.csv.gz")
+            if out_paths:
+                combined_path = os.path.join(os.path.dirname(out_paths[0]), "combined.csv.gz")
+            else:
+                combined_path = "combined.csv.gz"
             self.logger.info(f'Combining CSVs into a single file: {combined_path}')
             PCAPToCSV.combine_csvs(out_paths, combined_path)
         else:
