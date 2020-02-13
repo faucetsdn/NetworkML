@@ -91,6 +91,8 @@ class HostFootprint():
 
         # Replace string features with dummy (0/1) features
         # This is "one hot encoding"
+        # NOTE: Should this check exist? It could lead to the model
+        # functioning even when the input data is garbage
         X = self.string_feature_check(X)
 
         # Normalize X features before training
