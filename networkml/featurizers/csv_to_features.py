@@ -101,9 +101,9 @@ class CSVToFeatures():
         parser.add_argument('--functions', '-f', default='', help='comma separated list of <class>:<function> to featurize (default=None)')
         parser.add_argument('--groups', '-g', default='default', help='comma separated list of groups of functions to featurize (default=default)')
         parser.add_argument('--gzip', '-z', choices=['input', 'output', 'both', 'neither'], default='both', help='gzip the input/output file, both or neither (default=both)')
-        parser.add_argument('--logging', '-l', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO', help='logging level (default=INFO)')
         parser.add_argument('--output', '-o', default=None, help='path to write out gzipped csv file or directory for gzipped csv files')
         parser.add_argument('--threads', '-t', default=1, type=int, help='number of async threads to use (default=1)')
+        parser.add_argument('--verbose', '-v', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO', help='logging level (default=INFO)')
         parsed_args = parser.parse_args()
         return parsed_args
 
@@ -173,7 +173,7 @@ class CSVToFeatures():
         combined = parsed_args.combined
         features_path = parsed_args.features_path
         threads = parsed_args.threads
-        log_level = parsed_args.logging
+        log_level = parsed_args.verbose
         functions = parsed_args.functions
         groups = parsed_args.groups
         gzip_opt = parsed_args.gzip

@@ -55,10 +55,10 @@ class PCAPToCSV():
         parser.add_argument('path', help='path to a single pcap file, or a directory of pcaps to parse')
         parser.add_argument('--combined', '-c', action='store_true', help='write out all records from all pcaps into a single gzipped csv file')
         parser.add_argument('--engine', '-e', choices=['pyshark', 'tshark', 'host'], default='tshark', help='engine to use to process the PCAP file (default=tshark)')
-        parser.add_argument('--level', '-v', choices=['packet', 'flow', 'host'], default='packet', help='level to make the output records (default=packet)')
-        parser.add_argument('--logging', '-l', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO', help='logging level (default=INFO)')
+        parser.add_argument('--level', '-l', choices=['packet', 'flow', 'host'], default='packet', help='level to make the output records (default=packet)')
         parser.add_argument('--output', '-o', default=None, help='path to write out gzipped csv file or directory for gzipped csv files')
         parser.add_argument('--threads', '-t', default=1, type=int, help='number of async threads to use (default=1)')
+        parser.add_argument('--verbose', '-v', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO', help='logging level (default=INFO)')
         parsed_args = parser.parse_args()
         return parsed_args
 
@@ -327,7 +327,7 @@ class PCAPToCSV():
         combined = parsed_args.combined
         engine = parsed_args.engine
         threads = parsed_args.threads
-        log_level = parsed_args.logging
+        log_level = parsed_args.verbose
         level = parsed_args.level
 
         log_levels = {'INFO': logging.INFO, 'DEBUG': logging.DEBUG, 'WARNING': logging.WARNING, 'ERROR': logging.ERROR}
