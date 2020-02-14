@@ -139,7 +139,7 @@ class HostFootprint():
             # Object is the datatype pandas uses for storing strings
             if X[col].dtype == "object":
 
-                # log warning
+                # log warning if a string column is found
                 self.logger.info(f'String object found in column {col}')
 
                 # Expand features into "dummy", i.e. 0/1
@@ -157,12 +157,13 @@ class HostFootprint():
 
     def predict(self):
         """
-        This function takes a csv of features at the host footprint level and then makes
-        a role prediction for each row. The output is the top three roles.
+        This function takes a csv of features at the host footprint level and 
+        then makes a role prediction for each row. The output is the top three
+        roles.
 
         OUTPUTS:
-        --prediction: top three roles for each host and the associated probability of each role
-        (in json format)
+        --all_prediction: top three roles for each host and the associated 
+        probability of each role -- a dictionary
         """
 
         # Load data from host footprint .csv
@@ -174,7 +175,7 @@ class HostFootprint():
         # named filename
         X = df.drop("filename", axis=1)
 
-        # get filenames to match to predictions if they exist
+        # get filenames to match to predictions
         y = df.filename
 
         # Normalize X features before training
@@ -183,13 +184,13 @@ class HostFootprint():
         # Make model predicton - Will return a vector of values
         predictions_rows = self.model.predict_proba(X)
 
-        # Output JSON of top three roles and probabilities
-
-        # These operations do NOT create a sorted list
-        # NOTE: To change the number of roles for which you want a prediction
-        # change the number number in the argpartition line of code
+        # Output JSON of top three roles and probabilities for each file
         all_predictions = {}
         for counter, predictions in enumerate(predictions_rows):
+
+            # These operations do NOT create a sorted list
+            # NOTE: To change the number of roles for which you want a 
+            # prediction change the number number in the argpartition code
             ind = np.argpartition(predictions, 3)[-3:] # Index of top 3 roles
             labels = self.le.inverse_transform(ind) # top three role names
             probs = predictions[ind] # probability of top three roles
@@ -203,6 +204,9 @@ class HostFootprint():
 
             # Place roles and probabilities in json
             role_predictions = json.dumps(role_list_sorted)
+
+            # Create dictionary with filename as key and a json of
+            # role predictions for that file
             all_predictions[y[counter]] = role_predictions
 
         return all_predictions
@@ -212,16 +216,20 @@ class HostFootprint():
         """
         Collect and parse command line arguments for using this class
         """
+
+        # Collect command line arguments
         parsed_args = HostFootprint.parse_args(argparse.ArgumentParser())
         self.path = parsed_args.path
         self.out_path = parsed_args.output
         operation = parsed_args.operation
         log_level = parsed_args.verbose
 
+        # Set logging output options
         log_levels = {'INFO': logging.INFO, 'DEBUG': logging.DEBUG,
                       'WARNING': logging.WARNING, 'ERROR': logging.ERROR}
         logging.basicConfig(level=log_levels[log_level])
 
+        # Basic execution logic
         if operation == 'train':
             self.train()
             print(f'{self.model} {self.le} {self.scaler_fitted}')
@@ -234,4 +242,6 @@ class HostFootprint():
 
 
 if __name__ == "__main__":
+
     host_footprint = HostFootprint()
+
