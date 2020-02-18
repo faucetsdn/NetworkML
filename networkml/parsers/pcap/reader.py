@@ -4,6 +4,7 @@ import io
 import gzip
 import datetime
 import os
+import platform
 from collections import OrderedDict
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import pyshark
@@ -281,30 +282,44 @@ def parallel_sessionizer(logger, pcap_files, duration=None, threshold_time=None,
         csv_file = pcap_filename_to_csv_filename(pcap_file, csv_dir)
         csv_filenames[pcap_file] = csv_file
 
-    with ProcessPoolExecutor() as executor:
-        unparsed_pcaps = []
-        pcap_file_sessions = {}
-        # Retrieve pre-cached CSVs.
-        for pcap_file in pcap_files:
-            csv_file = csv_filenames[pcap_file]
-            if os.path.exists(csv_file):
-                logger.info(f'found cached sessions pulling up {csv_file}')
-                pcap_file_sessions[pcap_file] = sessioncsv_to_sessions(csv_file)
-            else:
-                logger.info(f'no cache found, adding {pcap_file} to be sessionized')
-                unparsed_pcaps.append(pcap_file)
-        futures = {
-            executor.submit(sessionizer, logger, pcap_file, duration, threshold_time): pcap_file
-            for pcap_file in unparsed_pcaps}
-        for future in as_completed(futures):
-            pcap_file = futures.get(future, None)
-            if pcap_file:
-                logger.info('got sessionizer result from {0}'.format(pcap_file))
-                try:
-                    # 24h timeout per file.
-                    pcap_file_sessions[pcap_file] = future.result(timeout=(24 * 60 * 60))
-                    csv_file = csv_filenames[pcap_file]
-                    pcap_to_sessioncsv(os.path.dirname(csv_file), pcap_file, pcap_file_sessions[pcap_file])
-                except Exception as err:
-                    logger.error('exception processing {0}: {1}'.format(pcap_file, err))
-        return pcap_file_sessions
+    pcap_file_sessions = {}
+    unparsed_pcaps = []
+    # Retrieve pre-cached CSVs if any.
+    for pcap_file in pcap_files:
+        csv_file = csv_filenames[pcap_file]
+        if os.path.exists(csv_file):
+            logger.info(f'found cached sessions pulling up {csv_file}')
+            pcap_file_sessions[pcap_file] = sessioncsv_to_sessions(csv_file)
+        else:
+            logger.info(f'no cache found, adding {pcap_file} to be sessionized')
+            unparsed_pcaps.append(pcap_file)
+
+    if platform.python_version_tuple()[:2] == ('3', '6'):
+        logger.info('falling back to serial as python3.6 ProcessPoolExecutor() is broken')
+        pcap_file_sessions.update(
+            {pcap_file: sessionizer(logger, pcap_file, duration, threshold_time)
+             for pcap_file in unparsed_pcaps})
+    else:
+        with ProcessPoolExecutor() as executor:
+            futures = {
+                executor.submit(
+                    sessionizer, logger, pcap_file, duration, threshold_time): pcap_file
+                for pcap_file in unparsed_pcaps}
+            for future in as_completed(futures):
+                pcap_file = futures.get(future, None)
+                if pcap_file:
+                    logger.info('got sessionizer result from {0}'.format(pcap_file))
+                    try:
+                        # 24h timeout per file.
+                        pcap_file_sessions[pcap_file] = future.result(timeout=(24 * 60 * 60))
+                    except Exception as err:
+                        logger.error('exception processing {0}: {1}'.format(pcap_file, err))
+
+    # write out newly parsed results.
+    for pcap_file in unparsed_pcaps:
+        csv_file = csv_filenames[pcap_file]
+        csv_dir = os.path.dirname(csv_file)
+        pcap_to_sessioncsv(
+            csv_dir, pcap_file, pcap_file_sessions[pcap_file])
+
+    return pcap_file_sessions
