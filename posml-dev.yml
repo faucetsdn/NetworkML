@@ -2,5 +2,5 @@ name: posml-dev
 channels:
   - defaults
 dependencies:
-  - pip=18.1
-  - python=3.6.8
+  - pip=20.0
+  - python=3.7.6
