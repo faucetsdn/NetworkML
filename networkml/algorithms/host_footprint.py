@@ -107,11 +107,10 @@ class HostFootprint():
         # Calculate number of categories to predict
         num_categories = len(self.le.classes_)
 
-        # Train model
+        # Instantiate and train model
         clf = MLPClassifier(solver='sgd',
                             hidden_layer_sizes=(64, 32, num_categories),
                             random_state=1999)
-
         self.model = clf.fit(X, y)
 
 
@@ -157,12 +156,12 @@ class HostFootprint():
 
     def predict(self):
         """
-        This function takes a csv of features at the host footprint level and 
+        This function takes a csv of features at the host footprint level and
         then makes a role prediction for each row. The output is the top three
         roles.
 
         OUTPUTS:
-        --all_prediction: top three roles for each host and the associated 
+        --all_prediction: top three roles for each host and the associated
         probability of each role -- a dictionary
         """
 
