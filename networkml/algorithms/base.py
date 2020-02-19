@@ -90,11 +90,15 @@ class BaseAlgorithm:
         pcap_key = None
         pcap_labels = None
         if base_pcap.startswith('trace_'):
-            pcap_re = re.compile(r'^trace_([\da-f]+)_.+(client|server)-(.+).pcap$')
-            pcap_match = pcap_re.match(base_pcap)
-            if pcap_match:
-                pcap_key = pcap_match.group(1)
-                pcap_labels = pcap_match.group(3)
+            for pcap_re, key_pos, label_pos in (
+                    (re.compile(r'^trace_([\da-f]+)_([0-9\_\-]+)-(client|server)-(.+).pcap$'), 1, 4),
+                    (re.compile(r'^trace_([\da-f]+)_([0-9\_\-]+).pcap$'), 1, None)):
+                pcap_match = pcap_re.match(base_pcap)
+                if pcap_match:
+                    pcap_key = pcap_match.group(key_pos)
+                    if label_pos:
+                        pcap_labels = pcap_match.group(label_pos)
+                    break
         else:
             # Not a Poseidon trace file, return basename as key.
             pcap_key = base_pcap.split('.')[0]
@@ -166,7 +170,7 @@ class BaseAlgorithm:
             base_pcap = os.path.basename(fi)
             pcap_key, pcap_labels = self.parse_pcap_name(base_pcap)
             if pcap_key is None:
-                self.logger.debug('Ignoring unknown pcap name %s', base_pcap)
+                self.logger.warn('Ignoring unknown pcap name %s', base_pcap)
                 continue
 
             ## Get representations from the model
