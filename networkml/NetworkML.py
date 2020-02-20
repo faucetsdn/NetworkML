@@ -44,7 +44,7 @@ class NetworkML():
         self.get_files()
         self.model_hash = None
         self.model = Model(duration=self.duration, hidden_size=None,
-                           model_type=self.args.algorithm)
+                           model_type=self.args.algorithm, threshold_time=self.threshold)
 
         def create_base_alg():
             return BaseAlgorithm(

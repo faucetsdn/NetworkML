@@ -90,7 +90,7 @@ install:
 	python3 setup.py install
 
 dev:
-	${CONDA_EXE} env create --force -f $(CONDA_DEV).yml python=3.6
+	${CONDA_EXE} env create --force -f $(CONDA_DEV).yml python=3.7
 	source $(CONDAROOT)/activate $(CONDA_DEV) ; \
 	$(CONDA_ENV)/pip install --upgrade pip ; \
 	$(CONDA_ENV)/pip install .

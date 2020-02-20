@@ -1,3 +1,11 @@
+# v0.4.7 (2020-02-12)
+
+- Added caching for parsed sessions 
+- Added IPv6 capability to networkML
+- Updated pytest to v5.3.4
+- Updated models for scikit v0.22.1
+- Updated redis to v3.4.1
+
 # v0.4.6 (2020-01-15)
 
 - Updated tensorflow
