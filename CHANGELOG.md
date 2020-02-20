@@ -1,6 +1,14 @@
+# v0.4.8 (2020-02-20)
+
+- Fixed local dev python version to be 3.7
+- Fixed missing threshold_time configuration option
+- Fixed filename checks for client/server
+- Warn instead of debug log when files are ignored
+- Fixed running concurrent.futures when on python3.6
+
 # v0.4.7 (2020-02-12)
 
-- Added caching for parsed sessions 
+- Added caching for parsed sessions
 - Added IPv6 capability to networkML
 - Updated pytest to v5.3.4
 - Updated models for scikit v0.22.1
