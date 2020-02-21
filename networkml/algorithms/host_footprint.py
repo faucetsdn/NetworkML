@@ -10,6 +10,7 @@ import pandas as pd
 from sklearn import preprocessing
 from sklearn.neural_network import MLPClassifier
 
+import sklearn_json as skljson
 
 class HostFootprint():
     """
@@ -66,7 +67,7 @@ class HostFootprint():
         This function takes a .csv file of host footprint features--i.e. each
         row is a feature vector for a given host and each column is a feature
         --and trains a model to do business role classification. This function
-        returns the trained model. Because the best model is still yet to be
+        saves the trained model. Because the best model is still yet to be
         determined, this method uses only a simple neural network. A future
         version of this function will use a superior model once our research
         group has done experiments with different models and hyperparameter
@@ -107,12 +108,84 @@ class HostFootprint():
         # Calculate number of categories to predict
         num_categories = len(self.le.classes_)
 
-        # Train model
+        # Instantiate and train model
         clf = MLPClassifier(solver='sgd',
                             hidden_layer_sizes=(64, 32, num_categories),
                             random_state=1999)
-
+        self.logger.info(f'Beginning model training')
         self.model = clf.fit(X, y)
+
+        # Save model to JSON
+        model_path = "networkml/trained_models/onelayer/onelayer.json"
+        skljson.to_json(self.model, model_path)
+
+
+    def predict(self):
+        """
+        This function takes a csv of features at the host footprint level and
+        then makes a role prediction for each row. The output is the top three
+        roles.
+
+        OUTPUTS:
+        --all_prediction: top three roles for each host and the associated
+        probability of each role -- a dictionary
+        """
+
+        # Load data from host footprint .csv
+        df = pd.read_csv(self.path)
+
+        # Split dataframe into X (the input features or predictors)
+        # and y (the target or outcome or dependent variable)
+        # This drop function should work even if there is no column
+        # named filename
+        X = df.drop("filename", axis=1)
+
+        # Get filenames to match to predictions
+        y = df.filename
+
+        # Normalize X features before training
+        X = self.scaler_fitted.transform(X) ## Use already fitted scaler
+
+        # Load (or deserialize) model from JSON
+        model_path = "networkml/trained_models/onelayer/onelayer.json"
+        self.model = skljson.from_json(model_path)
+
+        # Convert coeficients to numpy arrays to enable JSON deserialization
+        # This is a hack to compensate for a potential bug in sklearn_json
+        for i, x in enumerate(self.model.coefs_):
+            self.model.coefs_[i] = np.array(x)
+
+        self.logger.info(f'Executing model inference')
+
+        # Make model predicton - Will return a vector of values
+        predictions_rows = self.model.predict_proba(X)
+
+        # Output JSON of top three roles and probabilities for each file
+        all_predictions = {}
+        for counter, predictions in enumerate(predictions_rows):
+
+            # These operations do NOT create a sorted list
+            # Note from the past: To change the number of roles for which you
+            # want a prediction, change the number in the argpartition code
+            ind = np.argpartition(predictions, 3)[-3:] # Index of top 3 roles
+            labels = self.le.inverse_transform(ind) # top three role names
+            probs = predictions[ind] # probability of top three roles
+
+            # Put labels and probabilities into list
+            role_list = [(k, v) for k, v in zip(labels, probs)]
+
+            # Sort role list by probabilities
+            role_list_sorted = sorted(role_list, key=lambda x: x[1],
+                                      reverse=True)
+
+            # Place roles and probabilities in json
+            role_predictions = json.dumps(role_list_sorted)
+
+            # Create dictionary with filename as key and a json of
+            # role predictions for that file
+            all_predictions[y[counter]] = role_predictions
+
+        return all_predictions
 
 
     def string_feature_check(self, X):
@@ -139,7 +212,7 @@ class HostFootprint():
             # Object is the datatype pandas uses for storing strings
             if X[col].dtype == "object":
 
-                # log warning
+                # log warning if a string column is found
                 self.logger.info(f'String object found in column {col}')
 
                 # Expand features into "dummy", i.e. 0/1
@@ -155,73 +228,24 @@ class HostFootprint():
         return X
 
 
-    def predict(self):
-        """
-        This function takes a csv of features at the host footprint level and then makes
-        a role prediction for each row. The output is the top three roles.
-
-        OUTPUTS:
-        --prediction: top three roles for each host and the associated probability of each role
-        (in json format)
-        """
-
-        # Load data from host footprint .csv
-        df = pd.read_csv(self.path)
-
-        # Split dataframe into X (the input features or predictors)
-        # and y (the target or outcome or dependent variable)
-        # This drop function should work even if there is no column
-        # named filename
-        X = df.drop("filename", axis=1)
-
-        # get filenames to match to predictions if they exist
-        y = df.filename
-
-        # Normalize X features before training
-        X = self.scaler_fitted.transform(X) ## Use already fitted scaler
-
-        # Make model predicton - Will return a vector of values
-        predictions_rows = self.model.predict_proba(X)
-
-        # Output JSON of top three roles and probabilities
-
-        # These operations do NOT create a sorted list
-        # NOTE: To change the number of roles for which you want a prediction
-        # change the number number in the argpartition line of code
-        all_predictions = {}
-        for counter, predictions in enumerate(predictions_rows):
-            ind = np.argpartition(predictions, 3)[-3:] # Index of top 3 roles
-            labels = self.le.inverse_transform(ind) # top three role names
-            probs = predictions[ind] # probability of top three roles
-
-            # Put labels and probabilities into list
-            role_list = [(k, v) for k, v in zip(labels, probs)]
-
-            # Sort role list by probabilities
-            role_list_sorted = sorted(role_list, key=lambda x: x[1],
-                                      reverse=True)
-
-            # Place roles and probabilities in json
-            role_predictions = json.dumps(role_list_sorted)
-            all_predictions[y[counter]] = role_predictions
-
-        return all_predictions
-
-
     def main(self):
         """
         Collect and parse command line arguments for using this class
         """
+
+        # Collect command line arguments
         parsed_args = HostFootprint.parse_args(argparse.ArgumentParser())
         self.path = parsed_args.path
         self.out_path = parsed_args.output
         operation = parsed_args.operation
         log_level = parsed_args.verbose
 
+        # Set logging output options
         log_levels = {'INFO': logging.INFO, 'DEBUG': logging.DEBUG,
                       'WARNING': logging.WARNING, 'ERROR': logging.ERROR}
         logging.basicConfig(level=log_levels[log_level])
 
+        # Basic execution logic
         if operation == 'train':
             self.train()
             print(f'{self.model} {self.le} {self.scaler_fitted}')
@@ -234,4 +258,5 @@ class HostFootprint():
 
 
 if __name__ == "__main__":
+
     host_footprint = HostFootprint()
