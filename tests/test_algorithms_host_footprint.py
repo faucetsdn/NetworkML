@@ -19,6 +19,7 @@ def test_predict():
     sys.argv = ['host_footprint.py', '--operation', operation, input_file]
     HostFootprint()
 
+
 def test_train_bad_data_too_few_columns():
     """
     This test tries to train a model on a mal-formed csv with too few fields

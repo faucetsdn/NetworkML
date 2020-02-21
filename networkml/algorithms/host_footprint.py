@@ -9,7 +9,8 @@ import numpy as np
 import pandas as pd
 from sklearn import preprocessing
 from sklearn.neural_network import MLPClassifier
-from sklearn.preprocessing import LabelBinarizer
+
+import sklearn_json as skljson
 
 class HostFootprint():
     """
@@ -66,7 +67,7 @@ class HostFootprint():
         This function takes a .csv file of host footprint features--i.e. each
         row is a feature vector for a given host and each column is a feature
         --and trains a model to do business role classification. This function
-        returns the trained model. Because the best model is still yet to be
+        saves the trained model. Because the best model is still yet to be
         determined, this method uses only a simple neural network. A future
         version of this function will use a superior model once our research
         group has done experiments with different models and hyperparameter
@@ -111,47 +112,12 @@ class HostFootprint():
         clf = MLPClassifier(solver='sgd',
                             hidden_layer_sizes=(64, 32, num_categories),
                             random_state=1999)
+        self.logger.info(f'Beginning model training')
         self.model = clf.fit(X, y)
 
-
-    def string_feature_check(self, X):
-        """
-        This function takes a pandas dataframe that contains the
-        features for a model and checks if any of the features are
-        strings (or "objects" in the pandas ontology). If any of the
-        features are strings, then that feature is expanded into dummy
-        features, i.e. a series of 0/1 features for each category within
-        that object feature. The function then removes the original feature.
-
-        INPUTS:
-        --X: a pandas dataframe with only the training features
-
-        OUPUTS:
-        --X: a pandas dataframe expanded with dummy features
-
-        """
-
-        # loop through columns in X
-        for col in X.columns:
-
-            # Check if the feature's data type is string
-            # Object is the datatype pandas uses for storing strings
-            if X[col].dtype == "object":
-
-                # log warning if a string column is found
-                self.logger.info(f'String object found in column {col}')
-
-                # Expand features into "dummy", i.e. 0/1
-                # features
-                new_features = pd.get_dummies(X[col])
-
-                # Add new features onto X dataframe
-                X = pd.concat([X, new_features], axis=1)
-
-                # Remove original non-expanded feature from X
-                X = X.drop(col, axis=1)
-
-        return X
+        # Save model to JSON
+        model_path = "networkml/trained_models/onelayer/onelayer.json"
+        skljson.to_json(self.model, model_path)
 
 
     def predict(self):
@@ -174,11 +140,22 @@ class HostFootprint():
         # named filename
         X = df.drop("filename", axis=1)
 
-        # get filenames to match to predictions
+        # Get filenames to match to predictions
         y = df.filename
 
         # Normalize X features before training
         X = self.scaler_fitted.transform(X) ## Use already fitted scaler
+
+        # Load (or deserialize) model from JSON
+        model_path = "networkml/trained_models/onelayer/onelayer.json"
+        self.model = skljson.from_json(model_path)
+
+        # Convert coeficients to numpy arrays to enable JSON deserialization
+        # This is a hack to compensate for a potential bug in sklearn_json
+        for i, x in enumerate(self.model.coefs_):
+            self.model.coefs_[i] = np.array(x)
+
+        self.logger.info(f'Executing model inference')
 
         # Make model predicton - Will return a vector of values
         predictions_rows = self.model.predict_proba(X)
@@ -188,8 +165,8 @@ class HostFootprint():
         for counter, predictions in enumerate(predictions_rows):
 
             # These operations do NOT create a sorted list
-            # NOTE: To change the number of roles for which you want a
-            # prediction change the number number in the argpartition code
+            # Note from the past: To change the number of roles for which you
+            # want a prediction, change the number in the argpartition code
             ind = np.argpartition(predictions, 3)[-3:] # Index of top 3 roles
             labels = self.le.inverse_transform(ind) # top three role names
             probs = predictions[ind] # probability of top three roles
@@ -283,4 +260,3 @@ class HostFootprint():
 if __name__ == "__main__":
 
     host_footprint = HostFootprint()
-
