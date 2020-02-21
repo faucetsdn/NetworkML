@@ -35,7 +35,7 @@ jobs:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-      if: github.repository == 'cyberreboot/networkml' && github.event_name == 'push'
+      if: github.repository == 'cyberreboot/networkml'
     - name: docker-test
       run: |
         docker build -f Dockerfile -t cyberreboot/networkml .
