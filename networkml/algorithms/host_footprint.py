@@ -24,19 +24,8 @@ class HostFootprint():
     """
 
 
-    def __init__(self, model=None, le=None, scaler_fitted=None):
-        """
-        le: label encoder, i.e. a mapping between integers and roles. This
-        is useful for translating between a device's role (represented as a
-        categorical variable) and an integer represention, which is needed
-        for modeling purposes.
-        scaler_fitted: An object used to consistently scale the statistical
-        features before training a model or doing inference.
-        """
+    def __init__(self):
         self.logger = logging.getLogger(__name__)
-        self.model = model
-        self.le = le
-        self.scaler_fitted = scaler_fitted
         self.main()
 
 
@@ -54,6 +43,9 @@ class HostFootprint():
         parser.add_argument('--output', '-o', default=None,
                             help='path to write out trained model parameters \
                             (required only for train, ignored for predict)')
+        parser.add_argument('--trained_model', '-t',
+                            default='networkml/trained_models/host_footprint.json',
+                            help='specify a path to a trained model')
         parser.add_argument('--verbose', '-v',
                             choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
                             default='INFO',
@@ -98,15 +90,15 @@ class HostFootprint():
 
         # Normalize X features before training
         scaler = preprocessing.MinMaxScaler()
-        self.scaler_fitted = scaler.fit(X)
-        X = self.scaler_fitted.transform(X)
+        scaler_fitted = scaler.fit(X)
+        X = scaler_fitted.transform(X)
 
         # Convert y into categorical/numerical feature
-        self.le = preprocessing.LabelEncoder()
-        y = self.le.fit_transform(y)
+        le = preprocessing.LabelEncoder()
+        y = le.fit_transform(y)
 
         # Calculate number of categories to predict
-        num_categories = len(self.le.classes_)
+        num_categories = len(le.classes_)
 
         # Instantiate and train model
         clf = MLPClassifier(solver='sgd',
@@ -116,8 +108,7 @@ class HostFootprint():
         self.model = clf.fit(X, y)
 
         # Save model to JSON
-        model_path = "networkml/trained_models/onelayer/onelayer.json"
-        skljson.to_json(self.model, model_path)
+        skljson.to_json(self.model, self.model_path)
 
 
     def predict(self):
@@ -143,12 +134,17 @@ class HostFootprint():
         # Get filenames to match to predictions
         y = df.filename
 
-        # Normalize X features before training
-        X = self.scaler_fitted.transform(X) ## Use already fitted scaler
+        # Normalize X features before predicting
+        scaler = preprocessing.MinMaxScaler()
+        scaler_fitted = scaler.fit(X)
+        X = scaler_fitted.transform(X)
+
+        # Get labels
+        le = preprocessing.LabelEncoder()
+        le.fit_transform(y)
 
         # Load (or deserialize) model from JSON
-        model_path = "networkml/trained_models/onelayer/onelayer.json"
-        self.model = skljson.from_json(model_path)
+        self.model = skljson.from_json(self.model_path)
 
         # Convert coeficients to numpy arrays to enable JSON deserialization
         # This is a hack to compensate for a potential bug in sklearn_json
@@ -168,7 +164,7 @@ class HostFootprint():
             # Note from the past: To change the number of roles for which you
             # want a prediction, change the number in the argpartition code
             ind = np.argpartition(predictions, 3)[-3:] # Index of top 3 roles
-            labels = self.le.inverse_transform(ind) # top three role names
+            labels = le.inverse_transform(ind) # top three role names
             probs = predictions[ind] # probability of top three roles
 
             # Put labels and probabilities into list
@@ -237,6 +233,7 @@ class HostFootprint():
         parsed_args = HostFootprint.parse_args(argparse.ArgumentParser())
         self.path = parsed_args.path
         self.out_path = parsed_args.output
+        self.model_path = parsed_args.trained_model
         operation = parsed_args.operation
         log_level = parsed_args.verbose
 
@@ -248,15 +245,10 @@ class HostFootprint():
         # Basic execution logic
         if operation == 'train':
             self.train()
-            print(f'{self.model} {self.le} {self.scaler_fitted}')
         elif operation == 'predict':
-            # TODO this shouldn't actually train first, need to save/load
-            # model instead
-            self.train()
             role_prediction = self.predict()
             print(f'{role_prediction}')
 
 
 if __name__ == "__main__":
-
     host_footprint = HostFootprint()

@@ -1,11 +1,13 @@
 # Machine Learning Models in NetworkML
 
 ## Overview
+TODO: needs a rewrite
 NetworkML performs two separate classifications: role identification and
 anomaly detection. Role identification uses either a one-layer neural network
 or random forests. Anomaly detection uses stochastic outlier selection.
 
 ### One-layer Neural Network
+TODO: needs a rewrite
 This technique uses a neural network with one hidden layer to do multi-label
 classification of device role. For further information on neural networks,
 see Francois Chollet's "Deep Learning with Python" published by Manning
@@ -15,6 +17,7 @@ in-house testing, this single layer neural network out-performs random forests
 at role classification.
 
 ### Random Forests
+TODO: needs a rewrite
 The random forests model also does multi-label classification of roles. A thorough
 description of random forests can be found in Leo Breiman, "Random Forests,"
 Journal of Machine Learning Research, Vol. 45, No. 1, 2001. Random Forests
@@ -25,6 +28,7 @@ by Routledge. NetworkML's implementation of decision trees uses the Python
 package scikit-learn.
 
 ### Stochastic Outlier Selection
+TODO: needs a rewrite
 Unlike the neural network or random forests models, stochastic outlier selection
 is an unsupervised learning approach. For a short description, see a blog post
 by the creator of this method, Jeroen Janssens, [here](https://www.datascienceworkshops.com/blog/stochastic-outlier-selection/).
