@@ -15,6 +15,9 @@ def test_train():
 def test_predict():
     """Test predict function of HostFootprint class"""
     input_file = './tests/test_data/combined.csv'
+    operation = 'train'
+    sys.argv = ['host_footprint.py', '--operation', operation, input_file]
+    HostFootprint()
     operation = 'predict'
     sys.argv = ['host_footprint.py', '--operation', operation, input_file]
     HostFootprint()
