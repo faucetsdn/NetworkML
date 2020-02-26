@@ -105,10 +105,11 @@ class CSVToFeatures():
 
     @staticmethod
     def parse_args(raw_args=None):
+        netml_path = networkml.__path__[0]
         parser = argparse.ArgumentParser()
         parser.add_argument('path', help='path to a single gzipped csv file, or a directory of gzipped csvs to parse')
         parser.add_argument('--combined', '-c', action='store_true', help='write out all records from all csvs into a single gzipped csv file')
-        parser.add_argument('--features_path', '-p', default=os.path.join(networkml.__path__[0], 'featurizers/funcs'), help='path to featurizer functions')
+        parser.add_argument('--features_path', '-p', default=os.path.join(netml_path, 'featurizers/funcs'), help='path to featurizer functions')
         parser.add_argument('--functions', '-f', default='', help='comma separated list of <class>:<function> to featurize (default=None)')
         parser.add_argument('--groups', '-g', default='tshark', help='comma separated list of groups of functions to featurize (default=tshark)')
         parser.add_argument('--gzip', '-z', choices=['input', 'output', 'both', 'neither'], default='both', help='gzip the input/output file, both or neither (default=both)')
