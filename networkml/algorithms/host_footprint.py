@@ -4,13 +4,15 @@ A class to perform machine learning operations on computer network traffic
 import argparse
 import json
 import logging
+import os
 
+import networkml
 import numpy as np
 import pandas as pd
+import sklearn_json as skljson
 from sklearn import preprocessing
 from sklearn.neural_network import MLPClassifier
 
-import sklearn_json as skljson
 
 class HostFootprint():
     """
@@ -26,7 +28,7 @@ class HostFootprint():
 
     def __init__(self, raw_args=None):
         self.logger = logging.getLogger(__name__)
-        self.main(raw_args=raw_args)
+        self.raw_args = raw_args
 
 
     @staticmethod
@@ -35,18 +37,16 @@ class HostFootprint():
         Use python's argparse module to collect command line arguments
         for using this class
         """
+        netml_path = list(networkml.__path__)
         parser = argparse.ArgumentParser()
         parser.add_argument('path', help='path to a single csv file')
-        parser.add_argument('--operation', choices=['train', 'predict'],
+        parser.add_argument('--operation', '-O', choices=['train', 'predict'],
                             default='predict',
                             help='choose which operation task to perform, \
                             train or predict (default=predict)')
-        parser.add_argument('--output', '-o', default=None,
-                            help='path to write out trained model parameters \
-                            (required only for train, ignored for predict)')
         parser.add_argument('--trained_model', '-t',
-                            default='networkml/trained_models/host_footprint.json',
-                            help='specify a path to a trained model')
+                            default=os.path.join(netml_path[0], 'trained_models/host_footprint.json'),
+                            help='specify a path to load or save trained model')
         parser.add_argument('--verbose', '-v',
                             choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
                             default='INFO',
@@ -225,15 +225,14 @@ class HostFootprint():
         return X
 
 
-    def main(self, raw_args=None):
+    def main(self):
         """
         Collect and parse command line arguments for using this class
         """
 
         # Collect command line arguments
-        parsed_args = HostFootprint.parse_args(raw_args=raw_args)
+        parsed_args = HostFootprint.parse_args(raw_args=self.raw_args)
         self.path = parsed_args.path
-        self.out_path = parsed_args.output
         self.model_path = parsed_args.trained_model
         operation = parsed_args.operation
         log_level = parsed_args.verbose
@@ -246,10 +245,14 @@ class HostFootprint():
         # Basic execution logic
         if operation == 'train':
             self.train()
+            self.logger.info(f'Saved model to: {self.model_path}')
+            return self.model_path
         elif operation == 'predict':
             role_prediction = self.predict()
-            print(f'{role_prediction}')
+            self.logger.info(f'{role_prediction}')
+            return role_prediction
 
 
 if __name__ == "__main__":
     host_footprint = HostFootprint()
+    host_footprint.main()

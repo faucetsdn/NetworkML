@@ -1,14 +1,11 @@
 import argparse
 import csv
 import concurrent.futures
-import datetime
 import gzip
 import io
 import logging
 import os
 import pathlib
-import time
-import humanize
 import numpy as np
 
 
@@ -21,7 +18,7 @@ class CSVToFeatures():
 
     def __init__(self, raw_args=None):
         self.logger = logging.getLogger(__name__)
-        self.main(raw_args=raw_args)
+        self.raw_args = raw_args
 
 
     @staticmethod
@@ -178,8 +175,8 @@ class CSVToFeatures():
         return failed_paths
 
 
-    def main(self, raw_args=None):
-        parsed_args = CSVToFeatures.parse_args(raw_args=raw_args)
+    def main(self):
+        parsed_args = CSVToFeatures.parse_args(raw_args=self.raw_args)
         in_path = parsed_args.path
         out_path = parsed_args.output
         combined = parsed_args.combined
@@ -247,14 +244,12 @@ class CSVToFeatures():
                 combined_path = combined_path[:-3]
             self.logger.info(f'Combining CSVs into a single file: {combined_path}')
             CSVToFeatures.combine_csvs(out_paths, combined_path, gzip_opt)
+            return combined_path
         else:
             self.logger.info(f'GZipped CSV file(s) written out to: {out_paths}')
+            return os.path.dirname(out_paths[0])
 
 
 if __name__ == '__main__':  # pragma: no cover
-    start = time.time()
-    CSVToFeatures()
-    end = time.time()
-    elapsed = end - start
-    human_elapsed = humanize.naturaldelta(datetime.timedelta(seconds=elapsed))
-    logging.info(f'Elapsed Time: {elapsed} seconds ({human_elapsed})')
+    features = CSVToFeatures()
+    features.main()

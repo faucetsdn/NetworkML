@@ -41,14 +41,14 @@ class NetworkML():
     def run_stages(self):
         invalid_stage_combo = False
         if self.first_stage == 'parser':
-            PCAPToCSV(raw_args=[self.in_path, '-e', self.engine, '-l', self.level, '-o', self.output, '-t', str(self.threads), '-v', self.log_level])
+            instance = PCAPToCSV(raw_args=[self.in_path, '-e', self.engine, '-l', self.level, '-o', self.output, '-t', str(self.threads), '-v', self.log_level])
+            result = instance.main()
             if self.final_stage != 'parser':
-                if self.output:
-                    self.in_path = self.output
-                CSVToFeatures(raw_args=[self.in_path, '-c', '-g', self.groups, '-z', self.gzip_opt, '-o', self.output, '-t', str(self.threads), '-v', self.log_level])
+                instance = CSVToFeatures(raw_args=[result, '-c', '-g', self.groups, '-z', self.gzip_opt, '-o', self.output, '-t', str(self.threads), '-v', self.log_level])
+                result = instance.main()
                 if self.final_stage == 'algorithm':
-                    # TODO
-                    pass
+                    instance = HostFootprint(raw_args=[result, '-O', self.operation, '-v', self.log_level])
+                    result = instance.main()
         elif self.first_stage == 'featurizer':
             if self.final_stage == 'parser':
                 invalid_stage_combo = True
