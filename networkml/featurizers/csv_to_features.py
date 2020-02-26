@@ -13,6 +13,7 @@ import numpy as np
 
 
 from networkml.featurizers.main import Featurizer
+import networkml
 
 
 class CSVToFeatures():
@@ -21,6 +22,14 @@ class CSVToFeatures():
     def __init__(self, raw_args=None):
         self.logger = logging.getLogger(__name__)
         self.main(raw_args=raw_args)
+
+
+    @staticmethod
+    def iscsv(pathfile):
+        for ext in ('csv', 'gz'):
+            if pathfile.endswith(''.join(('.', ext))):
+                return True
+        return False
 
 
     @staticmethod
@@ -99,7 +108,7 @@ class CSVToFeatures():
         parser = argparse.ArgumentParser()
         parser.add_argument('path', help='path to a single gzipped csv file, or a directory of gzipped csvs to parse')
         parser.add_argument('--combined', '-c', action='store_true', help='write out all records from all csvs into a single gzipped csv file')
-        parser.add_argument('--features_path', '-p', default='./networkml/featurizers/funcs', help='path to featurizer functions (default="./networkml/featurizers/funcs")')
+        parser.add_argument('--features_path', '-p', default=os.path.join(networkml.__path__[0], 'featurizers/funcs'), help='path to featurizer functions')
         parser.add_argument('--functions', '-f', default='', help='comma separated list of <class>:<function> to featurize (default=None)')
         parser.add_argument('--groups', '-g', default='tshark', help='comma separated list of groups of functions to featurize (default=tshark)')
         parser.add_argument('--gzip', '-z', choices=['input', 'output', 'both', 'neither'], default='both', help='gzip the input/output file, both or neither (default=both)')
@@ -203,17 +212,18 @@ class CSVToFeatures():
                 pathlib.Path(out_path).mkdir(parents=True, exist_ok=True)
             for root, _, files in os.walk(in_path):
                 for pathfile in files:
-                    in_paths.append(os.path.join(root, pathfile))
-                    if out_path:
-                        if gzip_opt in ['neither', 'input']:
-                            out_paths.append(os.path.join(out_path, pathfile) + ".features")
+                    if CSVToFeatures.iscsv(pathfile):
+                        in_paths.append(os.path.join(root, pathfile))
+                        if out_path:
+                            if gzip_opt in ['neither', 'input']:
+                                out_paths.append(os.path.join(out_path, pathfile) + ".features")
+                            else:
+                                out_paths.append(os.path.join(out_path, pathfile) + ".features.gz")
                         else:
-                            out_paths.append(os.path.join(out_path, pathfile) + ".features.gz")
-                    else:
-                        if gzip_opt in ['neither', 'input']:
-                            out_paths.append(os.path.join(root, pathfile) + ".features")
-                        else:
-                            out_paths.append(os.path.join(root, pathfile) + ".features.gz")
+                            if gzip_opt in ['neither', 'input']:
+                                out_paths.append(os.path.join(root, pathfile) + ".features")
+                            else:
+                                out_paths.append(os.path.join(root, pathfile) + ".features.gz")
         else:
             in_paths.append(in_path)
             if out_path:
