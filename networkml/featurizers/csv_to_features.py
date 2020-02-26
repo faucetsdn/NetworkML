@@ -18,8 +18,9 @@ from networkml.featurizers.main import Featurizer
 class CSVToFeatures():
 
 
-    def __init__(self):
+    def __init__(self, raw_args=None):
         self.logger = logging.getLogger(__name__)
+        self.main(raw_args=raw_args)
 
 
     @staticmethod
@@ -94,17 +95,18 @@ class CSVToFeatures():
             return [dict(line) for line in reader]
 
     @staticmethod
-    def parse_args(parser):
+    def parse_args(raw_args=None):
+        parser = argparse.ArgumentParser()
         parser.add_argument('path', help='path to a single gzipped csv file, or a directory of gzipped csvs to parse')
         parser.add_argument('--combined', '-c', action='store_true', help='write out all records from all csvs into a single gzipped csv file')
         parser.add_argument('--features_path', '-p', default='./networkml/featurizers/funcs', help='path to featurizer functions (default="./networkml/featurizers/funcs")')
         parser.add_argument('--functions', '-f', default='', help='comma separated list of <class>:<function> to featurize (default=None)')
-        parser.add_argument('--groups', '-g', default='default', help='comma separated list of groups of functions to featurize (default=default)')
+        parser.add_argument('--groups', '-g', default='tshark', help='comma separated list of groups of functions to featurize (default=tshark)')
         parser.add_argument('--gzip', '-z', choices=['input', 'output', 'both', 'neither'], default='both', help='gzip the input/output file, both or neither (default=both)')
         parser.add_argument('--output', '-o', default=None, help='path to write out gzipped csv file or directory for gzipped csv files')
         parser.add_argument('--threads', '-t', default=1, type=int, help='number of async threads to use (default=1)')
         parser.add_argument('--verbose', '-v', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO', help='logging level (default=INFO)')
-        parsed_args = parser.parse_args()
+        parsed_args = parser.parse_args(raw_args)
         return parsed_args
 
     def exec_features(self, features, in_file, out_file, features_path, gzip_opt):
@@ -166,8 +168,8 @@ class CSVToFeatures():
         return failed_paths
 
 
-    def main(self):
-        parsed_args = CSVToFeatures.parse_args(argparse.ArgumentParser())
+    def main(self, raw_args=None):
+        parsed_args = CSVToFeatures.parse_args(raw_args=raw_args)
         in_path = parsed_args.path
         out_path = parsed_args.output
         combined = parsed_args.combined
@@ -240,8 +242,7 @@ class CSVToFeatures():
 
 if __name__ == '__main__':  # pragma: no cover
     start = time.time()
-    instance = CSVToFeatures()
-    instance.main()
+    CSVToFeatures()
     end = time.time()
     elapsed = end - start
     human_elapsed = humanize.naturaldelta(datetime.timedelta(seconds=elapsed))
