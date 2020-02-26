@@ -24,17 +24,18 @@ class HostFootprint():
     """
 
 
-    def __init__(self):
+    def __init__(self, raw_args=None):
         self.logger = logging.getLogger(__name__)
-        self.main()
+        self.main(raw_args=raw_args)
 
 
     @staticmethod
-    def parse_args(parser):
+    def parse_args(raw_args=None):
         """
         Use python's argparse module to collect command line arguments
         for using this class
         """
+        parser = argparse.ArgumentParser()
         parser.add_argument('path', help='path to a single csv file')
         parser.add_argument('--operation', choices=['train', 'predict'],
                             default='predict',
@@ -50,7 +51,7 @@ class HostFootprint():
                             choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
                             default='INFO',
                             help='logging level (default=INFO)')
-        parsed_args = parser.parse_args()
+        parsed_args = parser.parse_args(raw_args)
         return parsed_args
 
 
@@ -224,13 +225,13 @@ class HostFootprint():
         return X
 
 
-    def main(self):
+    def main(self, raw_args=None):
         """
         Collect and parse command line arguments for using this class
         """
 
         # Collect command line arguments
-        parsed_args = HostFootprint.parse_args(argparse.ArgumentParser())
+        parsed_args = HostFootprint.parse_args(raw_args=raw_args)
         self.path = parsed_args.path
         self.out_path = parsed_args.output
         self.model_path = parsed_args.trained_model
