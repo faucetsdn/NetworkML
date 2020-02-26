@@ -1,4 +1,3 @@
-import argparse
 from networkml.algorithms.host_footprint import HostFootprint
 from networkml.featurizers.csv_to_features import CSVToFeatures
 from networkml.parsers.pcap_to_csv import PCAPToCSV
