@@ -65,7 +65,7 @@ class NetworkML():
             invalid_stage_combo = True
 
         if invalid_stage_combo:
-            self.logger.erorr('Invalid first and final stage combination')
+            self.logger.error('Invalid first and final stage combination')
 
 
     def main(self, raw_args=None):
