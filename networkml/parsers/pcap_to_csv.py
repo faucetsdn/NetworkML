@@ -2,7 +2,6 @@ import argparse
 import ast
 import concurrent.futures
 import csv
-import datetime
 import gzip
 import io
 import json
@@ -14,11 +13,9 @@ import random
 import shlex
 import string
 import subprocess
-import time
 
 from copy import deepcopy
 
-import humanize
 import pyshark
 
 
@@ -40,7 +37,7 @@ class PCAPToCSV():
                           '<IPV6 Layer>',
                           '<TLS Layer>']
         self.flattened_dict = {}
-        self.main(raw_args=raw_args)
+        self.raw_args = raw_args
 
 
     @staticmethod
@@ -322,8 +319,8 @@ class PCAPToCSV():
         return failed_paths
 
 
-    def main(self, raw_args=None):
-        parsed_args = PCAPToCSV.parse_args(raw_args=raw_args)
+    def main(self):
+        parsed_args = PCAPToCSV.parse_args(raw_args=self.raw_args)
         in_path = parsed_args.path
         out_path = parsed_args.output
         combined = parsed_args.combined
@@ -373,14 +370,12 @@ class PCAPToCSV():
                 combined_path = "combined.csv.gz"
             self.logger.info(f'Combining CSVs into a single file: {combined_path}')
             PCAPToCSV.combine_csvs(out_paths, combined_path)
+            return combined_path
         else:
             self.logger.info(f'GZipped CSV file(s) written out to: {out_paths}')
+            return os.path.dirname(out_paths[0])
 
 
 if __name__ == '__main__':  # pragma: no cover
-    start = time.time()
-    PCAPToCSV()
-    end = time.time()
-    elapsed = end - start
-    human_elapsed = humanize.naturaldelta(datetime.timedelta(seconds=elapsed))
-    logging.info(f'Elapsed Time: {elapsed} seconds ({human_elapsed})')
+    instance = PCAPToCSV()
+    instance.main()
