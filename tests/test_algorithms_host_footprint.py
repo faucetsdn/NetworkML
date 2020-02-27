@@ -9,7 +9,8 @@ def test_train():
     input_file = './tests/test_data/combined.csv'
     operation = 'train'
     sys.argv = ['host_footprint.py', '--operation', operation, input_file]
-    HostFootprint()
+    instance = HostFootprint()
+    instance.main()
 
 
 def test_predict():
@@ -17,10 +18,12 @@ def test_predict():
     input_file = './tests/test_data/combined.csv'
     operation = 'train'
     sys.argv = ['host_footprint.py', '--operation', operation, input_file]
-    HostFootprint()
+    instance = HostFootprint()
+    instance.main()
     operation = 'predict'
     sys.argv = ['host_footprint.py', '--operation', operation, input_file]
-    HostFootprint()
+    instance = HostFootprint()
+    instance.main()
 
 
 def test_train_bad_data_too_few_columns():
@@ -30,5 +33,6 @@ def test_train_bad_data_too_few_columns():
     input_file = './tests/test_data/bad_data_too_few_columns.csv'
     operation = 'train'
     sys.argv = ['host_footprint.py', '--operation', operation, input_file]
+    instance = HostFootprint()
     with pytest.raises(Exception):
-        HostFootprint()
+        instance.main()
