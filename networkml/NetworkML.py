@@ -53,12 +53,15 @@ class NetworkML():
             if self.final_stage == 'parser':
                 invalid_stage_combo = True
             else:
-                # TODO
-                pass
+                instance = CSVToFeatures(raw_args=[self.in_path, '-c', '-g', self.groups, '-z', self.gzip_opt, '-o', self.output, '-t', str(self.threads), '-v', self.log_level])
+                result = instance.main()
+                if self.final_stage == 'algorithm':
+                    instance = HostFootprint(raw_args=[result, '-O', self.operation, '-v', self.log_level])
+                    result = instance.main()
         elif self.first_stage == 'algorithm':
             if self.final_stage == 'algorithm':
-                # TODO
-                pass
+                instance = HostFootprint(raw_args=[self.in_path, '-O', self.operation, '-v', self.log_level])
+                result = instance.main()
             else:
                 invalid_stage_combo = True
         else:
@@ -66,6 +69,9 @@ class NetworkML():
 
         if invalid_stage_combo:
             self.logger.error('Invalid first and final stage combination')
+
+        if self.final_stage == 'algorithm' and self.operation == 'predict':
+            self.logger.info(f'Prediction: {result}')
 
 
     def main(self, raw_args=None):
