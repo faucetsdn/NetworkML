@@ -4,6 +4,7 @@ from networkml.parsers.pcap_to_csv import PCAPToCSV
 
 import argparse
 import datetime
+import json
 import logging
 import os
 import time
