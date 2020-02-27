@@ -5,6 +5,7 @@ from networkml.parsers.pcap_to_csv import PCAPToCSV
 import argparse
 import datetime
 import logging
+import os
 import time
 
 import humanize
@@ -96,7 +97,7 @@ class NetworkML():
             file_path = os.getenv('file_path', 'None')
             try:
                 channel = NetworkML.connect_rabbit()
-                body = {'id': uid, 'type': 'metadata', 'file_path': file_path, 'data': result, 'results': {'tool': 'networkml', 'version': version}}
+                body = {'id': uid, 'type': 'metadata', 'file_path': file_path, 'data': result, 'results': {'tool': 'networkml', 'version': networkml.__version__}}
                 NetworkML.send_rabbit_msg(body, channel)
                 body = {'id': uid, 'type': 'metadata', 'file_path': file_path, 'data': '', 'results': {'tool': 'networkml', 'version': networkml.__version__}}
             except Exception as e:  # pragma: no cover
