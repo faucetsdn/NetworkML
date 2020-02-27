@@ -54,6 +54,7 @@ class NetworkML():
         parser.add_argument('--level', '-l', choices=['packet', 'flow', 'host'], default='packet', help='level to make the output records (default=packet)')
         parser.add_argument('--operation', '-O', choices=['train', 'predict'], default='predict', help='choose which operation task to perform, train or predict (default=predict)')
         parser.add_argument('--output', '-o', default=None, help='directory to write out any results files to')
+        parser.add_argument('--rabbit', '-r', action='store_true', help='Send prediction message to RabbitMQ')
         parser.add_argument('--threads', '-t', default=1, type=int, help='number of async threads to use (default=1)')
         parser.add_argument('--verbose', '-v', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO', help='logging level (default=INFO)')
         parsed_args = parser.parse_args(raw_args)
@@ -94,15 +95,16 @@ class NetworkML():
 
         if self.final_stage == 'algorithm' and self.operation == 'predict':
             self.logger.info(f'Prediction: {result}')
-            uid = os.getenv('id', 'None')
-            file_path = os.getenv('file_path', 'None')
-            try:
-                channel = NetworkML.connect_rabbit()
-                body = {'id': uid, 'type': 'metadata', 'file_path': file_path, 'data': result, 'results': {'tool': 'networkml', 'version': networkml.__version__}}
-                NetworkML.send_rabbit_msg(body, channel)
-                body = {'id': uid, 'type': 'metadata', 'file_path': file_path, 'data': '', 'results': {'tool': 'networkml', 'version': networkml.__version__}}
-            except Exception as e:  # pragma: no cover
-                self.logger.error(f'Failed to send Rabbit message because: {e}')
+            if self.rabbit:
+                uid = os.getenv('id', 'None')
+                file_path = os.getenv('file_path', 'None')
+                try:
+                    channel = NetworkML.connect_rabbit()
+                    body = {'id': uid, 'type': 'metadata', 'file_path': file_path, 'data': result, 'results': {'tool': 'networkml', 'version': networkml.__version__}}
+                    NetworkML.send_rabbit_msg(body, channel)
+                    body = {'id': uid, 'type': 'metadata', 'file_path': file_path, 'data': '', 'results': {'tool': 'networkml', 'version': networkml.__version__}}
+                except Exception as e:  # pragma: no cover
+                    self.logger.error(f'Failed to send Rabbit message because: {e}')
 
 
     def main(self, raw_args=None):
@@ -117,6 +119,7 @@ class NetworkML():
         self.level = parsed_args.level
         self.operation = parsed_args.operation
         self.output = parsed_args.output
+        self.rabbit = parsed_args.rabbit
         self.threads = parsed_args.threads
         self.log_level = parsed_args.verbose
 
