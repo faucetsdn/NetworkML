@@ -50,7 +50,7 @@ def test_CSVToFeatures_generic():
     sys.argv = ['pcap_to_csv.py', '-e', 'tshark', '-o', '/tmp/foo1', './tests']
     instance = PCAPToCSV()
     instance.main()
-    sys.argv = ['csv_to_features.py', '-z', 'input', '-f', 'Generic:all', '/tmp/foo1']
+    sys.argv = ['csv_to_features.py', '-z', 'input', '-f', 'Generic:all', '-g', 'None', '/tmp/foo1']
     instance2 = CSVToFeatures()
     instance2.main()
 
