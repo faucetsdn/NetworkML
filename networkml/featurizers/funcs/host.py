@@ -240,9 +240,10 @@ class Host(Features):
             flags_counter[decoded_flag] = 0
         for row in rows:
             flags = self._safe_int(row.get(flags_field, 0))
-            for bit, decoded_flag in decode_map.items():
-                if flags & (2**bit):
-                    flags_counter[decoded_flag] += 1
+            if flags:
+                for bit, decoded_flag in decode_map.items():
+                    if flags & (2**bit):
+                        flags_counter[decoded_flag] += 1
         return [{'tshark_%s_%s_%s' % (
             flags_field.replace('.', '_'), decoded_flag, suffix): val
                 for decoded_flag, val in flags_counter.items()}]
