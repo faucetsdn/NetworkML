@@ -167,8 +167,13 @@ class Host(Features):
 
 
     def _priv_ip_proto_ports(self, rows, ip_proto):
-        lowest_ports = self._lowest_ip_proto_ports(rows, ip_proto)
-        return {port for port in lowest_ports if port < 1024}
+        # https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xml
+        wk_ref_priv_proto_ports = frozenset(
+            [22, 23, 25, 53, 67, 68, 80, 123, 137, 138, 139, 143, 161, 443, 631])
+        lowest_ports = {port for port in self._lowest_ip_proto_ports(rows, ip_proto) if port < 1024}
+        priv_ports = {port: int(port in lowest_ports) for port in wk_ref_priv_proto_ports}
+        priv_ports.update({'other': int(not lowest_ports.issubset(wk_ref_priv_proto_ports))})
+        return priv_ports
 
 
     def _nonpriv_ip_proto_ports(self, rows, ip_proto):
@@ -179,9 +184,8 @@ class Host(Features):
 
     def _get_priv_ports(self, rows, ip_proto, suffix):
         priv_ports = self._priv_ip_proto_ports(rows, ip_proto)
-        if priv_ports:
-            return [{'tshark_%s_priv_port_%u_%s' % (ip_proto, port, suffix): 1 for port in priv_ports}]
-        return [{}]
+        return [{'tshark_%s_priv_port_%s_%s' % (ip_proto, port, suffix): present
+            for port, present in priv_ports.items()}]
 
 
     def tshark_priv_tcp_ports_in(self, rows):
