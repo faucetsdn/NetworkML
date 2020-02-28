@@ -5,8 +5,9 @@ def test_protocols():
     instance = Host()
     assert instance.tshark_last_protocols_array(
         [{'frame.protocols': 'eth:ethertype:ip:udp:db-lsp-disc:json'}]) == [
-                {'protocol_db-lsp-disc': 1, 'protocol_ip': 1, 'protocol_json': 1, 'protocol_udp': 1, 'protocol_eth': 1 }]
-    assert instance.tshark_last_protocols_array([{}]) == [{}]
+            {'protocol_esp': 0, 'protocol_eth': 1, 'protocol_ip': 1, 'protocol_gre': 0, 'protocol_ipv6': 0, 'protocol_tcp': 0, 'protocol_arp': 0, 'protocol_icmp': 0, 'other': 1}]
+    assert instance.tshark_last_protocols_array([{}]) == [
+        {'protocol_esp': 0, 'protocol_eth': 0, 'protocol_ip': 0, 'protocol_gre': 0, 'protocol_ipv6': 0, 'protocol_tcp': 0, 'protocol_arp': 0, 'protocol_icmp': 0, 'other': 0}]
 
 
 def test_non_ip():

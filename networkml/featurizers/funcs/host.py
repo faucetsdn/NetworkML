@@ -86,14 +86,18 @@ class Host(Features):
 
 
     def tshark_last_protocols_array(self, rows):
-        protocols = set()
+        # http://www.iana.org/assignments/protocol-numbers 
+        wk_protocols = frozenset(['eth', 'ipv6', 'ip', 'tcp', 'arp', 'icmp', 'gre', 'esp'])
+        raw_protocols = set()
         try:
-            protocols.update({
+            raw_protocols.update({
                 protocol for protocol in self.last_protocols(rows)[0]['Protocols'].split(':') if protocol})
         except IndexError:
-            return []
-        protocols = protocols - set(['ethertype'])
-        return [{'protocol_%s' % protocol: 1 for protocol in protocols}]
+            pass
+        raw_protocols -= set(['ethertype'])
+        protocols = {'protocol_%s' % protocol: int(protocol in raw_protocols) for protocol in wk_protocols}
+        protocols.update({'other': int(not raw_protocols.issubset(wk_protocols))})
+        return [protocols]
 
 
     def tshark_ipv4(self, rows):
