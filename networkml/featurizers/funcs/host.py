@@ -52,15 +52,11 @@ class Host(Features):
 
 
     def pyshark_ipv4(self, rows):
-        if 4 in self._pyshark_ipversions(rows):
-            return [{'IPv4': 1}]
-        return [{'IPv4': 0}]
+        return [{'IPv4': (4 in self._pyshark_ipversions(rows))}]
 
 
     def pyshark_ipv6(self, rows):
-        if 6 in self._pyshark_ipversions(rows):
-            return [{'IPv6': 1}]
-        return [{'IPv6': 0}]
+        return [{'IPv6': (6 in self._pyshark_ipversions(rows))}]
 
 
     def pyshark_last_highest_layer(self, rows):
@@ -102,15 +98,11 @@ class Host(Features):
 
 
     def tshark_ipv4(self, rows):
-        if 4 in self._tshark_ipversions(rows):
-            return [{'IPv4': 1}]
-        return [{'IPv4': 0}]
+        return [{'IPv4': int(4 in self._tshark_ipversions(rows))}]
 
 
     def tshark_ipv6(self, rows):
-        if 6 in self._tshark_ipversions(rows):
-            return [{'IPv6': 1}]
-        return [{'IPv6': 0}]
+        return [{'IPv6': int(6 in self._tshark_ipversions(rows))}]
 
 
     def _calc_time_delta(self, field, rows):
