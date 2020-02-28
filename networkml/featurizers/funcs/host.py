@@ -168,6 +168,7 @@ class Host(Features):
 
     def _priv_ip_proto_ports(self, rows, ip_proto):
         # https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xml
+        # TODO: enumerate most common ports from survey (complete indicator matrix too expensive)
         wk_ref_priv_proto_ports = frozenset(
             [22, 23, 25, 53, 67, 68, 69, 80, 88, 110, 123, 137, 138, 139, 143, 161, 443, 631])
         lowest_ports = {port for port in self._lowest_ip_proto_ports(rows, ip_proto) if port < 1024}
@@ -177,6 +178,8 @@ class Host(Features):
 
 
     def _nonpriv_ip_proto_ports(self, rows, ip_proto):
+        # https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xml
+        # TODO: enumerate most common ports from survey (complete indicator matrix too expensive)
         wk_ref_nonpriv_proto_ports = frozenset(
             [1900, 2375, 2376, 5222, 5349, 5353, 5354, 5349, 5357, 6653])
         lowest_ports = {port for port in self._lowest_ip_proto_ports(rows, ip_proto) if port >= 1024}
