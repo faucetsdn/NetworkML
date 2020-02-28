@@ -60,20 +60,18 @@ class Host(Features):
 
 
     def pyshark_last_highest_layer(self, rows):
-        new_rows = [{'highest_layer': 0}]
+        highest_layer = 0
         for row in self._pyshark_row_layers(rows):
-            new_rows[0]['highest_layer'] = row['layers'].split('<')[-1]
-        return new_rows
+            highest_layer = row['layers'].split('<')[-1]
+        return [{'highest_layer': highest_layer}]
 
 
     def pyshark_layers(self, rows):
-        new_rows = [{}]
         layers = set()
         for row in self._pyshark_row_layers(rows):
             temp = row['layers'].split('<')[1:]
             layers.update({layer.split(' Layer')[0] for layer in temp})
-        new_rows[0].update({layer: 1 for layer in layers})
-        return new_rows
+        return [{layer: 1 for layer in layers}]
 
 
     @staticmethod
@@ -207,10 +205,7 @@ class Host(Features):
 
 
     def _get_nonpriv_ports(self, rows, ip_proto, suffix):
-        nonpriv = 0
-        if rows:
-            if self._nonpriv_ip_proto_ports(rows, ip_proto):
-                nonpriv = 1
+        nonpriv = int(bool(rows and self._nonpriv_ip_proto_ports(rows, ip_proto)))
         return [{'tshark_nonpriv_%s_ports_%s' % (ip_proto, suffix): nonpriv}]
 
 
