@@ -5,7 +5,7 @@ def test_protocols():
     instance = Host()
     assert instance.tshark_last_protocols_array(
         [{'frame.protocols': 'eth:ethertype:ip:udp:db-lsp-disc:json'}]) == [
-                {'protocol_db-lsp-disc': 1, 'protocol_ip': 1, 'protocol_json': 1, 'protocol_udp': 1, 'protocol_eth': 1}]
+                {'protocol_db-lsp-disc': 1, 'protocol_ip': 1, 'protocol_json': 1, 'protocol_udp': 1, 'protocol_eth': 1 }]
     assert instance.tshark_last_protocols_array([{}]) == [{}]
 
 
@@ -33,20 +33,24 @@ def test_ipv4_multicast():
 
 def test_tcp_flags():
     instance = Host()
-    assert instance.tshark_tcp_flags_out([{'tcp.flags': 123}]) == [{'tshark_tcp_flags_123_out': 1}]
-    assert instance.tshark_tcp_flags_in([{'tcp.flags': 123}]) == [{'tshark_tcp_flags_123_in': 1}]
+    assert instance.tshark_tcp_flags_out([{'tcp.flags': 0x00000014}]) == [
+        {'tshark_tcp_flags_ack_out': 1, 'tshark_tcp_flags_cwr_out': 0, 'tshark_tcp_flags_ece_out': 0,  'tshark_tcp_flags_fin_out': 0, 'tshark_tcp_flags_ns_out': 0, 'tshark_tcp_flags_psh_out': 0, 'tshark_tcp_flags_rst_out': 1, 'tshark_tcp_flags_syn_out': 0, 'tshark_tcp_flags_urg_out': 0}]
+    assert instance.tshark_tcp_flags_in([{'tcp.flags': 0x00000014}]) == [
+        {'tshark_tcp_flags_ack_in': 1, 'tshark_tcp_flags_cwr_in': 0, 'tshark_tcp_flags_ece_in': 0,  'tshark_tcp_flags_fin_in': 0, 'tshark_tcp_flags_ns_in': 0, 'tshark_tcp_flags_psh_in': 0, 'tshark_tcp_flags_rst_in': 1, 'tshark_tcp_flags_syn_in': 0, 'tshark_tcp_flags_urg_in': 0}]
 
 
 def test_ip_flags():
     instance = Host()
-    assert instance.tshark_ip_flags_out([{'ip.flags': 0x00004000}]) == [{'tshark_ip_flags_16384_out': 1}]
-    assert instance.tshark_ip_flags_in([{'ip.flags': 0x00004000}]) == [{'tshark_ip_flags_16384_in': 1}]
+    assert instance.tshark_ip_flags_out([{'ip.flags': 0x00004000}]) == [{'tshark_ip_flags_rb_out': 0, 'tshark_ip_flags_df_out': 1, 'tshark_ip_flags_mf_out': 0}]
+    assert instance.tshark_ip_flags_in([{'ip.flags': 0x00004000}]) == [{'tshark_ip_flags_rb_in': 0, 'tshark_ip_flags_df_in': 1, 'tshark_ip_flags_mf_in': 0}]
 
 
 def test_ip_dsfield_flags():
     instance = Host()
-    assert instance.tshark_ip_dsfield_out([{'ip.dsfield': 0x00000010}]) == [{'tshark_ip_dsfield_16_out': 1}]
-    assert instance.tshark_ip_dsfield_in([{'ip.dsfield': 0x00000010}]) == [{'tshark_ip_dsfield_16_in': 1}]
+    assert instance.tshark_ip_dsfield_out([{'ip.dsfield': 0x000000c0}]) == [
+        {'tshark_ip_dsfield_ecn0_out': 0, 'tshark_ip_dsfield_ecn1_out': 0, 'tshark_ip_dsfield_dscp0_out': 0, 'tshark_ip_dsfield_dscp1_out': 0, 'tshark_ip_dsfield_dscp2_out': 0, 'tshark_ip_dsfield_dscp3_out': 0, 'tshark_ip_dsfield_dscp4_out': 1, 'tshark_ip_dsfield_dscp5_out': 1}]
+    assert instance.tshark_ip_dsfield_in([{'ip.dsfield': 0x000000c0}]) == [
+        {'tshark_ip_dsfield_ecn0_in': 0, 'tshark_ip_dsfield_ecn1_in': 0, 'tshark_ip_dsfield_dscp0_in': 0, 'tshark_ip_dsfield_dscp1_in': 0, 'tshark_ip_dsfield_dscp2_in': 0, 'tshark_ip_dsfield_dscp3_in': 0, 'tshark_ip_dsfield_dscp4_in': 1, 'tshark_ip_dsfield_dscp5_in': 1}]
 
 
 def test_tcp_priv_ports():

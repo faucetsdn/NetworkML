@@ -60,7 +60,7 @@ class Host(Features):
 
 
     def pyshark_last_highest_layer(self, rows):
-        new_rows = [{'highest_layer': ''}]
+        new_rows = [{'highest_layer': 0}]
         for row in self._pyshark_row_layers(rows):
             new_rows[0]['highest_layer'] = row['layers'].split('<')[-1]
         return new_rows
@@ -88,9 +88,10 @@ class Host(Features):
 
 
     def tshark_last_protocols_array(self, rows):
+        protocols = set()
         try:
-            protocols = {
-                protocol for protocol in self.last_protocols(rows)[0]['Protocols'].split(':') if protocol}
+            protocols.update({
+                protocol for protocol in self.last_protocols(rows)[0]['Protocols'].split(':') if protocol})
         except IndexError:
             return []
         protocols = protocols - set(['ethertype'])
@@ -139,7 +140,7 @@ class Host(Features):
             eth_type = row.get(eth_field, None)
             if eth_type:
                 return eth_type
-        return None
+        return 0
 
 
     @staticmethod
@@ -233,19 +234,24 @@ class Host(Features):
         return self._get_nonpriv_ports(rows, 'udp', 'out')
 
 
-    def _get_flags(self, rows, suffix, flags_field):
+    def _get_flags(self, rows, suffix, flags_field, decode_map):
         flags_counter = Counter()
+        for decoded_flag in decode_map.values():
+            flags_counter[decoded_flag] = 0
         for row in rows:
-            flag = self._safe_int(row.get(flags_field, None))
-            if flag:
-                flags_counter[flag] += 1
-        return [{'tshark_%s_%u_%s' % (
-            flags_field.replace('.', '_'), flag, suffix): val
-                for flag, val in flags_counter.items()}]
+            flags = self._safe_int(row.get(flags_field, 0))
+            for bit, decoded_flag in decode_map.items():
+                if flags & (2**bit):
+                    flags_counter[decoded_flag] += 1
+        return [{'tshark_%s_%s_%s' % (
+            flags_field.replace('.', '_'), decoded_flag, suffix): val
+                for decoded_flag, val in flags_counter.items()}]
 
 
     def _get_tcp_flags(self, rows, suffix):
-        return self._get_flags(rows, suffix, 'tcp.flags')
+        return self._get_flags(rows, suffix, 'tcp.flags',
+            {0: 'fin', 1: 'syn', 2: 'rst', 3: 'psh', 4: 'ack',
+                5: 'urg', 6: 'ece', 7: 'cwr', 8: 'ns'})
 
 
     def tshark_tcp_flags_in(self, rows):
@@ -259,7 +265,8 @@ class Host(Features):
 
 
     def _get_ip_flags(self, rows, suffix):
-        return self._get_flags(rows, suffix, 'ip.flags')
+        return self._get_flags(rows, suffix, 'ip.flags',
+            {13: 'rb', 14: 'df', 15: 'mf'})
 
 
     def tshark_ip_flags_in(self, rows):
@@ -273,7 +280,9 @@ class Host(Features):
 
 
     def _get_ip_dsfield(self, rows, suffix):
-        return self._get_flags(rows, suffix, 'ip.dsfield')
+        return self._get_flags(rows, suffix, 'ip.dsfield', {
+            0: 'ecn0', 1: 'ecn1', 2: 'dscp0', 3: 'dscp1', 4: 'dscp2',
+            5: 'dscp3', 6: 'dscp4', 7: 'dscp5'})
 
 
     def tshark_ip_dsfield_in(self, rows):
