@@ -169,7 +169,7 @@ class Host(Features):
     def _priv_ip_proto_ports(self, rows, ip_proto):
         # https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xml
         wk_ref_priv_proto_ports = frozenset(
-            [22, 23, 25, 53, 67, 68, 80, 123, 137, 138, 139, 143, 161, 443, 631])
+            [22, 23, 25, 53, 67, 68, 69, 80, 88, 110, 123, 137, 138, 139, 143, 161, 443, 631])
         lowest_ports = {port for port in self._lowest_ip_proto_ports(rows, ip_proto) if port < 1024}
         priv_ports = {port: int(port in lowest_ports) for port in wk_ref_priv_proto_ports}
         priv_ports.update({'other': int(not lowest_ports.issubset(wk_ref_priv_proto_ports))})
@@ -177,9 +177,12 @@ class Host(Features):
 
 
     def _nonpriv_ip_proto_ports(self, rows, ip_proto):
-        lowest_ports = self._lowest_ip_proto_ports(rows, ip_proto)
-        non_priv_ports = {port for port in lowest_ports if port >= 1024}
-        return non_priv_ports
+        wk_ref_nonpriv_proto_ports = frozenset(
+            [1900, 2375, 2376, 5222, 5349, 5353, 5354, 5349, 5357, 6653])
+        lowest_ports = {port for port in self._lowest_ip_proto_ports(rows, ip_proto) if port >= 1024}
+        nonpriv_ports = {port: int(port in lowest_ports) for port in wk_ref_nonpriv_proto_ports}
+        nonpriv_ports.update({'other': int(not lowest_ports.issubset(wk_ref_nonpriv_proto_ports))})
+        return nonpriv_ports
 
 
     def _get_priv_ports(self, rows, ip_proto, suffix):
@@ -209,8 +212,9 @@ class Host(Features):
 
 
     def _get_nonpriv_ports(self, rows, ip_proto, suffix):
-        nonpriv = int(bool(rows and self._nonpriv_ip_proto_ports(rows, ip_proto)))
-        return [{'tshark_nonpriv_%s_ports_%s' % (ip_proto, suffix): nonpriv}]
+        nonpriv_ports = self._nonpriv_ip_proto_ports(rows, ip_proto)
+        return [{'tshark_%s_nonpriv_port_%s_%s' % (ip_proto, port, suffix): present
+            for port, present in nonpriv_ports.items()}]
 
 
     def tshark_nonpriv_tcp_ports_in(self, rows):
