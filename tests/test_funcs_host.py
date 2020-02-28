@@ -80,5 +80,4 @@ def test_tcp_nonpriv_ports():
 def test_wk_ip_protos():
     instance = Host()
     assert instance.tshark_wk_ip_protos([{'tcp': {}}, {'udp': {}}, {'somethingelse': {}}]) == [
-        {'tshark_wk_ip_proto_udp': 1, 'tshark_wk_ip_proto_other': 1, 'tshark_wk_ip_proto_tcp': 1}]
-
+        {'tshark_wk_ip_proto_arp': 0, 'tshark_wk_ip_proto_other': 1, 'tshark_wk_ip_proto_icmp6': 0, 'tshark_wk_ip_proto_icmp': 0, 'tshark_wk_ip_proto_tcp': 1, 'tshark_wk_ip_proto_udp': 1}]

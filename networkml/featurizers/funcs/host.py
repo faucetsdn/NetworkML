@@ -298,14 +298,14 @@ class Host(Features):
 
     def tshark_wk_ip_protos(self, rows):
         wk_protos = set()
-        ref_wk_protos = frozenset(('tcp', 'udp', 'icmp', 'icmp6', 'arp'))
+        ref_wk_protos = frozenset(('tcp', 'udp', 'icmp', 'icmp6', 'arp', 'other'))
         for row in rows:
             wk_proto = set(row.keys()).intersection(ref_wk_protos)
             if wk_proto:
-                wk_protos.add(list(wk_proto)[0])
+                wk_protos.update(wk_proto)
             else:
                 wk_protos.add('other')
-        return [{'tshark_wk_ip_proto_%s' % wk_proto: 1 for wk_proto in wk_protos}]
+        return [{'tshark_wk_ip_proto_%s' % wk_proto: int(wk_proto in wk_protos) for wk_proto in ref_wk_protos}]
 
 
     @staticmethod
