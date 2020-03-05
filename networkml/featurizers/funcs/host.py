@@ -1,4 +1,4 @@
-from collections import Counter
+from collections import Counter, defaultdict
 import ipaddress
 import statistics
 from numpy import percentile
@@ -25,97 +25,15 @@ class Host(Features):
         'total': sum,
     }
 
-
-    def _calc_tshark_field(self, field, tshark_field, rows):
-        field_parts = field.split('_')
-        field_prefix = field_parts[0]
-        field_suffix = field_parts[-1]
-        stat = self.NAME_TO_STAT.get(field_prefix, None)
-        assert stat is not None, field_prefix
-        rows_filter = rows
-        if field_suffix == 'in':
-            rows_filter = self._select_mac_direction(rows, output=False)
-        elif field_suffix == 'out':
-            rows_filter = self._select_mac_direction(rows, output=True)
-        new_rows = [{field: self._stat_row_field(stat, tshark_field, rows_filter)}]
-        return new_rows
-
-
-    def _pyshark_ipversions(self, rows):
-        ipversions = set()
-        for row in self._pyshark_row_layers(rows):
-            if '<IP Layer>' in row['layers']:
-                ipversions.add(4)
-            elif '<IPV6 Layer>' in row['layers']:
-                ipversions.add(6)
-        return ipversions
-
-
-    def pyshark_ipv4(self, rows):
-        return [{'IPv4': (4 in self._pyshark_ipversions(rows))}]
-
-
-    def pyshark_ipv6(self, rows):
-        return [{'IPv6': (6 in self._pyshark_ipversions(rows))}]
-
-
-    def pyshark_last_highest_layer(self, rows):
-        highest_layer = 0
-        for row in self._pyshark_row_layers(rows):
-            highest_layer = row['layers'].split('<')[-1]
-        return [{'highest_layer': highest_layer}]
-
-
-    def pyshark_layers(self, rows):
-        layers = set()
-        for row in self._pyshark_row_layers(rows):
-            temp = row['layers'].split('<')[1:]
-            layers.update({layer.split(' Layer')[0] for layer in temp})
-        return [{layer: 1 for layer in layers}]
-
-
-    @staticmethod
-    def last_protocols(rows):
-        protocols = ''
-        for row in rows:
-            row_protocols = row.get('frame.protocols', None)
-            if row_protocols is not None:
-                protocols = row_protocols
-        new_rows = [{'Protocols': protocols}]
-        return new_rows
-
-
-    def tshark_last_protocols_array(self, rows):
-        # http://www.iana.org/assignments/protocol-numbers 
-        wk_protocols = frozenset(['eth', 'ipv6', 'ip', 'tcp', 'arp', 'icmp', 'gre', 'esp'])
-        raw_protocols = set()
-        try:
-            raw_protocols.update({
-                protocol for protocol in self.last_protocols(rows)[0]['Protocols'].split(':') if protocol})
-        except IndexError:
-            pass
-        raw_protocols -= set(['ethertype'])
-        protocols = {'protocol_%s' % protocol: int(protocol in raw_protocols) for protocol in wk_protocols}
-        protocols.update({'other': int(not raw_protocols.issubset(wk_protocols))})
-        return [protocols]
-
-
-    def tshark_ipv4(self, rows):
-        return [{'IPv4': int(4 in self._tshark_ipversions(rows))}]
-
-
-    def tshark_ipv6(self, rows):
-        return [{'IPv6': int(6 in self._tshark_ipversions(rows))}]
-
-
-    def _calc_time_delta(self, field, rows):
-        assert 'time_delta' in field
-        return self._calc_tshark_field(field, 'frame.time_delta_displayed', rows)
-
-
-    def _calc_framelen(self, field, rows):
-        assert 'frame_len' in field
-        return self._calc_tshark_field(field, 'frame.len', rows)
+    # http://www.iana.org/assignments/protocol-numbers
+    WK_PROTOCOLS = frozenset(['eth', 'ipv6', 'ip', 'tcp', 'arp', 'icmp', 'gre', 'esp'])
+    # https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xml
+    # TODO: enumerate most common ports from survey (complete indicator matrix too expensive)
+    WK_PRIV_PROTO_PORTS = frozenset(
+        [22, 23, 25, 53, 67, 68, 69, 80, 88, 110, 123, 137, 138, 139, 143, 161, 443, 631])
+    WK_NONPRIV_PROTO_PORTS = frozenset(
+        [1900, 2375, 2376, 5222, 5349, 5353, 5354, 5349, 5357, 6653])
+    WK_PROTOS = frozenset(('tcp', 'udp', 'icmp', 'icmpv6', 'arp', 'other'))
 
 
     @staticmethod
@@ -154,6 +72,131 @@ class Host(Features):
         return None
 
 
+    def _row_keys(self, row):
+        keys = set()
+        for field in ('eth.src', 'eth.dst'):
+            val = row.get(field, None)
+            if not val:
+                continue
+            if not self._is_unicast(val):
+                continue
+            keys.add(val)
+        return keys
+
+
+    def _partition_rows_by_field_vals(self, rows):
+        partitioned_rows = defaultdict(list)
+        for row in rows:
+            for key in self._row_keys(row):
+                partitioned_rows[key].append(row)
+        return partitioned_rows
+
+
+    def _host_rows(self, rows, host_func):
+        newrows = []
+        for host_key, host_rows in self._partition_rows_by_field_vals(rows).items():
+            host_func_results = host_func(host_rows)
+            host_func_results.update({'host_key': host_key})
+            newrows.append(host_func_results)
+        return newrows
+
+
+    def _pyshark_ipversions(self, rows):
+        ipversions = set()
+        for row in self._pyshark_row_layers(rows):
+            if '<IP Layer>' in row['layers']:
+                ipversions.add(4)
+            elif '<IPV6 Layer>' in row['layers']:
+                ipversions.add(6)
+        return ipversions
+
+
+    def pyshark_ipv4(self, rows):
+        return [{'IPv6': (6 in self._pyshark_ipversions(rows))}]
+
+
+    def pyshark_ipv6(self, rows):
+        return [{'IPv6': (6 in self._pyshark_ipversions(rows))}]
+
+
+    def pyshark_last_highest_layer(self, rows):
+        highest_layer = 0
+        for row in self._pyshark_row_layers(rows):
+            highest_layer = row['layers'].split('<')[-1]
+        return [{'highest_layer': highest_layer}]
+
+
+    def pyshark_layers(self, rows):
+        layers = set()
+        for row in self._pyshark_row_layers(rows):
+            temp = row['layers'].split('<')[1:]
+            layers.update({layer.split(' Layer')[0] for layer in temp})
+        return [{layer: 1 for layer in layers}]
+
+
+    @staticmethod
+    def _last_protocols(rows):
+        protocols = ''
+        for row in rows:
+            row_protocols = row.get('frame.protocols', None)
+            if row_protocols is not None:
+                protocols = row_protocols
+        return protocols
+
+
+    def tshark_last_protocols_array(self, rows):
+
+        def last_protocols_array(host_rows):
+            raw_protocols = set()
+            try:
+                raw_protocols.update({
+                    protocol for protocol in self._last_protocols(host_rows).split(':') if protocol})
+            except IndexError:
+                pass
+            raw_protocols -= set(['ethertype'])
+            protocols = {'protocol_%s' % protocol: int(protocol in raw_protocols) for protocol in self.WK_PROTOCOLS}
+            protocols.update({'other': int(not raw_protocols.issubset(self.WK_PROTOCOLS))})
+            return protocols
+
+        return self._host_rows(rows, last_protocols_array)
+
+
+    def tshark_ipv4(self, rows):
+        return self._host_rows(rows, lambda x: {'IPv4': int(4 in self._tshark_ipversions(x))})
+
+
+    def tshark_ipv6(self, rows):
+        return self._host_rows(rows, lambda x: {'IPv6': int(6 in self._tshark_ipversions(x))})
+
+
+    def _calc_tshark_field(self, field, tshark_field, rows):
+
+        def calc_field(host_rows):
+            field_parts = field.split('_')
+            field_prefix = field_parts[0]
+            field_suffix = field_parts[-1]
+            stat = self.NAME_TO_STAT.get(field_prefix, None)
+            assert stat is not None, field_prefix
+            rows_filter = host_rows
+            if field_suffix == 'in':
+                rows_filter = self._select_mac_direction(host_rows, output=False)
+            elif field_suffix == 'out':
+                rows_filter = self._select_mac_direction(host_rows, output=True)
+            return {field: self._stat_row_field(stat, tshark_field, rows_filter)}
+
+        return self._host_rows(rows, calc_field)
+
+
+    def _calc_time_delta(self, field, rows):
+        assert 'time_delta' in field
+        return self._calc_tshark_field(field, 'frame.time_delta_displayed', rows)
+
+
+    def _calc_framelen(self, field, rows):
+        assert 'frame_len' in field
+        return self._calc_tshark_field(field, 'frame.len', rows)
+
+
     def _get_ip_proto_ports(self, row, ip_proto):
         src_port = self._safe_int(row.get('.'.join((ip_proto, 'srcport')), None))
         dst_port = self._safe_int(row.get('.'.join((ip_proto, 'dstport')), None))
@@ -171,31 +214,27 @@ class Host(Features):
 
 
     def _priv_ip_proto_ports(self, rows, ip_proto):
-        # https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xml
-        # TODO: enumerate most common ports from survey (complete indicator matrix too expensive)
-        wk_ref_priv_proto_ports = frozenset(
-            [22, 23, 25, 53, 67, 68, 69, 80, 88, 110, 123, 137, 138, 139, 143, 161, 443, 631])
         lowest_ports = {port for port in self._lowest_ip_proto_ports(rows, ip_proto) if port < 1024}
-        priv_ports = {port: int(port in lowest_ports) for port in wk_ref_priv_proto_ports}
-        priv_ports.update({'other': int(not lowest_ports.issubset(wk_ref_priv_proto_ports))})
+        priv_ports = {port: int(port in lowest_ports) for port in self.WK_PRIV_PROTO_PORTS}
+        priv_ports.update({'other': int(not lowest_ports.issubset(self.WK_PRIV_PROTO_PORTS))})
         return priv_ports
 
 
     def _nonpriv_ip_proto_ports(self, rows, ip_proto):
-        # https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xml
-        # TODO: enumerate most common ports from survey (complete indicator matrix too expensive)
-        wk_ref_nonpriv_proto_ports = frozenset(
-            [1900, 2375, 2376, 5222, 5349, 5353, 5354, 5349, 5357, 6653])
         lowest_ports = {port for port in self._lowest_ip_proto_ports(rows, ip_proto) if port >= 1024}
-        nonpriv_ports = {port: int(port in lowest_ports) for port in wk_ref_nonpriv_proto_ports}
-        nonpriv_ports.update({'other': int(not lowest_ports.issubset(wk_ref_nonpriv_proto_ports))})
+        nonpriv_ports = {port: int(port in lowest_ports) for port in self.WK_NONPRIV_PROTO_PORTS}
+        nonpriv_ports.update({'other': int(not lowest_ports.issubset(self.WK_NONPRIV_PROTO_PORTS))})
         return nonpriv_ports
 
 
     def _get_priv_ports(self, rows, ip_proto, suffix):
-        priv_ports = self._priv_ip_proto_ports(rows, ip_proto)
-        return [{'tshark_%s_priv_port_%s_%s' % (ip_proto, port, suffix): present
-            for port, present in priv_ports.items()}]
+
+        def priv_ports_present(host_rows):
+            priv_ports = self._priv_ip_proto_ports(host_rows, ip_proto)
+            return {'tshark_%s_priv_port_%s_%s' % (ip_proto, port, suffix): present
+                    for port, present in priv_ports.items()}
+
+        return self._host_rows(rows, priv_ports_present)
 
 
     def tshark_priv_tcp_ports_in(self, rows):
@@ -219,9 +258,13 @@ class Host(Features):
 
 
     def _get_nonpriv_ports(self, rows, ip_proto, suffix):
-        nonpriv_ports = self._nonpriv_ip_proto_ports(rows, ip_proto)
-        return [{'tshark_%s_nonpriv_port_%s_%s' % (ip_proto, port, suffix): present
-            for port, present in nonpriv_ports.items()}]
+
+        def nonpriv_ports_present(host_rows):
+            nonpriv_ports = self._nonpriv_ip_proto_ports(host_rows, ip_proto)
+            return {'tshark_%s_nonpriv_port_%s_%s' % (ip_proto, port, suffix): present
+                    for port, present in nonpriv_ports.items()}
+
+        return self._host_rows(rows, nonpriv_ports_present)
 
 
     def tshark_nonpriv_tcp_ports_in(self, rows):
@@ -254,40 +297,56 @@ class Host(Features):
                 for bit, decoded_flag in decode_map.items():
                     if flags & (2**bit):
                         flags_counter[decoded_flag] += 1
-        return [{'tshark_%s_%s_%s' % (
+        return {'tshark_%s_%s_%s' % (
             flags_field.replace('.', '_'), decoded_flag, suffix): val
-                for decoded_flag, val in flags_counter.items()}]
+                for decoded_flag, val in flags_counter.items()}
 
 
     def _get_tcp_flags(self, rows, suffix):
-        return self._get_flags(rows, suffix, 'tcp.flags',
-            {0: 'fin', 1: 'syn', 2: 'rst', 3: 'psh', 4: 'ack',
-                5: 'urg', 6: 'ece', 7: 'cwr', 8: 'ns'})
+        return self._get_flags(
+            rows, suffix, 'tcp.flags',
+            {0: 'fin', 1: 'syn', 2: 'rst', 3: 'psh', 4: 'ack', 5: 'urg', 6: 'ece', 7: 'cwr', 8: 'ns'})
 
 
     def tshark_tcp_flags_in(self, rows):
-        rows_filter = self._select_mac_direction(rows, output=False)
-        return self._get_tcp_flags(rows_filter, 'in')
+
+        def tcp_flags_in(host_rows):
+            rows_filter = self._select_mac_direction(host_rows, output=False)
+            return self._get_tcp_flags(rows_filter, 'in')
+
+        return self._host_rows(rows, tcp_flags_in)
 
 
     def tshark_tcp_flags_out(self, rows):
-        rows_filter = self._select_mac_direction(rows, output=True)
-        return self._get_tcp_flags(rows_filter, 'out')
+
+        def tcp_flags_out(host_rows):
+            rows_filter = self._select_mac_direction(host_rows, output=True)
+            return self._get_tcp_flags(rows_filter, 'out')
+
+        return self._host_rows(rows, tcp_flags_out)
 
 
     def _get_ip_flags(self, rows, suffix):
-        return self._get_flags(rows, suffix, 'ip.flags',
-            {13: 'rb', 14: 'df', 15: 'mf'})
+        return self._get_flags(
+            rows, suffix, 'ip.flags', {13: 'rb', 14: 'df', 15: 'mf'})
 
 
     def tshark_ip_flags_in(self, rows):
-        rows_filter = self._select_mac_direction(rows, output=False)
-        return self._get_ip_flags(rows_filter, 'in')
+
+        def ip_flags_in(host_rows):
+            rows_filter = self._select_mac_direction(host_rows, output=False)
+            return self._get_ip_flags(rows_filter, 'in')
+
+        return self._host_rows(rows, ip_flags_in)
 
 
     def tshark_ip_flags_out(self, rows):
-        rows_filter = self._select_mac_direction(rows, output=True)
-        return self._get_ip_flags(rows_filter, 'out')
+
+        def ip_flags_out(host_rows):
+            rows_filter = self._select_mac_direction(host_rows, output=True)
+            return self._get_ip_flags(rows_filter, 'out')
+
+        return self._host_rows(rows, ip_flags_out)
 
 
     def _get_ip_dsfield(self, rows, suffix):
@@ -297,79 +356,111 @@ class Host(Features):
 
 
     def tshark_ip_dsfield_in(self, rows):
-        rows_filter = self._select_mac_direction(rows, output=False)
-        return self._get_ip_dsfield(rows_filter, 'in')
+
+        def ip_dsfield_in(host_rows):
+            rows_filter = self._select_mac_direction(host_rows, output=False)
+            return self._get_ip_dsfield(rows_filter, 'in')
+
+        return self._host_rows(rows, ip_dsfield_in)
 
 
     def tshark_ip_dsfield_out(self, rows):
-        rows_filter = self._select_mac_direction(rows, output=True)
-        return self._get_ip_dsfield(rows_filter, 'out')
+
+        def ip_dsfield_out(host_rows):
+            rows_filter = self._select_mac_direction(host_rows, output=True)
+            return self._get_ip_dsfield(rows_filter, 'out')
+
+        return self._host_rows(rows, ip_dsfield_out)
 
 
     def tshark_wk_ip_protos(self, rows):
-        wk_protos = set()
-        ref_wk_protos = frozenset(('tcp', 'udp', 'icmp', 'icmp6', 'arp', 'other'))
-        for row in rows:
-            wk_proto = set(row.keys()).intersection(ref_wk_protos)
-            if wk_proto:
-                wk_protos.update(wk_proto)
-            else:
-                wk_protos.add('other')
-        return [{'tshark_wk_ip_proto_%s' % wk_proto: int(wk_proto in wk_protos) for wk_proto in ref_wk_protos}]
+
+        def protos(host_rows):
+            wk_protos = set()
+            for row in host_rows:
+                row_layers = {layer.split('.')[0] for layer, val in row.items() if '.' in layer and val} - set(
+                    ['data', 'eth', 'ip', 'ipv6', '_ws', 'frame'])
+                wk_proto = row_layers.intersection(self.WK_PROTOS)
+                if wk_proto:
+                    wk_protos.update(wk_proto)
+                if row_layers - wk_proto:
+                    wk_protos.add('other')
+            return {'tshark_wk_ip_proto_%s' % wk_proto: int(wk_proto in wk_protos) for wk_proto in self.WK_PROTOS}
+
+        return self._host_rows(rows, protos)
 
 
-    @staticmethod
-    def tshark_vlan_id(rows):
-        vlan_id = 0
-        for row in rows:
-            vlan_id = row.get('vlan.id', 0)
-            if vlan_id:
-                break
-        return [{'tshark_vlan_id': vlan_id}]
+    def tshark_vlan_id(self, rows):
+
+        def first_vlan_id(host_rows):
+            vlan_id = 0
+            for row in host_rows:
+                vlan_id = row.get('vlan.id', 0)
+                if vlan_id:
+                    break
+            return {'tshark_vlan_id': vlan_id}
+
+        return self._host_rows(rows, first_vlan_id)
 
 
     def tshark_ipx(self, rows):
-        ipx = 0
-        for row in rows:
-            if self._get_proto_eth_type(row) == ETH_TYPE_IPX:
-                ipx = 1
-                break
-        return [{'tshark_ipx': ipx}]
+
+        def first_ipx(host_rows):
+            ipx = 0
+            for row in host_rows:
+                if self._get_proto_eth_type(row) == ETH_TYPE_IPX:
+                    ipx = 1
+                    break
+            return {'tshark_ipx': ipx}
+
+        return self._host_rows(rows, first_ipx)
 
 
     def tshark_both_private_ip(self, rows):
-        both_private = 0
-        if rows:
-            both_private = 1
-            for row in rows:
-                ip_src, ip_dst = self._get_ips(row)
-                if ip_src and ip_dst:
-                    if not (ip_src.is_private and ip_dst.is_private):
-                        both_private = 0
-                        break
-        return [{'tshark_both_private_ip': both_private}]
+
+        def first_not_both_private_ip(host_rows):
+            both_private = 0
+            if host_rows:
+                both_private = 1
+                for row in host_rows:
+                    ip_src, ip_dst = self._get_ips(row)
+                    if ip_src and ip_dst:
+                        if not ip_src.is_private or not ip_dst.is_private:
+                            both_private = 0
+                            break
+            return {'tshark_both_private_ip': both_private}
+
+        return self._host_rows(rows, first_not_both_private_ip)
 
 
     def tshark_ipv4_multicast(self, rows):
-        multicast = 0
-        if rows:
-            for row in rows:
-                _, ip_dst = self._get_ips(row)
-                if ip_dst and ip_dst.version == 4 and ip_dst.is_multicast:
-                    multicast = 1
-                    break
-        return [{'tshark_ipv4_multicast': multicast}]
+
+        def first_ipv4_multicast(host_rows):
+            multicast = 0
+            if host_rows:
+                for row in host_rows:
+                    _, ip_dst = self._get_ips(row)
+                    if ip_dst and ip_dst.version == 4 and ip_dst.is_multicast:
+                        multicast = 1
+                        break
+            return {'tshark_ipv4_multicast': multicast}
+
+        return self._host_rows(rows, first_ipv4_multicast)
 
 
     def tshark_non_ip(self, rows):
-        non_ip = 1
-        if rows:
-            non_ip = 0
-            for row in rows:
-                if self._get_proto_eth_type(row) not in ETH_IP_TYPES:
-                    non_ip = 1
-                    break
-        return [{'tshark_non_ip': non_ip}]
+
+        def first_non_ip(host_rows):
+            non_ip = 1
+            if host_rows:
+                non_ip = 0
+                for row in host_rows:
+                    if self._get_proto_eth_type(row) not in ETH_IP_TYPES:
+                        non_ip = 1
+                        break
+            return {'tshark_non_ip': non_ip}
+
+        return self._host_rows(rows, first_non_ip)
 
 
     def tshark_average_time_delta(self, rows):
