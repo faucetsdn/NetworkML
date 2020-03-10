@@ -112,7 +112,7 @@ class Host(Features):
 
 
     def pyshark_ipv4(self, rows):
-        return [{'IPv6': (6 in self._pyshark_ipversions(rows))}]
+        return [{'IPv4': (4 in self._pyshark_ipversions(rows))}]
 
 
     def pyshark_ipv6(self, rows):
