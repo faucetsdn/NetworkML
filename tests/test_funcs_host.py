@@ -1,6 +1,13 @@
 from networkml.featurizers.funcs.host import Host
 
 
+def test_max_frame_time():
+    instance = Host()
+    assert instance.tshark_max_frame_time_in([
+        {'eth.src': '0e:02:03:04:05:06', 'frame.time_epoch': 999},
+        {'eth.src': '0e:02:03:04:05:06', 'frame.time_epoch': 1001}]) == [
+                {'host_key': '0e:02:03:04:05:06', 'max_frame_time_in': 1001}]
+
 
 def test_max_frame_len():
     instance = Host()

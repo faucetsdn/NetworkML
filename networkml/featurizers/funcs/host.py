@@ -504,6 +504,22 @@ class Host(Features):
 
     # By direction
 
+    def tshark_min_frame_time_in(self, rows):
+        return self._calc_tshark_field('min_frame_time_in', 'frame.time_epoch', rows)
+
+
+    def tshark_min_frame_time_out(self, rows):
+        return self._calc_tshark_field('min_frame_time_out', 'frame.time_epoch', rows)
+
+
+    def tshark_max_frame_time_in(self, rows):
+        return self._calc_tshark_field('max_frame_time_in', 'frame.time_epoch', rows)
+
+
+    def tshark_max_frame_time_out(self, rows):
+        return self._calc_tshark_field('max_frame_time_out', 'frame.time_epoch', rows)
+
+
     def tshark_count_frame_len_in(self, rows):
         return self._calc_framelen('count_frame_len_in', rows)
 
