@@ -586,6 +586,12 @@ class Host(HostBase, Features):
             keys.add(val)
         return keys
 
+    def pyshark_ipv4(self, rows):
+        return self._pyshark_ipv4(rows)
+
+    def pyshark_ipv6(self, rows):
+        return self._pyshark_ipv6(rows)
+
     def host_tshark_last_protocols_array(self, rows):
         return self._tshark_last_protocols_array(rows)
 
@@ -797,8 +803,8 @@ class Host(HostBase, Features):
 class SessionHost(HostBase, Features):
 
     def _row_keys(self, row):
-        eth_src = row['eth.src']
-        eth_dst = row['eth.dst']
+        eth_src = row.get('eth.src', None)
+        eth_dst = row.get('eth.dst', None)
         ip_src, ip_dst = self._get_ips(row)
         wk_proto, _ = self._row_protos(row)
         ip_proto = wk_proto.intersection({'tcp', 'udp'})
@@ -810,10 +816,13 @@ class SessionHost(HostBase, Features):
         ip_dstport = None
         if ip_proto:
             ip_srcport, ip_dstport = self._get_ip_proto_ports(row, ip_proto)
+        if self._is_unicast(eth_dst):
+            return {
+                (eth_src, ip_proto, ip_src, ip_srcport, eth_dst, ip_dst, ip_dstport),
+                (eth_dst, ip_proto, ip_dst, ip_dstport, eth_src, ip_src, ip_srcport),
+            }
         return {
-            (eth_src, ip_proto, ip_src, ip_srcport, eth_dst, ip_dst, ip_dstport),
-            (eth_dst, ip_proto, ip_dst, ip_dstport, eth_src, ip_src, ip_srcport),
-        }
+             (eth_src, ip_proto, ip_src, ip_srcport, eth_dst, ip_dst, ip_dstport)}
 
     def _host_rows(self, rows, host_func):
         newrows = []
