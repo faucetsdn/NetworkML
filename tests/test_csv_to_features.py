@@ -1,3 +1,4 @@
+import shutil
 import sys
 import tempfile
 import os
@@ -19,18 +20,25 @@ def test_CSVToFeatures():
 
 
 def test_CSVToFeatures_no_output():
-    sys.argv = ['pcap_to_csv.py', '-e', 'tshark', './tests/test_data/trace_ab12_2001-01-01_02_03-client-ip6-1-2-3-4.pcap']
-    instance = PCAPToCSV()
-    instance.main()
-    sys.argv = ['csv_to_features.py', '-c', '-g', 'tshark', './tests/test_data/trace_ab12_2001-01-01_02_03-client-ip6-1-2-3-4.pcap.csv.gz']
-    instance2 = CSVToFeatures()
-    instance2.main()
+    with tempfile.TemporaryDirectory() as tmpdir:
+        shutil.copytree('./tests/test_data', tmpdir)
+        sys.argv = ['pcap_to_csv.py', '-e', 'tshark',
+                    os.path.join(tmpdir, 'trace_ab12_2001-01-01_02_03-client-ip6-1-2-3-4.pcap')]
+        instance = PCAPToCSV()
+        instance.main()
+        sys.argv = ['csv_to_features.py', '-c', '-g', 'tshark',
+                    os.path.join(tmpdir, 'trace_ab12_2001-01-01_02_03-client-ip6-1-2-3-4.pcap.csv.gz')]
+        instance2 = CSVToFeatures()
+        instance2.main()
 
 
 def test_CSVToFeatures_no_group_or_func():
-    sys.argv = ['csv_to_features.py', '-g', '', './tests/test_data/trace_ab12_2001-01-01_02_03-client-ip-1-2-3-4.pcap.csv.gz']
-    instance = CSVToFeatures()
-    instance.main()
+    with tempfile.TemporaryDirectory() as tmpdir:
+        shutil.copytree('./tests/test_data', tmpdir)
+        sys.argv = ['csv_to_features.py', '-g', '',
+                    os.path.join(tmpdir, 'trace_ab12_2001-01-01_02_03-client-ip-1-2-3-4.pcap.csv.gz')]
+        instance = CSVToFeatures()
+        instance.main()
 
 
 def test_CSVToFeatures_dir():
