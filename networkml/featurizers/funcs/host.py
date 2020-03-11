@@ -90,7 +90,7 @@ class HostBase:
 
     def _pyshark_ipversions(self, rows):
         ipversions = set()
-        for row in self._pyshark_row_layers(rows):
+        for row in self._pyshark_row_layers(rows):  # pytype: disable=attribute-error
             if '<IP Layer>' in row['layers']:
                 ipversions.add(4)
             elif '<IPV6 Layer>' in row['layers']:
@@ -140,7 +140,7 @@ class HostBase:
                 rows_filter = self._select_mac_direction(host_rows, output=False)
             elif field_suffix == 'out':
                 rows_filter = self._select_mac_direction(host_rows, output=True)
-            return {field: self._stat_row_field(stat, tshark_field, rows_filter)}
+            return {field: self._stat_row_field(stat, tshark_field, rows_filter)}  # pytype: disable=attribute-error
 
         return self._host_rows(rows, calc_field)
 
@@ -153,8 +153,8 @@ class HostBase:
         return self._calc_tshark_field(field, 'frame.len', rows)
 
     def _get_ip_proto_ports(self, row, ip_proto):
-        src_port = self._safe_int(row.get('.'.join((ip_proto, 'srcport')), None))
-        dst_port = self._safe_int(row.get('.'.join((ip_proto, 'dstport')), None))
+        src_port = self._safe_int(row.get('.'.join((ip_proto, 'srcport')), None))  # pytype: disable=attribute-error
+        dst_port = self._safe_int(row.get('.'.join((ip_proto, 'dstport')), None))  # pytype: disable=attribute-error
         return (src_port, dst_port)
 
     def _lowest_ip_proto_ports(self, rows, ip_proto):
@@ -198,10 +198,10 @@ class HostBase:
 
     def _get_flags(self, rows, suffix, flags_field, decode_map):
         flags_counter = Counter()
-        for decoded_flag in decode_map.values():
+        for decoded_flag in decode_map.values():  # pytype: disable=attribute-error
             flags_counter[decoded_flag] = 0
         for row in rows:
-            flags = self._safe_int(row.get(flags_field, 0))
+            flags = self._safe_int(row.get(flags_field, 0))  # pytype: disable=attribute-error
             if flags:
                 for bit, decoded_flag in decode_map.items():
                     if flags & (2**bit):
@@ -232,13 +232,13 @@ class HostBase:
 
     def _pyshark_last_highest_layer(self, rows):
         highest_layer = 0
-        for row in self._pyshark_row_layers(rows):
+        for row in self._pyshark_row_layers(rows):  # pytype: disable=attribute-error
             highest_layer = row['layers'].split('<')[-1]
         return [{'highest_layer': highest_layer}]
 
     def _pyshark_layers(self, rows):
         layers = set()
-        for row in self._pyshark_row_layers(rows):
+        for row in self._pyshark_row_layers(rows):  # pytype: disable=attribute-error
             temp = row['layers'].split('<')[1:]
             layers.update({layer.split(' Layer')[0] for layer in temp})
         return [{layer: 1 for layer in layers}]
