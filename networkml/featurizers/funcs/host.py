@@ -586,9 +586,6 @@ class Host(HostBase, Features):
             keys.add(val)
         return keys
 
-    def host_tshark_input_mac(self, rows):
-        return self._tshark_input_mac(rows)
-
     def host_tshark_last_protocols_array(self, rows):
         return self._tshark_last_protocols_array(rows)
 
@@ -827,9 +824,6 @@ class SessionHost(HostBase, Features):
             host_func_results.update({'host_key': host_key})
             newrows.append(host_func_results)
         return newrows
-
-    def sessionhost_tshark_input_mac(self, rows):
-        return self._tshark_input_mac(rows)
 
     def sessionhost_tshark_last_protocols_array(self, rows):
         return self._tshark_last_protocols_array(rows)
