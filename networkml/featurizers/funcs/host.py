@@ -35,7 +35,6 @@ class HostBase:
         [1900, 2375, 2376, 5222, 5349, 5353, 5354, 5349, 5357, 6653])
     WK_PROTOS = frozenset(('tcp', 'udp', 'icmp', 'icmpv6', 'arp', 'other'))
 
-
     def _pyshark_ipversions(self, rows):
         ipversions = set()
         for row in self._pyshark_row_layers(rows):
@@ -44,6 +43,9 @@ class HostBase:
             elif '<IPV6 Layer>' in row['layers']:
                 ipversions.add(6)
         return ipversions
+
+    def _pyshark_ipversion(self, version, rows):
+        return [{'IPv%u' % version: (version in self._pyshark_ipversions(rows))}]
 
     @staticmethod
     def _last_protocols(rows):
@@ -82,25 +84,6 @@ class Host(HostBase, Features):
             host_func_results.update({'host_key': host_key})
             newrows.append(host_func_results)
         return newrows
-
-    def pyshark_ipv4(self, rows):
-        return [{'IPv4': (4 in self._pyshark_ipversions(rows))}]
-
-    def pyshark_ipv6(self, rows):
-        return [{'IPv6': (6 in self._pyshark_ipversions(rows))}]
-
-    def pyshark_last_highest_layer(self, rows):
-        highest_layer = 0
-        for row in self._pyshark_row_layers(rows):
-            highest_layer = row['layers'].split('<')[-1]
-        return [{'highest_layer': highest_layer}]
-
-    def pyshark_layers(self, rows):
-        layers = set()
-        for row in self._pyshark_row_layers(rows):
-            temp = row['layers'].split('<')[1:]
-            layers.update({layer.split(' Layer')[0] for layer in temp})
-        return [{layer: 1 for layer in layers}]
 
     def _calc_tshark_field(self, field, tshark_field, rows):
 
@@ -198,6 +181,25 @@ class Host(HostBase, Features):
         return self._get_flags(rows, suffix, 'ip.dsfield', {
             0: 'ecn0', 1: 'ecn1', 2: 'dscp0', 3: 'dscp1', 4: 'dscp2',
             5: 'dscp3', 6: 'dscp4', 7: 'dscp5'})
+
+    def pyshark_ipv4(self, rows):
+        return self._pyshark_ipversion(4, rows)
+
+    def pyshark_ipv6(self, rows):
+        return self._pyshark_ipversion(6, rows)
+
+    def pyshark_last_highest_layer(self, rows):
+        highest_layer = 0
+        for row in self._pyshark_row_layers(rows):
+            highest_layer = row['layers'].split('<')[-1]
+        return [{'highest_layer': highest_layer}]
+
+    def pyshark_layers(self, rows):
+        layers = set()
+        for row in self._pyshark_row_layers(rows):
+            temp = row['layers'].split('<')[1:]
+            layers.update({layer.split(' Layer')[0] for layer in temp})
+        return [{layer: 1 for layer in layers}]
 
     def tshark_last_protocols_array(self, rows):
 
