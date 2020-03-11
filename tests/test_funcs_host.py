@@ -1,6 +1,22 @@
 from networkml.featurizers.funcs.host import Host
 
 
+def test_tshark_input_mac():
+    instance = Host()
+    # 1 appears the most on both sides.
+    # pytype: disable=attribute-error
+    assert instance._tshark_input_mac(
+        [{'eth.src': 1, 'eth.dst': 2}, {'eth.src': 2, 'eth.dst': 1}, {'eth.src': 1, 'eth.dst': 99}]) == (1, {1, 2, 99})
+
+
+def test_select_mac_direction():
+    rows = [{'eth.src': 1, 'eth.dst': 2}, {'eth.src': 2, 'eth.dst': 1}, {'eth.src': 1, 'eth.dst': 99}]
+    instance = Host()
+    # pytype: disable=attribute-error
+    assert [{'eth.dst': 1, 'eth.src': 2}, {'eth.src': 1}, {'eth.src': 2}, {'eth.src': 99}] == list(instance._select_mac_direction(rows, output=False))
+    assert [{'eth.dst': 2, 'eth.src': 1}, {'eth.dst': 99, 'eth.src': 1}, {'eth.src': 1}, {'eth.src': 2}, {'eth.src': 99}] == list(instance._select_mac_direction(rows, output=True))
+
+
 def test_max_frame_time():
     instance = Host()
     assert instance.host_tshark_max_frame_time_in([
