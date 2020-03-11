@@ -1,10 +1,5 @@
 import ipaddress
 import statistics
-from collections import Counter
-import netaddr
-
-
-MAC_BCAST = netaddr.EUI('FF-FF-FF-FF-FF-FF')
 
 
 class Features():
@@ -36,56 +31,6 @@ class Features():
             return statfunc([float(row[field]) for row in filter(lambda row: field in row, rows)])
         except (IndexError, ValueError, statistics.StatisticsError):
             return 0
-
-    @staticmethod
-    def _is_unicast(mac):
-        mac_val = netaddr.EUI(mac)
-        if mac_val == MAC_BCAST or netaddr.EUI(mac_val).packed[0] & 1:
-            return False
-        return True
-
-    def _tshark_input_mac(self, rows):
-        '''Infer MAC address of host connected to a port, from pcap.
-
-           Pick the host that most often occurs as both source and destination.
-        '''
-        eth_srcs = Counter()
-        eth_dsts = Counter()
-        all_eths = Counter()
-
-        for row in rows:
-            eth_src = row.get('eth.src', None)
-            if eth_src and self._is_unicast(eth_src):
-                eth_srcs[eth_src] += 1
-                all_eths[eth_src] += 1
-            eth_dst = row.get('eth.dst', None)
-            if eth_dst and self._is_unicast(eth_dst):
-                eth_dsts[eth_dst] += 1
-                all_eths[eth_dst] += 1
-
-        common_eth = set(eth_srcs).union(eth_dsts)
-        if len(common_eth) > 1:
-            common_count = [(eth, all_eths[eth]) for eth in common_eth]
-            max_eth = sorted(common_count, key=lambda x: x[1])[-1][0]
-            return (max_eth, set(all_eths.keys()))
-        return (None, None)
-
-    def _select_mac_direction(self, rows, output=True):
-        '''Return filter expression selecting input or output rows.'''
-        src_mac, all_macs = self._tshark_input_mac(rows)
-        # Select all if can't infer direction.
-        if src_mac is None or len(all_macs) == 1:
-            return rows
-        # We have to return rows for all hosts whether in or out
-        # to ensure columns are always present.
-        placeholder_rows = [{'eth.src': eth_src} for eth_src in all_macs]
-        if output:
-            # Select all rows where traffic originated by inferred source MAC
-            return filter(lambda row: (
-                row.get('eth.src', None) == src_mac or len(row) == 1), rows + placeholder_rows)
-        # Select all rows where traffic not originated by inferred source MAC.
-        return filter(lambda row: (
-            row.get('eth.src', None) != src_mac or len(row) == 1), rows + placeholder_rows)
 
     @staticmethod
     def _tshark_ipversions(rows):
