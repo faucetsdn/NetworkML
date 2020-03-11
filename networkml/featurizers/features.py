@@ -1,10 +1,10 @@
+import ipaddress
 import statistics
 from collections import Counter
 import netaddr
 
 
 MAC_BCAST = netaddr.EUI('FF-FF-FF-FF-FF-FF')
-
 
 
 class Features():
@@ -23,13 +23,11 @@ class Features():
         results = func(*args)
         return results
 
-
     @staticmethod
     def get_columns(fields, rows):
         # Terse but efficient.
         new_rows = [{field: row[field] for field in fields if row.get(field, None)} for row in rows]
         return new_rows
-
 
     @staticmethod
     def _stat_row_field(statfunc, field, rows):
@@ -39,14 +37,12 @@ class Features():
         except (IndexError, ValueError, statistics.StatisticsError):
             return 0
 
-
     @staticmethod
     def _is_unicast(mac):
         mac_val = netaddr.EUI(mac)
         if mac_val == MAC_BCAST or netaddr.EUI(mac_val).packed[0] & 1:
             return False
         return True
-
 
     def _tshark_input_mac(self, rows):
         '''Infer MAC address of host connected to a port, from pcap.
@@ -74,7 +70,6 @@ class Features():
             return (max_eth, set(all_eths.keys()))
         return (None, None)
 
-
     def _select_mac_direction(self, rows, output=True):
         '''Return filter expression selecting input or output rows.'''
         src_mac, all_macs = self._tshark_input_mac(rows)
@@ -92,12 +87,43 @@ class Features():
         return filter(lambda row: (
             row.get('eth.src', None) != src_mac or len(row) == 1), rows + placeholder_rows)
 
-
     @staticmethod
     def _tshark_ipversions(rows):
         return {int(row['ip.version']) for row in rows if row.get('ip.version', None)}
 
-
     @staticmethod
     def _pyshark_row_layers(rows):
         return filter(lambda row: 'layers' in row, rows)
+
+    @staticmethod
+    def _get_ips(row):
+        ip_src = None
+        for src_field in ('ip.src', 'ip.src_host'):
+            ip_src = row.get(src_field, None)
+            if ip_src:
+                break
+        ip_dst = None
+        for dst_field in ('ip.dst', 'ip.dst_host'):
+            ip_dst = row.get(dst_field, None)
+            if ip_dst:
+                break
+        if ip_src and ip_dst:
+            ip_src = ipaddress.ip_address(ip_src)
+            ip_dst = ipaddress.ip_address(ip_dst)
+        return (ip_src, ip_dst)
+
+    @staticmethod
+    def _get_proto_eth_type(row):
+        for eth_field in ('vlan.etype', 'eth.type'):
+            eth_type = row.get(eth_field, None)
+            if eth_type:
+                return eth_type
+        return 0
+
+    @staticmethod
+    def _safe_int(maybeint):
+        if isinstance(maybeint, int) or maybeint is None:
+            return maybeint
+        if maybeint:
+            return int(maybeint, 0)
+        return None
