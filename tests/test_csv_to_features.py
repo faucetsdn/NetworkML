@@ -1,9 +1,12 @@
+import shutil
 import sys
 import tempfile
 import os
 
 from networkml.featurizers.csv_to_features import CSVToFeatures
 from networkml.parsers.pcap_to_csv import PCAPToCSV
+
+C2FARGS = ['csv_to_features.py', '-c', '-g', 'host_tshark']
 
 
 def test_CSVToFeatures():
@@ -12,25 +15,31 @@ def test_CSVToFeatures():
                     './tests/test_data/trace_ab12_2001-01-01_02_03-client-ip-1-2-3-4.pcap']
         instance = PCAPToCSV()
         instance.main()
-        sys.argv = ['csv_to_features.py', '-c', '-g', 'tshark',
-                    '-o', os.path.join(tmpdir, 'combined.csv.gz'), os.path.join(tmpdir, 'foo-1.csv.gz')]
+        sys.argv = C2FARGS + [
+            '-o', os.path.join(tmpdir, 'combined.csv.gz'), os.path.join(tmpdir, 'foo-1.csv.gz')]
         instance2 = CSVToFeatures()
         instance2.main()
 
 
 def test_CSVToFeatures_no_output():
-    sys.argv = ['pcap_to_csv.py', '-e', 'tshark', './tests/test_data/trace_ab12_2001-01-01_02_03-client-ip6-1-2-3-4.pcap']
-    instance = PCAPToCSV()
-    instance.main()
-    sys.argv = ['csv_to_features.py', '-c', '-g', 'tshark', './tests/test_data/trace_ab12_2001-01-01_02_03-client-ip6-1-2-3-4.pcap.csv.gz']
-    instance2 = CSVToFeatures()
-    instance2.main()
+    with tempfile.TemporaryDirectory() as tmpdir:
+        testdata = os.path.join(tmpdir, 'test_data')
+        shutil.copytree('./tests/test_data', testdata)
+        sys.argv = ['pcap_to_csv.py', '-e', 'tshark', os.path.join(testdata, 'trace_ab12_2001-01-01_02_03-client-ip6-1-2-3-4.pcap')]
+        instance = PCAPToCSV()
+        instance.main()
+        sys.argv = C2FARGS + [os.path.join(testdata, 'trace_ab12_2001-01-01_02_03-client-ip6-1-2-3-4.pcap.csv.gz')]
+        instance2 = CSVToFeatures()
+        instance2.main()
 
 
 def test_CSVToFeatures_no_group_or_func():
-    sys.argv = ['csv_to_features.py', '-g', '', './tests/test_data/trace_ab12_2001-01-01_02_03-client-ip-1-2-3-4.pcap.csv.gz']
-    instance = CSVToFeatures()
-    instance.main()
+    with tempfile.TemporaryDirectory() as tmpdir:
+        testdata = os.path.join(tmpdir, 'test_data')
+        shutil.copytree('./tests/test_data', testdata)
+        sys.argv = ['csv_to_features.py', '-g', '', os.path.join(testdata, 'trace_ab12_2001-01-01_02_03-client-ip-1-2-3-4.pcap.csv.gz')]
+        instance = CSVToFeatures()
+        instance.main()
 
 
 def test_CSVToFeatures_dir():
@@ -38,7 +47,7 @@ def test_CSVToFeatures_dir():
         sys.argv = ['pcap_to_csv.py', '-e', 'tshark', '-o', os.path.join(tmpdir, 'foo2'), './tests']
         instance = PCAPToCSV()
         instance.main()
-        sys.argv = ['csv_to_features.py', '-t', '2', '-c', '-g', 'tshark', os.path.join(tmpdir, 'foo2')]
+        sys.argv = C2FARGS + ['-t', '2', os.path.join(tmpdir, 'foo2')]
         instance2 = CSVToFeatures()
         instance2.main()
 
@@ -50,7 +59,7 @@ def test_CSVToFeatures_dir_output():
         sys.argv = ['pcap_to_csv.py', '-e', 'tshark', '-o', foo2, './tests']
         instance = PCAPToCSV()
         instance.main()
-        sys.argv = ['csv_to_features.py', '-t', '2', '-c', '-g', 'tshark', '-o', foo2out, foo2]
+        sys.argv = C2FARGS + ['-t', '2', '-o', foo2out, foo2]
         instance2 = CSVToFeatures()
         instance2.main()
 
