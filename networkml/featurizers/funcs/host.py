@@ -816,7 +816,7 @@ class SessionHost(HostBase, Features):
         ip_dstport = None
         if ip_proto:
             ip_srcport, ip_dstport = self._get_ip_proto_ports(row, ip_proto)
-        if self._is_unicast(eth_dst):
+        if eth_dst and self._is_unicast(eth_dst):
             return {
                 (eth_src, ip_proto, ip_src, ip_srcport, eth_dst, ip_dst, ip_dstport),
                 (eth_dst, ip_proto, ip_dst, ip_dstport, eth_src, ip_src, ip_srcport),
