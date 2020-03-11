@@ -45,10 +45,13 @@ def test_CSVToFeatures_no_group_or_func():
 
 def test_CSVToFeatures_dir():
     with tempfile.TemporaryDirectory() as tmpdir:
-        sys.argv = ['pcap_to_csv.py', '-e', 'tshark', '-o', os.path.join(tmpdir, 'foo2'), './tests']
+        foo2 = os.path.join(tmpdir, 'foo2')
+        testsdir = os.path.join(tmpdir, 'tests')
+        shutil.copytree('./tests', testsdir)
+        sys.argv = ['pcap_to_csv.py', '-e', 'tshark', '-o', foo2, testsdir]
         instance = PCAPToCSV()
         instance.main()
-        sys.argv = ['csv_to_features.py', '-t', '2', '-c', '-g', 'tshark', os.path.join(tmpdir, 'foo2')]
+        sys.argv = ['csv_to_features.py', '-t', '2', '-c', '-g', 'tshark', foo2]
         instance2 = CSVToFeatures()
         instance2.main()
 
@@ -57,7 +60,9 @@ def test_CSVToFeatures_dir_output():
     with tempfile.TemporaryDirectory() as tmpdir:
         foo2 = os.path.join(tmpdir, 'foo2')
         foo2out = os.path.join(tmpdir, 'foo2_output')
-        sys.argv = ['pcap_to_csv.py', '-e', 'tshark', '-o', foo2, './tests']
+        testsdir = os.path.join(tmpdir, 'tests')
+        shutil.copytree('./tests', testsdir)
+        sys.argv = ['pcap_to_csv.py', '-e', 'tshark', '-o', foo2, testsdir]
         instance = PCAPToCSV()
         instance.main()
         sys.argv = ['csv_to_features.py', '-t', '2', '-c', '-g', 'tshark', '-o', foo2out, foo2]
@@ -68,7 +73,9 @@ def test_CSVToFeatures_dir_output():
 def test_CSVToFeatures_generic():
     with tempfile.TemporaryDirectory() as tmpdir:
         foo1 = os.path.join(tmpdir, 'foo1')
-        sys.argv = ['pcap_to_csv.py', '-e', 'tshark', '-o', foo1, './tests']
+        testsdir = os.path.join(tmpdir, 'tests')
+        shutil.copytree('./tests', testsdir)
+        sys.argv = ['pcap_to_csv.py', '-e', 'tshark', '-o', foo1, testsdir]
         instance = PCAPToCSV()
         instance.main()
         sys.argv = ['csv_to_features.py', '-z', 'input', '-f', 'Generic:all', '-g', 'None', foo1]
@@ -79,7 +86,9 @@ def test_CSVToFeatures_generic():
 def test_CSVToFeatures_host():
     with tempfile.TemporaryDirectory() as tmpdir:
         foo3 = os.path.join(tmpdir, 'foo3')
-        sys.argv = ['pcap_to_csv.py', '-e', 'pyshark', '-o', foo3, './tests']
+        testsdir = os.path.join(tmpdir, 'tests')
+        shutil.copytree('./tests', testsdir)
+        sys.argv = ['pcap_to_csv.py', '-e', 'pyshark', '-o', foo3, testsdir]
         instance = PCAPToCSV()
         instance.main()
         sys.argv = ['csv_to_features.py', '-c', '-z', 'input', '-g', 'pyshark', foo3]
