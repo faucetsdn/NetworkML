@@ -3,7 +3,7 @@ numpy==1.18.1
 pika==1.1.0
 py-cpuinfo==5.0.0
 pyshark @ git+https://github.com/KimiNewt/pyshark.git#egg=pyshark&subdirectory=src
-pytest==5.3.5
+pytest==5.4.0
 pytest-cov==2.8.1
 pytest-xdist==1.31.0
 redis==3.4.1
