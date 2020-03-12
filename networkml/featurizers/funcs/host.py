@@ -77,16 +77,11 @@ class HostBase:
         # Select all if can't infer direction.
         if src_mac is None or len(all_macs) == 1:
             return rows
-        # We have to return rows for all hosts whether in or out
-        # to ensure columns are always present.
-        placeholder_rows = [{'eth.src': eth_src} for eth_src in all_macs]
         if output:
             # Select all rows where traffic originated by inferred source MAC
-            return filter(lambda row: (
-                row.get('eth.src', None) == src_mac or len(row) == 1), rows + placeholder_rows)
+            return filter(lambda row: (row.get('eth.src', None) == src_mac), rows)
         # Select all rows where traffic not originated by inferred source MAC.
-        return filter(lambda row: (
-            row.get('eth.src', None) != src_mac or len(row) == 1), rows + placeholder_rows)
+        return filter(lambda row: (row.get('eth.src', None) != src_mac), rows)
 
     def _pyshark_ipversions(self, rows):
         ipversions = set()
@@ -112,22 +107,26 @@ class HostBase:
     def _row_keys(self, row):
         return set()
 
-    def _partition_rows_by_field_vals(self, rows):
+    def _partition_rows_by_field_vals(self, rows, all_rows):
         partitioned_rows = defaultdict(list)
+        if all_rows is not None:
+            for row in all_rows:
+                for key in self._row_keys(row):
+                    partitioned_rows[key] = []
         for row in rows:
             for key in self._row_keys(row):
                 partitioned_rows[key].append(row)
         return partitioned_rows
 
-    def _host_rows(self, rows, host_func):
+    def _host_rows(self, rows, host_func, all_rows=None):
         newrows = []
-        for host_key, host_rows in self._partition_rows_by_field_vals(rows).items():
+        for host_key, host_rows in self._partition_rows_by_field_vals(rows, all_rows).items():
             host_func_results = host_func(host_rows)
             host_func_results.update({'host_key': host_key})
             newrows.append(host_func_results)
         return newrows
 
-    def _calc_tshark_field(self, field, tshark_field, rows):
+    def _calc_tshark_field(self, field, tshark_field, rows, all_rows=None):
 
         def calc_field(host_rows):
             field_parts = field.split('_')
@@ -142,7 +141,7 @@ class HostBase:
                 rows_filter = self._select_mac_direction(host_rows, output=True)
             return {field: self._stat_row_field(stat, tshark_field, rows_filter)}  # pytype: disable=attribute-error
 
-        return self._host_rows(rows, calc_field)
+        return self._host_rows(rows, calc_field, all_rows=all_rows)
 
     def _calc_time_delta(self, field, rows):
         assert 'time_delta' in field
@@ -178,23 +177,23 @@ class HostBase:
         nonpriv_ports.update({'other': int(not lowest_ports.issubset(self.WK_NONPRIV_PROTO_PORTS))})
         return nonpriv_ports
 
-    def _get_priv_ports(self, rows, ip_proto, suffix):
+    def _get_priv_ports(self, rows, ip_proto, suffix, all_rows=None):
 
         def priv_ports_present(host_rows):
             priv_ports = self._priv_ip_proto_ports(host_rows, ip_proto)
             return {'tshark_%s_priv_port_%s_%s' % (ip_proto, port, suffix): present
                     for port, present in priv_ports.items()}
 
-        return self._host_rows(rows, priv_ports_present)
+        return self._host_rows(rows, priv_ports_present, all_rows=all_rows)
 
-    def _get_nonpriv_ports(self, rows, ip_proto, suffix):
+    def _get_nonpriv_ports(self, rows, ip_proto, suffix, all_rows=None):
 
         def nonpriv_ports_present(host_rows):
             nonpriv_ports = self._nonpriv_ip_proto_ports(host_rows, ip_proto)
             return {'tshark_%s_nonpriv_port_%s_%s' % (ip_proto, port, suffix): present
                     for port, present in nonpriv_ports.items()}
 
-        return self._host_rows(rows, nonpriv_ports_present)
+        return self._host_rows(rows, nonpriv_ports_present, all_rows=all_rows)
 
     def _get_flags(self, rows, suffix, flags_field, decode_map):
         flags_counter = Counter()
@@ -266,36 +265,36 @@ class HostBase:
         return self._host_rows(rows, lambda x: {'IPv6': int(6 in self._tshark_ipversions(x))})
 
     def _tshark_priv_tcp_ports_in(self, rows):
-        rows = self._select_mac_direction(rows, output=False)
-        return self._get_priv_ports(rows, 'tcp', 'in')
+        in_rows = self._select_mac_direction(rows, output=False)
+        return self._get_priv_ports(in_rows, 'tcp', 'in', all_rows=rows)
 
     def _tshark_priv_tcp_ports_out(self, rows):
-        rows = self._select_mac_direction(rows, output=True)
-        return self._get_priv_ports(rows, 'tcp', 'out')
+        out_rows = self._select_mac_direction(rows, output=True)
+        return self._get_priv_ports(out_rows, 'tcp', 'out', all_rows=rows)
 
     def _tshark_priv_udp_ports_in(self, rows):
-        rows = self._select_mac_direction(rows, output=False)
-        return self._get_priv_ports(rows, 'udp', 'in')
+        in_rows = self._select_mac_direction(rows, output=False)
+        return self._get_priv_ports(in_rows, 'udp', 'in', all_rows=rows)
 
     def _tshark_priv_udp_ports_out(self, rows):
-        rows = self._select_mac_direction(rows, output=True)
-        return self._get_priv_ports(rows, 'udp', 'out')
+        out_rows = self._select_mac_direction(rows, output=True)
+        return self._get_priv_ports(out_rows, 'udp', 'out', all_rows=rows)
 
     def _tshark_nonpriv_tcp_ports_in(self, rows):
-        rows = self._select_mac_direction(rows, output=False)
-        return self._get_nonpriv_ports(rows, 'tcp', 'in')
+        in_rows = self._select_mac_direction(rows, output=False)
+        return self._get_nonpriv_ports(in_rows, 'tcp', 'in', all_rows=rows)
 
     def _tshark_nonpriv_tcp_ports_out(self, rows):
-        rows = self._select_mac_direction(rows, output=True)
-        return self._get_nonpriv_ports(rows, 'tcp', 'out')
+        out_rows = self._select_mac_direction(rows, output=True)
+        return self._get_nonpriv_ports(out_rows, 'tcp', 'out', all_rows=rows)
 
     def _tshark_nonpriv_udp_ports_in(self, rows):
-        rows = self._select_mac_direction(rows, output=False)
-        return self._get_nonpriv_ports(rows, 'udp', 'in')
+        in_rows = self._select_mac_direction(rows, output=False)
+        return self._get_nonpriv_ports(in_rows, 'udp', 'in', all_rows=rows)
 
     def _tshark_nonpriv_udp_ports_out(self, rows):
-        rows = self._select_mac_direction(rows, output=True)
-        return self._get_nonpriv_ports(rows, 'udp', 'out')
+        out_rows = self._select_mac_direction(rows, output=True)
+        return self._get_nonpriv_ports(out_rows, 'udp', 'out', all_rows=rows)
 
     def _tshark_tcp_flags_in(self, rows):
 
@@ -824,9 +823,9 @@ class SessionHost(HostBase, Features):
         return {
              (eth_src, ip_proto, ip_src, ip_srcport, eth_dst, ip_dst, ip_dstport)}
 
-    def _host_rows(self, rows, host_func):
+    def _host_rows(self, rows, host_func, all_rows=None):
         newrows = []
-        for host_key, host_rows in self._partition_rows_by_field_vals(rows).items():
+        for host_key, host_rows in self._partition_rows_by_field_vals(rows, all_rows).items():
             # eth_src only.
             host_key = host_key[0]
             host_func_results = host_func(host_rows)
