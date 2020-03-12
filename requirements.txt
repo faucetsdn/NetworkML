@@ -1,4 +1,5 @@
 humanize==1.0.0
+netaddr==0.7.19
 numpy==1.18.1
 pandas==0.25.3
 pika==1.1.0

@@ -7,6 +7,7 @@ import logging
 import os
 import pathlib
 import numpy as np
+from collections import defaultdict, Counter
 
 
 from networkml.featurizers.main import Featurizer
@@ -122,11 +123,17 @@ class CSVToFeatures():
         featurizer = Featurizer()
         rows = featurizer.main(features, rows, features_path)
 
-        header = set()
+        rowcounts = Counter()
         for row in rows:
             for r in row:
-                header.update(r.keys())
-        header = list(header)
+                for header_key in r:
+                    rowcounts[header_key] += 1
+        rowcompare = defaultdict(set)
+        for header_key, header_count in rowcounts.items():
+            if header_key != 'host_key':
+                rowcompare[header_count].add(header_key)
+        assert len(rowcompare) == 1, 'inconsistent featurizer row counts: %s' % rowcompare
+        header = list(rowcounts.keys())
 
         columns = [np.array(row) for row in rows]
         np_array = np.vstack(columns)
@@ -156,7 +163,7 @@ class CSVToFeatures():
                     finished_files += 1
                     self.exec_features(features, in_paths[i], out_paths[i], features_path, gzip_opt)
                     self.logger.info(f'Finished {in_paths[i]}. {finished_files}/{num_files} CSVs done.')
-                except Exception as e:  # pragma: no cover
+                except AssertionError as e:  # pragma: no cover
                     self.logger.error(f'{in_paths[i]} generated an exception: {e}')
                     failed_paths.append(out_paths[i])
         else:

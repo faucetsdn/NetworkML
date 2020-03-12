@@ -1,6 +1,7 @@
 import inspect
 import os
 import sys
+from networkml.featurizers.features import Features
 
 # TODO move print statements to logging
 
@@ -36,12 +37,13 @@ class Featurizer():
 
             #import the module
             module = __import__(mod_name, locals(), globals())
-            for name,cls in inspect.getmembers(module):
-                if inspect.isclass(cls) and name != "Features":
+            for name, cls in inspect.getmembers(module):
+                if inspect.isclass(cls) and name != 'Features':
                     instance = cls()
-                    #append an instance of the class to classes
-                    classes.append((instance, name))
-                    print(f'Importing class: {name}')
+                    if isinstance(instance, Features):
+                        # append an instance of the class to classes
+                        classes.append((instance, name))
+                        print(f'Importing class: {name}')
 
         return classes
 
@@ -49,12 +51,19 @@ class Featurizer():
     def run_all_funcs(self, functions, groups, classes, rows):
         feature_rows = []
         run_methods = []
+
+        def verify_feature_row(feature_row):
+            assert isinstance(feature_row, list), 'method %s returned non list: %s' % (method, feature_row)
+            non_dicts = {x for x in feature_row if not isinstance(x, dict)}
+            assert not non_dicts, 'method %s returned something not a dict' % (method, non_dicts)
+
         for f in classes:
             if groups:
                 methods = filter(lambda funcname: funcname.startswith(groups), dir(f[0]))
                 for method in methods:
                     print(f'Running method: {f[1]}/{method}')
                     feature_row = f[0].run_func(method, rows)
+                    verify_feature_row(feature_row)
                     feature_rows.append(feature_row)
                     run_methods.append((f[1], method))
 
@@ -65,6 +74,7 @@ class Featurizer():
                     if f[1] == function[0]:
                         print(f'Running method: {f[1]}/{function[1]}')
                         feature_row = f[0].run_func(function[1], rows)
+                        verify_feature_row(feature_row)
                         feature_rows.append(feature_row)
         return feature_rows
 
