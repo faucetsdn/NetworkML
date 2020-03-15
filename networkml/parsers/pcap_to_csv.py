@@ -258,22 +258,30 @@ class PCAPToCSV():
             yield _recordize()
 
 
-    def get_tshark_packet_data(self, pcap_file, dict_fp):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            tmp_json_filename = os.path.join(tmpdir, 'tshark.json')
-            with open(tmp_json_filename, mode='w', encoding='utf-8', errors='ignore') as tmp_json:
-                try:
-                    options = '-n -V -Tjson'
-                    subprocess.check_call(shlex.split(' '.join(['tshark', '-r', pcap_file, options])), stdout=tmp_json)
-                except Exception as e:  # pragma: no cover
-                    self.logger.error(f'{e}')
-            with open(tmp_json_filename, mode='r', encoding='utf-8', errors='ignore') as tmp_json:
-                with gzip.open(dict_fp, 'w') as f:
-                    f = io.TextIOWrapper(f, newline='', write_through=True)
+    def _parse_tshark_to_json(self, pcap_file, tmp_json_filename):
+        with open(tmp_json_filename, mode='w', encoding='utf-8', errors='ignore') as tmp_json:
+            options = '-n -V -Tjson'
+            subprocess.check_call(shlex.split(' '.join(['tshark', '-r', pcap_file, options])), stdout=tmp_json)
+
+
+    def _flatten_json(self, dict_fp, tmp_json_filename):
+        with open(tmp_json_filename, mode='r', encoding='utf-8', errors='ignore') as tmp_json:
+            with gzip.open(dict_fp, 'w') as gzip_f:
+                with io.TextIOWrapper(gzip_f, newline='', write_through=True) as f:
                     for item in self.json_packet_records(tmp_json):
                         self.flattened_dict = {}
                         self.flatten_json('', item)
                         print(self.flattened_dict, file=f)
+
+
+    def get_tshark_packet_data(self, pcap_file, dict_fp):
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                tmp_json_filename = os.path.join(tmpdir, 'tshark.json')
+                self._parse_tshark_to_json(pcap_file, tmp_json_filename)
+                self._flatten_json(dict_fp, tmp_json_filename)
+        except Exception as e:  # pragma: no cover
+            self.logger.error(f'{e}')
 
 
     def get_tshark_host_data(self, pcap_file, dict_fp):
