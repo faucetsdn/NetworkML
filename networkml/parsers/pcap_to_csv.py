@@ -257,13 +257,13 @@ class PCAPToCSV():
     def get_tshark_packet_data(self, pcap_file, dict_fp):
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_json_filename = os.path.join(tmpdir, 'tshark.json')
-            with open(tmp_json_filename, 'w') as tmp_json:
+            with open(tmp_json_filename, mode='w', encoding='utf-8', errors='ignore') as tmp_json:
                 try:
                     options = '-n -V -Tjson'
                     subprocess.check_call(shlex.split(' '.join(['tshark', '-r', pcap_file, options])), stdout=tmp_json)
                 except Exception as e:  # pragma: no cover
                     self.logger.error(f'{e}')
-            with open(tmp_json_filename) as tmp_json:
+            with open(tmp_json_filename, mode='r', encoding='utf-8', errors='ignore') as tmp_json:
                 with gzip.open(dict_fp, 'w') as f:
                     f = io.TextIOWrapper(f, newline='', write_through=True)
                     for item in self.json_packet_records(tmp_json):
