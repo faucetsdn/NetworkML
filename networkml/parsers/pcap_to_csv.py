@@ -243,7 +243,7 @@ class PCAPToCSV():
         def _recordize():
             return json.loads('\n'.join(json_buffer))
 
-        for json_line in raw_tshark_json.readlines():
+        for json_line in raw_tshark_json:
             if packet_delim_re.match(json_line) or not json_line:
                 if json_buffer:
                     yield _recordize()
