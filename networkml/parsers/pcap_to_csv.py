@@ -14,6 +14,7 @@ import re
 import shlex
 import string
 import subprocess
+import tempfile
 
 from copy import deepcopy
 
@@ -242,7 +243,7 @@ class PCAPToCSV():
         def _recordize():
             return json.loads('\n'.join(json_buffer))
 
-        for json_line in raw_tshark_json.decode('utf-8', 'ignore').splitlines():
+        for json_line in raw_tshark_json.readlines():
             if packet_delim_re.match(json_line) or not json_line:
                 if json_buffer:
                     yield _recordize()
@@ -254,19 +255,21 @@ class PCAPToCSV():
 
 
     def get_tshark_packet_data(self, pcap_file, dict_fp):
-        output = ''
-        try:
-            options = '-n -V -Tjson'
-            output = subprocess.check_output(shlex.split(' '.join(['tshark', '-r', pcap_file, options])))
-        except Exception as e:  # pragma: no cover
-            self.logger.error(f'{e}')
-
-        with gzip.open(dict_fp, 'w') as f:
-            f = io.TextIOWrapper(f, newline='', write_through=True)
-            for item in self.json_packet_records(output):
-                self.flattened_dict = {}
-                self.flatten_json('', item)
-                print(self.flattened_dict, file=f)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_json_filename = os.path.join(tmpdir, 'tshark.json')
+            with open(tmp_json_filename, 'w') as tmp_json:
+                try:
+                    options = '-n -V -Tjson'
+                    subprocess.check_call(shlex.split(' '.join(['tshark', '-r', pcap_file, options])), stdout=tmp_json)
+                except Exception as e:  # pragma: no cover
+                    self.logger.error(f'{e}')
+            with open(tmp_json_filename) as tmp_json:
+                with gzip.open(dict_fp, 'w') as f:
+                    f = io.TextIOWrapper(f, newline='', write_through=True)
+                    for item in self.json_packet_records(tmp_json):
+                        self.flattened_dict = {}
+                        self.flatten_json('', item)
+                        print(self.flattened_dict, file=f)
 
 
     def get_tshark_host_data(self, pcap_file, dict_fp):
