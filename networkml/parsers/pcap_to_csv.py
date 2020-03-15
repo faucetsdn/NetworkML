@@ -10,6 +10,7 @@ import ntpath
 import os
 import pathlib
 import random
+import re
 import shlex
 import string
 import subprocess
@@ -234,18 +235,35 @@ class PCAPToCSV():
                     self.flattened_dict[key] = value
 
 
+    def json_packet_records(self, raw_tshark_json):
+        json_buffer = []
+        packet_delim_re = re.compile(r'^([\[\]]|\s+\,)$')
+
+        def _recordize():
+            return json.loads('\n'.join(json_buffer))
+
+        for json_line in raw_tshark_json.decode('utf-8', 'ignore').splitlines():
+            if packet_delim_re.match(json_line) or not json_line:
+                if json_buffer:
+                    yield _recordize()
+                json_buffer = []
+            else:
+                json_buffer.append(json_line)
+        if json_buffer:
+            yield _recordize()
+
+
     def get_tshark_packet_data(self, pcap_file, dict_fp):
-        output = b'[]'
+        output = ''
         try:
             options = '-n -V -Tjson'
             output = subprocess.check_output(shlex.split(' '.join(['tshark', '-r', pcap_file, options])))
         except Exception as e:  # pragma: no cover
             self.logger.error(f'{e}')
-        output = json.loads(output.decode("utf-8", "ignore"))
 
         with gzip.open(dict_fp, 'w') as f:
             f = io.TextIOWrapper(f, newline='', write_through=True)
-            for item in output:
+            for item in self.json_packet_records(output):
                 self.flattened_dict = {}
                 self.flatten_json('', item)
                 print(self.flattened_dict, file=f)
