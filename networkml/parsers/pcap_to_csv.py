@@ -220,10 +220,8 @@ class PCAPToCSV():
 
     def flatten_json(self, key, value):
         if isinstance(value, list):
-            i=0
-            for sub_item in value:
+            for i, sub_item in enumerate(value):
                 self.flatten_json(str(i), sub_item)
-                i=i+1
         elif isinstance(value, dict):
             sub_keys = value.keys()
             for sub_key in sub_keys:
@@ -238,24 +236,27 @@ class PCAPToCSV():
 
     def json_packet_records(self, raw_tshark_json):
         json_buffer = []
-        packet_delim_re = re.compile(r'^([\[\]]|\s+\,)$')
 
         def _recordize():
             return json.loads('\n'.join(json_buffer))
 
-        while True:
-            json_line_raw = raw_tshark_json.readline()
-            json_line = json_line_raw.rstrip()
-            if json_line == json_line_raw:
-                break
-            if packet_delim_re.match(json_line) or not json_line:
+        depth = 0
+        for json_line in raw_tshark_json:
+            if not json_line.startswith(' '):
+                continue
+            json_line = json_line.rstrip()
+            bracket_line = json_line.rstrip(',')
+            if bracket_line.endswith('}'):
+                depth -= 1
+            elif bracket_line.endswith('{'):
+                depth += 1
+            if depth == 0:
+                json_buffer.append(bracket_line)
                 if json_buffer:
                     yield _recordize()
                 json_buffer = []
             else:
                 json_buffer.append(json_line)
-        if json_buffer:
-            yield _recordize()
 
 
     def _parse_tshark_to_json(self, pcap_file, tmp_json_filename):
