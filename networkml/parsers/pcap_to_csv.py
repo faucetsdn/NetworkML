@@ -10,9 +10,11 @@ import ntpath
 import os
 import pathlib
 import random
+import re
 import shlex
 import string
 import subprocess
+import tempfile
 
 from copy import deepcopy
 
@@ -218,10 +220,8 @@ class PCAPToCSV():
 
     def flatten_json(self, key, value):
         if isinstance(value, list):
-            i=0
-            for sub_item in value:
+            for i, sub_item in enumerate(value):
                 self.flatten_json(str(i), sub_item)
-                i=i+1
         elif isinstance(value, dict):
             sub_keys = value.keys()
             for sub_key in sub_keys:
@@ -234,21 +234,55 @@ class PCAPToCSV():
                     self.flattened_dict[key] = value
 
 
-    def get_tshark_packet_data(self, pcap_file, dict_fp):
-        output = b'[]'
-        try:
+    def json_packet_records(self, raw_tshark_json):
+        json_buffer = []
+
+        def _recordize():
+            return json.loads('\n'.join(json_buffer))
+
+        depth = 0
+        for json_line in raw_tshark_json:
+            if not json_line.startswith(' '):
+                continue
+            json_line = json_line.rstrip()
+            bracket_line = json_line.rstrip(',')
+            if bracket_line.endswith('}'):
+                depth -= 1
+            elif bracket_line.endswith('{'):
+                depth += 1
+            if depth == 0:
+                json_buffer.append(bracket_line)
+                if json_buffer:
+                    yield _recordize()
+                json_buffer = []
+            else:
+                json_buffer.append(json_line)
+
+
+    def _parse_tshark_to_json(self, pcap_file, tmp_json_filename):
+        with open(tmp_json_filename, mode='w', encoding='utf-8', errors='ignore') as tmp_json:
             options = '-n -V -Tjson'
-            output = subprocess.check_output(shlex.split(' '.join(['tshark', '-r', pcap_file, options])))
+            subprocess.check_call(shlex.split(' '.join(['tshark', '-r', pcap_file, options])), stdout=tmp_json)
+
+
+    def _flatten_json(self, dict_fp, tmp_json_filename):
+        with open(tmp_json_filename, mode='r', encoding='utf-8', errors='ignore') as tmp_json:
+            with gzip.open(dict_fp, 'w') as gzip_f:
+                with io.TextIOWrapper(gzip_f, newline='', write_through=True) as f:
+                    for item in self.json_packet_records(tmp_json):
+                        self.flattened_dict = {}
+                        self.flatten_json('', item)
+                        print(self.flattened_dict, file=f)
+
+
+    def get_tshark_packet_data(self, pcap_file, dict_fp):
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                tmp_json_filename = os.path.join(tmpdir, 'tshark.json')
+                self._parse_tshark_to_json(pcap_file, tmp_json_filename)
+                self._flatten_json(dict_fp, tmp_json_filename)
         except Exception as e:  # pragma: no cover
             self.logger.error(f'{e}')
-        output = json.loads(output.decode("utf-8", "ignore"))
-
-        with gzip.open(dict_fp, 'w') as f:
-            f = io.TextIOWrapper(f, newline='', write_through=True)
-            for item in output:
-                self.flattened_dict = {}
-                self.flatten_json('', item)
-                print(self.flattened_dict, file=f)
 
 
     def get_tshark_host_data(self, pcap_file, dict_fp):
