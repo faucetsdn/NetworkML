@@ -51,7 +51,6 @@ class Featurizer():
     def run_all_funcs(self, functions, groups, classes, rows_f):
         feature_rows = []
         run_methods = []
-        rows = list(rows_f())
 
         def verify_feature_row(feature_row):
             assert isinstance(feature_row, list), 'method %s returned non list: %s' % (method, feature_row)
@@ -63,7 +62,7 @@ class Featurizer():
                 methods = filter(lambda funcname: funcname.startswith(groups), dir(f[0]))
                 for method in methods:
                     print(f'Running method: {f[1]}/{method}')
-                    feature_row = f[0].run_func(method, rows)
+                    feature_row = f[0].run_func(method, rows_f)
                     verify_feature_row(feature_row)
                     feature_rows.append(feature_row)
                     run_methods.append((f[1], method))
@@ -74,7 +73,7 @@ class Featurizer():
                 for f in classes:
                     if f[1] == function[0]:
                         print(f'Running method: {f[1]}/{function[1]}')
-                        feature_row = f[0].run_func(function[1], rows)
+                        feature_row = f[0].run_func(function[1], rows_f)
                         verify_feature_row(feature_row)
                         feature_rows.append(feature_row)
         return feature_rows
