@@ -1,5 +1,5 @@
 netaddr==0.7.19
-numpy==1.18.1
+numpy==1.18.2
 pika==1.1.0
 py-cpuinfo==5.0.0
 pyshark @ git+https://github.com/KimiNewt/pyshark.git#egg=pyshark&subdirectory=src
