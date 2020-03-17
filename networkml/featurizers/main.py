@@ -52,7 +52,7 @@ class Featurizer():
         feature_rows = []
         run_methods = []
 
-        def verify_feature_row(feature_row):
+        def verify_feature_row(feature_row, method):
             assert isinstance(feature_row, list), 'method %s returned non list: %s' % (method, feature_row)
             non_dicts = {x for x in feature_row if not isinstance(x, dict)}
             assert not non_dicts, 'method %s returned something not a dict' % (method, non_dicts)
@@ -63,7 +63,7 @@ class Featurizer():
                 for method in methods:
                     print(f'Running method: {f[1]}/{method}')
                     feature_row = f[0].run_func(method, rows_f)
-                    verify_feature_row(feature_row)
+                    verify_feature_row(feature_row, method)
                     feature_rows.append(feature_row)
                     run_methods.append((f[1], method))
 
@@ -74,7 +74,7 @@ class Featurizer():
                     if f[1] == function[0]:
                         print(f'Running method: {f[1]}/{function[1]}')
                         feature_row = f[0].run_func(function[1], rows_f)
-                        verify_feature_row(feature_row)
+                        verify_feature_row(feature_row, function[1])
                         feature_rows.append(feature_row)
         return feature_rows
 
