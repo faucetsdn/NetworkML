@@ -6,3 +6,4 @@ pika==1.1.0
 pyshark @ git+https://github.com/KimiNewt/pyshark.git#egg=pyshark&subdirectory=src
 scikit-learn==0.22.1
 sklearn-json==0.1.0
+ujson==2.0.2

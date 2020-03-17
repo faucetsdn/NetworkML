@@ -4,7 +4,6 @@ import concurrent.futures
 import csv
 import gzip
 import io
-import json
 import logging
 import ntpath
 import os
@@ -18,6 +17,7 @@ import tempfile
 from copy import deepcopy
 
 import pyshark
+import ujson
 
 
 class PCAPToCSV():
@@ -237,7 +237,7 @@ class PCAPToCSV():
         json_buffer = []
 
         def _recordize():
-            return json.loads('\n'.join(json_buffer))
+            return ujson.loads('\n'.join(json_buffer))
 
         depth = 0
         for json_line in raw_tshark_json:
