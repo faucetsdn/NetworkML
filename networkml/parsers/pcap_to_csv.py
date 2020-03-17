@@ -68,7 +68,7 @@ class PCAPToCSV():
         header_all = set()
         with gzip.open(dict_fp, 'rb') as f:
             for line in io.TextIOWrapper(f, newline=''):
-                header_all.update(ast.literal_eval(line.strip()).keys())
+                header_all.update(ujson.loads(line.strip()).keys())
         header = []
         for key in header_all:
             if key[0].isalpha() or key[0] == '_':
@@ -148,7 +148,7 @@ class PCAPToCSV():
                     for key in keys:
                         if not key[0].isalpha() or key == 'tcp.payload_raw' or key == 'tcp.payload':
                             del packet_dict[key]
-                    print(packet_dict, file=f)
+                    f.write(ujson.dumps(packet_dict) + '\n')
 
         for protocol in self.PROTOCOLS:
             if protocol in all_protocols:
@@ -214,7 +214,7 @@ class PCAPToCSV():
                                     'Total Bytes': bytes_total,
                                     'Relative Start': rel_start,
                                     'Duration': duration}
-                            print(conv, file=f)
+                            f.write(ujson.dumps(conv) + '\n')
 
 
     def flatten_json(self, key, value):
@@ -271,7 +271,7 @@ class PCAPToCSV():
                     for item in self.json_packet_records(tmp_json):
                         self.flattened_dict = {}
                         self.flatten_json('', item)
-                        print(self.flattened_dict, file=f)
+                        f.write(ujson.dumps(self.flattened_dict) + '\n')
 
 
     def get_tshark_packet_data(self, pcap_file, dict_fp):
@@ -297,29 +297,30 @@ class PCAPToCSV():
             try:
                 with gzip.open(dict_fp, 'rb') as f:
                     for line in io.TextIOWrapper(f, newline=''):
-                        w.writerow(ast.literal_eval(line.strip()))
+                        w.writerow(ujson.loads(line.strip()))
             except Exception as e:  # pragma: no cover
                 self.logger.error(f'Failed to write to CSV because: {e}')
 
 
     def parse_file(self, level, in_file, out_file, engine):
         self.logger.info(f'Processing {in_file}')
-        dict_fp = '/tmp/networkml.' + ''.join([random.choice(string.ascii_letters + string.digits) for n in range(8)])
-        if level == 'packet':
-            if engine == 'tshark':
-                # option for tshark as it's much faster
-                self.get_tshark_packet_data(in_file, dict_fp)
-            elif engine == 'pyshark':
-                # using pyshark to get everything possible
-                self.get_pyshark_packet_data(in_file, dict_fp)
-        elif level == 'flow':
-            # using tshark conv,tcp and conv,udp filters
-            self.get_tshark_conv_data(in_file, dict_fp)
-        elif level == 'host':
-            # TODO unknown what should be in this, just the overarching stats?
-            raise NotImplementedError("To be implemented")
-        self.write_dict_to_csv(dict_fp, out_file)
-        PCAPToCSV.cleanup_files([dict_fp])
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dict_fp = os.path.join(tmpdir, os.path.basename(in_file))
+            if level == 'packet':
+                if engine == 'tshark':
+                    # option for tshark as it's much faster
+                    self.get_tshark_packet_data(in_file, dict_fp)
+                elif engine == 'pyshark':
+                    # using pyshark to get everything possible
+                    self.get_pyshark_packet_data(in_file, dict_fp)
+            elif level == 'flow':
+                # using tshark conv,tcp and conv,udp filters
+                self.get_tshark_conv_data(in_file, dict_fp)
+            elif level == 'host':
+                # TODO unknown what should be in this, just the overarching stats?
+                raise NotImplementedError("To be implemented")
+            self.write_dict_to_csv(dict_fp, out_file)
+            PCAPToCSV.cleanup_files([dict_fp])
 
 
     def process_files(self, threads, level, in_paths, out_paths, engine):
