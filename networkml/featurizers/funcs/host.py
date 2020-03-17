@@ -142,12 +142,14 @@ class HostBase:
 
         return self._host_rows(rows, calc_field, all_rows=all_rows)
 
-    def _calc_time_delta(self, field, rows):
+    def _calc_time_delta(self, field, rows_f):
         assert 'time_delta' in field
+        rows = list(rows_f())
         return self._calc_tshark_field(field, 'frame.time_delta_displayed', rows)
 
-    def _calc_framelen(self, field, rows):
+    def _calc_framelen(self, field, rows_f):
         assert 'frame_len' in field
+        rows = list(rows_f())
         return self._calc_tshark_field(field, 'frame.len', rows)
 
     def _get_ip_proto_ports(self, row, ip_proto):
@@ -241,7 +243,7 @@ class HostBase:
             layers.update({layer.split(' Layer')[0] for layer in temp})
         return [{layer: 1 for layer in layers}]
 
-    def _tshark_last_protocols_array(self, rows):
+    def _tshark_last_protocols_array(self, rows_f):
 
         def last_protocols_array(host_rows):
             raw_protocols = set()
@@ -255,92 +257,109 @@ class HostBase:
             protocols.update({'other': int(not raw_protocols.issubset(self.WK_PROTOCOLS))})
             return protocols
 
+        rows = list(rows_f())
         return self._host_rows(rows, last_protocols_array)
 
-    def _tshark_ipv4(self, rows):
+    def _tshark_ipv4(self, rows_f):
+        rows = list(rows_f())
         return self._host_rows(rows, lambda x: {'IPv4': int(4 in self._tshark_ipversions(x))})
 
-    def _tshark_ipv6(self, rows):
+    def _tshark_ipv6(self, rows_f):
+        rows = list(rows_f())
         return self._host_rows(rows, lambda x: {'IPv6': int(6 in self._tshark_ipversions(x))})
 
-    def _tshark_priv_tcp_ports_in(self, rows):
+    def _tshark_priv_tcp_ports_in(self, rows_f):
+        rows = list(rows_f())
         in_rows = self._select_mac_direction(rows, output=False)
         return self._get_priv_ports(in_rows, 'tcp', 'in', all_rows=rows)
 
-    def _tshark_priv_tcp_ports_out(self, rows):
+    def _tshark_priv_tcp_ports_out(self, rows_f):
+        rows = list(rows_f())
         out_rows = self._select_mac_direction(rows, output=True)
         return self._get_priv_ports(out_rows, 'tcp', 'out', all_rows=rows)
 
-    def _tshark_priv_udp_ports_in(self, rows):
+    def _tshark_priv_udp_ports_in(self, rows_f):
+        rows = list(rows_f())
         in_rows = self._select_mac_direction(rows, output=False)
         return self._get_priv_ports(in_rows, 'udp', 'in', all_rows=rows)
 
-    def _tshark_priv_udp_ports_out(self, rows):
+    def _tshark_priv_udp_ports_out(self, rows_f):
+        rows = list(rows_f())
         out_rows = self._select_mac_direction(rows, output=True)
         return self._get_priv_ports(out_rows, 'udp', 'out', all_rows=rows)
 
-    def _tshark_nonpriv_tcp_ports_in(self, rows):
+    def _tshark_nonpriv_tcp_ports_in(self, rows_f):
+        rows = list(rows_f())
         in_rows = self._select_mac_direction(rows, output=False)
         return self._get_nonpriv_ports(in_rows, 'tcp', 'in', all_rows=rows)
 
-    def _tshark_nonpriv_tcp_ports_out(self, rows):
+    def _tshark_nonpriv_tcp_ports_out(self, rows_f):
+        rows = list(rows_f())
         out_rows = self._select_mac_direction(rows, output=True)
         return self._get_nonpriv_ports(out_rows, 'tcp', 'out', all_rows=rows)
 
-    def _tshark_nonpriv_udp_ports_in(self, rows):
+    def _tshark_nonpriv_udp_ports_in(self, rows_f):
+        rows = list(rows_f())
         in_rows = self._select_mac_direction(rows, output=False)
         return self._get_nonpriv_ports(in_rows, 'udp', 'in', all_rows=rows)
 
-    def _tshark_nonpriv_udp_ports_out(self, rows):
+    def _tshark_nonpriv_udp_ports_out(self, rows_f):
+        rows = list(rows_f())
         out_rows = self._select_mac_direction(rows, output=True)
         return self._get_nonpriv_ports(out_rows, 'udp', 'out', all_rows=rows)
 
-    def _tshark_tcp_flags_in(self, rows):
+    def _tshark_tcp_flags_in(self, rows_f):
 
         def tcp_flags_in(host_rows):
             rows_filter = self._select_mac_direction(host_rows, output=False)
             return self._get_tcp_flags(rows_filter, 'in')
 
+        rows = list(rows_f())
         return self._host_rows(rows, tcp_flags_in)
 
-    def _tshark_tcp_flags_out(self, rows):
+    def _tshark_tcp_flags_out(self, rows_f):
 
         def tcp_flags_out(host_rows):
             rows_filter = self._select_mac_direction(host_rows, output=True)
             return self._get_tcp_flags(rows_filter, 'out')
 
+        rows = list(rows_f())
         return self._host_rows(rows, tcp_flags_out)
 
-    def _tshark_ip_flags_in(self, rows):
+    def _tshark_ip_flags_in(self, rows_f):
 
         def ip_flags_in(host_rows):
             rows_filter = self._select_mac_direction(host_rows, output=False)
             return self._get_ip_flags(rows_filter, 'in')
 
+        rows = list(rows_f())
         return self._host_rows(rows, ip_flags_in)
 
-    def _tshark_ip_flags_out(self, rows):
+    def _tshark_ip_flags_out(self, rows_f):
 
         def ip_flags_out(host_rows):
             rows_filter = self._select_mac_direction(host_rows, output=True)
             return self._get_ip_flags(rows_filter, 'out')
 
+        rows = list(rows_f())
         return self._host_rows(rows, ip_flags_out)
 
-    def _tshark_ip_dsfield_in(self, rows):
+    def _tshark_ip_dsfield_in(self, rows_f):
 
         def ip_dsfield_in(host_rows):
             rows_filter = self._select_mac_direction(host_rows, output=False)
             return self._get_ip_dsfield(rows_filter, 'in')
 
+        rows = list(rows_f())
         return self._host_rows(rows, ip_dsfield_in)
 
-    def _tshark_ip_dsfield_out(self, rows):
+    def _tshark_ip_dsfield_out(self, rows_f):
 
         def ip_dsfield_out(host_rows):
             rows_filter = self._select_mac_direction(host_rows, output=True)
             return self._get_ip_dsfield(rows_filter, 'out')
 
+        rows = list(rows_f())
         return self._host_rows(rows, ip_dsfield_out)
 
     def _row_protos(self, row):
@@ -348,7 +367,7 @@ class HostBase:
             'data', 'eth', 'ip', 'ipv6', '_ws', 'frame'}
         return row_layers.intersection(self.WK_PROTOS), row_layers
 
-    def _tshark_wk_ip_protos(self, rows):
+    def _tshark_wk_ip_protos(self, rows_f):
 
         def protos(host_rows):
             wk_protos = set()
@@ -360,9 +379,9 @@ class HostBase:
                     wk_protos.add('other')
             return {'tshark_wk_ip_proto_%s' % wk_proto: int(wk_proto in wk_protos) for wk_proto in self.WK_PROTOS}
 
-        return self._host_rows(rows, protos)
+        return self._host_rows(rows_f(), protos)
 
-    def _tshark_vlan_id(self, rows):
+    def _tshark_vlan_id(self, rows_f):
 
         def first_vlan_id(host_rows):
             vlan_id = 0
@@ -372,9 +391,10 @@ class HostBase:
                     break
             return {'tshark_vlan_id': vlan_id}
 
+        rows = list(rows_f())
         return self._host_rows(rows, first_vlan_id)
 
-    def _tshark_ipx(self, rows):
+    def _tshark_ipx(self, rows_f):
 
         def first_ipx(host_rows):
             ipx = 0
@@ -384,9 +404,10 @@ class HostBase:
                     break
             return {'tshark_ipx': ipx}
 
+        rows = list(rows_f())
         return self._host_rows(rows, first_ipx)
 
-    def _tshark_both_private_ip(self, rows):
+    def _tshark_both_private_ip(self, rows_f):
 
         def first_not_both_private_ip(host_rows):
             both_private = 0
@@ -400,9 +421,10 @@ class HostBase:
                             break
             return {'tshark_both_private_ip': both_private}
 
+        rows = list(rows_f())
         return self._host_rows(rows, first_not_both_private_ip)
 
-    def _tshark_ipv4_multicast(self, rows):
+    def _tshark_ipv4_multicast(self, rows_f):
 
         def first_ipv4_multicast(host_rows):
             multicast = 0
@@ -414,9 +436,10 @@ class HostBase:
                         break
             return {'tshark_ipv4_multicast': multicast}
 
+        rows = list(rows_f())
         return self._host_rows(rows, first_ipv4_multicast)
 
-    def _tshark_non_ip(self, rows):
+    def _tshark_non_ip(self, rows_f):
 
         def first_non_ip(host_rows):
             non_ip = 1
@@ -428,147 +451,152 @@ class HostBase:
                         break
             return {'tshark_non_ip': non_ip}
 
+        rows = list(rows_f())
         return self._host_rows(rows, first_non_ip)
 
-    def _tshark_average_time_delta(self, rows):
-        return self._calc_time_delta('average_time_delta', rows)
+    def _tshark_average_time_delta(self, rows_f):
+        return self._calc_time_delta('average_time_delta', rows_f)
 
-    def _tshark_min_time_delta(self, rows):
-        return self._calc_time_delta('min_time_delta', rows)
+    def _tshark_min_time_delta(self, rows_f):
+        return self._calc_time_delta('min_time_delta', rows_f)
 
-    def _tshark_max_time_delta(self, rows):
-        return self._calc_time_delta('max_time_delta', rows)
+    def _tshark_max_time_delta(self, rows_f):
+        return self._calc_time_delta('max_time_delta', rows_f)
 
-    def _tshark_average_frame_len(self, rows):
-        return self._calc_framelen('average_frame_len', rows)
+    def _tshark_average_frame_len(self, rows_f):
+        return self._calc_framelen('average_frame_len', rows_f)
 
-    def _tshark_min_frame_len(self, rows):
-        return self._calc_framelen('min_frame_len', rows)
+    def _tshark_min_frame_len(self, rows_f):
+        return self._calc_framelen('min_frame_len', rows_f)
 
-    def _tshark_max_frame_len(self, rows):
-        return self._calc_framelen('max_frame_len', rows)
+    def _tshark_max_frame_len(self, rows_f):
+        return self._calc_framelen('max_frame_len', rows_f)
 
-    def _tshark_median_frame_len(self, rows):
-        return self._calc_framelen('median_frame_len', rows)
+    def _tshark_median_frame_len(self, rows_f):
+        return self._calc_framelen('median_frame_len', rows_f)
 
-    def _tshark_variance_frame_len(self, rows):
-        return self._calc_framelen('variance_frame_len', rows)
+    def _tshark_variance_frame_len(self, rows_f):
+        return self._calc_framelen('variance_frame_len', rows_f)
 
-    def _tshark_25q_frame_len(self, rows):
-        return self._calc_framelen('25q_frame_len', rows)
+    def _tshark_25q_frame_len(self, rows_f):
+        return self._calc_framelen('25q_frame_len', rows_f)
 
-    def _tshark_75q_frame_len(self, rows):
-        return self._calc_framelen('75q_frame_len', rows)
+    def _tshark_75q_frame_len(self, rows_f):
+        return self._calc_framelen('75q_frame_len', rows_f)
 
     # By direction
 
-    def _tshark_min_frame_time_in(self, rows):
+    def _tshark_min_frame_time_in(self, rows_f):
+        rows = list(rows_f())
         return self._calc_tshark_field('min_frame_time_in', 'frame.time_epoch', rows)
 
-    def _tshark_min_frame_time_out(self, rows):
+    def _tshark_min_frame_time_out(self, rows_f):
+        rows = list(rows_f())
         return self._calc_tshark_field('min_frame_time_out', 'frame.time_epoch', rows)
 
-    def _tshark_max_frame_time_in(self, rows):
+    def _tshark_max_frame_time_in(self, rows_f):
+        rows = list(rows_f())
         return self._calc_tshark_field('max_frame_time_in', 'frame.time_epoch', rows)
 
-    def _tshark_max_frame_time_out(self, rows):
+    def _tshark_max_frame_time_out(self, rows_f):
+        rows = list(rows_f())
         return self._calc_tshark_field('max_frame_time_out', 'frame.time_epoch', rows)
 
-    def _tshark_count_frame_len_in(self, rows):
-        return self._calc_framelen('count_frame_len_in', rows)
+    def _tshark_count_frame_len_in(self, rows_f):
+        return self._calc_framelen('count_frame_len_in', rows_f)
 
-    def _tshark_count_frame_len_out(self, rows):
-        return self._calc_framelen('count_frame_len_out', rows)
+    def _tshark_count_frame_len_out(self, rows_f):
+        return self._calc_framelen('count_frame_len_out', rows_f)
 
-    def _tshark_total_frame_len_in(self, rows):
-        return self._calc_framelen('total_frame_len_in', rows)
+    def _tshark_total_frame_len_in(self, rows_f):
+        return self._calc_framelen('total_frame_len_in', rows_f)
 
-    def _tshark_total_frame_len_out(self, rows):
-        return self._calc_framelen('total_frame_len_out', rows)
+    def _tshark_total_frame_len_out(self, rows_f):
+        return self._calc_framelen('total_frame_len_out', rows_f)
 
-    def _tshark_average_frame_len_in(self, rows):
-        return self._calc_framelen('average_frame_len_in', rows)
+    def _tshark_average_frame_len_in(self, rows_f):
+        return self._calc_framelen('average_frame_len_in', rows_f)
 
-    def _tshark_average_frame_len_out(self, rows):
-        return self._calc_framelen('average_frame_len_out', rows)
+    def _tshark_average_frame_len_out(self, rows_f):
+        return self._calc_framelen('average_frame_len_out', rows_f)
 
-    def _tshark_25q_frame_len_in(self, rows):
-        return self._calc_framelen('25q_frame_len_in', rows)
+    def _tshark_25q_frame_len_in(self, rows_f):
+        return self._calc_framelen('25q_frame_len_in', rows_f)
 
-    def _tshark_25q_frame_len_out(self, rows):
-        return self._calc_framelen('25q_frame_len_out', rows)
+    def _tshark_25q_frame_len_out(self, rows_f):
+        return self._calc_framelen('25q_frame_len_out', rows_f)
 
-    def _tshark_75q_frame_len_in(self, rows):
-        return self._calc_framelen('75q_frame_len_in', rows)
+    def _tshark_75q_frame_len_in(self, rows_f):
+        return self._calc_framelen('75q_frame_len_in', rows_f)
 
-    def _tshark_75q_frame_len_out(self, rows):
-        return self._calc_framelen('75q_frame_len_out', rows)
+    def _tshark_75q_frame_len_out(self, rows_f):
+        return self._calc_framelen('75q_frame_len_out', rows_f)
 
-    def _tshark_median_frame_len_in(self, rows):
-        return self._calc_framelen('median_frame_len_in', rows)
+    def _tshark_median_frame_len_in(self, rows_f):
+        return self._calc_framelen('median_frame_len_in', rows_f)
 
-    def _tshark_median_frame_len_out(self, rows):
-        return self._calc_framelen('median_frame_len_out', rows)
+    def _tshark_median_frame_len_out(self, rows_f):
+        return self._calc_framelen('median_frame_len_out', rows_f)
 
-    def _tshark_variance_frame_len_in(self, rows):
-        return self._calc_framelen('variance_frame_len_in', rows)
+    def _tshark_variance_frame_len_in(self, rows_f):
+        return self._calc_framelen('variance_frame_len_in', rows_f)
 
-    def _tshark_variance_frame_len_out(self, rows):
-        return self._calc_framelen('variance_frame_len_out', rows)
+    def _tshark_variance_frame_len_out(self, rows_f):
+        return self._calc_framelen('variance_frame_len_out', rows_f)
 
-    def _tshark_max_frame_len_in(self, rows):
-        return self._calc_framelen('max_frame_len_in', rows)
+    def _tshark_max_frame_len_in(self, rows_f):
+        return self._calc_framelen('max_frame_len_in', rows_f)
 
-    def _tshark_max_frame_len_out(self, rows):
-        return self._calc_framelen('max_frame_len_out', rows)
+    def _tshark_max_frame_len_out(self, rows_f):
+        return self._calc_framelen('max_frame_len_out', rows_f)
 
-    def _tshark_min_frame_len_in(self, rows):
-        return self._calc_framelen('min_frame_len_in', rows)
+    def _tshark_min_frame_len_in(self, rows_f):
+        return self._calc_framelen('min_frame_len_in', rows_f)
 
-    def _tshark_min_frame_len_out(self, rows):
-        return self._calc_framelen('min_frame_len_out', rows)
+    def _tshark_min_frame_len_out(self, rows_f):
+        return self._calc_framelen('min_frame_len_out', rows_f)
 
-    def _tshark_min_time_delta_in(self, rows):
-        return self._calc_time_delta('min_time_delta_in', rows)
+    def _tshark_min_time_delta_in(self, rows_f):
+        return self._calc_time_delta('min_time_delta_in', rows_f)
 
-    def _tshark_min_time_delta_out(self, rows):
-        return self._calc_time_delta('min_time_delta_out', rows)
+    def _tshark_min_time_delta_out(self, rows_f):
+        return self._calc_time_delta('min_time_delta_out', rows_f)
 
-    def _tshark_25q_time_delta_in(self, rows):
-        return self._calc_time_delta('25q_time_delta_in', rows)
+    def _tshark_25q_time_delta_in(self, rows_f):
+        return self._calc_time_delta('25q_time_delta_in', rows_f)
 
-    def _tshark_25q_time_delta_out(self, rows):
-        return self._calc_time_delta('25q_time_delta_out', rows)
+    def _tshark_25q_time_delta_out(self, rows_f):
+        return self._calc_time_delta('25q_time_delta_out', rows_f)
 
-    def _tshark_median_time_delta_in(self, rows):
-        return self._calc_time_delta('median_time_delta_in', rows)
+    def _tshark_median_time_delta_in(self, rows_f):
+        return self._calc_time_delta('median_time_delta_in', rows_f)
 
-    def _tshark_median_time_delta_out(self, rows):
-        return self._calc_time_delta('median_time_delta_out', rows)
+    def _tshark_median_time_delta_out(self, rows_f):
+        return self._calc_time_delta('median_time_delta_out', rows_f)
 
-    def _tshark_average_time_delta_in(self, rows):
-        return self._calc_time_delta('average_time_delta_in', rows)
+    def _tshark_average_time_delta_in(self, rows_f):
+        return self._calc_time_delta('average_time_delta_in', rows_f)
 
-    def _tshark_average_time_delta_out(self, rows):
-        return self._calc_time_delta('average_time_delta_out', rows)
+    def _tshark_average_time_delta_out(self, rows_f):
+        return self._calc_time_delta('average_time_delta_out', rows_f)
 
-    def _tshark_75q_time_delta_in(self, rows):
-        return self._calc_time_delta('75q_time_delta_in', rows)
+    def _tshark_75q_time_delta_in(self, rows_f):
+        return self._calc_time_delta('75q_time_delta_in', rows_f)
 
-    def _tshark_75q_time_delta_out(self, rows):
-        return self._calc_time_delta('75q_time_delta_out', rows)
+    def _tshark_75q_time_delta_out(self, rows_f):
+        return self._calc_time_delta('75q_time_delta_out', rows_f)
 
-    def _tshark_max_time_delta_in(self, rows):
-        return self._calc_time_delta('max_time_delta_in', rows)
+    def _tshark_max_time_delta_in(self, rows_f):
+        return self._calc_time_delta('max_time_delta_in', rows_f)
 
-    def _tshark_max_time_delta_out(self, rows):
-        return self._calc_time_delta('max_time_delta_out', rows)
+    def _tshark_max_time_delta_out(self, rows_f):
+        return self._calc_time_delta('max_time_delta_out', rows_f)
 
-    def _tshark_variance_time_delta_in(self, rows):
-        return self._calc_time_delta('variance_time_delta_in', rows)
+    def _tshark_variance_time_delta_in(self, rows_f):
+        return self._calc_time_delta('variance_time_delta_in', rows_f)
 
-    def _tshark_variance_time_delta_out(self, rows):
-        return self._calc_time_delta('variance_time_delta_out', rows)
+    def _tshark_variance_time_delta_out(self, rows_f):
+        return self._calc_time_delta('variance_time_delta_out', rows_f)
 
 
 class Host(HostBase, Features):
@@ -591,280 +619,211 @@ class Host(HostBase, Features):
         return self._pyshark_ipv6(rows_f)
 
     def host_tshark_last_protocols_array(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_last_protocols_array(rows)
+        return self._tshark_last_protocols_array(rows_f)
 
     def host_tshark_ipv4(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_ipv4(rows)
+        return self._tshark_ipv4(rows_f)
 
     def host_tshark_ipv6(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_ipv6(rows)
+        return self._tshark_ipv6(rows_f)
 
     def host_tshark_priv_tcp_ports_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_priv_tcp_ports_in(rows)
+        return self._tshark_priv_tcp_ports_in(rows_f)
 
     def host_tshark_priv_tcp_ports_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_priv_tcp_ports_out(rows)
+        return self._tshark_priv_tcp_ports_out(rows_f)
 
     def host_tshark_priv_udp_ports_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_priv_udp_ports_in(rows)
+        return self._tshark_priv_udp_ports_in(rows_f)
 
     def host_tshark_priv_udp_ports_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_priv_udp_ports_out(rows)
+        return self._tshark_priv_udp_ports_out(rows_f)
 
     def host_tshark_nonpriv_tcp_ports_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_nonpriv_tcp_ports_in(rows)
+        return self._tshark_nonpriv_tcp_ports_in(rows_f)
 
     def host_tshark_nonpriv_tcp_ports_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_nonpriv_tcp_ports_out(rows)
+        return self._tshark_nonpriv_tcp_ports_out(rows_f)
 
     def host_tshark_nonpriv_udp_ports_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_nonpriv_udp_ports_in(rows)
+        return self._tshark_nonpriv_udp_ports_in(rows_f)
 
     def host_tshark_nonpriv_udp_ports_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_nonpriv_udp_ports_out(rows)
+        return self._tshark_nonpriv_udp_ports_out(rows_f)
 
     def host_tshark_tcp_flags_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_tcp_flags_in(rows)
+        return self._tshark_tcp_flags_in(rows_f)
 
     def host_tshark_tcp_flags_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_tcp_flags_out(rows)
+        return self._tshark_tcp_flags_out(rows_f)
 
     def host_tshark_ip_flags_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_ip_flags_in(rows)
+        return self._tshark_ip_flags_in(rows_f)
 
     def host_tshark_ip_flags_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_ip_flags_out(rows)
+        return self._tshark_ip_flags_out(rows_f)
 
     def host_tshark_ip_dsfield_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_ip_dsfield_in(rows)
+        return self._tshark_ip_dsfield_in(rows_f)
 
     def host_tshark_ip_dsfield_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_ip_dsfield_out(rows)
+        return self._tshark_ip_dsfield_out(rows_f)
 
     def host_tshark_wk_ip_protos(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_wk_ip_protos(rows)
+        return self._tshark_wk_ip_protos(rows_f)
 
     def host_tshark_vlan_id(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_vlan_id(rows)
+        return self._tshark_vlan_id(rows_f)
 
     def host_tshark_ipx(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_ipx(rows)
+        return self._tshark_ipx(rows_f)
 
     def host_tshark_both_private_ip(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_both_private_ip(rows)
+        return self._tshark_both_private_ip(rows_f)
 
     def host_tshark_ipv4_multicast(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_ipv4_multicast(rows)
+        return self._tshark_ipv4_multicast(rows_f)
 
     def host_tshark_non_ip(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_non_ip(rows)
+        return self._tshark_non_ip(rows_f)
 
     def host_tshark_average_time_delta(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_average_time_delta(rows)
+        return self._tshark_average_time_delta(rows_f)
 
     def host_tshark_min_time_delta(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_min_time_delta(rows)
+        return self._tshark_min_time_delta(rows_f)
 
     def host_tshark_max_time_delta(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_max_time_delta(rows)
+        return self._tshark_max_time_delta(rows_f)
 
     def host_tshark_average_frame_len(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_average_frame_len(rows)
+        return self._tshark_average_frame_len(rows_f)
 
     def host_tshark_min_frame_len(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_min_frame_len(rows)
+        return self._tshark_min_frame_len(rows_f)
 
     def host_tshark_max_frame_len(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_max_frame_len(rows)
+        return self._tshark_max_frame_len(rows_f)
 
     def host_tshark_median_frame_len(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_median_frame_len(rows)
+        return self._tshark_median_frame_len(rows_f)
 
     def host_tshark_variance_frame_len(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_variance_frame_len(rows)
+        return self._tshark_variance_frame_len(rows_f)
 
     def host_tshark_25q_frame_len(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_25q_frame_len(rows)
+        return self._tshark_25q_frame_len(rows_f)
 
     def host_tshark_75q_frame_len(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_75q_frame_len(rows)
+        return self._tshark_75q_frame_len(rows_f)
 
     def host_tshark_min_frame_time_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_min_frame_time_in(rows)
+        return self._tshark_min_frame_time_in(rows_f)
 
     def host_tshark_min_frame_time_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_min_frame_time_out(rows)
+        return self._tshark_min_frame_time_out(rows_f)
 
     def host_tshark_max_frame_time_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_max_frame_time_in(rows)
+        return self._tshark_max_frame_time_in(rows_f)
 
     def host_tshark_max_frame_time_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_max_frame_time_out(rows)
+        return self._tshark_max_frame_time_out(rows_f)
 
     def host_tshark_count_frame_len_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_count_frame_len_in(rows)
+        return self._tshark_count_frame_len_in(rows_f)
 
     def host_tshark_count_frame_len_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_count_frame_len_out(rows)
+        return self._tshark_count_frame_len_out(rows_f)
 
     def host_tshark_total_frame_len_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_total_frame_len_in(rows)
+        return self._tshark_total_frame_len_in(rows_f)
 
     def host_tshark_total_frame_len_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_total_frame_len_out(rows)
+        return self._tshark_total_frame_len_out(rows_f)
 
     def host_tshark_average_frame_len_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_average_frame_len_in(rows)
+        return self._tshark_average_frame_len_in(rows_f)
 
     def host_tshark_average_frame_len_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_average_frame_len_out(rows)
+        return self._tshark_average_frame_len_out(rows_f)
 
     def host_tshark_25q_frame_len_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_25q_frame_len_in(rows)
+        return self._tshark_25q_frame_len_in(rows_f)
 
     def host_tshark_25q_frame_len_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_25q_frame_len_out(rows)
+        return self._tshark_25q_frame_len_out(rows_f)
 
     def host_tshark_75q_frame_len_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_75q_frame_len_in(rows)
+        return self._tshark_75q_frame_len_in(rows_f)
 
     def host_tshark_75q_frame_len_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_75q_frame_len_out(rows)
+        return self._tshark_75q_frame_len_out(rows_f)
 
     def host_tshark_median_frame_len_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_median_frame_len_in(rows)
+        return self._tshark_median_frame_len_in(rows_f)
 
     def host_tshark_median_frame_len_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_median_frame_len_out(rows)
+        return self._tshark_median_frame_len_out(rows_f)
 
     def host_tshark_variance_frame_len_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_variance_frame_len_in(rows)
+        return self._tshark_variance_frame_len_in(rows_f)
 
     def host_tshark_variance_frame_len_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_variance_frame_len_out(rows)
+        return self._tshark_variance_frame_len_out(rows_f)
 
     def host_tshark_max_frame_len_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_max_frame_len_in(rows)
+        return self._tshark_max_frame_len_in(rows_f)
 
     def host_tshark_max_frame_len_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_max_frame_len_out(rows)
+        return self._tshark_max_frame_len_out(rows_f)
 
     def host_tshark_min_frame_len_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_min_frame_len_in(rows)
+        return self._tshark_min_frame_len_in(rows_f)
 
     def host_tshark_min_frame_len_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_min_frame_len_out(rows)
+        return self._tshark_min_frame_len_out(rows_f)
 
     def host_tshark_min_time_delta_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_min_time_delta_in(rows)
+        return self._tshark_min_time_delta_in(rows_f)
 
     def host_tshark_min_time_delta_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_min_time_delta_out(rows)
+        return self._tshark_min_time_delta_out(rows_f)
 
     def host_tshark_25q_time_delta_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_25q_time_delta_in(rows)
+        return self._tshark_25q_time_delta_in(rows_f)
 
     def host_tshark_25q_time_delta_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_25q_time_delta_out(rows)
+        return self._tshark_25q_time_delta_out(rows_f)
 
     def host_tshark_median_time_delta_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_median_time_delta_in(rows)
+        return self._tshark_median_time_delta_in(rows_f)
 
     def host_tshark_median_time_delta_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_median_time_delta_out(rows)
+        return self._tshark_median_time_delta_out(rows_f)
 
     def host_tshark_average_time_delta_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_average_time_delta_in(rows)
+        return self._tshark_average_time_delta_in(rows_f)
 
     def host_tshark_average_time_delta_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_average_time_delta_out(rows)
+        return self._tshark_average_time_delta_out(rows_f)
 
     def host_tshark_75q_time_delta_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_75q_time_delta_in(rows)
+        return self._tshark_75q_time_delta_in(rows_f)
 
     def host_tshark_75q_time_delta_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_75q_time_delta_out(rows)
+        return self._tshark_75q_time_delta_out(rows_f)
 
     def host_tshark_max_time_delta_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_max_time_delta_in(rows)
+        return self._tshark_max_time_delta_in(rows_f)
 
     def host_tshark_max_time_delta_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_max_time_delta_out(rows)
+        return self._tshark_max_time_delta_out(rows_f)
 
     def host_tshark_variance_time_delta_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_variance_time_delta_in(rows)
+        return self._tshark_variance_time_delta_in(rows_f)
 
     def host_tshark_variance_time_delta_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_variance_time_delta_out(rows)
+        return self._tshark_variance_time_delta_out(rows_f)
 
 
 class SessionHost(HostBase, Features):
@@ -902,277 +861,208 @@ class SessionHost(HostBase, Features):
         return newrows
 
     def sessionhost_tshark_last_protocols_array(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_last_protocols_array(rows)
+        return self._tshark_last_protocols_array(rows_f)
 
     def sessionhost_tshark_ipv4(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_ipv4(rows)
+        return self._tshark_ipv4(rows_f)
 
     def sessionhost_tshark_ipv6(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_ipv6(rows)
+        return self._tshark_ipv6(rows_f)
 
     def sessionhost_tshark_priv_tcp_ports_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_priv_tcp_ports_in(rows)
+        return self._tshark_priv_tcp_ports_in(rows_f)
 
     def sessionhost_tshark_priv_tcp_ports_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_priv_tcp_ports_out(rows)
+        return self._tshark_priv_tcp_ports_out(rows_f)
 
     def sessionhost_tshark_priv_udp_ports_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_priv_udp_ports_in(rows)
+        return self._tshark_priv_udp_ports_in(rows_f)
 
     def sessionhost_tshark_priv_udp_ports_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_priv_udp_ports_out(rows)
+        return self._tshark_priv_udp_ports_out(rows_f)
 
     def sessionhost_tshark_nonpriv_tcp_ports_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_nonpriv_tcp_ports_in(rows)
+        return self._tshark_nonpriv_tcp_ports_in(rows_f)
 
     def sessionhost_tshark_nonpriv_tcp_ports_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_nonpriv_tcp_ports_out(rows)
+        return self._tshark_nonpriv_tcp_ports_out(rows_f)
 
     def sessionhost_tshark_nonpriv_udp_ports_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_nonpriv_udp_ports_in(rows)
+        return self._tshark_nonpriv_udp_ports_in(rows_f)
 
     def sessionhost_tshark_nonpriv_udp_ports_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_nonpriv_udp_ports_out(rows)
+        return self._tshark_nonpriv_udp_ports_out(rows_f)
 
     def sessionhost_tshark_tcp_flags_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_tcp_flags_in(rows)
+        return self._tshark_tcp_flags_in(rows_f)
 
     def sessionhost_tshark_tcp_flags_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_tcp_flags_out(rows)
+        return self._tshark_tcp_flags_out(rows_f)
 
     def sessionhost_tshark_ip_flags_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_ip_flags_in(rows)
+        return self._tshark_ip_flags_in(rows_f)
 
     def sessionhost_tshark_ip_flags_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_ip_flags_out(rows)
+        return self._tshark_ip_flags_out(rows_f)
 
     def sessionhost_tshark_ip_dsfield_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_ip_dsfield_in(rows)
+        return self._tshark_ip_dsfield_in(rows_f)
 
     def sessionhost_tshark_ip_dsfield_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_ip_dsfield_out(rows)
+        return self._tshark_ip_dsfield_out(rows_f)
 
     def sessionhost_tshark_wk_ip_protos(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_wk_ip_protos(rows)
+        return self._tshark_wk_ip_protos(rows_f)
 
     def sessionhost_tshark_vlan_id(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_vlan_id(rows)
+        return self._tshark_vlan_id(rows_f)
 
     def sessionhost_tshark_ipx(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_ipx(rows)
+        return self._tshark_ipx(rows_f)
 
     def sessionhost_tshark_both_private_ip(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_both_private_ip(rows)
+        return self._tshark_both_private_ip(rows_f)
 
     def sessionhost_tshark_ipv4_multicast(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_ipv4_multicast(rows)
+        return self._tshark_ipv4_multicast(rows_f)
 
     def sessionhost_tshark_non_ip(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_non_ip(rows)
+        return self._tshark_non_ip(rows_f)
 
     def sessionhost_tshark_average_time_delta(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_average_time_delta(rows)
+        return self._tshark_average_time_delta(rows_f)
 
     def sessionhost_tshark_min_time_delta(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_min_time_delta(rows)
+        return self._tshark_min_time_delta(rows_f)
 
     def sessionhost_tshark_max_time_delta(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_max_time_delta(rows)
+        return self._tshark_max_time_delta(rows_f)
 
     def sessionhost_tshark_average_frame_len(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_average_frame_len(rows)
+        return self._tshark_average_frame_len(rows_f)
 
     def sessionhost_tshark_min_frame_len(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_min_frame_len(rows)
+        return self._tshark_min_frame_len(rows_f)
 
     def sessionhost_tshark_max_frame_len(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_max_frame_len(rows)
+        return self._tshark_max_frame_len(rows_f)
 
     def sessionhost_tshark_median_frame_len(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_median_frame_len(rows)
+        return self._tshark_median_frame_len(rows_f)
 
     def sessionhost_tshark_variance_frame_len(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_variance_frame_len(rows)
+        return self._tshark_variance_frame_len(rows_f)
 
     def sessionhost_tshark_25q_frame_len(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_25q_frame_len(rows)
+        return self._tshark_25q_frame_len(rows_f)
 
     def sessionhost_tshark_75q_frame_len(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_75q_frame_len(rows)
+        return self._tshark_75q_frame_len(rows_f)
 
     def sessionhost_tshark_min_frame_time_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_min_frame_time_in(rows)
+        return self._tshark_min_frame_time_in(rows_f)
 
     def sessionhost_tshark_min_frame_time_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_min_frame_time_out(rows)
+        return self._tshark_min_frame_time_out(rows_f)
 
     def sessionhost_tshark_max_frame_time_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_max_frame_time_in(rows)
+        return self._tshark_max_frame_time_in(rows_f)
 
     def sessionhost_tshark_max_frame_time_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_max_frame_time_out(rows)
+        return self._tshark_max_frame_time_out(rows_f)
 
     def sessionhost_tshark_count_frame_len_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_count_frame_len_in(rows)
+        return self._tshark_count_frame_len_in(rows_f)
 
     def sessionhost_tshark_count_frame_len_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_count_frame_len_out(rows)
+        return self._tshark_count_frame_len_out(rows_f)
 
     def sessionhost_tshark_total_frame_len_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_total_frame_len_in(rows)
+        return self._tshark_total_frame_len_in(rows_f)
 
     def sessionhost_tshark_total_frame_len_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_total_frame_len_out(rows)
+        return self._tshark_total_frame_len_out(rows_f)
 
     def sessionhost_tshark_average_frame_len_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_average_frame_len_in(rows)
+        return self._tshark_average_frame_len_in(rows_f)
 
     def sessionhost_tshark_average_frame_len_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_average_frame_len_out(rows)
+        return self._tshark_average_frame_len_out(rows_f)
 
     def sessionhost_tshark_25q_frame_len_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_25q_frame_len_in(rows)
+        return self._tshark_25q_frame_len_in(rows_f)
 
     def sessionhost_tshark_25q_frame_len_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_25q_frame_len_out(rows)
+        return self._tshark_25q_frame_len_out(rows_f)
 
     def sessionhost_tshark_75q_frame_len_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_75q_frame_len_in(rows)
+        return self._tshark_75q_frame_len_in(rows_f)
 
     def sessionhost_tshark_75q_frame_len_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_75q_frame_len_out(rows)
+        return self._tshark_75q_frame_len_out(rows_f)
 
     def sessionhost_tshark_median_frame_len_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_median_frame_len_in(rows)
+        return self._tshark_median_frame_len_in(rows_f)
 
     def sessionhost_tshark_median_frame_len_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_median_frame_len_out(rows)
+        return self._tshark_median_frame_len_out(rows_f)
 
     def sessionhost_tshark_variance_frame_len_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_variance_frame_len_in(rows)
+        return self._tshark_variance_frame_len_in(rows_f)
 
     def sessionhost_tshark_variance_frame_len_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_variance_frame_len_out(rows)
+        return self._tshark_variance_frame_len_out(rows_f)
 
     def sessionhost_tshark_max_frame_len_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_max_frame_len_in(rows)
+        return self._tshark_max_frame_len_in(rows_f)
 
     def sessionhost_tshark_max_frame_len_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_max_frame_len_out(rows)
+        return self._tshark_max_frame_len_out(rows_f)
 
     def sessionhost_tshark_min_frame_len_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_min_frame_len_in(rows)
+        return self._tshark_min_frame_len_in(rows_f)
 
     def sessionhost_tshark_min_frame_len_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_min_frame_len_out(rows)
+        return self._tshark_min_frame_len_out(rows_f)
 
     def sessionhost_tshark_min_time_delta_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_min_time_delta_in(rows)
+        return self._tshark_min_time_delta_in(rows_f)
 
     def sessionhost_tshark_min_time_delta_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_min_time_delta_out(rows)
+        return self._tshark_min_time_delta_out(rows_f)
 
     def sessionhost_tshark_25q_time_delta_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_25q_time_delta_in(rows)
+        return self._tshark_25q_time_delta_in(rows_f)
 
     def sessionhost_tshark_25q_time_delta_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_25q_time_delta_out(rows)
+        return self._tshark_25q_time_delta_out(rows_f)
 
     def sessionhost_tshark_median_time_delta_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_median_time_delta_in(rows)
+        return self._tshark_median_time_delta_in(rows_f)
 
     def sessionhost_tshark_median_time_delta_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_median_time_delta_out(rows)
+        return self._tshark_median_time_delta_out(rows_f)
 
     def sessionhost_tshark_average_time_delta_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_average_time_delta_in(rows)
+        return self._tshark_average_time_delta_in(rows_f)
 
     def sessionhost_tshark_average_time_delta_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_average_time_delta_out(rows)
+        return self._tshark_average_time_delta_out(rows_f)
 
     def sessionhost_tshark_75q_time_delta_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_75q_time_delta_in(rows)
+        return self._tshark_75q_time_delta_in(rows_f)
 
     def sessionhost_tshark_75q_time_delta_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_75q_time_delta_out(rows)
+        return self._tshark_75q_time_delta_out(rows_f)
 
     def sessionhost_tshark_max_time_delta_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_max_time_delta_in(rows)
+        return self._tshark_max_time_delta_in(rows_f)
 
     def sessionhost_tshark_max_time_delta_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_max_time_delta_out(rows)
+        return self._tshark_max_time_delta_out(rows_f)
 
     def sessionhost_tshark_variance_time_delta_in(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_variance_time_delta_in(rows)
+        return self._tshark_variance_time_delta_in(rows_f)
 
     def sessionhost_tshark_variance_time_delta_out(self, rows_f):
-        rows = list(rows_f())
-        return self._tshark_variance_time_delta_out(rows)
+        return self._tshark_variance_time_delta_out(rows_f)
