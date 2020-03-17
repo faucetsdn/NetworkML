@@ -1,23 +1,19 @@
 import argparse
-import ast
 import concurrent.futures
 import csv
 import gzip
 import io
+import json
 import logging
 import ntpath
 import os
 import pathlib
-import random
 import shlex
-import string
 import subprocess
 import tempfile
-
 from copy import deepcopy
 
 import pyshark
-import ujson
 
 
 class PCAPToCSV():
@@ -68,7 +64,7 @@ class PCAPToCSV():
         header_all = set()
         with gzip.open(dict_fp, 'rb') as f:
             for line in io.TextIOWrapper(f, newline=''):
-                header_all.update(ujson.loads(line.strip()).keys())
+                header_all.update(json.loads(line.strip()).keys())
         header = []
         for key in header_all:
             if key[0].isalpha() or key[0] == '_':
@@ -148,7 +144,7 @@ class PCAPToCSV():
                     for key in keys:
                         if not key[0].isalpha() or key == 'tcp.payload_raw' or key == 'tcp.payload':
                             del packet_dict[key]
-                    f.write(ujson.dumps(packet_dict) + '\n')
+                    f.write(json.dumps(packet_dict) + '\n')
 
         for protocol in self.PROTOCOLS:
             if protocol in all_protocols:
@@ -214,33 +210,42 @@ class PCAPToCSV():
                                     'Total Bytes': bytes_total,
                                     'Relative Start': rel_start,
                                     'Duration': duration}
-                            f.write(ujson.dumps(conv) + '\n')
+                            f.write(json.dumps(conv) + '\n')
 
 
-    def flatten_json(self, key, value):
-        if isinstance(value, list):
-            for i, sub_item in enumerate(value):
-                self.flatten_json(str(i), sub_item)
-        elif isinstance(value, dict):
-            sub_keys = value.keys()
-            for sub_key in sub_keys:
-                self.flatten_json(sub_key, value[sub_key])
-        else:
-            # remove junk
-            if (key[0].isalpha() or key[0] == '_') and ';' not in key and '(' not in key and '\\' not in key and '{' not in key and '<' not in key and '+' not in key:
-                # limit field size for csv
-                if (value and len(value) < 131072) or not value:
-                    self.flattened_dict[key] = value
+    def flatten_json(self, item):
+        flattened_dict = {}
+
+        def flatten(key, value):
+            if isinstance(value, list):
+                for i, sub_item in enumerate(value):
+                    flatten(str(i), sub_item)
+            elif isinstance(value, dict):
+                sub_keys = value.keys()
+                for sub_key in sub_keys:
+                    flatten(sub_key, value[sub_key])
+            else:
+                # remove junk
+                if (key[0].isalpha() or key[0] == '_') and ';' not in key and '(' not in key and '\\' not in key and '{' not in key and '<' not in key and '+' not in key:
+                    # limit field size for csv
+                    if (value and len(value) < 131072) or not value:
+                        flattened_dict[key] = value
+
+        flatten('', item)
+        return flattened_dict
 
 
-    def json_packet_records(self, raw_tshark_json):
+    def json_packet_records(self, process):
         json_buffer = []
 
         def _recordize():
-            return ujson.loads('\n'.join(json_buffer))
+            return json.loads('\n'.join(json_buffer))
 
         depth = 0
-        for json_line in raw_tshark_json:
+        while True:
+            json_line = process.stdout.readline().decode(encoding='utf-8', errors='ignore')
+            if json_line == '' and process.poll() is not None:
+                break
             if not json_line.startswith(' '):
                 continue
             json_line = json_line.rstrip()
@@ -258,30 +263,13 @@ class PCAPToCSV():
                 json_buffer.append(json_line)
 
 
-    def _parse_tshark_to_json(self, pcap_file, tmp_json_filename):
-        with open(tmp_json_filename, mode='w', encoding='utf-8', errors='ignore') as tmp_json:
-            options = '-n -V -Tjson'
-            subprocess.check_call(shlex.split(' '.join(['tshark', '-r', pcap_file, options])), stdout=tmp_json)
-
-
-    def _flatten_json(self, dict_fp, tmp_json_filename):
-        with open(tmp_json_filename, mode='r', encoding='utf-8', errors='ignore') as tmp_json:
-            with gzip.open(dict_fp, 'w') as gzip_f:
-                with io.TextIOWrapper(gzip_f, newline='', write_through=True) as f:
-                    for item in self.json_packet_records(tmp_json):
-                        self.flattened_dict = {}
-                        self.flatten_json('', item)
-                        f.write(ujson.dumps(self.flattened_dict) + '\n')
-
-
     def get_tshark_packet_data(self, pcap_file, dict_fp):
-        try:
-            with tempfile.TemporaryDirectory() as tmpdir:
-                tmp_json_filename = os.path.join(tmpdir, 'tshark.json')
-                self._parse_tshark_to_json(pcap_file, tmp_json_filename)
-                self._flatten_json(dict_fp, tmp_json_filename)
-        except Exception as e:  # pragma: no cover
-            self.logger.error(f'{e}')
+        options = '-n -V -Tjson'
+        process = subprocess.Popen(shlex.split(' '.join(['tshark', '-r', pcap_file, options])), stdout=subprocess.PIPE)
+        with gzip.open(dict_fp, 'w') as gzip_f:
+            with io.TextIOWrapper(gzip_f, newline='', write_through=True) as f:
+                for item in self.json_packet_records(process):
+                    f.write(json.dumps(self.flatten_json(item)) + '\n')
 
 
     def get_tshark_host_data(self, pcap_file, dict_fp):
@@ -297,7 +285,7 @@ class PCAPToCSV():
             try:
                 with gzip.open(dict_fp, 'rb') as f:
                     for line in io.TextIOWrapper(f, newline=''):
-                        w.writerow(ujson.loads(line.strip()))
+                        w.writerow(json.loads(line.strip()))
             except Exception as e:  # pragma: no cover
                 self.logger.error(f'Failed to write to CSV because: {e}')
 
@@ -318,7 +306,7 @@ class PCAPToCSV():
                 self.get_tshark_conv_data(in_file, dict_fp)
             elif level == 'host':
                 # TODO unknown what should be in this, just the overarching stats?
-                raise NotImplementedError("To be implemented")
+                raise NotImplementedError('To be implemented')
             self.write_dict_to_csv(dict_fp, out_file)
             PCAPToCSV.cleanup_files([dict_fp])
 
