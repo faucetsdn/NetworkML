@@ -123,9 +123,9 @@ class CSVToFeatures():
     def exec_features(self, features, in_file, out_file, features_path, gzip_opt):
         self.logger.info(f'Processing {in_file}')
         use_gzip = gzip_opt in ['input', 'both']
-        rows = [row for row in CSVToFeatures.get_rows(in_file, use_gzip)]
+        rows_f = lambda: CSVToFeatures.get_rows(in_file, use_gzip)
         featurizer = Featurizer()
-        rows = featurizer.main(features, rows, features_path)
+        rows = featurizer.main(features, rows_f, features_path)
 
         rowcounts = Counter()
         for row in rows:

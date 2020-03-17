@@ -48,9 +48,10 @@ class Featurizer():
         return classes
 
 
-    def run_all_funcs(self, functions, groups, classes, rows):
+    def run_all_funcs(self, functions, groups, classes, rows_f):
         feature_rows = []
         run_methods = []
+        rows = list(rows_f())
 
         def verify_feature_row(feature_row):
             assert isinstance(feature_row, list), 'method %s returned non list: %s' % (method, feature_row)
