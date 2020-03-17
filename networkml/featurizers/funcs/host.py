@@ -125,7 +125,7 @@ class HostBase:
             newrows.append(host_func_results)
         return newrows
 
-    def _calc_tshark_field(self, field, tshark_field, rows, all_rows=None):
+    def _calc_tshark_field(self, field, tshark_field, rows_f):
 
         def calc_field(host_rows):
             field_parts = field.split('_')
@@ -140,17 +140,16 @@ class HostBase:
                 rows_filter = self._select_mac_direction(host_rows, output=True)
             return {field: self._stat_row_field(stat, tshark_field, rows_filter)}  # pytype: disable=attribute-error
 
-        return self._host_rows(rows, calc_field, all_rows=all_rows)
+        rows = list(rows_f())
+        return self._host_rows(rows, calc_field)
 
     def _calc_time_delta(self, field, rows_f):
         assert 'time_delta' in field
-        rows = list(rows_f())
-        return self._calc_tshark_field(field, 'frame.time_delta_displayed', rows)
+        return self._calc_tshark_field(field, 'frame.time_delta_displayed', rows_f)
 
     def _calc_framelen(self, field, rows_f):
         assert 'frame_len' in field
-        rows = list(rows_f())
-        return self._calc_tshark_field(field, 'frame.len', rows)
+        return self._calc_tshark_field(field, 'frame.len', rows_f)
 
     def _get_ip_proto_ports(self, row, ip_proto):
         src_port = self._safe_int(row.get('.'.join((ip_proto, 'srcport')), None))  # pytype: disable=attribute-error
@@ -487,20 +486,16 @@ class HostBase:
     # By direction
 
     def _tshark_min_frame_time_in(self, rows_f):
-        rows = list(rows_f())
-        return self._calc_tshark_field('min_frame_time_in', 'frame.time_epoch', rows)
+        return self._calc_tshark_field('min_frame_time_in', 'frame.time_epoch', rows_f)
 
     def _tshark_min_frame_time_out(self, rows_f):
-        rows = list(rows_f())
-        return self._calc_tshark_field('min_frame_time_out', 'frame.time_epoch', rows)
+        return self._calc_tshark_field('min_frame_time_out', 'frame.time_epoch', rows_f)
 
     def _tshark_max_frame_time_in(self, rows_f):
-        rows = list(rows_f())
-        return self._calc_tshark_field('max_frame_time_in', 'frame.time_epoch', rows)
+        return self._calc_tshark_field('max_frame_time_in', 'frame.time_epoch', rows_f)
 
     def _tshark_max_frame_time_out(self, rows_f):
-        rows = list(rows_f())
-        return self._calc_tshark_field('max_frame_time_out', 'frame.time_epoch', rows)
+        return self._calc_tshark_field('max_frame_time_out', 'frame.time_epoch', rows_f)
 
     def _tshark_count_frame_len_in(self, rows_f):
         return self._calc_framelen('count_frame_len_in', rows_f)
