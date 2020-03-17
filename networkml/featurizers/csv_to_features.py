@@ -91,15 +91,18 @@ class CSVToFeatures():
 
 
     @staticmethod
-    def get_rows(in_file, gzip_opt):
-        if gzip_opt in ['input', 'both']:
+    def get_rows(in_file, use_gzip):
+        if use_gzip:
             with gzip.open(in_file, 'rb') as f_in:
                 reader = csv.DictReader(io.TextIOWrapper(f_in, newline=''))
-                return [dict(line) for line in reader]
+                for line in reader:
+                    yield dict(line)
+        else:
+            with open(in_file, 'r') as f_in:
+                reader = csv.DictReader(f_in)
+                for line in reader:
+                    yield dict(line)
 
-        with open(in_file, 'r') as f_in:
-            reader = csv.DictReader(f_in)
-            return [dict(line) for line in reader]
 
     @staticmethod
     def parse_args(raw_args=None):
@@ -119,7 +122,8 @@ class CSVToFeatures():
 
     def exec_features(self, features, in_file, out_file, features_path, gzip_opt):
         self.logger.info(f'Processing {in_file}')
-        rows = CSVToFeatures.get_rows(in_file, gzip_opt)
+        use_gzip = gzip_opt in ['input', 'both']
+        rows = [row for row in CSVToFeatures.get_rows(in_file, use_gzip)]
         featurizer = Featurizer()
         rows = featurizer.main(features, rows, features_path)
 

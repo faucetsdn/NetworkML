@@ -10,7 +10,6 @@ import ntpath
 import os
 import pathlib
 import random
-import re
 import shlex
 import string
 import subprocess
