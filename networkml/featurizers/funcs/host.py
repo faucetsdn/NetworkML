@@ -92,7 +92,7 @@ class HostBase:
         return ipversions
 
     def _pyshark_ipversion(self, version, rows):
-        return [{'IPv%u' % version: (version in self._pyshark_ipversions(rows))}]
+        return [{'IPv%u' % version: int(version in self._pyshark_ipversions(rows))}]
 
     @staticmethod
     def _last_protocols(rows):

@@ -1,6 +1,18 @@
 from networkml.featurizers.funcs.host import Host
 
 
+def test_pyshark_ipv4():
+    instance = Host()
+    assert instance.pyshark_ipv4(
+        lambda: [{'eth.src': '0e:02:03:04:05:06', 'layers': {'<IP Layer>': {}}}]) == [{'IPv4': 1}]
+
+
+def test_pyshark_ipv6():
+    instance = Host()
+    assert instance.pyshark_ipv6(
+        lambda: [{'eth.src': '0e:02:03:04:05:06', 'layers': {'<IPV6 Layer>': {}}}]) == [{'IPv6': 1}]
+
+
 def test_tshark_input_mac():
     instance = Host()
     # 1 appears the most on both sides.
