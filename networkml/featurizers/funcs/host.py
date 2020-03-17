@@ -82,9 +82,9 @@ class HostBase:
         # Select all rows where traffic not originated by inferred source MAC.
         return filter(lambda row: (row.get('eth.src', None) != src_mac), rows)
 
-    def _pyshark_ipversions(self, rows):
+    def _pyshark_ipversions(self, rows_f):
         ipversions = set()
-        for row in self._pyshark_row_layers(rows):  # pytype: disable=attribute-error
+        for row in self._pyshark_row_layers(rows_f):  # pytype: disable=attribute-error
             if '<IP Layer>' in row['layers']:
                 ipversions.add(4)
             elif '<IPV6 Layer>' in row['layers']:
@@ -222,11 +222,11 @@ class HostBase:
             0: 'ecn0', 1: 'ecn1', 2: 'dscp0', 3: 'dscp1', 4: 'dscp2',
             5: 'dscp3', 6: 'dscp4', 7: 'dscp5'})
 
-    def _pyshark_ipv4(self, rows):
-        return self._pyshark_ipversion(4, rows)
+    def _pyshark_ipv4(self, rows_f):
+        return self._pyshark_ipversion(4, rows_f)
 
-    def _pyshark_ipv6(self, rows):
-        return self._pyshark_ipversion(6, rows)
+    def _pyshark_ipv6(self, rows_f):
+        return self._pyshark_ipversion(6, rows_f)
 
     def _pyshark_last_highest_layer(self, rows):
         highest_layer = 0
@@ -585,12 +585,10 @@ class Host(HostBase, Features):
         return keys
 
     def pyshark_ipv4(self, rows_f):
-        rows = list(rows_f())
-        return self._pyshark_ipv4(rows)
+        return self._pyshark_ipv4(rows_f)
 
     def pyshark_ipv6(self, rows_f):
-        rows = list(rows_f())
-        return self._pyshark_ipv6(rows)
+        return self._pyshark_ipv6(rows_f)
 
     def host_tshark_last_protocols_array(self, rows_f):
         rows = list(rows_f())

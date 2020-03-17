@@ -37,8 +37,8 @@ class Features():
         return {int(row['ip.version']) for row in rows if row.get('ip.version', None)}
 
     @staticmethod
-    def _pyshark_row_layers(rows):
-        return filter(lambda row: 'layers' in row, rows)
+    def _pyshark_row_layers(rows_f):
+        return filter(lambda row: 'layers' in row, rows_f())
 
     @staticmethod
     def _get_ips(row):
