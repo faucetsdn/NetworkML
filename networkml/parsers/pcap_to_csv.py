@@ -248,19 +248,21 @@ class PCAPToCSV():
                 break
             if not json_line.startswith(' '):
                 continue
-            json_line = json_line.rstrip()
+            json_line = json_line.strip()
             bracket_line = json_line.rstrip(',')
             if bracket_line.endswith('}'):
                 depth -= 1
             elif bracket_line.endswith('{'):
                 depth += 1
             if depth == 0:
-                json_buffer.append(bracket_line)
+                if bracket_line:
+                    json_buffer.append(bracket_line)
                 if json_buffer:
                     yield _recordize()
                 json_buffer = []
             else:
-                json_buffer.append(json_line)
+                if json_line:
+                    json_buffer.append(json_line)
 
 
     def get_tshark_packet_data(self, pcap_file, dict_fp):
