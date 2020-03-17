@@ -106,10 +106,10 @@ class HostBase:
     def _row_keys(self, row):
         return set()
 
-    def _partition_rows_by_field_vals(self, rows, all_rows):
+    def _partition_rows_by_field_vals(self, rows, all_rows_f):
         partitioned_rows = defaultdict(list)
-        if all_rows is not None:
-            for row in all_rows:
+        if all_rows_f is not None:
+            for row in all_rows_f():
                 for key in self._row_keys(row):
                     partitioned_rows[key] = []
         for row in rows:
@@ -117,9 +117,9 @@ class HostBase:
                 partitioned_rows[key].append(row)
         return partitioned_rows
 
-    def _host_rows(self, rows, host_func, all_rows=None):
+    def _host_rows(self, rows, host_func, all_rows_f=None):
         newrows = []
-        for host_key, host_rows in self._partition_rows_by_field_vals(rows, all_rows).items():
+        for host_key, host_rows in self._partition_rows_by_field_vals(rows, all_rows_f).items():
             host_func_results = host_func(host_rows)
             host_func_results.update({'host_key': host_key})
             newrows.append(host_func_results)
@@ -177,23 +177,23 @@ class HostBase:
         nonpriv_ports.update({'other': int(not lowest_ports.issubset(self.WK_NONPRIV_PROTO_PORTS))})
         return nonpriv_ports
 
-    def _get_priv_ports(self, rows, ip_proto, suffix, all_rows=None):
+    def _get_priv_ports(self, rows, ip_proto, suffix, all_rows_f=None):
 
         def priv_ports_present(host_rows):
             priv_ports = self._priv_ip_proto_ports(host_rows, ip_proto)
             return {'tshark_%s_priv_port_%s_%s' % (ip_proto, port, suffix): present
                     for port, present in priv_ports.items()}
 
-        return self._host_rows(rows, priv_ports_present, all_rows=all_rows)
+        return self._host_rows(rows, priv_ports_present, all_rows_f=all_rows_f)
 
-    def _get_nonpriv_ports(self, rows, ip_proto, suffix, all_rows=None):
+    def _get_nonpriv_ports(self, rows, ip_proto, suffix, all_rows_f=None):
 
         def nonpriv_ports_present(host_rows):
             nonpriv_ports = self._nonpriv_ip_proto_ports(host_rows, ip_proto)
             return {'tshark_%s_nonpriv_port_%s_%s' % (ip_proto, port, suffix): present
                     for port, present in nonpriv_ports.items()}
 
-        return self._host_rows(rows, nonpriv_ports_present, all_rows=all_rows)
+        return self._host_rows(rows, nonpriv_ports_present, all_rows_f=all_rows_f)
 
     def _get_flags(self, rows, suffix, flags_field, decode_map):
         flags_counter = Counter()
@@ -270,42 +270,42 @@ class HostBase:
     def _tshark_priv_tcp_ports_in(self, rows_f):
         rows = list(rows_f())
         in_rows = self._select_mac_direction(rows, output=False)
-        return self._get_priv_ports(in_rows, 'tcp', 'in', all_rows=rows)
+        return self._get_priv_ports(in_rows, 'tcp', 'in', all_rows_f=rows_f)
 
     def _tshark_priv_tcp_ports_out(self, rows_f):
         rows = list(rows_f())
         out_rows = self._select_mac_direction(rows, output=True)
-        return self._get_priv_ports(out_rows, 'tcp', 'out', all_rows=rows)
+        return self._get_priv_ports(out_rows, 'tcp', 'out', all_rows_f=rows_f)
 
     def _tshark_priv_udp_ports_in(self, rows_f):
         rows = list(rows_f())
         in_rows = self._select_mac_direction(rows, output=False)
-        return self._get_priv_ports(in_rows, 'udp', 'in', all_rows=rows)
+        return self._get_priv_ports(in_rows, 'udp', 'in', all_rows_f=rows_f)
 
     def _tshark_priv_udp_ports_out(self, rows_f):
         rows = list(rows_f())
         out_rows = self._select_mac_direction(rows, output=True)
-        return self._get_priv_ports(out_rows, 'udp', 'out', all_rows=rows)
+        return self._get_priv_ports(out_rows, 'udp', 'out', all_rows_f=rows_f)
 
     def _tshark_nonpriv_tcp_ports_in(self, rows_f):
         rows = list(rows_f())
         in_rows = self._select_mac_direction(rows, output=False)
-        return self._get_nonpriv_ports(in_rows, 'tcp', 'in', all_rows=rows)
+        return self._get_nonpriv_ports(in_rows, 'tcp', 'in', all_rows_f=rows_f)
 
     def _tshark_nonpriv_tcp_ports_out(self, rows_f):
         rows = list(rows_f())
         out_rows = self._select_mac_direction(rows, output=True)
-        return self._get_nonpriv_ports(out_rows, 'tcp', 'out', all_rows=rows)
+        return self._get_nonpriv_ports(out_rows, 'tcp', 'out', all_rows_f=rows_f)
 
     def _tshark_nonpriv_udp_ports_in(self, rows_f):
         rows = list(rows_f())
         in_rows = self._select_mac_direction(rows, output=False)
-        return self._get_nonpriv_ports(in_rows, 'udp', 'in', all_rows=rows)
+        return self._get_nonpriv_ports(in_rows, 'udp', 'in', all_rows_f=rows_f)
 
     def _tshark_nonpriv_udp_ports_out(self, rows_f):
         rows = list(rows_f())
         out_rows = self._select_mac_direction(rows, output=True)
-        return self._get_nonpriv_ports(out_rows, 'udp', 'out', all_rows=rows)
+        return self._get_nonpriv_ports(out_rows, 'udp', 'out', all_rows_f=rows_f)
 
     def _tshark_tcp_flags_in(self, rows_f):
 
@@ -845,9 +845,9 @@ class SessionHost(HostBase, Features):
         return {
             (eth_src, ip_proto, ip_src, ip_srcport, eth_dst, ip_dst, ip_dstport)}
 
-    def _host_rows(self, rows, host_func, all_rows=None):
+    def _host_rows(self, rows, host_func, all_rows_f=None):
         newrows = []
-        for host_key, host_rows in self._partition_rows_by_field_vals(rows, all_rows).items():
+        for host_key, host_rows in self._partition_rows_by_field_vals(rows, all_rows_f).items():
             # eth_src only.
             host_key = host_key[0]
             host_func_results = host_func(host_rows)
