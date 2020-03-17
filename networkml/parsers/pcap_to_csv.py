@@ -265,16 +265,19 @@ class PCAPToCSV():
 
     def get_tshark_packet_data(self, pcap_file, dict_fp):
         options = '-n -V -Tjson'
-        process = subprocess.Popen(shlex.split(' '.join(['tshark', '-r', pcap_file, options])), stdout=subprocess.PIPE)
-        with gzip.open(dict_fp, 'w') as gzip_f:
-            with io.TextIOWrapper(gzip_f, newline='', write_through=True) as f:
-                for item in self.json_packet_records(process):
-                    f.write(json.dumps(self.flatten_json(item)) + '\n')
+        try:
+            process = subprocess.Popen(shlex.split(' '.join(['tshark', '-r', pcap_file, options])), stdout=subprocess.PIPE)
+            with gzip.open(dict_fp, 'w') as gzip_f:
+                with io.TextIOWrapper(gzip_f, newline='', write_through=True) as f:
+                    for item in self.json_packet_records(process):
+                        f.write(json.dumps(self.flatten_json(item)) + '\n')
+        except Exception as e:  # pragma: no cover
+            self.logger.error(f'{e}')
 
 
     def get_tshark_host_data(self, pcap_file, dict_fp):
         # TODO
-        raise NotImplementedError("To be implemented")
+        raise NotImplementedError('To be implemented')
 
 
     def write_dict_to_csv(self, dict_fp, out_file):
