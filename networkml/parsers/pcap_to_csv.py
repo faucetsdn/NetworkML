@@ -1,6 +1,7 @@
 import argparse
 import concurrent.futures
 import csv
+import functools
 import gzip
 import io
 import json
@@ -33,7 +34,6 @@ class PCAPToCSV():
                           '<ARP Layer>',
                           '<IPV6 Layer>',
                           '<TLS Layer>']
-        self.flattened_dict = {}
         self.raw_args = raw_args
 
 
@@ -213,6 +213,12 @@ class PCAPToCSV():
                             f.write(json.dumps(conv) + '\n')
 
 
+    @staticmethod
+    @functools.lru_cache()
+    def good_json_key(key):
+        return (key[0].isalpha() or key[0] == '_') and ';' not in key and '(' not in key and '\\' not in key and '{' not in key and '<' not in key and '+' not in key
+
+
     def flatten_json(self, item):
         flattened_dict = {}
 
@@ -226,7 +232,7 @@ class PCAPToCSV():
                     flatten(sub_key, value[sub_key])
             else:
                 # remove junk
-                if (key[0].isalpha() or key[0] == '_') and ';' not in key and '(' not in key and '\\' not in key and '{' not in key and '<' not in key and '+' not in key:
+                if self.good_json_key(key):
                     # limit field size for csv
                     if (value and len(value) < 131072) or not value:
                         flattened_dict[key] = value

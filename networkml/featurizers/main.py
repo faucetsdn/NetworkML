@@ -1,6 +1,7 @@
 import inspect
 import os
 import sys
+import time
 from networkml.featurizers.features import Features
 
 # TODO move print statements to logging
@@ -48,23 +49,29 @@ class Featurizer():
         return classes
 
 
-    def run_all_funcs(self, functions, groups, classes, rows):
+    def run_all_funcs(self, functions, groups, classes, rows_f):
         feature_rows = []
         run_methods = []
 
-        def verify_feature_row(feature_row):
+        def verify_feature_row(method, feature_row):
             assert isinstance(feature_row, list), 'method %s returned non list: %s' % (method, feature_row)
             non_dicts = {x for x in feature_row if not isinstance(x, dict)}
             assert not non_dicts, 'method %s returned something not a dict' % (method, non_dicts)
+
+        def run_func(method, func, descr):
+            print(f'running {descr}...', end='')
+            start_time = time.time()
+            feature_row = func()
+            elapsed_time = int(time.time() - start_time)
+            print(f'{elapsed_time}s')
+            verify_feature_row(method, feature_row)
+            return feature_row
 
         for f in classes:
             if groups:
                 methods = filter(lambda funcname: funcname.startswith(groups), dir(f[0]))
                 for method in methods:
-                    print(f'Running method: {f[1]}/{method}')
-                    feature_row = f[0].run_func(method, rows)
-                    verify_feature_row(feature_row)
-                    feature_rows.append(feature_row)
+                    feature_rows.append(run_func(method, lambda: f[0].run_func(method, rows_f), f'{f[1]}/{method}'))
                     run_methods.append((f[1], method))
 
         # run remaining extras
@@ -72,10 +79,8 @@ class Featurizer():
             if function not in run_methods:
                 for f in classes:
                     if f[1] == function[0]:
-                        print(f'Running method: {f[1]}/{function[1]}')
-                        feature_row = f[0].run_func(function[1], rows)
-                        verify_feature_row(feature_row)
-                        feature_rows.append(feature_row)
+                        method = function[1]
+                        feature_rows.append(run_func(method, lambda: f[0].run_func(method, rows_f), f'{f[1]}/{function[1]}'))
         return feature_rows
 
 

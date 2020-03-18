@@ -1,3 +1,4 @@
+import functools
 import ipaddress
 import statistics
 
@@ -25,10 +26,14 @@ class Features():
         return new_rows
 
     @staticmethod
-    def _stat_row_field(statfunc, field, rows):
+    @functools.lru_cache()
+    def get_float_field(field, rows):
+        return [float(row[field]) for row in filter(lambda row: field in row, rows)]
+
+    def _stat_row_field(self, statfunc, field, rows):
         # apply a statistical function, to all rows with a given field.
         try:
-            return statfunc([float(row[field]) for row in filter(lambda row: field in row, rows)])
+            return statfunc(self.get_float_field(field, rows))
         except (IndexError, ValueError, statistics.StatisticsError):
             return 0
 
@@ -37,8 +42,8 @@ class Features():
         return {int(row['ip.version']) for row in rows if row.get('ip.version', None)}
 
     @staticmethod
-    def _pyshark_row_layers(rows):
-        return filter(lambda row: 'layers' in row, rows)
+    def _pyshark_row_layers(rows_f):
+        return filter(lambda row: 'layers' in row, rows_f())
 
     @staticmethod
     def _get_ips(row):
