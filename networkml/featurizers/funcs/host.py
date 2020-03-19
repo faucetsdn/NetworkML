@@ -138,14 +138,6 @@ class HostBase:
                 return lambda: filter(lambda row: hk in self._row_keys(row), rows_f())
             all_host_rows[host_key] = make_filter(host_key)
 
-        #host_rows = defaultdict(list)
-        #for row in rows_f():
-        #   for host_key in self._row_keys(row):
-        #       host_rows[host_key].append(row)
-        #all_host_rows = {}
-        #for host_key in all_keys:
-        #    rows = host_rows[host_key]
-        #    all_host_rows[host_key] = lambda: rows
         return all_host_rows
 
     def _host_rows(self, rows_f, host_func, all_rows_f=None):
@@ -848,6 +840,24 @@ class SessionHost(HostBase, Features):
             }
         return {
             (eth_src, ip_proto, ip_src, ip_srcport, eth_dst, ip_dst, ip_dstport)}
+
+    @functools.lru_cache()
+    def _all_host_rows(self, rows_f, all_rows_f):
+        all_keys = set()
+        if all_rows_f is not None:
+            all_keys = self._all_keys(all_rows_f)
+        else:
+            all_keys = self._all_keys(rows_f)
+
+        host_rows = defaultdict(list)
+        for row in rows_f():
+           for host_key in self._row_keys(row):
+               host_rows[host_key].append(row)
+        all_host_rows = {}
+        for host_key in all_keys:
+            rows = host_rows[host_key]
+            all_host_rows[host_key] = lambda: rows
+        return all_host_rows
 
     @staticmethod
     def _host_func_results_key(host_func_results, host_key):
