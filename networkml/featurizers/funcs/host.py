@@ -841,7 +841,7 @@ class SessionHost(HostBase, Features):
         return {
             (eth_src, ip_proto, ip_src, ip_srcport, eth_dst, ip_dst, ip_dstport)}
 
-    @functools.lru_cache()
+    @functools.lru_cache(maxsize=None)
     def _all_host_rows(self, rows_f, all_rows_f):
         all_keys = set()
         if all_rows_f is not None:
@@ -855,8 +855,9 @@ class SessionHost(HostBase, Features):
                host_rows[host_key].append(row)
         all_host_rows = {}
         for host_key in all_keys:
-            rows = host_rows[host_key]
-            all_host_rows[host_key] = lambda: rows
+            def make_filter(hk):
+                return lambda: host_rows[hk]
+            all_host_rows[host_key] = make_filter(host_key)
         return all_host_rows
 
     @staticmethod
