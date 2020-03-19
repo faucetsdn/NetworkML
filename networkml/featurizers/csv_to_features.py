@@ -14,12 +14,52 @@ from networkml.featurizers.main import Featurizer
 import networkml
 
 
+WS_FIELDS = {
+    'arp.opcode',
+    'eth.src',
+    'eth.dst',
+    'eth.type',
+    'frame.len',
+    'frame.time_delta_displayed',
+    'frame.protocols',
+    'icmp.code',
+    'gre.proto',
+    'ip.src',
+    'ip.src_host',
+    'ip.dst',
+    'ip.dst_host',
+    'ip.dsfield',
+    'ip.flags',
+    'ip.proto',
+    'ip.version',
+    'icmpv6.code',
+    'ipv6.src',
+    'ipv6.src_host',
+    'ipv6.dst',
+    'ipv6.dst_host',
+    'tcp.flags',
+    'tcp.srcport',
+    'tcp.dstport',
+    'udp.srcport',
+    'udp.dstport',
+    'vlan.etype',
+    'vlan.id',
+}
+
+
 class CSVToFeatures():
 
 
     def __init__(self, raw_args=None):
         self.logger = logging.getLogger(__name__)
         self.raw_args = raw_args
+
+
+    @staticmethod
+    def get_reader(in_file, use_gzip):
+        if use_gzip:
+            return lambda in_file: io.TextIOWrapper(gzip.open(in_file, 'rb'), newline='')
+        return lambda in_file: open(in_file, 'r')
 
 
     @staticmethod
@@ -89,17 +129,15 @@ class CSVToFeatures():
             if os.path.exists(fi):
                 os.remove(fi)
 
+    @staticmethod
+    def row_filter(row):
+        return {field: val for field, val in row.items() if field in WS_FIELDS}
 
     @staticmethod
-    def get_rows(in_file, gzip_opt):
-        if gzip_opt in ['input', 'both']:
-            with gzip.open(in_file, 'rb') as f_in:
-                reader = csv.DictReader(io.TextIOWrapper(f_in, newline=''))
-                return [dict(line) for line in reader]
-
-        with open(in_file, 'r') as f_in:
-            reader = csv.DictReader(f_in)
-            return [dict(line) for line in reader]
+    def get_rows(in_file, use_gzip):
+        reader = CSVToFeatures.get_reader(in_file, use_gzip)
+        with reader(in_file) as f:
+            return [CSVToFeatures.row_filter(line) for line in csv.DictReader(f)]
 
     @staticmethod
     def parse_args(raw_args=None):
@@ -118,10 +156,13 @@ class CSVToFeatures():
         return parsed_args
 
     def exec_features(self, features, in_file, out_file, features_path, gzip_opt):
-        self.logger.info(f'Processing {in_file}')
-        rows = CSVToFeatures.get_rows(in_file, gzip_opt)
+        in_file_size = os.path.getsize(in_file)
+        self.logger.info(f'Processing {in_file} size {in_file_size}')
+        use_gzip = gzip_opt in ['input', 'both']
+        rows = CSVToFeatures.get_rows(in_file, use_gzip)
+        rows_f = lambda: rows
         featurizer = Featurizer()
-        rows = featurizer.main(features, rows, features_path)
+        rows = featurizer.main(features, rows_f, features_path)
 
         rowcounts = Counter()
         for row in rows:
@@ -163,7 +204,7 @@ class CSVToFeatures():
                     finished_files += 1
                     self.exec_features(features, in_paths[i], out_paths[i], features_path, gzip_opt)
                     self.logger.info(f'Finished {in_paths[i]}. {finished_files}/{num_files} CSVs done.')
-                except AssertionError as e:  # pragma: no cover
+                except Exception as e:  # pragma: no cover
                     self.logger.error(f'{in_paths[i]} generated an exception: {e}')
                     failed_paths.append(out_paths[i])
         else:

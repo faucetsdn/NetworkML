@@ -13,5 +13,5 @@ def test_get_columns():
 
 def test_stat_row_field():
     instance = Features()
-    assert instance._stat_row_field(max, 'notthere', [{'foo': 1, 'baz': 3}]) == 0
-    assert instance._stat_row_field(max, 'foo', [{'foo': 1, 'baz': 3}, {'foo': 99, 'baz': 3}]) == 99
+    assert instance._stat_row_field(max, 'notthere', iter([{'foo': 1, 'baz': 3}])) == 0
+    assert instance._stat_row_field(max, 'foo', iter([{'foo': 1, 'baz': 3}, {'foo': 99, 'baz': 3}])) == 99
