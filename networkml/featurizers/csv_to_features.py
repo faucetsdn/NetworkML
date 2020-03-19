@@ -1,7 +1,6 @@
 import argparse
 import csv
 import concurrent.futures
-import functools
 import gzip
 import io
 import logging
@@ -135,7 +134,6 @@ class CSVToFeatures():
         return {field: val for field, val in row.items() if field in WS_FIELDS}
 
     @staticmethod
-    @functools.lru_cache()
     def get_rows(in_file, use_gzip):
         reader = CSVToFeatures.get_reader(in_file, use_gzip)
         with reader(in_file) as f:
