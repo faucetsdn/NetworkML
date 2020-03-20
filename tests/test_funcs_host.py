@@ -116,16 +116,25 @@ def test_host_non_ip():
 
 def test_host_vlan_id():
     instance = Host()
-    assert instance.host_tshark_vlan_id(
-        lambda: [{'eth.src': TEST_MAC, 'vlan.id': 999}]) == [{'host_key': TEST_MAC, 'tshark_vlan_id': 999}]
+    rows = [{'vlan.id': 999}]
+    assert _sort_output(instance.host_tshark_vlan_id(_make_rows_keys(rows, HOST_ROW))) == [
+        {'host_key': TEST_MAC, 'tshark_vlan_id': 999},
+        {'host_key': TEST_MAC2, 'tshark_vlan_id': 999},
+    ]
 
 
 def test_host_ipx():
     instance = Host()
-    assert instance.host_tshark_ipx(
-        lambda: [{'eth.src': TEST_MAC, 'eth.type': 0x8137}]) == [{'host_key': TEST_MAC, 'tshark_ipx': 1}]
-    assert instance.host_tshark_ipx(
-        lambda: [{'eth.src': TEST_MAC, 'eth.type': 0x800}]) == [{'host_key': TEST_MAC, 'tshark_ipx': 0}]
+    rows = [{'eth.type': 0x8137}]
+    assert _sort_output(instance.host_tshark_ipx(_make_rows_keys(rows, HOST_ROW))) == [
+        {'host_key': TEST_MAC, 'tshark_ipx': 1},
+        {'host_key': TEST_MAC2, 'tshark_ipx': 1},
+    ]
+    rows = [{'eth.type': 0x800}]
+    assert _sort_output(instance.host_tshark_ipx(_make_rows_keys(rows, HOST_ROW))) == [
+        {'host_key': TEST_MAC, 'tshark_ipx': 0},
+        {'host_key': TEST_MAC2, 'tshark_ipx': 0},
+    ]
 
 
 def test_host_both_private_ip():
@@ -159,20 +168,27 @@ def test_host_tcp_flags():
 
 def test_host_ip_flags():
     instance = Host()
-    rows = lambda: [{'eth.src': TEST_MAC, 'ip.flags': 0x00004000}]
-    assert instance.host_tshark_ip_flags_out(rows) == [
-        {'host_key': TEST_MAC, 'tshark_ip_flags_rb_out': 0, 'tshark_ip_flags_df_out': 1, 'tshark_ip_flags_mf_out': 0}]
-    assert instance.host_tshark_ip_flags_in(rows) == [
-        {'host_key': TEST_MAC, 'tshark_ip_flags_rb_in': 0, 'tshark_ip_flags_df_in': 1, 'tshark_ip_flags_mf_in': 0}]
+    rows = [{'ip.flags': 0x00004000}]
+    assert _sort_output(instance.host_tshark_ip_flags_out(_make_rows_keys(rows, HOST_ROW))) == [
+        {'host_key': TEST_MAC, 'tshark_ip_flags_rb_out': 0, 'tshark_ip_flags_df_out': 0, 'tshark_ip_flags_mf_out': 0},
+        {'host_key': TEST_MAC2, 'tshark_ip_flags_rb_out': 0, 'tshark_ip_flags_df_out': 0, 'tshark_ip_flags_mf_out': 0}
+    ]
+    assert _sort_output(instance.host_tshark_ip_flags_in(_make_rows_keys(rows, HOST_ROW))) == [
+        {'host_key': TEST_MAC, 'tshark_ip_flags_rb_in': 0, 'tshark_ip_flags_df_in': 1, 'tshark_ip_flags_mf_in': 0},
+        {'host_key': TEST_MAC2, 'tshark_ip_flags_rb_in': 0, 'tshark_ip_flags_df_in': 1, 'tshark_ip_flags_mf_in': 0}
+    ]
 
 
 def test_host_ip_dsfield_flags():
     instance = Host()
-    rows = lambda: [{'eth.src': TEST_MAC, 'ip.dsfield': 0x000000c0}]
-    assert instance.host_tshark_ip_dsfield_out(rows) == [
-        {'host_key': TEST_MAC, 'tshark_ip_dsfield_ecn0_out': 0, 'tshark_ip_dsfield_ecn1_out': 0, 'tshark_ip_dsfield_dscp0_out': 0, 'tshark_ip_dsfield_dscp1_out': 0, 'tshark_ip_dsfield_dscp2_out': 0, 'tshark_ip_dsfield_dscp3_out': 0, 'tshark_ip_dsfield_dscp4_out': 1, 'tshark_ip_dsfield_dscp5_out': 1}]
-    assert instance.host_tshark_ip_dsfield_in(rows) == [
-        {'host_key': TEST_MAC, 'tshark_ip_dsfield_ecn0_in': 0, 'tshark_ip_dsfield_ecn1_in': 0, 'tshark_ip_dsfield_dscp0_in': 0, 'tshark_ip_dsfield_dscp1_in': 0, 'tshark_ip_dsfield_dscp2_in': 0, 'tshark_ip_dsfield_dscp3_in': 0, 'tshark_ip_dsfield_dscp4_in': 1, 'tshark_ip_dsfield_dscp5_in': 1}]
+    rows = [{'ip.dsfield': 0x000000c0}]
+    assert _sort_output(instance.host_tshark_ip_dsfield_out(_make_rows_keys(rows, HOST_ROW))) == [
+        {'host_key': TEST_MAC, 'tshark_ip_dsfield_ecn0_out': 0, 'tshark_ip_dsfield_ecn1_out': 0, 'tshark_ip_dsfield_dscp0_out': 0, 'tshark_ip_dsfield_dscp1_out': 0, 'tshark_ip_dsfield_dscp2_out': 0, 'tshark_ip_dsfield_dscp3_out': 0, 'tshark_ip_dsfield_dscp4_out': 0, 'tshark_ip_dsfield_dscp5_out': 0},
+        {'host_key': TEST_MAC2, 'tshark_ip_dsfield_ecn0_out': 0, 'tshark_ip_dsfield_ecn1_out': 0, 'tshark_ip_dsfield_dscp0_out': 0, 'tshark_ip_dsfield_dscp1_out': 0, 'tshark_ip_dsfield_dscp2_out': 0, 'tshark_ip_dsfield_dscp3_out': 0, 'tshark_ip_dsfield_dscp4_out': 0, 'tshark_ip_dsfield_dscp5_out': 0}
+    ]
+    assert _sort_output(instance.host_tshark_ip_dsfield_in(_make_rows_keys(rows, HOST_ROW))) == [
+        {'host_key': TEST_MAC, 'tshark_ip_dsfield_ecn0_in': 0, 'tshark_ip_dsfield_ecn1_in': 0, 'tshark_ip_dsfield_dscp0_in': 0, 'tshark_ip_dsfield_dscp1_in': 0, 'tshark_ip_dsfield_dscp2_in': 0, 'tshark_ip_dsfield_dscp3_in': 0, 'tshark_ip_dsfield_dscp4_in': 1, 'tshark_ip_dsfield_dscp5_in': 1},
+        {'host_key': TEST_MAC2, 'tshark_ip_dsfield_ecn0_in': 0, 'tshark_ip_dsfield_ecn1_in': 0, 'tshark_ip_dsfield_dscp0_in': 0, 'tshark_ip_dsfield_dscp1_in': 0, 'tshark_ip_dsfield_dscp2_in': 0, 'tshark_ip_dsfield_dscp3_in': 0, 'tshark_ip_dsfield_dscp4_in': 1, 'tshark_ip_dsfield_dscp5_in': 1}]
 
 
 def test_host_tcp_priv_ports():
