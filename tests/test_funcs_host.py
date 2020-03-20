@@ -79,7 +79,7 @@ def test_host_ipversions():
         {'IPv4': 1, 'host_key': TEST_MAC},
         {'IPv4': 1, 'host_key': TEST_MAC2}
     ]
-    rows = [{'ip.version': 6}]    
+    rows = [{'ip.version': 6}]
     assert _sort_output(instance.host_tshark_ipv6(_make_rows_keys(rows, HOST_ROW))) == [
         {'IPv6': 1, 'host_key': TEST_MAC},
         {'IPv6': 1, 'host_key': TEST_MAC2}
@@ -88,20 +88,30 @@ def test_host_ipversions():
 
 def test_host_protocols():
     instance = Host()
-    assert instance.host_tshark_last_protocols_array(
-        lambda: [{'eth.src': TEST_MAC, 'frame.protocols': 'eth:ethertype:ip:udp:db-lsp-disc:json'}]) == [
-            {'host_key': TEST_MAC, 'protocol_esp': 0, 'protocol_eth': 1, 'protocol_ip': 1, 'protocol_gre': 0, 'protocol_ipv6': 0, 'protocol_tcp': 0, 'protocol_arp': 0, 'protocol_icmp': 0, 'other': 1}]
-    assert instance.host_tshark_last_protocols_array(
-        lambda: [{'eth.src': TEST_MAC}]) == [
-            {'host_key': TEST_MAC, 'protocol_esp': 0, 'protocol_eth': 0, 'protocol_ip': 0, 'protocol_gre': 0, 'protocol_ipv6': 0, 'protocol_tcp': 0, 'protocol_arp': 0, 'protocol_icmp': 0, 'other': 0}]
+    rows = [{'frame.protocols': 'eth:ethertype:ip:udp:db-lsp-disc:json'}]
+    assert _sort_output(instance.host_tshark_last_protocols_array(_make_rows_keys(rows, HOST_ROW))) == [
+        {'host_key': TEST_MAC, 'protocol_esp': 0, 'protocol_eth': 1, 'protocol_ip': 1, 'protocol_gre': 0, 'protocol_ipv6': 0, 'protocol_tcp': 0, 'protocol_arp': 0, 'protocol_icmp': 0, 'other': 1},
+        {'host_key': TEST_MAC2, 'protocol_esp': 0, 'protocol_eth': 1, 'protocol_ip': 1, 'protocol_gre': 0, 'protocol_ipv6': 0, 'protocol_tcp': 0, 'protocol_arp': 0, 'protocol_icmp': 0, 'other': 1}
+    ]
+    rows = [{}]
+    assert _sort_output(instance.host_tshark_last_protocols_array(_make_rows_keys(rows, HOST_ROW))) == [
+        {'host_key': TEST_MAC, 'protocol_esp': 0, 'protocol_eth': 0, 'protocol_ip': 0, 'protocol_gre': 0, 'protocol_ipv6': 0, 'protocol_tcp': 0, 'protocol_arp': 0, 'protocol_icmp': 0, 'other': 0},
+        {'host_key': TEST_MAC2, 'protocol_esp': 0, 'protocol_eth': 0, 'protocol_ip': 0, 'protocol_gre': 0, 'protocol_ipv6': 0, 'protocol_tcp': 0, 'protocol_arp': 0, 'protocol_icmp': 0, 'other': 0}
+    ]
 
 
 def test_host_non_ip():
     instance = Host()
-    assert instance.host_tshark_non_ip(
-        lambda: [{'eth.src': TEST_MAC, 'eth.type': 99}]) == [{'host_key': TEST_MAC, 'tshark_non_ip': 1}]
-    assert instance.host_tshark_non_ip(
-        lambda: [{'eth.src': TEST_MAC, 'eth.type': 0x00000800}]) == [{'host_key': TEST_MAC, 'tshark_non_ip': 0}]
+    rows = [{'eth.type': 99}]
+    assert _sort_output(instance.host_tshark_non_ip(_make_rows_keys(rows, HOST_ROW))) == [
+        {'host_key': TEST_MAC, 'tshark_non_ip': 1},
+        {'host_key': TEST_MAC2, 'tshark_non_ip': 1},
+    ]
+    rows = [{'eth.type': 0x800}]
+    assert _sort_output(instance.host_tshark_non_ip(_make_rows_keys(rows, HOST_ROW))) == [
+        {'host_key': TEST_MAC, 'tshark_non_ip': 0},
+        {'host_key': TEST_MAC2, 'tshark_non_ip': 0},
+    ]
 
 
 def test_host_vlan_id():
