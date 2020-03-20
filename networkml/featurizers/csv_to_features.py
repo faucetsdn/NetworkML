@@ -20,6 +20,7 @@ WS_FIELDS = {
     'eth.dst',
     'eth.type',
     'frame.len',
+    'frame.time_epoch',
     'frame.time_delta_displayed',
     'frame.protocols',
     'icmp.code',

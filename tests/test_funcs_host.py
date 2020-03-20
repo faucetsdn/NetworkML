@@ -1,24 +1,29 @@
 import operator
 import ipaddress
 from networkml.featurizers.funcs.host import Host, SessionHost
+from networkml.featurizers.csv_to_features import WS_FIELDS
 
 TEST_MAC = '0e:02:03:04:05:06'
 TEST_MAC2 = '0e:02:03:04:05:07'
 SESS_ROW = {'eth.src': TEST_MAC, 'ip.src': '127.0.0.1', 'eth.dst': TEST_MAC2, 'ip.dst': '127.0.0.2', 'tcp.srcport': 8080, 'tcp.dstport': 80}
+HOST_ROW = {'eth.src': TEST_MAC, 'eth.dst': TEST_MAC2}
 
 
 def _sort_output(output):
     return sorted(output, key=operator.itemgetter('host_key'))
 
+
 def _make_rows_keys(rows, rows_keys):
     for row in rows:
         row.update(rows_keys)
+        for row_key in row:
+            assert row_key in WS_FIELDS
     return lambda: rows
 
 
 def test_host_row_keys():
     instance = Host()
-    assert instance._row_keys({'eth.src': TEST_MAC, 'eth.dst': TEST_MAC2}) == {TEST_MAC, TEST_MAC2}
+    assert instance._row_keys(HOST_ROW) == {TEST_MAC, TEST_MAC2}
 
 
 def test_host_pyshark_ipv4():
@@ -51,23 +56,34 @@ def test_host_select_mac_direction():
 
 def test_host_max_frame_time():
     instance = Host()
-    assert instance.host_tshark_max_frame_time_in(
-        lambda: [{'eth.src': TEST_MAC, 'frame.time_epoch': 999}, {'eth.src': TEST_MAC, 'frame.time_epoch': 1001}]) == [
-            {'host_key': TEST_MAC, 'max_frame_time_in': 1001}]
+    rows = [{'frame.time_epoch': 999}, {'frame.time_epoch': 1001}]
+    assert _sort_output(instance.host_tshark_max_frame_time_in(_make_rows_keys(rows, HOST_ROW))) == [
+        {'host_key': TEST_MAC, 'max_frame_time_in': 1001.0},
+        {'host_key': TEST_MAC2, 'max_frame_time_in': 1001.0}
+    ]
 
 
 def test_host_max_frame_len():
     instance = Host()
-    assert instance.host_tshark_max_frame_len(
-        lambda: [{'eth.src': TEST_MAC, 'frame.len': 999}]) == [{'host_key': TEST_MAC, 'max_frame_len': 999}]
+    rows = [{'frame.len': 999}]
+    assert _sort_output(instance.host_tshark_max_frame_len(_make_rows_keys(rows, HOST_ROW))) == [
+        {'host_key': TEST_MAC, 'max_frame_len': 999},
+        {'host_key': TEST_MAC2, 'max_frame_len': 999}
+    ]
 
 
 def test_host_ipversions():
     instance = Host()
-    assert instance.host_tshark_ipv4(
-        lambda: [{'eth.src': TEST_MAC, 'ip.version': 4}]) == [{'host_key': TEST_MAC, 'IPv4': 1}]
-    assert instance.host_tshark_ipv6(
-        lambda: [{'eth.src': TEST_MAC, 'ip.version': 6}]) == [{'host_key': TEST_MAC, 'IPv6': 1}]
+    rows = [{'ip.version': 4}]
+    assert _sort_output(instance.host_tshark_ipv4(_make_rows_keys(rows, HOST_ROW))) == [
+        {'IPv4': 1, 'host_key': TEST_MAC},
+        {'IPv4': 1, 'host_key': TEST_MAC2}
+    ]
+    rows = [{'ip.version': 6}]    
+    assert _sort_output(instance.host_tshark_ipv6(_make_rows_keys(rows, HOST_ROW))) == [
+        {'IPv6': 1, 'host_key': TEST_MAC},
+        {'IPv6': 1, 'host_key': TEST_MAC2}
+    ]
 
 
 def test_host_protocols():
