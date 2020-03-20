@@ -1,6 +1,24 @@
-from networkml.featurizers.funcs.host import Host
+import operator
+import ipaddress
+from networkml.featurizers.funcs.host import Host, SessionHost
 
 TEST_MAC = '0e:02:03:04:05:06'
+TEST_MAC2 = '0e:02:03:04:05:07'
+SESS_ROW = {'eth.src': TEST_MAC, 'ip.src': '127.0.0.1', 'eth.dst': TEST_MAC2, 'ip.dst': '127.0.0.2', 'tcp.srcport': 8080, 'tcp.dstport': 80}
+
+
+def _sort_output(output):
+    return sorted(output, key=operator.itemgetter('host_key'))
+
+def _make_rows_keys(rows, rows_keys):
+    for row in rows:
+        row.update(rows_keys)
+    return lambda: rows
+
+
+def test_host_row_keys():
+    instance = Host()
+    assert instance._row_keys({'eth.src': TEST_MAC, 'eth.dst': TEST_MAC2}) == {TEST_MAC, TEST_MAC2}
 
 
 def test_host_pyshark_ipv4():
@@ -166,3 +184,24 @@ def test_host_wk_ip_protos():
     assert instance.host_tshark_wk_ip_protos(
         lambda: [{'eth.src': TEST_MAC, 'tcp.something': 'whatever', 'udp.something': 'whatever', 'something.else': 'something', 'data.something': 'whatever'}]) == [
             {'host_key': TEST_MAC, 'tshark_wk_ip_proto_arp': 0, 'tshark_wk_ip_proto_other': 1, 'tshark_wk_ip_proto_icmpv6': 0, 'tshark_wk_ip_proto_icmp': 0, 'tshark_wk_ip_proto_tcp': 1, 'tshark_wk_ip_proto_udp': 1}]
+
+
+def test_session_row_keys():
+    instance = SessionHost()
+    assert instance._row_keys(SESS_ROW) == {
+        ('0e:02:03:04:05:06', 'tcp', ipaddress.IPv4Address('127.0.0.1'), 8080, '0e:02:03:04:05:07', ipaddress.IPv4Address('127.0.0.2'), 80),
+        ('0e:02:03:04:05:07', 'tcp', ipaddress.IPv4Address('127.0.0.2'), 80, '0e:02:03:04:05:06', ipaddress.IPv4Address('127.0.0.1'), 8080)
+    }
+
+
+def test_session_max_frame_time():
+    rows = [{'frame.time_epoch': 999}, {'frame.time_epoch': 1001}]
+    instance = SessionHost()
+    assert _sort_output(instance.sessionhost_tshark_max_frame_time_in(_make_rows_keys(rows, SESS_ROW))) == [
+        {'host_key': TEST_MAC, 'max_frame_time_in': 1001.0},
+        {'host_key': TEST_MAC2, 'max_frame_time_in': 1001.0}
+    ]
+    assert _sort_output(instance.sessionhost_tshark_max_frame_time_out(_make_rows_keys(rows, SESS_ROW))) == [
+        {'host_key': TEST_MAC, 'max_frame_time_out': 0},
+        {'host_key': TEST_MAC2, 'max_frame_time_out': 0}
+    ]

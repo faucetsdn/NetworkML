@@ -69,7 +69,7 @@ class HostBase:
         common_eth = set(eth_srcs).union(eth_dsts)
         if len(common_eth) > 1:
             common_count = [(eth, all_eths[eth]) for eth in common_eth]
-            max_eth = sorted(common_count, key=lambda x: x[1])[-1][0]
+            max_eth = sorted(common_count, key=lambda x: (x[1], x[0]))[-1][0]
             return (max_eth, set(all_eths.keys()))
         return (None, None)
 
