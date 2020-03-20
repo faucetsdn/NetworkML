@@ -143,7 +143,7 @@ class HostBase:
     def _host_rows(self, rows_f, host_func, all_rows_f=None):
         newrows = []
         all_host_rows = self._all_host_rows(rows_f, all_rows_f)
-        for host_key, host_rows in all_host_rows.items():
+        for host_key, host_rows in sorted(all_host_rows.items()):
             host_func_results = host_func(host_rows)
             newrows.append(self._host_func_results_key(host_func_results, host_key))
         return newrows
