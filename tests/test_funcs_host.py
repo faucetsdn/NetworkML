@@ -234,6 +234,19 @@ def test_host_tcp_nonpriv_ports():
     ]
 
 
+def test_host_udp_nonpriv_ports():
+    instance = Host()
+    rows = [{'udp.srcport': 1025, 'udp.dstport': 9999}]
+    assert _sort_output(instance.host_tshark_nonpriv_udp_ports_in(_make_rows_keys(rows, HOST_ROW))) == [
+        {'host_key': TEST_MAC, 'tshark_udp_nonpriv_port_5349_in': 0, 'tshark_udp_nonpriv_port_5222_in': 0, 'tshark_udp_nonpriv_port_2375_in': 0, 'tshark_udp_nonpriv_port_2376_in': 0, 'tshark_udp_nonpriv_port_5353_in': 0, 'tshark_udp_nonpriv_port_5354_in': 0, 'tshark_udp_nonpriv_port_1900_in': 0, 'tshark_udp_nonpriv_port_5357_in': 0, 'tshark_udp_nonpriv_port_6653_in': 0, 'tshark_udp_nonpriv_port_other_in': 1},
+        {'host_key': TEST_MAC2, 'tshark_udp_nonpriv_port_5349_in': 0, 'tshark_udp_nonpriv_port_5222_in': 0, 'tshark_udp_nonpriv_port_2375_in': 0, 'tshark_udp_nonpriv_port_2376_in': 0, 'tshark_udp_nonpriv_port_5353_in': 0, 'tshark_udp_nonpriv_port_5354_in': 0, 'tshark_udp_nonpriv_port_1900_in': 0, 'tshark_udp_nonpriv_port_5357_in': 0, 'tshark_udp_nonpriv_port_6653_in': 0, 'tshark_udp_nonpriv_port_other_in': 0}
+    ]
+    assert _sort_output(instance.host_tshark_nonpriv_udp_ports_out(_make_rows_keys(rows, HOST_ROW))) == [
+        {'host_key': TEST_MAC, 'tshark_udp_nonpriv_port_5349_out': 0, 'tshark_udp_nonpriv_port_5222_out': 0, 'tshark_udp_nonpriv_port_2375_out': 0, 'tshark_udp_nonpriv_port_2376_out': 0, 'tshark_udp_nonpriv_port_5353_out': 0, 'tshark_udp_nonpriv_port_5354_out': 0, 'tshark_udp_nonpriv_port_1900_out': 0, 'tshark_udp_nonpriv_port_5357_out': 0, 'tshark_udp_nonpriv_port_6653_out': 0, 'tshark_udp_nonpriv_port_other_out': 0},
+        {'host_key': TEST_MAC2, 'tshark_udp_nonpriv_port_5349_out': 0, 'tshark_udp_nonpriv_port_5222_out': 0, 'tshark_udp_nonpriv_port_2375_out': 0, 'tshark_udp_nonpriv_port_2376_out': 0, 'tshark_udp_nonpriv_port_5353_out': 0, 'tshark_udp_nonpriv_port_5354_out': 0, 'tshark_udp_nonpriv_port_1900_out': 0, 'tshark_udp_nonpriv_port_5357_out': 0, 'tshark_udp_nonpriv_port_6653_out': 0, 'tshark_udp_nonpriv_port_other_out': 0}
+    ]
+
+
 def test_host_wk_ip_protos():
     instance = Host()
     assert instance.host_tshark_wk_ip_protos(
