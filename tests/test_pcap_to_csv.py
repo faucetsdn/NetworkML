@@ -1,18 +1,27 @@
+import shutil
 import sys
+import tempfile
+import os
 
 from networkml.parsers.pcap_to_csv import PCAPToCSV
 
 
 def test_PCAPToCSV_pyshark_packet():
-    sys.argv = ['pcap_to_csv.py', '-c', '-e', 'pyshark', '-t', '2', '-v', 'DEBUG', '-o', '/tmp/networkml_test.pcap.csv.gz', './tests/test_data/trace_ab12_2001-01-01_02_03-client-ip-1-2-3-4.pcap']
-    instance = PCAPToCSV()
-    instance.main()
+    with tempfile.TemporaryDirectory() as tmpdir:
+        testdata = os.path.join(tmpdir, 'test_data')
+        shutil.copytree('./tests/test_data', testdata)
+        sys.argv = ['pcap_to_csv.py', '-c', '-e', 'pyshark', '-t', '2', '-v', 'DEBUG', '-o', os.path.join(tmpdir, 'networkml_test.pcap.csv.gz'), os.path.join(testdata, 'trace_ab12_2001-01-01_02_03-client-ip-1-2-3-4.pcap')]
+        instance = PCAPToCSV()
+        instance.main()
 
 
 def test_PCAPToCSV_tshark_flow():
-    sys.argv = ['pcap_to_csv.py', '-c', '-e', 'tshark', '-l', 'flow', '-t', '2', './tests/test_data/trace_ab12_2001-01-01_02_03-client-ip-1-2-3-4.pcap']
-    instance = PCAPToCSV()
-    instance.main()
+    with tempfile.TemporaryDirectory() as tmpdir:
+        testdata = os.path.join(tmpdir, 'test_data')
+        shutil.copytree('./tests/test_data', testdata)
+        sys.argv = ['pcap_to_csv.py', '-c', '-e', 'tshark', '-l', 'flow', '-t', '2', os.path.join(testdata, 'trace_ab12_2001-01-01_02_03-client-ip-1-2-3-4.pcap')]
+        instance = PCAPToCSV()
+        instance.main()
 
 
 def test_ispcap():
