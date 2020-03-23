@@ -1,15 +1,17 @@
 import argparse
 import csv
 import concurrent.futures
+import gzip
+import io
 import logging
 import os
 import pathlib
-from collections import defaultdict, Counter
 import numpy as np
+from collections import defaultdict, Counter
 
-import networkml
-from networkml.gzipio import gzip_reader, gzip_writer
+
 from networkml.featurizers.main import Featurizer
+import networkml
 
 
 WS_FIELDS = {
@@ -57,15 +59,8 @@ class CSVToFeatures():
     @staticmethod
     def get_reader(in_file, use_gzip):
         if use_gzip:
-            return gzip_reader(in_file)
-        return open(in_file, 'r')
-
-
-    @staticmethod
-    def get_writer(out_file, use_gzip):
-        if use_gzip:
-            return gzip_writer(out_file)
-        return open(out_file, 'w')
+            return lambda in_file: io.TextIOWrapper(gzip.open(in_file, 'rb'), newline='')
+        return lambda in_file: open(in_file, 'r')
 
 
     @staticmethod
@@ -78,35 +73,56 @@ class CSVToFeatures():
 
     @staticmethod
     def write_features_to_csv(header, rows, out_file, gzip_opt):
-        use_gzip = gzip_opt in ['output', 'both']
-        with CSVToFeatures.get_writer(out_file, use_gzip) as f_out:
-            writer = csv.DictWriter(f_out, fieldnames=header)
-            writer.writeheader()
-            writer.writerows(rows)
+        if gzip_opt in ['output', 'both']:
+            with gzip.open(out_file, 'wb') as f:
+                w = csv.DictWriter(io.TextIOWrapper(f, newline='', write_through=True), fieldnames=header)
+                w.writeheader()
+                w.writerows(rows)
+        else:
+            with open(out_file, 'w') as f:
+                w = csv.DictWriter(f, fieldnames=header)
+                w.writeheader()
+                w.writerows(rows)
 
 
     @staticmethod
     def combine_csvs(out_paths, combined_path, gzip_opt):
         # First determine the field names from the top line of each input file
         fieldnames = {'filename'}
-        use_gzip = gzip_opt in ['output', 'both']
         for filename in out_paths:
-            with CSVToFeatures.get_reader(filename, use_gzip) as f_in:
-                reader = csv.reader(f_in)
-                fieldnames.update({header for header in next(reader)})
+            if gzip_opt in ['output', 'both']:
+                with gzip.open(filename, 'rb') as f_in:
+                    reader = csv.reader(io.TextIOWrapper(f_in, newline=''))
+                    fieldnames.update({header for header in next(reader)})
+            else:
+                with open(filename, 'r') as f_in:
+                    reader = csv.reader(f_in)
+                    fieldnames.update({header for header in next(reader)})
 
         # Then copy the data
-        with CSVToFeatures.get_writer(combined_path, use_gzip) as f_out:
-            writer = csv.DictWriter(f_out, fieldnames=fieldnames)
-            writer.writeheader()
-            for filename in out_paths:
-                source_file = filename.split('/')[-1].split('.features.gz')[0]
-                with CSVToFeatures.get_reader(filename, use_gzip) as f_in:
-                    reader = csv.DictReader(f_in)
-                    for line in reader:
-                        line['filename'] = source_file
-                        writer.writerow(line)
-                    CSVToFeatures.cleanup_files([filename])
+        if gzip_opt in ['output', 'both']:
+            with gzip.open(combined_path, 'wb') as f_out:
+                writer = csv.DictWriter(io.TextIOWrapper(f_out, newline='', write_through=True), fieldnames=fieldnames)
+                writer.writeheader()
+                for filename in out_paths:
+                    with gzip.open(filename, 'rb') as f_in:
+                        reader = csv.DictReader(io.TextIOWrapper(f_in, newline=''))
+                        for line in reader:
+                            line['filename'] = filename.split('/')[-1].split('.features.gz')[0]
+                            writer.writerow(line)
+                        CSVToFeatures.cleanup_files([filename])
+        else:
+            with open(combined_path, 'w') as f_out:
+                writer = csv.DictWriter(f_out, fieldnames=fieldnames)
+                writer.writeheader()
+                for filename in out_paths:
+                    with open(filename, 'r') as f_in:
+                        reader = csv.DictReader(f_in)
+                        for line in reader:
+                            line['filename'] = filename.split('/')[-1].split('.features')[0]
+                            writer.writerow(line)
+                        CSVToFeatures.cleanup_files([filename])
+
 
     @staticmethod
     def cleanup_files(paths):
@@ -120,8 +136,9 @@ class CSVToFeatures():
 
     @staticmethod
     def get_rows(in_file, use_gzip):
-        with CSVToFeatures.get_reader(in_file, use_gzip) as f_in:
-            return [CSVToFeatures.row_filter(line) for line in csv.DictReader(f_in)]
+        reader = CSVToFeatures.get_reader(in_file, use_gzip)
+        with reader(in_file) as f:
+            return [CSVToFeatures.row_filter(line) for line in csv.DictReader(f)]
 
     @staticmethod
     def parse_args(raw_args=None):
@@ -277,9 +294,9 @@ class CSVToFeatures():
             self.logger.info(f'Combining CSVs into a single file: {combined_path}')
             CSVToFeatures.combine_csvs(out_paths, combined_path, gzip_opt)
             return combined_path
-
-        self.logger.info(f'GZipped CSV file(s) written out to: {out_paths}')
-        return os.path.dirname(out_paths[0])
+        else:
+            self.logger.info(f'GZipped CSV file(s) written out to: {out_paths}')
+            return os.path.dirname(out_paths[0])
 
 
 if __name__ == '__main__':  # pragma: no cover
