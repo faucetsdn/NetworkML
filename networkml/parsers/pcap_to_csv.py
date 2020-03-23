@@ -2,8 +2,7 @@ import argparse
 import concurrent.futures
 import csv
 import functools
-import gzip
-import io
+import inspect
 import json
 import logging
 import ntpath
@@ -12,13 +11,11 @@ import pathlib
 import shlex
 import subprocess
 import tempfile
-from copy import deepcopy
-
 import pyshark
+from networkml.gzipio import gzip_reader, gzip_writer
 
 
 class PCAPToCSV():
-
 
     def __init__(self, raw_args=None):
         self.logger = logging.getLogger(__name__)
@@ -36,14 +33,12 @@ class PCAPToCSV():
                           '<TLS Layer>']
         self.raw_args = raw_args
 
-
     @staticmethod
     def ispcap(pathfile):
         for ext in ('pcap', 'pcapng', 'dump', 'capture'):
             if pathfile.endswith(''.join(('.', ext))):
                 return True
         return False
-
 
     @staticmethod
     def parse_args(raw_args=None):
@@ -58,60 +53,36 @@ class PCAPToCSV():
         parsed_args = parser.parse_args(raw_args)
         return parsed_args
 
-
-    @staticmethod
-    def get_csv_header(dict_fp):
-        header_all = set()
-        with gzip.open(dict_fp, 'rb') as f:
-            for line in io.TextIOWrapper(f, newline=''):
-                header_all.update(json.loads(line.strip()).keys())
-        header = []
-        for key in header_all:
-            if key[0].isalpha() or key[0] == '_':
-                header.append(key)
-        return header
-
-
     @staticmethod
     def combine_csvs(out_paths, combined_path):
         # First determine the field names from the top line of each input file
         fieldnames = {'filename'}
         for filename in out_paths:
-            with gzip.open(filename, 'rb') as f_in:
-                reader = csv.reader(io.TextIOWrapper(f_in, newline=''))
+            with gzip_reader(filename) as f_in:
+                reader = csv.reader(f_in)
                 fieldnames.update({header for header in next(reader)})
 
         # Then copy the data
-        with gzip.open(combined_path, 'wb') as f_out:
-            writer = csv.DictWriter(io.TextIOWrapper(f_out, newline='', write_through=True), fieldnames=fieldnames)
+        with gzip_writer(combined_path) as f_out:
+            writer = csv.DictWriter(f_out, fieldnames=fieldnames)
             writer.writeheader()
             for filename in out_paths:
-                with gzip.open(filename, 'rb') as f_in:
-                    reader = csv.DictReader(io.TextIOWrapper(f_in, newline=''))
+                source_filename = filename.split('/')[-1].split('csv.gz')[0]
+                with gzip_reader(filename) as f_in:
+                    reader = csv.DictReader(f_in)
                     for line in reader:
-                        line['filename'] = filename.split('/')[-1].split('csv.gz')[0]
+                        line['filename'] = source_filename
                         writer.writerow(line)
-                    PCAPToCSV.cleanup_files([filename])
+                os.remove(filename)
 
-
-    @staticmethod
-    def cleanup_files(paths):
-        for fi in paths:
-            if os.path.exists(fi):
-                os.remove(fi)
-
-
-    def get_pyshark_packet_data(self, pcap_file, dict_fp):
+    def get_pyshark_packet_data(self, pcap_file, dict_fp, _tmpdir):
+        all_headers = set()
         all_protocols = set()
-
         pcap_file_short = ntpath.basename(pcap_file)
-        with gzip.open(dict_fp, 'w') as f:
-            f = io.TextIOWrapper(f, newline='', write_through=True)
-            with pyshark.FileCapture(pcap_file,
-                                     use_json=True,
-                                     include_raw=True,
-                                     keep_packets=False,
-                                     custom_parameters=['-o', 'tcp.desegment_tcp_streams:false', '-n']) as cap:
+        with gzip_writer(dict_fp) as f_out:
+            with pyshark.FileCapture(
+                    pcap_file, use_json=True, include_raw=True, keep_packets=False,
+                    custom_parameters=['-o', 'tcp.desegment_tcp_streams:false', '-n']) as cap:
                 for packet in cap:
                     packet_dict = {}
                     packet_dict['filename'] = pcap_file_short
@@ -139,218 +110,224 @@ class PCAPToCSV():
                                 else:
                                     packet_dict[key] = layer_info[key]
                     # clean up records
-                    packet_dict_copy = deepcopy(packet_dict)
-                    keys = packet_dict_copy.keys()
+                    keys = list(packet_dict.keys())
+                    all_headers.update(keys)
                     for key in keys:
-                        if not key[0].isalpha() or key == 'tcp.payload_raw' or key == 'tcp.payload':
+                        if not key[0].isalpha() or key in ('tcp.payload_raw', 'tcp.payload', 'udp.payload_raw', 'udp.payload'):
                             del packet_dict[key]
-                    f.write(json.dumps(packet_dict) + '\n')
+                    f_out.write(json.dumps(packet_dict) + '\n')
 
         for protocol in self.PROTOCOLS:
             if protocol in all_protocols:
                 all_protocols.remove(protocol)
         if all_protocols:
-            self.logger.warning(f'Found the following other layers in {pcap_file_short} that were not added to the CSV: {all_protocols}')
+            self.logger.warning('Found the following other layers in %s that were not added to the CSV: %s', pcap_file_short, all_protocols)
+        return all_headers
 
-
-    def get_tshark_conv_data(self, pcap_file, dict_fp):
+    def get_tshark_conv_data(self, pcap_file, dict_fp, _tmpdir):
         # TODO (add a summary of other packets with protocols?)
         output = ''
-        try:
-            # TODO perhaps more than just tcp/udp in the future
-            options = '-n -q -z conv,tcp -z conv,udp'
-            output = subprocess.check_output(shlex.split(' '.join(['tshark', '-r', pcap_file, options])))
-            output = output.decode("utf-8")
-        except Exception as e:  # pragma: no cover
-            self.logger.error(f'{e}')
-
+        # TODO perhaps more than just tcp/udp in the future
+        options = '-n -q -z conv,tcp -z conv,udp'
+        output = subprocess.check_output(shlex.split(' '.join(['tshark', '-r', pcap_file, options])))
+        output = output.decode("utf-8")
+        all_headers = set()
         in_block = False
         name = None
         results = {}
-        for line in output.split('\n'):
+        for line in output.splitlines():
             if line.startswith('==='):
                 if in_block:
                     in_block = False
                     name = None
-                    continue
                 else:
                     in_block = True
-                    continue
             if in_block:
                 if not name:
                     name = ''.join(line.split(':')).strip()
                     results[name] = ''
-                    continue
                 elif not line.startswith('Filter:') and line != '':
                     results[name] += line + '\n'
 
-        with gzip.open(dict_fp, 'w') as f:
-            f = io.TextIOWrapper(f, newline='', write_through=True)
-            for result in results.keys():
+        with gzip_writer(dict_fp) as f_out:
+            for result, conv_data in results.items():
                 if 'Conversations' in result:
                     transport_proto = result.split()[0]
                     # handle conversation parsing
-                    for line in results[result].split('\n'):
+                    for line in conv_data.splitlines():
                         if line == '' or line.startswith(' '):
                             # header or padding, dicard
                             continue
-                        else:
-                            # TODO perhaps additional features can be extracted for flows from tshark
-                            src, _, dst, frames_l, bytes_l, frames_r, bytes_r, frames_total, bytes_total, rel_start, duration = line.split()
-                            conv = {'Source': src.rsplit(':', 1)[0],
-                                    'Source Port': src.rsplit(':', 1)[1],
-                                    'Destination': dst.rsplit(':', 1)[0],
-                                    'Destination Port': dst.rsplit(':', 1)[1],
-                                    'Transport Protocol': transport_proto,
-                                    'Frames to Source': frames_l,
-                                    'Bytes to Source': bytes_l,
-                                    'Frames to Destination': frames_r,
-                                    'Bytes to Destination': bytes_r,
-                                    'Total Frames': frames_total,
-                                    'Total Bytes': bytes_total,
-                                    'Relative Start': rel_start,
-                                    'Duration': duration}
-                            f.write(json.dumps(conv) + '\n')
+                        # TODO perhaps additional features can be extracted for flows from tshark
+                        src, _, dst, frames_l, bytes_l, frames_r, bytes_r, frames_total, bytes_total, rel_start, duration = line.split()
+                        conv = {'Source': src.rsplit(':', 1)[0],
+                                'Source Port': src.rsplit(':', 1)[1],
+                                'Destination': dst.rsplit(':', 1)[0],
+                                'Destination Port': dst.rsplit(':', 1)[1],
+                                'Transport Protocol': transport_proto,
+                                'Frames to Source': frames_l,
+                                'Bytes to Source': bytes_l,
+                                'Frames to Destination': frames_r,
+                                'Bytes to Destination': bytes_r,
+                                'Total Frames': frames_total,
+                                'Total Bytes': bytes_total,
+                                'Relative Start': rel_start,
+                                'Duration': duration}
+                        all_headers.update(conv.keys())
+                        f_out.write(json.dumps(conv) + '\n')
+        return all_headers
 
+    def get_tshark_packet_data(self, pcap_file, dict_fp, tmpdir):
+        header_all = set()
+        preprocessor_script = os.path.join(tmpdir, 'tshark_preprocess.py')
 
-    @staticmethod
-    @functools.lru_cache()
-    def good_json_key(key):
-        return (key[0].isalpha() or key[0] == '_') and ';' not in key and '(' not in key and '\\' not in key and '{' not in key and '<' not in key and '+' not in key
+        # Run as an external process for better parallelism.
+        def json_packet_records(pcap_file):
+            import shlex
+            import subprocess
 
+            json_buffer = []
 
-    def flatten_json(self, item):
-        flattened_dict = {}
+            def _recordize():
+                return ''.join(json_buffer)
 
-        def flatten(key, value):
-            if isinstance(value, list):
-                for i, sub_item in enumerate(value):
-                    flatten(str(i), sub_item)
-            elif isinstance(value, dict):
-                sub_keys = value.keys()
-                for sub_key in sub_keys:
-                    flatten(sub_key, value[sub_key])
-            else:
-                # remove junk
-                if self.good_json_key(key):
-                    # limit field size for csv
-                    if (value and len(value) < 131072) or not value:
-                        flattened_dict[key] = value
-
-        flatten('', item)
-        return flattened_dict
-
-
-    def json_packet_records(self, process):
-        json_buffer = []
-
-        def _recordize():
-            return json.loads('\n'.join(json_buffer))
-
-        depth = 0
-        while True:
-            json_line = process.stdout.readline().decode(encoding='utf-8', errors='ignore')
-            if json_line == '' and process.poll() is not None:
-                break
-            if not json_line.startswith(' '):
-                continue
-            json_line = json_line.strip()
-            bracket_line = json_line.rstrip(',')
-            if bracket_line.endswith('}'):
-                depth -= 1
-            elif bracket_line.endswith('{'):
-                depth += 1
-            if depth == 0:
-                if bracket_line:
-                    json_buffer.append(bracket_line)
-                if json_buffer:
-                    yield _recordize()
-                json_buffer = []
-            else:
-                if json_line:
-                    json_buffer.append(json_line)
-
-
-    def get_tshark_packet_data(self, pcap_file, dict_fp):
-        options = '-n -V -Tjson'
-        try:
+            options = '-n -V -Tjson'
             process = subprocess.Popen(shlex.split(' '.join(['tshark', '-r', pcap_file, options])), stdout=subprocess.PIPE)
-            with gzip.open(dict_fp, 'w') as gzip_f:
-                with io.TextIOWrapper(gzip_f, newline='', write_through=True) as f:
-                    for item in self.json_packet_records(process):
-                        f.write(json.dumps(self.flatten_json(item)) + '\n')
-        except Exception as e:  # pragma: no cover
-            self.logger.error(f'{e}')
+            depth = 0
+            while True:
+                json_line = process.stdout.readline().decode(encoding='utf-8', errors='ignore')
+                if json_line == '' and process.poll() is not None:
+                    break
+                if not json_line.startswith(' '):
+                    continue
+                json_line = json_line.strip()
+                bracket_line = json_line.rstrip(',')
+                if bracket_line.endswith('}'):
+                    depth -= 1
+                elif bracket_line.endswith('{'):
+                    depth += 1
+                if depth == 0:
+                    if bracket_line:
+                        json_buffer.append(bracket_line)
+                    if json_buffer:
+                        print(_recordize())
+                    json_buffer = []
+                else:
+                    if json_line:
+                        json_buffer.append(json_line)
 
+        @functools.lru_cache(maxsize=None)
+        def good_json_key(key):
+            return (key[0].isalpha() or key[0] == '_') and ';' not in key and '(' not in key and '\\' not in key and '{' not in key and '<' not in key and '+' not in key
 
-    def get_tshark_host_data(self, pcap_file, dict_fp):
-        # TODO
-        raise NotImplementedError('To be implemented')
+        def flatten_json(item):
+            flattened_dict = {}
 
+            def flatten(key, value):
+                if isinstance(value, list):
+                    for i, sub_item in enumerate(value):
+                        flatten(str(i), sub_item)
+                elif isinstance(value, dict):
+                    sub_keys = list(value.keys())
+                    for sub_key in sub_keys:
+                        flatten(sub_key, value[sub_key])
+                else:
+                    # remove junk
+                    if good_json_key(key):
+                        # limit field size for csv
+                        if (value and len(value) < 131072) or not value:
+                            flattened_dict[key] = value
 
-    def write_dict_to_csv(self, dict_fp, out_file):
-        header = PCAPToCSV.get_csv_header(dict_fp)
-        with gzip.open(out_file, 'wb') as f:
-            w = csv.DictWriter(io.TextIOWrapper(f, newline='', write_through=True), fieldnames=header)
-            w.writeheader()
-            try:
-                with gzip.open(dict_fp, 'rb') as f:
-                    for line in io.TextIOWrapper(f, newline=''):
-                        w.writerow(json.loads(line.strip()))
-            except Exception as e:  # pragma: no cover
-                self.logger.error(f'Failed to write to CSV because: {e}')
+            flatten('', item)
+            return flattened_dict
 
+        def write_preprocessor():
+            indent = 0
+            preprocessor_lines = []
+            for line in inspect.getsource(json_packet_records).splitlines():
+                if not indent:
+                    indent = len(line) - len(line.strip())
+                preprocessor_lines.append(line[indent:])
+            preprocessor_lines.append(f'\njson_packet_records("{pcap_file}")')
+            with open(preprocessor_script, 'w') as f_out:
+                f_out.write('\n'.join(preprocessor_lines))
 
-    def parse_file(self, level, in_file, out_file, engine):
-        self.logger.info(f'Processing {in_file}')
+        write_preprocessor()
+        process = subprocess.Popen(shlex.split(' '.join(['python3', preprocessor_script])), stdout=subprocess.PIPE)
+        with gzip_writer(dict_fp) as f_out:
+            while True:
+                json_line = process.stdout.readline().decode(encoding='utf-8', errors='ignore')
+                if json_line == '' and process.poll() is not None:
+                    break
+                if not json_line:
+                    continue
+                decoded_json = flatten_json(json.loads(json_line))
+                header_all.update(decoded_json.keys())
+                f_out.write(json.dumps(decoded_json) + '\n')
+        return header_all
+
+    def parse_file(self, in_file, out_file, engine_func):
+
+        def _write_dict_to_csv(header_all, dict_fp, out_file):
+            header = sorted([key for key in header_all if key[0].isalpha() or key[0] == '_'])
+            with gzip_writer(out_file) as f_out:
+                writer = csv.DictWriter(f_out, fieldnames=header)
+                writer.writeheader()
+                with gzip_reader(dict_fp) as f_in:
+                    for line in f_in:
+                        writer.writerow(json.loads(line.strip()))
+
+        self.logger.info('Processing %s', in_file)
         with tempfile.TemporaryDirectory() as tmpdir:
-            dict_fp = os.path.join(tmpdir, os.path.basename(in_file))
-            if level == 'packet':
-                if engine == 'tshark':
-                    # option for tshark as it's much faster
-                    self.get_tshark_packet_data(in_file, dict_fp)
-                elif engine == 'pyshark':
-                    # using pyshark to get everything possible
-                    self.get_pyshark_packet_data(in_file, dict_fp)
-            elif level == 'flow':
-                # using tshark conv,tcp and conv,udp filters
-                self.get_tshark_conv_data(in_file, dict_fp)
-            elif level == 'host':
-                # TODO unknown what should be in this, just the overarching stats?
-                raise NotImplementedError('To be implemented')
-            self.write_dict_to_csv(dict_fp, out_file)
-            PCAPToCSV.cleanup_files([dict_fp])
+            try:
+                dict_fp = os.path.join(tmpdir, os.path.basename(in_file))
+                header_all = engine_func(in_file, dict_fp, tmpdir)
+                _write_dict_to_csv(header_all, dict_fp, out_file)
+            except Exception as e:  # pragma: no cover
+                self.logger.error('Could not parse %s: %s', in_file, e)
 
+    def _get_engine_func(self, level, engine):
+        if level == 'flow':
+            # using tshark conv,tcp and conv,udp filters
+            return self.get_tshark_conv_data
+        if level == 'packet':
+            if engine == 'tshark':
+                # option for tshark as it's much faster
+                return self.get_tshark_packet_data
+            if engine == 'pyshark':
+                return self.get_pyshark_packet_data
+        raise NotImplementedError(f'To be implemented: {level}/{engine}')
 
     def process_files(self, threads, level, in_paths, out_paths, engine):
         num_files = len(in_paths)
         failed_paths = []
         finished_files = 0
+        engine_func = self._get_engine_func(level, engine)
         # corner case so it works in jupyterlab
         if threads < 2:
-            for i in range(len(in_paths)):
+            for i, paths in enumerate(zip(in_paths, out_paths)):
+                in_path, out_path = paths
                 try:
                     finished_files += 1
-                    self.parse_file(level, in_paths[i], out_paths[i], engine)
-                    self.logger.info(f'Finished {in_paths[i]}. {finished_files}/{num_files} PCAPs done.')
+                    self.parse_file(in_path, out_path, engine_func)
+                    self.logger.info('Finished %s. %u/%u PCAPs done.', in_path, finished_files, num_files)
                 except Exception as e:  # pragma: no cover
-                    self.logger.error(f'{in_paths[i]} generated an exception: {e}')
-                    failed_paths.append(out_paths[i])
+                    self.logger.error('%s generated an exception: %s', in_path, e)
+                    failed_paths.append(out_path)
         else:
             with concurrent.futures.ProcessPoolExecutor(max_workers=threads) as executor:
-                future_to_parse = {executor.submit(self.parse_file, level, in_paths[i], out_paths[i], engine): i for i in range(len(in_paths))}
+                future_to_parse = {executor.submit(self.parse_file, in_paths[i], out_paths[i], engine_func): i for i in range(len(in_paths))}
                 for future in concurrent.futures.as_completed(future_to_parse):
                     path = future_to_parse[future]
                     try:
                         finished_files += 1
                         future.result()
                     except Exception as e:  # pragma: no cover
-                        self.logger.error(f'{in_paths[path]} generated an exception: {e}')
+                        self.logger.error('%s generated an exception: %s', in_paths[path], e)
                         failed_paths.append(out_paths[path])
                     else:
-                        self.logger.info(f'Finished {in_paths[path]}. {finished_files}/{num_files} PCAPs done.')
+                        self.logger.info('Finished %s. %u/%u PCAPs done.', in_paths[path], finished_files, num_files)
         return failed_paths
-
 
     def main(self):
         parsed_args = PCAPToCSV.parse_args(raw_args=self.raw_args)
@@ -388,10 +365,9 @@ class PCAPToCSV():
                 out_paths.append(in_path + ".csv.gz")
 
         if level == 'packet' and engine == 'pyshark':
-            self.logger.info(f'Including the following layers in CSV (if they exist): {self.PROTOCOLS}')
+            self.logger.info('Including the following layers in CSV (if they exist): %s', self.PROTOCOLS)
 
         failed_paths = self.process_files(threads, level, in_paths, out_paths, engine)
-
         for failed_path in failed_paths:  # pragma: no cover
             if failed_path in out_paths:
                 out_paths.remove(failed_path)
@@ -401,12 +377,12 @@ class PCAPToCSV():
                 combined_path = os.path.join(os.path.dirname(out_paths[0]), "combined.csv.gz")
             else:
                 combined_path = "combined.csv.gz"
-            self.logger.info(f'Combining CSVs into a single file: {combined_path}')
+            self.logger.info('Combining CSVs into a single file: %s', combined_path)
             PCAPToCSV.combine_csvs(out_paths, combined_path)
             return combined_path
-        else:
-            self.logger.info(f'GZipped CSV file(s) written out to: {out_paths}')
-            return os.path.dirname(out_paths[0])
+
+        self.logger.info('GZipped CSV file(s) written out to: %s', out_paths)
+        return os.path.dirname(out_paths[0])
 
 
 if __name__ == '__main__':  # pragma: no cover
