@@ -139,7 +139,7 @@ class HostFootprint():
         y = le.fit_transform(y)
 
         # Save label encoder
-        serialize_label_encoder(le, self.le_path)
+        HostFootprint.serialize_label_encoder(le, self.le_path)
 
         # Calculate number of categories to predict
         num_categories = len(le.classes_)
@@ -184,7 +184,7 @@ class HostFootprint():
         X = scaler_fitted.transform(X)
 
         # Get label encoder
-        le = deserialize_label_encoder(self.le_path)
+        le = HostFootprint.deserialize_label_encoder(self.le_path)
 
         # Load (or deserialize) model from JSON
         self.model = skljson.from_json(self.model_path)
