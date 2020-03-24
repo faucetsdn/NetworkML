@@ -161,7 +161,8 @@ class CSVToFeatures():
         for header_key, header_count in rowcounts.items():
             if header_key != 'host_key':
                 rowcompare[header_count].add(header_key)
-        assert len(rowcompare) == 1, 'inconsistent featurizer row counts: %s' % rowcompare
+        assert not len(rowcompare) == 0, 'featurizer returned no results'
+        assert len(rowcompare) == 1, 'inconsistent featurizer row counts (headers not consistently present in all rows): %s' % rowcompare
         header = list(rowcounts.keys())
 
         columns = [np.array(row) for row in rows]
