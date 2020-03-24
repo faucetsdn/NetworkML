@@ -69,7 +69,7 @@ class HostBase:
         common_eth = set(eth_srcs).union(eth_dsts)
         if len(common_eth) > 1:
             common_count = [(eth, all_eths[eth]) for eth in common_eth]
-            max_eth = sorted(common_count, key=lambda x: x[1])[-1][0]
+            max_eth = sorted(common_count, key=lambda x: (x[1], x[0]))[-1][0]
             return (max_eth, set(all_eths.keys()))
         return (None, None)
 
@@ -138,20 +138,12 @@ class HostBase:
                 return lambda: filter(lambda row: hk in self._row_keys(row), rows_f())
             all_host_rows[host_key] = make_filter(host_key)
 
-        #host_rows = defaultdict(list)
-        #for row in rows_f():
-        #   for host_key in self._row_keys(row):
-        #       host_rows[host_key].append(row)
-        #all_host_rows = {}
-        #for host_key in all_keys:
-        #    rows = host_rows[host_key]
-        #    all_host_rows[host_key] = lambda: rows
         return all_host_rows
 
     def _host_rows(self, rows_f, host_func, all_rows_f=None):
         newrows = []
         all_host_rows = self._all_host_rows(rows_f, all_rows_f)
-        for host_key, host_rows in all_host_rows.items():
+        for host_key, host_rows in sorted(all_host_rows.items()):
             host_func_results = host_func(host_rows)
             newrows.append(self._host_func_results_key(host_func_results, host_key))
         return newrows
@@ -842,12 +834,34 @@ class SessionHost(HostBase, Features):
         if ip_proto:
             ip_srcport, ip_dstport = self._get_ip_proto_ports(row, ip_proto)
         if eth_dst and self._is_unicast(eth_dst):
-            return {
+            keys = {
                 (eth_src, ip_proto, ip_src, ip_srcport, eth_dst, ip_dst, ip_dstport),
                 (eth_dst, ip_proto, ip_dst, ip_dstport, eth_src, ip_src, ip_srcport),
             }
-        return {
-            (eth_src, ip_proto, ip_src, ip_srcport, eth_dst, ip_dst, ip_dstport)}
+        else:
+            keys = {
+                (eth_src, ip_proto, ip_src, ip_srcport, eth_dst, ip_dst, ip_dstport)
+            }
+        return {tuple([str(i) for i in key]) for key in keys}
+
+    @functools.lru_cache(maxsize=None)
+    def _all_host_rows(self, rows_f, all_rows_f):
+        all_keys = set()
+        if all_rows_f is not None:
+            all_keys = self._all_keys(all_rows_f)
+        else:
+            all_keys = self._all_keys(rows_f)
+
+        host_rows = defaultdict(list)
+        for row in rows_f():
+           for host_key in self._row_keys(row):
+               host_rows[host_key].append(row)
+        all_host_rows = {}
+        for host_key in all_keys:
+            def make_filter(hk):
+                return lambda: host_rows[hk]
+            all_host_rows[host_key] = make_filter(host_key)
+        return all_host_rows
 
     @staticmethod
     def _host_func_results_key(host_func_results, host_key):

@@ -2,8 +2,6 @@ import argparse
 import concurrent.futures
 import csv
 import functools
-import gzip
-import io
 import json
 import logging
 import ntpath
@@ -15,6 +13,7 @@ import tempfile
 from copy import deepcopy
 
 import pyshark
+from networkml.gzipio import gzip_reader, gzip_writer
 
 
 class PCAPToCSV():
@@ -62,8 +61,8 @@ class PCAPToCSV():
     @staticmethod
     def get_csv_header(dict_fp):
         header_all = set()
-        with gzip.open(dict_fp, 'rb') as f:
-            for line in io.TextIOWrapper(f, newline=''):
+        with gzip_reader(dict_fp) as f_in:
+            for line in f_in:
                 header_all.update(json.loads(line.strip()).keys())
         header = []
         for key in header_all:
@@ -77,17 +76,17 @@ class PCAPToCSV():
         # First determine the field names from the top line of each input file
         fieldnames = {'filename'}
         for filename in out_paths:
-            with gzip.open(filename, 'rb') as f_in:
-                reader = csv.reader(io.TextIOWrapper(f_in, newline=''))
+            with gzip_reader(filename) as f_in:
+                reader = csv.reader(f_in)
                 fieldnames.update({header for header in next(reader)})
 
         # Then copy the data
-        with gzip.open(combined_path, 'wb') as f_out:
-            writer = csv.DictWriter(io.TextIOWrapper(f_out, newline='', write_through=True), fieldnames=fieldnames)
+        with gzip_writer(combined_path) as f_out:
+            writer = csv.DictWriter(f_out, fieldnames=fieldnames)
             writer.writeheader()
             for filename in out_paths:
-                with gzip.open(filename, 'rb') as f_in:
-                    reader = csv.DictReader(io.TextIOWrapper(f_in, newline=''))
+                with gzip_reader(filename) as f_in:
+                    reader = csv.DictReader(f_in)
                     for line in reader:
                         line['filename'] = filename.split('/')[-1].split('csv.gz')[0]
                         writer.writerow(line)
@@ -105,8 +104,7 @@ class PCAPToCSV():
         all_protocols = set()
 
         pcap_file_short = ntpath.basename(pcap_file)
-        with gzip.open(dict_fp, 'w') as f:
-            f = io.TextIOWrapper(f, newline='', write_through=True)
+        with gzip_writer(dict_fp) as f_out:
             with pyshark.FileCapture(pcap_file,
                                      use_json=True,
                                      include_raw=True,
@@ -144,7 +142,7 @@ class PCAPToCSV():
                     for key in keys:
                         if not key[0].isalpha() or key == 'tcp.payload_raw' or key == 'tcp.payload':
                             del packet_dict[key]
-                    f.write(json.dumps(packet_dict) + '\n')
+                    f_out.write(json.dumps(packet_dict) + '\n')
 
         for protocol in self.PROTOCOLS:
             if protocol in all_protocols:
@@ -184,8 +182,7 @@ class PCAPToCSV():
                 elif not line.startswith('Filter:') and line != '':
                     results[name] += line + '\n'
 
-        with gzip.open(dict_fp, 'w') as f:
-            f = io.TextIOWrapper(f, newline='', write_through=True)
+        with gzip_writer(dict_fp) as f_out:
             for result in results.keys():
                 if 'Conversations' in result:
                     transport_proto = result.split()[0]
@@ -210,7 +207,7 @@ class PCAPToCSV():
                                     'Total Bytes': bytes_total,
                                     'Relative Start': rel_start,
                                     'Duration': duration}
-                            f.write(json.dumps(conv) + '\n')
+                            f_out.write(json.dumps(conv) + '\n')
 
 
     @staticmethod
@@ -275,10 +272,9 @@ class PCAPToCSV():
         options = '-n -V -Tjson'
         try:
             process = subprocess.Popen(shlex.split(' '.join(['tshark', '-r', pcap_file, options])), stdout=subprocess.PIPE)
-            with gzip.open(dict_fp, 'w') as gzip_f:
-                with io.TextIOWrapper(gzip_f, newline='', write_through=True) as f:
-                    for item in self.json_packet_records(process):
-                        f.write(json.dumps(self.flatten_json(item)) + '\n')
+            with gzip_writer(dict_fp) as f_out:
+                for item in self.json_packet_records(process):
+                    f_out.write(json.dumps(self.flatten_json(item)) + '\n')
         except Exception as e:  # pragma: no cover
             self.logger.error(f'{e}')
 
@@ -290,13 +286,13 @@ class PCAPToCSV():
 
     def write_dict_to_csv(self, dict_fp, out_file):
         header = PCAPToCSV.get_csv_header(dict_fp)
-        with gzip.open(out_file, 'wb') as f:
-            w = csv.DictWriter(io.TextIOWrapper(f, newline='', write_through=True), fieldnames=header)
-            w.writeheader()
+        with gzip_writer(out_file) as f_out:
+            writer = csv.DictWriter(f_out, fieldnames=header)
+            writer.writeheader()
             try:
-                with gzip.open(dict_fp, 'rb') as f:
-                    for line in io.TextIOWrapper(f, newline=''):
-                        w.writerow(json.loads(line.strip()))
+                with gzip_reader(dict_fp) as f_in:
+                    for line in f_in:
+                        writer.writerow(json.loads(line.strip()))
             except Exception as e:  # pragma: no cover
                 self.logger.error(f'Failed to write to CSV because: {e}')
 
