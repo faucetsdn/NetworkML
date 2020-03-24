@@ -32,6 +32,43 @@ class HostFootprint():
 
 
     @staticmethod
+    def serialize_label_encoder(le, path):
+        """Serialize label encoder to enable persistence
+        without pickling the file. .pkl files are a security
+        risk and should be avoided
+        Model is saved as a JSON object.
+        INPUT:
+        --le: the label encoder object (from sklearn) to be saved
+        --path: filepath for saving the object
+        OUTPUT:
+        --Does not return anything
+        """
+        serialized_le = {
+            'classes': le.classes_.tolist(),
+        }
+        with open(path, 'w') as model_json:
+            json.dump(serialized_le, model_json)
+
+
+    @staticmethod
+    def deserialize_label_encoder(path):
+        """Deserialize JSON object storing label encoder.
+        Label encoder (from sklearn) is re-instantiated
+        with proper values.
+        INPUT:
+        --path: filepath for loading the JSON object
+        OUTPUT:
+        --le: Returns label encoder (sklearn) object
+        """
+        with open(path, 'r') as model_json:
+            model_dict = json.load(model_json)
+        # Instantiate and assign class label
+        le = preprocessing.LabelEncoder()
+        le.classes_ = model_dict['classes']
+        return le
+
+
+    @staticmethod
     def parse_args(raw_args=None):
         """
         Use python's argparse module to collect command line arguments
@@ -40,6 +77,9 @@ class HostFootprint():
         netml_path = list(networkml.__path__)
         parser = argparse.ArgumentParser()
         parser.add_argument('path', help='path to a single csv file')
+        parser.add_argument('--label_encoder', '-l',
+                            default=os.path.join(netml_path[0], 'trained_models/host_footprint_le.json'),
+                            help='specify a path to load or save label encoder')
         parser.add_argument('--operation', '-O', choices=['train', 'predict'],
                             default='predict',
                             help='choose which operation task to perform, \
@@ -98,6 +138,9 @@ class HostFootprint():
         le = preprocessing.LabelEncoder()
         y = le.fit_transform(y)
 
+        # Save label encoder
+        serialize_label_encoder(le, self.le_path)
+
         # Calculate number of categories to predict
         num_categories = len(le.classes_)
 
@@ -140,9 +183,8 @@ class HostFootprint():
         scaler_fitted = scaler.fit(X)
         X = scaler_fitted.transform(X)
 
-        # Get labels
-        le = preprocessing.LabelEncoder()
-        le.fit_transform(y)
+        # Get label encoder
+        le = deserialize_label_encoder(self.le_path)
 
         # Load (or deserialize) model from JSON
         self.model = skljson.from_json(self.model_path)
@@ -234,6 +276,7 @@ class HostFootprint():
         parsed_args = HostFootprint.parse_args(raw_args=self.raw_args)
         self.path = parsed_args.path
         self.model_path = parsed_args.trained_model
+        self.le_path = parsed_args.label_encoder
         operation = parsed_args.operation
         log_level = parsed_args.verbose
 
@@ -246,6 +289,7 @@ class HostFootprint():
         if operation == 'train':
             self.train()
             self.logger.info(f'Saved model to: {self.model_path}')
+            self.logger.info(f'Saved label encoder to: {self.le_path}')
             return self.model_path
         elif operation == 'predict':
             role_prediction = self.predict()
