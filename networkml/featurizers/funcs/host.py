@@ -834,12 +834,15 @@ class SessionHost(HostBase, Features):
         if ip_proto:
             ip_srcport, ip_dstport = self._get_ip_proto_ports(row, ip_proto)
         if eth_dst and self._is_unicast(eth_dst):
-            return {
+            keys = {
                 (eth_src, ip_proto, ip_src, ip_srcport, eth_dst, ip_dst, ip_dstport),
                 (eth_dst, ip_proto, ip_dst, ip_dstport, eth_src, ip_src, ip_srcport),
             }
-        return {
-            (eth_src, ip_proto, ip_src, ip_srcport, eth_dst, ip_dst, ip_dstport)}
+        else:
+            keys = {
+                (eth_src, ip_proto, ip_src, ip_srcport, eth_dst, ip_dst, ip_dstport)
+            }
+        return {tuple([str(i) for i in key]) for key in keys}
 
     @functools.lru_cache(maxsize=None)
     def _all_host_rows(self, rows_f, all_rows_f):

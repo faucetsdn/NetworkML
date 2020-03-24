@@ -26,6 +26,12 @@ def test_host_row_keys():
     assert instance._row_keys(HOST_ROW) == {TEST_MAC, TEST_MAC2}
 
 
+def test_host_all_host_rows():
+    instance = Host()
+    rows = _make_rows_keys([{}], HOST_ROW)
+    assert instance._all_host_rows(rows, rows)
+
+
 def test_host_pyshark_ipv4():
     instance = Host()
     assert instance.pyshark_ipv4(
@@ -257,9 +263,15 @@ def test_host_wk_ip_protos():
 def test_session_row_keys():
     instance = SessionHost()
     assert instance._row_keys(SESS_ROW) == {
-        ('0e:02:03:04:05:06', 'tcp', ipaddress.IPv4Address('127.0.0.1'), 8080, '0e:02:03:04:05:07', ipaddress.IPv4Address('127.0.0.2'), 80),
-        ('0e:02:03:04:05:07', 'tcp', ipaddress.IPv4Address('127.0.0.2'), 80, '0e:02:03:04:05:06', ipaddress.IPv4Address('127.0.0.1'), 8080)
+        ('0e:02:03:04:05:06', 'tcp', str(ipaddress.IPv4Address('127.0.0.1')), '8080', '0e:02:03:04:05:07', str(ipaddress.IPv4Address('127.0.0.2')), '80'),
+        ('0e:02:03:04:05:07', 'tcp', str(ipaddress.IPv4Address('127.0.0.2')), '80', '0e:02:03:04:05:06', str(ipaddress.IPv4Address('127.0.0.1')), '8080')
     }
+
+
+def test_host_all_host_rows():
+    instance = SessionHost()
+    rows = _make_rows_keys([{}], SESS_ROW)
+    assert instance._all_host_rows(rows, rows)
 
 
 def test_session_max_frame_time():
