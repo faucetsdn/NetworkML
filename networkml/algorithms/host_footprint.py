@@ -64,7 +64,7 @@ class HostFootprint():
             model_dict = json.load(model_json)
         # Instantiate and assign class label
         le = preprocessing.LabelEncoder()
-        le.classes_ = model_dict['classes']
+        le.classes_ = np.array(model_dict['classes'])
         return le
 
 
