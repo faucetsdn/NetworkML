@@ -135,7 +135,7 @@ class CSVToFeatures():
         parser.add_argument('--combined', '-c', action='store_true', help='write out all records from all csvs into a single gzipped csv file')
         parser.add_argument('--features_path', '-p', default=os.path.join(netml_path[0], 'featurizers/funcs'), help='path to featurizer functions')
         parser.add_argument('--functions', '-f', default='', help='comma separated list of <class>:<function> to featurize (default=None)')
-        parser.add_argument('--groups', '-g', default='tshark', help='comma separated list of groups of functions to featurize (default=tshark)')
+        parser.add_argument('--groups', '-g', default='host', help='comma separated list of groups of functions to featurize (default=host)')
         parser.add_argument('--gzip', '-z', choices=['input', 'output', 'both', 'neither'], default='both', help='gzip the input/output file, both or neither (default=both)')
         parser.add_argument('--output', '-o', default=None, help='path to write out gzipped csv file or directory for gzipped csv files')
         parser.add_argument('--threads', '-t', default=1, type=int, help='number of async threads to use (default=1)')
@@ -161,7 +161,8 @@ class CSVToFeatures():
         for header_key, header_count in rowcounts.items():
             if header_key != 'host_key':
                 rowcompare[header_count].add(header_key)
-        assert len(rowcompare) == 1, 'inconsistent featurizer row counts: %s' % rowcompare
+        assert not len(rowcompare) == 0, 'featurizer returned no results'
+        assert len(rowcompare) == 1, 'inconsistent featurizer row counts (headers not consistently present in all rows): %s' % rowcompare
         header = list(rowcounts.keys())
 
         columns = [np.array(row) for row in rows]
