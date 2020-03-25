@@ -125,7 +125,7 @@ class CSVToFeatures():
     @staticmethod
     def get_rows(in_file, use_gzip):
         with CSVToFeatures.get_reader(in_file, use_gzip) as f_in:
-            return [CSVToFeatures.row_filter(line) for line in csv.DictReader(f_in)]
+            return tuple(CSVToFeatures.row_filter(line) for line in csv.DictReader(f_in))
 
     @staticmethod
     def parse_args(raw_args=None):
