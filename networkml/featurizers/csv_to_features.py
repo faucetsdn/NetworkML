@@ -136,7 +136,8 @@ class CSVToFeatures():
                 pass
             return val
 
-        return {field: numerize(val) for field, val in row.items() if field in WS_FIELDS}
+        newrow = {field: numerize(val) for field, val in row.items() if field in WS_FIELDS and len(val)}
+        return newrow
 
     @staticmethod
     def get_rows(in_file, use_gzip):
