@@ -78,6 +78,15 @@ def test_host_max_frame_len():
     ]
 
 
+def test_host_max_delta_time():
+    instance = Host()
+    rows = [{'frame.time_delta_displayed': 999}]
+    assert _sort_output(instance.host_tshark_max_time_delta(_make_rows_keys(rows, HOST_ROW))) == [
+        {'host_key': TEST_MAC, 'max_time_delta': 999},
+        {'host_key': TEST_MAC2, 'max_time_delta': 999}
+    ]
+
+
 def test_host_ipversions():
     instance = Host()
     rows = [{'ip.version': 4}]

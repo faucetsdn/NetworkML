@@ -1,6 +1,6 @@
 import functools
 import ipaddress
-import statistics
+import numpy
 
 
 class Features():
@@ -27,14 +27,16 @@ class Features():
 
     @staticmethod
     @functools.lru_cache()
-    def get_float_field(field, rows):
-        return [float(row[field]) for row in filter(lambda row: field in row, rows)]
+    def get_float_field(field, rows_f):
+        vals = numpy.fromiter((float(row[field]) for row in filter(lambda row: field in row, rows_f())), dtype=numpy.float)
+        assert vals, field
+        return vals
 
-    def _stat_row_field(self, statfunc, field, rows):
+    def _stat_row_field(self, statfunc, field, rows_f):
         # apply a statistical function, to all rows with a given field.
         try:
-            return statfunc(self.get_float_field(field, rows))
-        except (IndexError, ValueError, statistics.StatisticsError):
+            return statfunc(self.get_float_field(field, rows_f))
+        except (IndexError, ValueError, TypeError):
             return 0
 
     @staticmethod

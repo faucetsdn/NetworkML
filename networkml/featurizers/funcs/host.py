@@ -1,8 +1,7 @@
 import functools
 from collections import Counter, defaultdict
-import statistics
-from numpy import percentile
 import netaddr
+import numpy
 from networkml.featurizers.features import Features
 
 
@@ -18,14 +17,14 @@ class HostBase:
 
     NAME_TO_STAT = {
         'count': len,
-        'max': max,
-        'min': min,
-        'average': statistics.mean,
-        'median': statistics.median,
-        'variance': statistics.variance,
-        '25q': lambda x: percentile(x, 25),
-        '75q': lambda x: percentile(x, 75),
-        'total': sum,
+        'max': numpy.max,
+        'min': numpy.min,
+        'average': numpy.mean,
+        'median': numpy.median,
+        'variance': numpy.var,
+        '25q': lambda x: numpy.percentile(x, 25),
+        '75q': lambda x: numpy.percentile(x, 75),
+        'total': numpy.sum,
     }
 
     # http://www.iana.org/assignments/protocol-numbers
@@ -37,6 +36,7 @@ class HostBase:
     WK_NONPRIV_PROTO_PORTS = frozenset(
         [1900, 2375, 2376, 5222, 5349, 5353, 5354, 5349, 5357, 6653])
     WK_PROTOS = frozenset(('tcp', 'udp', 'icmp', 'icmpv6', 'arp', 'other'))
+
 
     @staticmethod
     @functools.lru_cache(maxsize=65536)
@@ -77,16 +77,16 @@ class HostBase:
     def _select_mac_direction(self, rows_f, output=True, nodir=False):
         '''Return filter expression selecting input or output rows.'''
         if nodir:
-            return iter(rows_f())
+            return rows_f
         src_mac, all_macs = self._tshark_input_mac(rows_f)
         # Select all if can't infer direction.
         if src_mac is None or len(all_macs) == 1:
-            return iter(rows_f())
+            return rows_f
         if output:
             # Select all rows where traffic originated by inferred source MAC
-            return filter(lambda row: (row.get('eth.src', None) == src_mac), rows_f())
+            return lambda: filter(lambda row: (row.get('eth.src', None) == src_mac), rows_f())
         # Select all rows where traffic not originated by inferred source MAC.
-        return filter(lambda row: (row.get('eth.src', None) != src_mac), rows_f())
+        return lambda: filter(lambda row: (row.get('eth.src', None) != src_mac), rows_f())
 
     def _pyshark_ipversions(self, rows_f):
         ipversions = set()
@@ -221,11 +221,11 @@ class HostBase:
 
         return self._host_rows(rows_f, nonpriv_ports_present, all_rows_f=all_rows_f)
 
-    def _get_flags(self, rows, suffix, flags_field, decode_map):
+    def _get_flags(self, rows_f, suffix, flags_field, decode_map):
         flags_counter = Counter()
         for decoded_flag in decode_map.values():  # pytype: disable=attribute-error
             flags_counter[decoded_flag] = 0
-        for row in rows:
+        for row in rows_f():
             flags = self._safe_int(row.get(flags_field, 0))  # pytype: disable=attribute-error
             if flags:
                 for bit, decoded_flag in decode_map.items():
@@ -235,17 +235,17 @@ class HostBase:
             flags_field.replace('.', '_'), decoded_flag, suffix): val
                 for decoded_flag, val in flags_counter.items()}
 
-    def _get_tcp_flags(self, rows, suffix):
+    def _get_tcp_flags(self, rows_f, suffix):
         return self._get_flags(
-            rows, suffix, 'tcp.flags',
+            rows_f, suffix, 'tcp.flags',
             {0: 'fin', 1: 'syn', 2: 'rst', 3: 'psh', 4: 'ack', 5: 'urg', 6: 'ece', 7: 'cwr', 8: 'ns'})
 
-    def _get_ip_flags(self, rows, suffix):
+    def _get_ip_flags(self, rows_f, suffix):
         return self._get_flags(
-            rows, suffix, 'ip.flags', {13: 'rb', 14: 'df', 15: 'mf'})
+            rows_f, suffix, 'ip.flags', {13: 'rb', 14: 'df', 15: 'mf'})
 
-    def _get_ip_dsfield(self, rows, suffix):
-        return self._get_flags(rows, suffix, 'ip.dsfield', {
+    def _get_ip_dsfield(self, rows_f, suffix):
+        return self._get_flags(rows_f, suffix, 'ip.dsfield', {
             0: 'ecn0', 1: 'ecn1', 2: 'dscp0', 3: 'dscp1', 4: 'dscp2',
             5: 'dscp3', 6: 'dscp4', 7: 'dscp5'})
 
@@ -291,36 +291,36 @@ class HostBase:
         return self._host_rows(rows_f, lambda x: {'IPv6': int(6 in self._tshark_ipversions(x()))})
 
     def _tshark_priv_tcp_ports_in(self, rows_f):
-        in_rows = self._select_mac_direction(rows_f, output=False)
-        return self._get_priv_ports(lambda: in_rows, 'tcp', 'in', all_rows_f=rows_f)
+        in_rows_f = self._select_mac_direction(rows_f, output=False)
+        return self._get_priv_ports(in_rows_f, 'tcp', 'in', all_rows_f=rows_f)
 
     def _tshark_priv_tcp_ports_out(self, rows_f):
-        out_rows = self._select_mac_direction(rows_f, output=True)
-        return self._get_priv_ports(lambda: out_rows, 'tcp', 'out', all_rows_f=rows_f)
+        out_rows_f = self._select_mac_direction(rows_f, output=True)
+        return self._get_priv_ports(out_rows_f, 'tcp', 'out', all_rows_f=rows_f)
 
     def _tshark_priv_udp_ports_in(self, rows_f):
-        in_rows = self._select_mac_direction(rows_f, output=False)
-        return self._get_priv_ports(lambda: in_rows, 'udp', 'in', all_rows_f=rows_f)
+        in_rows_f = self._select_mac_direction(rows_f, output=False)
+        return self._get_priv_ports(in_rows_f, 'udp', 'in', all_rows_f=rows_f)
 
     def _tshark_priv_udp_ports_out(self, rows_f):
-        out_rows = self._select_mac_direction(rows_f, output=True)
-        return self._get_priv_ports(lambda: out_rows, 'udp', 'out', all_rows_f=rows_f)
+        out_rows_f = self._select_mac_direction(rows_f, output=True)
+        return self._get_priv_ports(out_rows_f, 'udp', 'out', all_rows_f=rows_f)
 
     def _tshark_nonpriv_tcp_ports_in(self, rows_f):
-        in_rows = self._select_mac_direction(rows_f, output=False)
-        return self._get_nonpriv_ports(lambda: in_rows, 'tcp', 'in', all_rows_f=rows_f)
+        in_rows_f = self._select_mac_direction(rows_f, output=False)
+        return self._get_nonpriv_ports(in_rows_f, 'tcp', 'in', all_rows_f=rows_f)
 
     def _tshark_nonpriv_tcp_ports_out(self, rows_f):
-        out_rows = self._select_mac_direction(rows_f, output=True)
-        return self._get_nonpriv_ports(lambda: out_rows, 'tcp', 'out', all_rows_f=rows_f)
+        out_rows_f = self._select_mac_direction(rows_f, output=True)
+        return self._get_nonpriv_ports(out_rows_f, 'tcp', 'out', all_rows_f=rows_f)
 
     def _tshark_nonpriv_udp_ports_in(self, rows_f):
-        in_rows = self._select_mac_direction(rows_f, output=False)
-        return self._get_nonpriv_ports(lambda: in_rows, 'udp', 'in', all_rows_f=rows_f)
+        in_rows_f = self._select_mac_direction(rows_f, output=False)
+        return self._get_nonpriv_ports(in_rows_f, 'udp', 'in', all_rows_f=rows_f)
 
     def _tshark_nonpriv_udp_ports_out(self, rows_f):
-        out_rows = self._select_mac_direction(rows_f, output=True)
-        return self._get_nonpriv_ports(lambda: out_rows, 'udp', 'out', all_rows_f=rows_f)
+        out_rows_f = self._select_mac_direction(rows_f, output=True)
+        return self._get_nonpriv_ports(out_rows_f, 'udp', 'out', all_rows_f=rows_f)
 
     def _tshark_tcp_flags_in(self, rows_f):
 
