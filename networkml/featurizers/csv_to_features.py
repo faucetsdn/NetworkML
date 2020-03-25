@@ -120,7 +120,18 @@ class CSVToFeatures():
 
     @staticmethod
     def row_filter(row):
-        return {field: val for field, val in row.items() if field in WS_FIELDS}
+
+        def numerize(val):
+            if val.startswith('0x'):
+                return int(val, 16)
+            for ntype in (int, float):
+                try:
+                    return ntype(val)
+                except ValueError:
+                    continue
+            return val
+
+        return {field: numerize(val) for field, val in row.items() if field in WS_FIELDS}
 
     @staticmethod
     def get_rows(in_file, use_gzip):
