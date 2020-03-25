@@ -49,7 +49,7 @@ class NetworkML():
         parser.add_argument('--engine', '-e', choices=['pyshark', 'tshark', 'host'], default='tshark', help='engine to use to process the PCAP file (default=tshark)')
         parser.add_argument('--first_stage', '-f', choices=['parser', 'featurizer', 'algorithm'], default='parser', help='choose which stage to start at, `path` arg is relative to stage (default=parser)')
         parser.add_argument('--final_stage', choices=['parser', 'featurizer', 'algorithm'], default='algorithm', help='choose which stage to finish at (default=algorithm)')
-        parser.add_argument('--groups', '-g', default='tshark', help='groups of comma separated features to use (default=tshark)')
+        parser.add_argument('--groups', '-g', default='host_tshark', help='groups of comma separated features to use (default=host_tshark)')
         parser.add_argument('--gzip', '-z', choices=['input', 'output', 'both'], default='both', help='use gzip between stages, useful when not using all 3 stages (default=both)')
         parser.add_argument('--level', '-l', choices=['packet', 'flow', 'host'], default='packet', help='level to make the output records (default=packet)')
         parser.add_argument('--operation', '-O', choices=['train', 'predict'], default='predict', help='choose which operation task to perform, train or predict (default=predict)')
