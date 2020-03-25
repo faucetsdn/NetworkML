@@ -1,6 +1,7 @@
 import argparse
 import csv
 import concurrent.futures
+import ipaddress
 import logging
 import os
 import pathlib
@@ -129,9 +130,13 @@ class CSVToFeatures():
                     return ntype(val)
                 except ValueError:
                     continue
+            try:
+                return ipaddress.ip_address(val).packed
+            except ValueError:
+                pass
             return val
 
-        return {field: numerize(val) for field, val in row.items() if field in WS_FIELDS}
+        return {field: numerize(val) for field, val in row.items() if len(val) and field in WS_FIELDS}
 
     @staticmethod
     def get_rows(in_file, use_gzip):
