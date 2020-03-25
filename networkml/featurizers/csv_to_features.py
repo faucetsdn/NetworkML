@@ -193,7 +193,7 @@ class CSVToFeatures():
                     finished_files += 1
                     self.exec_features(features, in_paths[i], out_paths[i], features_path, gzip_opt)
                     self.logger.info(f'Finished {in_paths[i]}. {finished_files}/{num_files} CSVs done.')
-                except IndexError as e:  # pragma: no cover
+                except Exception as e:  # pragma: no cover
                     self.logger.error(f'{in_paths[i]} generated an exception: {e}')
                     failed_paths.append(out_paths[i])
         else:
@@ -204,7 +204,7 @@ class CSVToFeatures():
                     try:
                         finished_files += 1
                         future.result()
-                    except IndexError as e:  # pragma: no cover
+                    except Exception as e:  # pragma: no cover
                         self.logger.error(f'{in_paths[path]} generated an exception: {e}')
                         failed_paths.append(out_paths[path])
                     else:
