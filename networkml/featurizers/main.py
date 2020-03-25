@@ -67,10 +67,14 @@ class Featurizer():
             verify_feature_row(method, feature_row)
             return feature_row
 
+        # attempt to group methods together based on same field name for more cache hits.
+        def method_key(method):
+            return ''.join(reversed(method.strip('_in').strip('_out')))
+
         for f in classes:
             if groups:
                 methods = filter(lambda funcname: funcname.startswith(groups), dir(f[0]))
-                for method in methods:
+                for method in sorted(methods, key=method_key):
                     feature_rows.append(run_func(method, lambda: f[0].run_func(method, rows_f), f'{f[1]}/{method}'))
                     run_methods.append((f[1], method))
 
