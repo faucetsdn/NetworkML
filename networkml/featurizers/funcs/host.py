@@ -844,7 +844,7 @@ class SessionHost(HostBase, Features):
             }
         return {tuple([str(i) for i in key]) for key in keys}
 
-    @functools.lru_cache(maxsize=None)
+    @functools.lru_cache(maxsize=8192)
     def _all_host_rows(self, rows_f, all_rows_f):
         all_keys = set()
         if all_rows_f is not None:
