@@ -56,8 +56,8 @@ def test_host_select_mac_direction():
     rows = lambda: [{'eth.src': 1, 'eth.dst': 2}, {'eth.src': 2, 'eth.dst': 1}, {'eth.src': 1, 'eth.dst': 99}]
     instance = Host()
     # pytype: disable=attribute-error
-    assert [{'eth.dst': 1, 'eth.src': 2}] == list(instance._select_mac_direction(rows, output=False))
-    assert [{'eth.dst': 2, 'eth.src': 1}, {'eth.dst': 99, 'eth.src': 1}] == list(instance._select_mac_direction(rows, output=True))
+    assert [{'eth.dst': 1, 'eth.src': 2}] == list(instance._select_mac_direction(rows, output=False)())
+    assert [{'eth.dst': 2, 'eth.src': 1}, {'eth.dst': 99, 'eth.src': 1}] == list(instance._select_mac_direction(rows, output=True)())
 
 
 def test_host_max_frame_time():
@@ -75,6 +75,15 @@ def test_host_max_frame_len():
     assert _sort_output(instance.host_tshark_max_frame_len(_make_rows_keys(rows, HOST_ROW))) == [
         {'host_key': TEST_MAC, 'max_frame_len': 999},
         {'host_key': TEST_MAC2, 'max_frame_len': 999}
+    ]
+
+
+def test_host_max_delta_time():
+    instance = Host()
+    rows = [{'frame.time_delta_displayed': 999}]
+    assert _sort_output(instance.host_tshark_max_time_delta(_make_rows_keys(rows, HOST_ROW))) == [
+        {'host_key': TEST_MAC, 'max_time_delta': 999},
+        {'host_key': TEST_MAC2, 'max_time_delta': 999}
     ]
 
 
@@ -206,7 +215,7 @@ def test_host_tcp_priv_ports():
     rows = [{'ip.src': '192.168.0.1', 'tcp.srcport': 1025, 'ip.dst': '192.168.0.2', 'tcp.dstport': 80}, {'ip.src': '192.168.0.1', 'tcp.srcport': 1025, 'ip.dst': '192.168.0.2', 'tcp.dstport': 25}]
     assert _sort_output(instance.host_tshark_priv_tcp_ports_in(_make_rows_keys(rows, HOST_ROW))) == [
         {'host_key': TEST_MAC, 'tshark_tcp_priv_port_161_in': 0, 'tshark_tcp_priv_port_67_in': 0, 'tshark_tcp_priv_port_68_in': 0, 'tshark_tcp_priv_port_69_in': 0, 'tshark_tcp_priv_port_631_in': 0, 'tshark_tcp_priv_port_137_in': 0, 'tshark_tcp_priv_port_138_in': 0, 'tshark_tcp_priv_port_139_in': 0, 'tshark_tcp_priv_port_110_in': 0, 'tshark_tcp_priv_port_143_in': 0, 'tshark_tcp_priv_port_80_in': 1, 'tshark_tcp_priv_port_53_in': 0, 'tshark_tcp_priv_port_22_in': 0, 'tshark_tcp_priv_port_23_in': 0, 'tshark_tcp_priv_port_88_in': 0, 'tshark_tcp_priv_port_25_in': 1, 'tshark_tcp_priv_port_443_in': 0, 'tshark_tcp_priv_port_123_in': 0, 'tshark_tcp_priv_port_other_in': 0},
-        {'host_key': TEST_MAC2, 'tshark_tcp_priv_port_161_in': 0, 'tshark_tcp_priv_port_67_in': 0, 'tshark_tcp_priv_port_68_in': 0, 'tshark_tcp_priv_port_69_in': 0, 'tshark_tcp_priv_port_631_in': 0, 'tshark_tcp_priv_port_137_in': 0, 'tshark_tcp_priv_port_138_in': 0, 'tshark_tcp_priv_port_139_in': 0, 'tshark_tcp_priv_port_110_in': 0, 'tshark_tcp_priv_port_143_in': 0, 'tshark_tcp_priv_port_80_in': 0, 'tshark_tcp_priv_port_53_in': 0, 'tshark_tcp_priv_port_22_in': 0, 'tshark_tcp_priv_port_23_in': 0, 'tshark_tcp_priv_port_88_in': 0, 'tshark_tcp_priv_port_25_in': 0, 'tshark_tcp_priv_port_443_in': 0, 'tshark_tcp_priv_port_123_in': 0, 'tshark_tcp_priv_port_other_in': 0},
+        {'host_key': TEST_MAC2, 'tshark_tcp_priv_port_161_in': 0, 'tshark_tcp_priv_port_67_in': 0, 'tshark_tcp_priv_port_68_in': 0, 'tshark_tcp_priv_port_69_in': 0, 'tshark_tcp_priv_port_631_in': 0, 'tshark_tcp_priv_port_137_in': 0, 'tshark_tcp_priv_port_138_in': 0, 'tshark_tcp_priv_port_139_in': 0, 'tshark_tcp_priv_port_110_in': 0, 'tshark_tcp_priv_port_143_in': 0, 'tshark_tcp_priv_port_80_in': 1, 'tshark_tcp_priv_port_53_in': 0, 'tshark_tcp_priv_port_22_in': 0, 'tshark_tcp_priv_port_23_in': 0, 'tshark_tcp_priv_port_88_in': 0, 'tshark_tcp_priv_port_25_in': 1, 'tshark_tcp_priv_port_443_in': 0, 'tshark_tcp_priv_port_123_in': 0, 'tshark_tcp_priv_port_other_in': 0},
     ]
     assert _sort_output(instance.host_tshark_priv_tcp_ports_out(_make_rows_keys(rows, HOST_ROW))) == [
         {'host_key': TEST_MAC, 'tshark_tcp_priv_port_161_out': 0, 'tshark_tcp_priv_port_67_out': 0, 'tshark_tcp_priv_port_68_out': 0, 'tshark_tcp_priv_port_69_out': 0, 'tshark_tcp_priv_port_631_out': 0, 'tshark_tcp_priv_port_137_out': 0, 'tshark_tcp_priv_port_138_out': 0, 'tshark_tcp_priv_port_139_out': 0, 'tshark_tcp_priv_port_110_out': 0, 'tshark_tcp_priv_port_143_out': 0, 'tshark_tcp_priv_port_80_out': 0, 'tshark_tcp_priv_port_53_out': 0, 'tshark_tcp_priv_port_22_out': 0, 'tshark_tcp_priv_port_23_out': 0, 'tshark_tcp_priv_port_88_out': 0, 'tshark_tcp_priv_port_25_out': 0, 'tshark_tcp_priv_port_443_out': 0, 'tshark_tcp_priv_port_123_out': 0, 'tshark_tcp_priv_port_other_out': 0},
@@ -219,7 +228,7 @@ def test_host_udp_priv_ports():
     rows = [{'udp.srcport': 1025, 'udp.dstport': 123}]
     assert _sort_output(instance.host_tshark_priv_udp_ports_in(_make_rows_keys(rows, HOST_ROW))) == [
         {'host_key': TEST_MAC, 'tshark_udp_priv_port_161_in': 0, 'tshark_udp_priv_port_67_in': 0, 'tshark_udp_priv_port_68_in': 0, 'tshark_udp_priv_port_69_in': 0, 'tshark_udp_priv_port_631_in': 0, 'tshark_udp_priv_port_137_in': 0, 'tshark_udp_priv_port_138_in': 0, 'tshark_udp_priv_port_139_in': 0, 'tshark_udp_priv_port_110_in': 0, 'tshark_udp_priv_port_143_in': 0, 'tshark_udp_priv_port_80_in': 0, 'tshark_udp_priv_port_53_in': 0, 'tshark_udp_priv_port_22_in': 0, 'tshark_udp_priv_port_23_in': 0, 'tshark_udp_priv_port_88_in': 0, 'tshark_udp_priv_port_25_in': 0, 'tshark_udp_priv_port_443_in': 0, 'tshark_udp_priv_port_123_in': 1, 'tshark_udp_priv_port_other_in': 0},
-        {'host_key': TEST_MAC2, 'tshark_udp_priv_port_161_in': 0, 'tshark_udp_priv_port_67_in': 0, 'tshark_udp_priv_port_68_in': 0, 'tshark_udp_priv_port_69_in': 0, 'tshark_udp_priv_port_631_in': 0, 'tshark_udp_priv_port_137_in': 0, 'tshark_udp_priv_port_138_in': 0, 'tshark_udp_priv_port_139_in': 0, 'tshark_udp_priv_port_110_in': 0, 'tshark_udp_priv_port_143_in': 0, 'tshark_udp_priv_port_80_in': 0, 'tshark_udp_priv_port_53_in': 0, 'tshark_udp_priv_port_22_in': 0, 'tshark_udp_priv_port_23_in': 0, 'tshark_udp_priv_port_88_in': 0, 'tshark_udp_priv_port_25_in': 0, 'tshark_udp_priv_port_443_in': 0, 'tshark_udp_priv_port_123_in': 0, 'tshark_udp_priv_port_other_in': 0}
+        {'host_key': TEST_MAC2, 'tshark_udp_priv_port_161_in': 0, 'tshark_udp_priv_port_67_in': 0, 'tshark_udp_priv_port_68_in': 0, 'tshark_udp_priv_port_69_in': 0, 'tshark_udp_priv_port_631_in': 0, 'tshark_udp_priv_port_137_in': 0, 'tshark_udp_priv_port_138_in': 0, 'tshark_udp_priv_port_139_in': 0, 'tshark_udp_priv_port_110_in': 0, 'tshark_udp_priv_port_143_in': 0, 'tshark_udp_priv_port_80_in': 0, 'tshark_udp_priv_port_53_in': 0, 'tshark_udp_priv_port_22_in': 0, 'tshark_udp_priv_port_23_in': 0, 'tshark_udp_priv_port_88_in': 0, 'tshark_udp_priv_port_25_in': 0, 'tshark_udp_priv_port_443_in': 0, 'tshark_udp_priv_port_123_in': 1, 'tshark_udp_priv_port_other_in': 0}
     ]
     assert _sort_output(instance.host_tshark_priv_udp_ports_out(_make_rows_keys(rows, HOST_ROW))) == [
         {'host_key': TEST_MAC, 'tshark_udp_priv_port_161_out': 0, 'tshark_udp_priv_port_67_out': 0, 'tshark_udp_priv_port_68_out': 0, 'tshark_udp_priv_port_69_out': 0, 'tshark_udp_priv_port_631_out': 0, 'tshark_udp_priv_port_137_out': 0, 'tshark_udp_priv_port_138_out': 0, 'tshark_udp_priv_port_139_out': 0, 'tshark_udp_priv_port_110_out': 0, 'tshark_udp_priv_port_143_out': 0, 'tshark_udp_priv_port_80_out': 0, 'tshark_udp_priv_port_53_out': 0, 'tshark_udp_priv_port_22_out': 0, 'tshark_udp_priv_port_23_out': 0, 'tshark_udp_priv_port_88_out': 0, 'tshark_udp_priv_port_25_out': 0, 'tshark_udp_priv_port_443_out': 0, 'tshark_udp_priv_port_123_out': 0, 'tshark_udp_priv_port_other_out': 0},
@@ -232,7 +241,7 @@ def test_host_tcp_nonpriv_ports():
     rows = [{'tcp.srcport': 1025, 'tcp.dstport': 9999}]
     assert _sort_output(instance.host_tshark_nonpriv_tcp_ports_in(_make_rows_keys(rows, HOST_ROW))) == [
         {'host_key': TEST_MAC, 'tshark_tcp_nonpriv_port_5349_in': 0, 'tshark_tcp_nonpriv_port_5222_in': 0, 'tshark_tcp_nonpriv_port_2375_in': 0, 'tshark_tcp_nonpriv_port_2376_in': 0, 'tshark_tcp_nonpriv_port_5353_in': 0, 'tshark_tcp_nonpriv_port_5354_in': 0, 'tshark_tcp_nonpriv_port_1900_in': 0, 'tshark_tcp_nonpriv_port_5357_in': 0, 'tshark_tcp_nonpriv_port_6653_in': 0, 'tshark_tcp_nonpriv_port_other_in': 1},
-        {'host_key': TEST_MAC2, 'tshark_tcp_nonpriv_port_5349_in': 0, 'tshark_tcp_nonpriv_port_5222_in': 0, 'tshark_tcp_nonpriv_port_2375_in': 0, 'tshark_tcp_nonpriv_port_2376_in': 0, 'tshark_tcp_nonpriv_port_5353_in': 0, 'tshark_tcp_nonpriv_port_5354_in': 0, 'tshark_tcp_nonpriv_port_1900_in': 0, 'tshark_tcp_nonpriv_port_5357_in': 0, 'tshark_tcp_nonpriv_port_6653_in': 0, 'tshark_tcp_nonpriv_port_other_in': 0}
+        {'host_key': TEST_MAC2, 'tshark_tcp_nonpriv_port_5349_in': 0, 'tshark_tcp_nonpriv_port_5222_in': 0, 'tshark_tcp_nonpriv_port_2375_in': 0, 'tshark_tcp_nonpriv_port_2376_in': 0, 'tshark_tcp_nonpriv_port_5353_in': 0, 'tshark_tcp_nonpriv_port_5354_in': 0, 'tshark_tcp_nonpriv_port_1900_in': 0, 'tshark_tcp_nonpriv_port_5357_in': 0, 'tshark_tcp_nonpriv_port_6653_in': 0, 'tshark_tcp_nonpriv_port_other_in': 1}
     ]
     assert _sort_output(instance.host_tshark_nonpriv_tcp_ports_out(_make_rows_keys(rows, HOST_ROW))) == [
         {'host_key': TEST_MAC, 'tshark_tcp_nonpriv_port_5349_out': 0, 'tshark_tcp_nonpriv_port_5222_out': 0, 'tshark_tcp_nonpriv_port_2375_out': 0, 'tshark_tcp_nonpriv_port_2376_out': 0, 'tshark_tcp_nonpriv_port_5353_out': 0, 'tshark_tcp_nonpriv_port_5354_out': 0, 'tshark_tcp_nonpriv_port_1900_out': 0, 'tshark_tcp_nonpriv_port_5357_out': 0, 'tshark_tcp_nonpriv_port_6653_out': 0, 'tshark_tcp_nonpriv_port_other_out': 0},
@@ -245,7 +254,7 @@ def test_host_udp_nonpriv_ports():
     rows = [{'udp.srcport': 1025, 'udp.dstport': 9999}]
     assert _sort_output(instance.host_tshark_nonpriv_udp_ports_in(_make_rows_keys(rows, HOST_ROW))) == [
         {'host_key': TEST_MAC, 'tshark_udp_nonpriv_port_5349_in': 0, 'tshark_udp_nonpriv_port_5222_in': 0, 'tshark_udp_nonpriv_port_2375_in': 0, 'tshark_udp_nonpriv_port_2376_in': 0, 'tshark_udp_nonpriv_port_5353_in': 0, 'tshark_udp_nonpriv_port_5354_in': 0, 'tshark_udp_nonpriv_port_1900_in': 0, 'tshark_udp_nonpriv_port_5357_in': 0, 'tshark_udp_nonpriv_port_6653_in': 0, 'tshark_udp_nonpriv_port_other_in': 1},
-        {'host_key': TEST_MAC2, 'tshark_udp_nonpriv_port_5349_in': 0, 'tshark_udp_nonpriv_port_5222_in': 0, 'tshark_udp_nonpriv_port_2375_in': 0, 'tshark_udp_nonpriv_port_2376_in': 0, 'tshark_udp_nonpriv_port_5353_in': 0, 'tshark_udp_nonpriv_port_5354_in': 0, 'tshark_udp_nonpriv_port_1900_in': 0, 'tshark_udp_nonpriv_port_5357_in': 0, 'tshark_udp_nonpriv_port_6653_in': 0, 'tshark_udp_nonpriv_port_other_in': 0}
+        {'host_key': TEST_MAC2, 'tshark_udp_nonpriv_port_5349_in': 0, 'tshark_udp_nonpriv_port_5222_in': 0, 'tshark_udp_nonpriv_port_2375_in': 0, 'tshark_udp_nonpriv_port_2376_in': 0, 'tshark_udp_nonpriv_port_5353_in': 0, 'tshark_udp_nonpriv_port_5354_in': 0, 'tshark_udp_nonpriv_port_1900_in': 0, 'tshark_udp_nonpriv_port_5357_in': 0, 'tshark_udp_nonpriv_port_6653_in': 0, 'tshark_udp_nonpriv_port_other_in': 1}
     ]
     assert _sort_output(instance.host_tshark_nonpriv_udp_ports_out(_make_rows_keys(rows, HOST_ROW))) == [
         {'host_key': TEST_MAC, 'tshark_udp_nonpriv_port_5349_out': 0, 'tshark_udp_nonpriv_port_5222_out': 0, 'tshark_udp_nonpriv_port_2375_out': 0, 'tshark_udp_nonpriv_port_2376_out': 0, 'tshark_udp_nonpriv_port_5353_out': 0, 'tshark_udp_nonpriv_port_5354_out': 0, 'tshark_udp_nonpriv_port_1900_out': 0, 'tshark_udp_nonpriv_port_5357_out': 0, 'tshark_udp_nonpriv_port_6653_out': 0, 'tshark_udp_nonpriv_port_other_out': 0},
