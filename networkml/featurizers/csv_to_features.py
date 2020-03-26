@@ -28,6 +28,9 @@ def hex_str(x):
     assert x.startswith('0x')
     return int(x, 16)
 
+def eth_protos(x):
+    return tuple(i for i in x.split(':') if i != 'ethertype')
+
 
 WS_FIELDS = {
     'arp.opcode': int,
@@ -37,7 +40,7 @@ WS_FIELDS = {
     'frame.len': int,
     'frame.time_epoch': float,
     'frame.time_delta_displayed': float,
-    'frame.protocols': str,
+    'frame.protocols': eth_protos,
     'icmp.code': int,
     'gre.proto': hex_str,
     'ip.src': ipaddress_packed,
