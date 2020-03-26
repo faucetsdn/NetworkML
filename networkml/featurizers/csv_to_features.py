@@ -1,8 +1,10 @@
 import argparse
 import csv
 import concurrent.futures
+import functools
 import ipaddress
 import logging
+import netaddr
 import os
 import pathlib
 from collections import defaultdict, Counter
@@ -119,10 +121,22 @@ class CSVToFeatures():
             if os.path.exists(fi):
                 os.remove(fi)
 
+
     @staticmethod
     def row_filter(row):
 
-        def numerize(val):
+
+        @functools.lru_cache(maxsize=65536)
+        def macint(val):
+            return int(netaddr.EUI(val))
+
+        @functools.lru_cache(maxsize=65536)
+        def ippacked(val):
+            return ipaddress.ip_address(val).packed
+
+        def numerize(field, val):
+            if field in ('eth.src', 'eth.dst'):
+                return macint(val)
             if val.startswith('0x'):
                 return int(val, 16)
             for ntype in (int, float):
@@ -131,12 +145,12 @@ class CSVToFeatures():
                 except ValueError:
                     continue
             try:
-                return ipaddress.ip_address(val).packed
+                return ippacked(val)
             except ValueError:
                 pass
             return val
 
-        newrow = {field: numerize(val) for field, val in row.items() if field in WS_FIELDS and len(val)}
+        newrow = {field: numerize(field, val) for field, val in row.items() if field in WS_FIELDS and len(val)}
         return newrow
 
     @staticmethod

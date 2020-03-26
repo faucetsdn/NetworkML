@@ -37,6 +37,12 @@ class HostBase:
         [1900, 2375, 2376, 5222, 5349, 5353, 5354, 5349, 5357, 6653])
     WK_PROTOS = frozenset(('tcp', 'udp', 'icmp', 'icmpv6', 'arp', 'other'))
 
+    @staticmethod
+    @functools.lru_cache(maxsize=65536)
+    def _mac_str(mac):
+        if mac is None:
+            return None
+        return str(netaddr.EUI(mac, dialect=netaddr.mac_unix))
 
     @staticmethod
     @functools.lru_cache(maxsize=65536)
@@ -601,7 +607,7 @@ class HostBase:
 class Host(HostBase, Features):
 
     def _row_keys(self, row):
-        return {val for val in (row.get('eth.src', None), row.get('eth.dst', None)) if val and self._is_unicast(val)}
+        return {val for val in (self._mac_str(row.get('eth.src', None)), self._mac_str(row.get('eth.dst', None))) if val and self._is_unicast(val)}
 
     def pyshark_ipv4(self, rows_f):
         return self._pyshark_ipv4(rows_f)
@@ -820,8 +826,8 @@ class Host(HostBase, Features):
 class SessionHost(HostBase, Features):
 
     def _row_keys(self, row):
-        eth_src = row.get('eth.src', None)
-        eth_dst = row.get('eth.dst', None)
+        eth_src = self._mac_str(row.get('eth.src', None))
+        eth_dst = self._mac_str(row.get('eth.dst', None))
         ip_src, ip_dst = self._get_ips(row)
         wk_proto, _ = self._row_protos(row)
         ip_proto = wk_proto.intersection({'tcp', 'udp'})
