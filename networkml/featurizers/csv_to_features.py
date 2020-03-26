@@ -18,7 +18,7 @@ from networkml.featurizers.main import Featurizer
 
 @functools.lru_cache()
 def ipaddress_packed(x):
-    return ipaddress.ip_address(x).packed
+    return int(ipaddress.ip_address(x))
 
 @functools.lru_cache()
 def netaddr_packed(x):
