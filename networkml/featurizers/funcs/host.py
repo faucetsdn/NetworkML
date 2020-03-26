@@ -603,7 +603,7 @@ class HostBase:
 class Host(HostBase, Features):
 
     def _row_keys(self, row):
-        return {val for val in (row.get('eth.src', None), row.get('eth.dst', None)) if val and self._is_unicast(val)}
+        return {val for val in (row.get('eth.src', None), row.get('eth.dst', None)) if val is not None and self._is_unicast(val)}
 
     def pyshark_ipv4(self, rows_f):
         return self._pyshark_ipv4(rows_f)
