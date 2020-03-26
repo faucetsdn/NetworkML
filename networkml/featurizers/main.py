@@ -56,7 +56,7 @@ class Featurizer():
         def verify_feature_row(method, feature_row):
             assert isinstance(feature_row, list), 'method %s returned non list: %s' % (method, feature_row)
             non_dicts = {x for x in feature_row if not isinstance(x, dict)}
-            assert not non_dicts, 'method %s returned something not a dict' % (method, non_dicts)
+            assert not non_dicts, 'method %s returned something not a dict: %s' % (method, non_dicts)
 
         def run_func(method, func, descr):
             print(f'running {descr}...', end='')

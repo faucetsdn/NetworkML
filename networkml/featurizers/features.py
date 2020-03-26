@@ -22,15 +22,9 @@ class Features():
         results = func(*args)
         return results
 
-    @staticmethod
-    def get_columns(fields, rows):
-        # Terse but efficient.
-        new_rows = [{field: row[field] for field in fields if row.get(field, None)} for row in rows]
-        return new_rows
-
     @functools.lru_cache()
     def get_float_field(self, field, rows_f):
-        vals = numpy.fromiter((float(row[field]) for row in filter(lambda row: field in row, rows_f())), dtype=numpy.float)
+        vals = numpy.fromiter((row[field] for row in filter(lambda row: field in row, rows_f())), dtype=numpy.float)
         if len(vals):
             self.nonempty_generators.add(rows_f)
             return vals
