@@ -38,6 +38,10 @@ class HostBase:
     WK_PROTOS = frozenset(('tcp', 'udp', 'icmp', 'icmpv6', 'arp', 'other'))
 
     @staticmethod
+    def _mac_str(mac):
+        return netaddr.EUI(mac, dialect=netaddr.mac_unix_expanded)
+
+    @staticmethod
     @functools.lru_cache(maxsize=65536)
     def _is_unicast(mac):
         mac_val = netaddr.EUI(mac)
@@ -119,7 +123,7 @@ class HostBase:
         return all_keys
 
     def _host_func_results_key(self, host_func_results, host_key):
-        host_func_results.update({'host_key': host_key})
+        host_func_results.update({'host_key': self._mac_str(host_key)})
         return host_func_results
 
     @functools.lru_cache()
@@ -599,7 +603,7 @@ class HostBase:
 class Host(HostBase, Features):
 
     def _row_keys(self, row):
-        return {val for val in (row.get('eth.src', None), row.get('eth.dst', None)) if val and self._is_unicast(val)}
+        return {val for val in (row.get('eth.src', None), row.get('eth.dst', None)) if val is not None and self._is_unicast(val)}
 
     def pyshark_ipv4(self, rows_f):
         return self._pyshark_ipv4(rows_f)
@@ -863,7 +867,7 @@ class SessionHost(HostBase, Features):
 
     def _host_func_results_key(self, host_func_results, host_key):
         # eth_src only.
-        host_func_results.update({'host_key': host_key[0]})
+        host_func_results.update({'host_key': self._mac_str(host_key[0])})
         return host_func_results
 
     def sessionhost_tshark_last_protocols_array(self, rows_f):

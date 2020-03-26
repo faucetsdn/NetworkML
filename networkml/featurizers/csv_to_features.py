@@ -4,6 +4,7 @@ import concurrent.futures
 import functools
 import ipaddress
 import logging
+import netaddr
 import os
 import pathlib
 from collections import defaultdict, Counter
@@ -122,32 +123,43 @@ class CSVToFeatures():
 
 
     @staticmethod
-    def row_filter(row):
+    def row_filter(row, field_casts):
 
-        @functools.lru_cache(maxsize=65536)
-        def ippacked(val):
-            return ipaddress.ip_address(val).packed
+        @functools.lru_cache()
+        def ipaddress_packed(x):
+            return ipaddress.ip_address(x).packed
 
-        def numerize(field, val):
-            if val.startswith('0x'):
-                return int(val, 16)
-            for ntype in (int, float):
-                try:
-                    return ntype(val)
-                except ValueError:
-                    continue
-            try:
-                return ippacked(val)
-            except ValueError:
-                pass
+        @functools.lru_cache()
+        def netaddr_packed(x):
+            return int(netaddr.EUI(x))
+
+        def numerize(field, val, field_casts):
+            if field not in field_casts:
+                field_casts[field] = None
+                for test_cast in (
+                        ipaddress_packed,
+                        netaddr_packed,
+                        lambda x: int(x, 16),
+                        int,
+                        float):
+                    try:
+                        val = test_cast(val)
+                        field_casts[field] = test_cast
+                        return val
+                    except (ValueError, netaddr.core.AddrFormatError):
+                        continue
+            field_cast = field_casts.get(field, None)
+            if field_cast:
+                return field_cast(val)
             return val
 
-        return {field: numerize(field, row[field]) for field in WS_FIELDS if len(row.get(field, ''))}
+        return {field: numerize(field, row[field], field_casts) for field in WS_FIELDS if len(row.get(field, ''))}
 
     @staticmethod
     def get_rows(in_file, use_gzip):
+        field_casts = {}
         with CSVToFeatures.get_reader(in_file, use_gzip) as f_in:
-            return tuple(CSVToFeatures.row_filter(line) for line in csv.DictReader(f_in))
+            return tuple(CSVToFeatures.row_filter(line, field_casts) for line in csv.DictReader(f_in))
 
     @staticmethod
     def parse_args(raw_args=None):
