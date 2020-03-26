@@ -74,11 +74,3 @@ class Features():
             if eth_type:
                 return eth_type
         return 0
-
-    @staticmethod
-    def _safe_int(maybeint):
-        if isinstance(maybeint, int) or maybeint is None:
-            return maybeint
-        if maybeint:
-            return int(maybeint, 0)
-        return None
