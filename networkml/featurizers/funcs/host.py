@@ -37,7 +37,6 @@ class HostBase:
         [1900, 2375, 2376, 5222, 5349, 5353, 5354, 5349, 5357, 6653])
     WK_PROTOS = frozenset(('tcp', 'udp', 'icmp', 'icmpv6', 'arp', 'other'))
 
-
     @staticmethod
     @functools.lru_cache(maxsize=65536)
     def _is_unicast(mac):
@@ -119,8 +118,7 @@ class HostBase:
             all_keys.update(self._row_keys(row))
         return all_keys
 
-    @staticmethod
-    def _host_func_results_key(host_func_results, host_key):
+    def _host_func_results_key(self, host_func_results, host_key):
         host_func_results.update({'host_key': host_key})
         return host_func_results
 
@@ -175,8 +173,8 @@ class HostBase:
         return self._calc_tshark_field(field, 'frame.len', rows_f)
 
     def _get_ip_proto_ports(self, row, ip_proto):
-        src_port = self._safe_int(row.get('.'.join((ip_proto, 'srcport')), None))  # pytype: disable=attribute-error
-        dst_port = self._safe_int(row.get('.'.join((ip_proto, 'dstport')), None))  # pytype: disable=attribute-error
+        src_port = row.get('.'.join((ip_proto, 'srcport')), None)  # pytype: disable=attribute-error
+        dst_port = row.get('.'.join((ip_proto, 'dstport')), None)  # pytype: disable=attribute-error
         return (src_port, dst_port)
 
     @functools.lru_cache()
@@ -226,7 +224,7 @@ class HostBase:
         for decoded_flag in decode_map.values():  # pytype: disable=attribute-error
             flags_counter[decoded_flag] = 0
         for row in rows_f():
-            flags = self._safe_int(row.get(flags_field, 0))  # pytype: disable=attribute-error
+            flags = row.get(flags_field, 0)  # pytype: disable=attribute-error
             if flags:
                 for bit, decoded_flag in decode_map.items():
                     if flags & (2**bit):
@@ -863,8 +861,7 @@ class SessionHost(HostBase, Features):
             all_host_rows[host_key] = make_filter(host_key)
         return all_host_rows
 
-    @staticmethod
-    def _host_func_results_key(host_func_results, host_key):
+    def _host_func_results_key(self, host_func_results, host_key):
         # eth_src only.
         host_func_results.update({'host_key': host_key[0]})
         return host_func_results

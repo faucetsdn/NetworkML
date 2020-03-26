@@ -1,6 +1,7 @@
 import argparse
 import csv
 import concurrent.futures
+import functools
 import ipaddress
 import logging
 import os
@@ -119,10 +120,15 @@ class CSVToFeatures():
             if os.path.exists(fi):
                 os.remove(fi)
 
+
     @staticmethod
     def row_filter(row):
 
-        def numerize(val):
+        @functools.lru_cache(maxsize=65536)
+        def ippacked(val):
+            return ipaddress.ip_address(val).packed
+
+        def numerize(field, val):
             if val.startswith('0x'):
                 return int(val, 16)
             for ntype in (int, float):
@@ -131,12 +137,12 @@ class CSVToFeatures():
                 except ValueError:
                     continue
             try:
-                return ipaddress.ip_address(val).packed
+                return ippacked(val)
             except ValueError:
                 pass
             return val
 
-        return {field: numerize(val) for field, val in row.items() if field in WS_FIELDS}
+        return {field: numerize(field, val) for field, val in row.items() if field in WS_FIELDS and len(val)}
 
     @staticmethod
     def get_rows(in_file, use_gzip):
