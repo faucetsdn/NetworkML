@@ -181,8 +181,8 @@ class HostBase:
         return self._calc_tshark_field(field, 'frame.len', rows_f)
 
     def _get_ip_proto_ports(self, row, ip_proto):
-        src_port = self._safe_int(row.get('.'.join((ip_proto, 'srcport')), None))  # pytype: disable=attribute-error
-        dst_port = self._safe_int(row.get('.'.join((ip_proto, 'dstport')), None))  # pytype: disable=attribute-error
+        src_port = row.get('.'.join((ip_proto, 'srcport')), None)  # pytype: disable=attribute-error
+        dst_port = row.get('.'.join((ip_proto, 'dstport')), None)  # pytype: disable=attribute-error
         return (src_port, dst_port)
 
     @functools.lru_cache()
@@ -232,7 +232,7 @@ class HostBase:
         for decoded_flag in decode_map.values():  # pytype: disable=attribute-error
             flags_counter[decoded_flag] = 0
         for row in rows_f():
-            flags = self._safe_int(row.get(flags_field, 0))  # pytype: disable=attribute-error
+            flags = row.get(flags_field, 0)  # pytype: disable=attribute-error
             if flags:
                 for bit, decoded_flag in decode_map.items():
                     if flags & (2**bit):
