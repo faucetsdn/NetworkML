@@ -42,7 +42,7 @@ class HostBase:
     def _mac_str(mac):
         if mac is None:
             return None
-        return str(netaddr.EUI(mac, dialect=netaddr.mac_unix))
+        return str(netaddr.EUI(mac, dialect=netaddr.mac_unix_expanded))
 
     @staticmethod
     @functools.lru_cache(maxsize=65536)
@@ -125,9 +125,8 @@ class HostBase:
             all_keys.update(self._row_keys(row))
         return all_keys
 
-    @staticmethod
-    def _host_func_results_key(host_func_results, host_key):
-        host_func_results.update({'host_key': host_key})
+    def _host_func_results_key(self, host_func_results, host_key):
+        host_func_results.update({'host_key': self._mac_str(host_key)})
         return host_func_results
 
     @functools.lru_cache()
@@ -607,7 +606,7 @@ class HostBase:
 class Host(HostBase, Features):
 
     def _row_keys(self, row):
-        return {val for val in (self._mac_str(row.get('eth.src', None)), self._mac_str(row.get('eth.dst', None))) if val and self._is_unicast(val)}
+        return {val for val in (row.get('eth.src', None), row.get('eth.dst', None)) if val and self._is_unicast(val)}
 
     def pyshark_ipv4(self, rows_f):
         return self._pyshark_ipv4(rows_f)
@@ -826,8 +825,8 @@ class Host(HostBase, Features):
 class SessionHost(HostBase, Features):
 
     def _row_keys(self, row):
-        eth_src = self._mac_str(row.get('eth.src', None))
-        eth_dst = self._mac_str(row.get('eth.dst', None))
+        eth_src = row.get('eth.src', None)
+        eth_dst = row.get('eth.dst', None)
         ip_src, ip_dst = self._get_ips(row)
         wk_proto, _ = self._row_protos(row)
         ip_proto = wk_proto.intersection({'tcp', 'udp'})
@@ -869,10 +868,9 @@ class SessionHost(HostBase, Features):
             all_host_rows[host_key] = make_filter(host_key)
         return all_host_rows
 
-    @staticmethod
-    def _host_func_results_key(host_func_results, host_key):
+    def _host_func_results_key(self, host_func_results, host_key):
         # eth_src only.
-        host_func_results.update({'host_key': host_key[0]})
+        host_func_results.update({'host_key': self._mac_str(host_key[0])})
         return host_func_results
 
     def sessionhost_tshark_last_protocols_array(self, rows_f):
