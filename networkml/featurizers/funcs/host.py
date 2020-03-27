@@ -276,10 +276,9 @@ class HostBase:
             raw_protocols = set()
             try:
                 raw_protocols.update({
-                    protocol for protocol in self._last_protocols(host_rows).split(':') if protocol})
+                    protocol for protocol in self._last_protocols(host_rows) if protocol})
             except IndexError:
                 pass
-            raw_protocols -= set(['ethertype'])
             protocols = {'protocol_%s' % protocol: int(protocol in raw_protocols) for protocol in self.WK_PROTOCOLS}
             protocols.update({'other': int(not raw_protocols.issubset(self.WK_PROTOCOLS))})
             return protocols

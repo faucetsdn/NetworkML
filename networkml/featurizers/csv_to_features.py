@@ -16,37 +16,53 @@ from networkml.gzipio import gzip_reader, gzip_writer
 from networkml.featurizers.main import Featurizer
 
 
+@functools.lru_cache()
+def ipaddress_packed(x):
+    return int(ipaddress.ip_address(x))
+
+@functools.lru_cache()
+def netaddr_packed(x):
+    return int(netaddr.EUI(x))
+
+def hex_str(x):
+    assert x.startswith('0x')
+    return int(x, 16)
+
+def eth_protos(x):
+    return tuple(i for i in x.split(':') if i != 'ethertype')
+
+
 WS_FIELDS = {
-    'arp.opcode',
-    'eth.src',
-    'eth.dst',
-    'eth.type',
-    'frame.len',
-    'frame.time_epoch',
-    'frame.time_delta_displayed',
-    'frame.protocols',
-    'icmp.code',
-    'gre.proto',
-    'ip.src',
-    'ip.src_host',
-    'ip.dst',
-    'ip.dst_host',
-    'ip.dsfield',
-    'ip.flags',
-    'ip.proto',
-    'ip.version',
-    'icmpv6.code',
-    'ipv6.src',
-    'ipv6.src_host',
-    'ipv6.dst',
-    'ipv6.dst_host',
-    'tcp.flags',
-    'tcp.srcport',
-    'tcp.dstport',
-    'udp.srcport',
-    'udp.dstport',
-    'vlan.etype',
-    'vlan.id',
+    'arp.opcode': int,
+    'eth.src': netaddr_packed,
+    'eth.dst': netaddr_packed,
+    'eth.type': hex_str,
+    'frame.len': int,
+    'frame.time_epoch': float,
+    'frame.time_delta_displayed': float,
+    'frame.protocols': eth_protos,
+    'icmp.code': int,
+    'gre.proto': hex_str,
+    'ip.src': ipaddress_packed,
+    'ip.src_host': ipaddress_packed,
+    'ip.dst': ipaddress_packed,
+    'ip.dst_host': ipaddress_packed,
+    'ip.dsfield': hex_str,
+    'ip.flags': hex_str,
+    'ip.proto': int,
+    'ip.version': int,
+    'icmpv6.code': int,
+    'ipv6.src': ipaddress_packed,
+    'ipv6.src_host': ipaddress_packed,
+    'ipv6.dst': ipaddress_packed,
+    'ipv6.dst_host': ipaddress_packed,
+    'tcp.flags': hex_str,
+    'tcp.srcport': int,
+    'tcp.dstport': int,
+    'udp.srcport': int,
+    'udp.dstport': int,
+    'vlan.etype': hex_str,
+    'vlan.id': int,
 }
 
 
@@ -121,39 +137,9 @@ class CSVToFeatures():
             if os.path.exists(fi):
                 os.remove(fi)
 
-
     @staticmethod
     def row_filter(row, field_casts):
-
-        @functools.lru_cache()
-        def ipaddress_packed(x):
-            return ipaddress.ip_address(x).packed
-
-        @functools.lru_cache()
-        def netaddr_packed(x):
-            return int(netaddr.EUI(x))
-
-        def numerize(field, val, field_casts):
-            if field not in field_casts:
-                field_casts[field] = None
-                for test_cast in (
-                        ipaddress_packed,
-                        netaddr_packed,
-                        lambda x: int(x, 16),
-                        int,
-                        float):
-                    try:
-                        val = test_cast(val)
-                        field_casts[field] = test_cast
-                        return val
-                    except (ValueError, netaddr.core.AddrFormatError):
-                        continue
-            field_cast = field_casts.get(field, None)
-            if field_cast:
-                return field_cast(val)
-            return val
-
-        return {field: numerize(field, row[field], field_casts) for field in WS_FIELDS if len(row.get(field, ''))}
+        return {field: field_cast(row[field]) for field, field_cast in WS_FIELDS.items() if len(row.get(field, ''))}
 
     @staticmethod
     def get_rows(in_file, use_gzip):

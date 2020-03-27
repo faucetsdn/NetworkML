@@ -103,7 +103,7 @@ def test_host_ipversions():
 
 def test_host_protocols():
     instance = Host()
-    rows = [{'frame.protocols': 'eth:ethertype:ip:udp:db-lsp-disc:json'}]
+    rows = [{'frame.protocols': ('eth', 'ip', 'udp', 'db-lsp-disc', 'json')}]
     assert _sort_output(instance.host_tshark_last_protocols_array(_make_rows_keys(rows, HOST_ROW))) == [
         {'host_key': TEST_MAC, 'protocol_esp': 0, 'protocol_eth': 1, 'protocol_ip': 1, 'protocol_gre': 0, 'protocol_ipv6': 0, 'protocol_tcp': 0, 'protocol_arp': 0, 'protocol_icmp': 0, 'other': 1},
         {'host_key': TEST_MAC2, 'protocol_esp': 0, 'protocol_eth': 1, 'protocol_ip': 1, 'protocol_gre': 0, 'protocol_ipv6': 0, 'protocol_tcp': 0, 'protocol_arp': 0, 'protocol_icmp': 0, 'other': 1}
