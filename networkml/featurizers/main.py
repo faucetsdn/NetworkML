@@ -1,3 +1,4 @@
+import copy
 import inspect
 import os
 import sys
@@ -49,7 +50,10 @@ class Featurizer():
         return classes
 
 
-    def run_all_funcs(self, functions, groups, classes, rows_f):
+    def run_all_funcs(self, functions_orig, groups_orig, classes_orig, rows_f):
+        functions = copy.deepcopy(functions_orig)
+        groups = copy.deepcopy(groups_orig)
+        classes = copy.deepcopy(classes_orig)
         feature_rows = []
         run_methods = []
 
