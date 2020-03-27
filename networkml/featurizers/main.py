@@ -1,3 +1,4 @@
+import copy
 import inspect
 import os
 import sys
@@ -49,14 +50,17 @@ class Featurizer():
         return classes
 
 
-    def run_all_funcs(self, functions, groups, classes, rows_f):
+    def run_all_funcs(self, functions_orig, groups_orig, classes_orig, rows_f):
+        functions = copy.deepcopy(functions_orig)
+        groups = copy.deepcopy(groups_orig)
+        classes = copy.deepcopy(classes_orig)
         feature_rows = []
         run_methods = []
 
         def verify_feature_row(method, feature_row):
             assert isinstance(feature_row, list), 'method %s returned non list: %s' % (method, feature_row)
             non_dicts = {x for x in feature_row if not isinstance(x, dict)}
-            assert not non_dicts, 'method %s returned something not a dict' % (method, non_dicts)
+            assert not non_dicts, 'method %s returned something not a dict: %s' % (method, non_dicts)
 
         def run_func(method, func, descr):
             print(f'running {descr}...', end='')
@@ -67,10 +71,14 @@ class Featurizer():
             verify_feature_row(method, feature_row)
             return feature_row
 
+        # attempt to group methods together based on same field name for more cache hits.
+        def method_key(method):
+            return ''.join(reversed(method.strip('_in').strip('_out')))
+
         for f in classes:
             if groups:
                 methods = filter(lambda funcname: funcname.startswith(groups), dir(f[0]))
-                for method in methods:
+                for method in sorted(methods, key=method_key):
                     feature_rows.append(run_func(method, lambda: f[0].run_func(method, rows_f), f'{f[1]}/{method}'))
                     run_methods.append((f[1], method))
 

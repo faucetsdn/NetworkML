@@ -1,9 +1,12 @@
 import functools
 import ipaddress
-import statistics
+import numpy
 
 
 class Features():
+
+    def __init__(self):
+        self.nonempty_generators = set()
 
     def run_func(self, func_name, *args):
         """
@@ -25,17 +28,19 @@ class Features():
         new_rows = [{field: row[field] for field in fields if row.get(field, None)} for row in rows]
         return new_rows
 
-    @staticmethod
     @functools.lru_cache()
-    def get_float_field(field, rows):
-        return [float(row[field]) for row in filter(lambda row: field in row, rows)]
+    def get_float_field(self, field, rows_f):
+        vals = numpy.fromiter((row[field] for row in filter(lambda row: field in row, rows_f())), dtype=numpy.float)
+        if len(vals):
+            self.nonempty_generators.add(rows_f)
+            return vals
+        # Ensure that we don't get a non empty generator.
+        assert rows_f not in self.nonempty_generators, field
+        return [0]
 
-    def _stat_row_field(self, statfunc, field, rows):
+    def _stat_row_field(self, statfunc, field, rows_f):
         # apply a statistical function, to all rows with a given field.
-        try:
-            return statfunc(self.get_float_field(field, rows))
-        except (IndexError, ValueError, statistics.StatisticsError):
-            return 0
+        return statfunc(self.get_float_field(field, rows_f))
 
     @staticmethod
     def _tshark_ipversions(rows):
@@ -69,11 +74,3 @@ class Features():
             if eth_type:
                 return eth_type
         return 0
-
-    @staticmethod
-    def _safe_int(maybeint):
-        if isinstance(maybeint, int) or maybeint is None:
-            return maybeint
-        if maybeint:
-            return int(maybeint, 0)
-        return None

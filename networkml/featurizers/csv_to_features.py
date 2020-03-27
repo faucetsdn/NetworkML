@@ -1,7 +1,10 @@
 import argparse
 import csv
 import concurrent.futures
+import functools
+import ipaddress
 import logging
+import netaddr
 import os
 import pathlib
 from collections import defaultdict, Counter
@@ -13,37 +16,53 @@ from networkml.gzipio import gzip_reader, gzip_writer
 from networkml.featurizers.main import Featurizer
 
 
+@functools.lru_cache()
+def ipaddress_packed(x):
+    return int(ipaddress.ip_address(x))
+
+@functools.lru_cache()
+def netaddr_packed(x):
+    return int(netaddr.EUI(x))
+
+def hex_str(x):
+    assert x.startswith('0x')
+    return int(x, 16)
+
+def eth_protos(x):
+    return tuple(i for i in x.split(':') if i != 'ethertype')
+
+
 WS_FIELDS = {
-    'arp.opcode',
-    'eth.src',
-    'eth.dst',
-    'eth.type',
-    'frame.len',
-    'frame.time_epoch',
-    'frame.time_delta_displayed',
-    'frame.protocols',
-    'icmp.code',
-    'gre.proto',
-    'ip.src',
-    'ip.src_host',
-    'ip.dst',
-    'ip.dst_host',
-    'ip.dsfield',
-    'ip.flags',
-    'ip.proto',
-    'ip.version',
-    'icmpv6.code',
-    'ipv6.src',
-    'ipv6.src_host',
-    'ipv6.dst',
-    'ipv6.dst_host',
-    'tcp.flags',
-    'tcp.srcport',
-    'tcp.dstport',
-    'udp.srcport',
-    'udp.dstport',
-    'vlan.etype',
-    'vlan.id',
+    'arp.opcode': int,
+    'eth.src': netaddr_packed,
+    'eth.dst': netaddr_packed,
+    'eth.type': hex_str,
+    'frame.len': int,
+    'frame.time_epoch': float,
+    'frame.time_delta_displayed': float,
+    'frame.protocols': eth_protos,
+    'icmp.code': int,
+    'gre.proto': hex_str,
+    'ip.src': ipaddress_packed,
+    'ip.src_host': ipaddress_packed,
+    'ip.dst': ipaddress_packed,
+    'ip.dst_host': ipaddress_packed,
+    'ip.dsfield': hex_str,
+    'ip.flags': hex_str,
+    'ip.proto': int,
+    'ip.version': int,
+    'icmpv6.code': int,
+    'ipv6.src': ipaddress_packed,
+    'ipv6.src_host': ipaddress_packed,
+    'ipv6.dst': ipaddress_packed,
+    'ipv6.dst_host': ipaddress_packed,
+    'tcp.flags': hex_str,
+    'tcp.srcport': int,
+    'tcp.dstport': int,
+    'udp.srcport': int,
+    'udp.dstport': int,
+    'vlan.etype': hex_str,
+    'vlan.id': int,
 }
 
 
@@ -119,13 +138,14 @@ class CSVToFeatures():
                 os.remove(fi)
 
     @staticmethod
-    def row_filter(row):
-        return {field: val for field, val in row.items() if field in WS_FIELDS}
+    def row_filter(row, field_casts):
+        return {field: field_cast(row[field]) for field, field_cast in WS_FIELDS.items() if len(row.get(field, ''))}
 
     @staticmethod
     def get_rows(in_file, use_gzip):
+        field_casts = {}
         with CSVToFeatures.get_reader(in_file, use_gzip) as f_in:
-            return [CSVToFeatures.row_filter(line) for line in csv.DictReader(f_in)]
+            return tuple(CSVToFeatures.row_filter(line, field_casts) for line in csv.DictReader(f_in))
 
     @staticmethod
     def parse_args(raw_args=None):
@@ -135,7 +155,7 @@ class CSVToFeatures():
         parser.add_argument('--combined', '-c', action='store_true', help='write out all records from all csvs into a single gzipped csv file')
         parser.add_argument('--features_path', '-p', default=os.path.join(netml_path[0], 'featurizers/funcs'), help='path to featurizer functions')
         parser.add_argument('--functions', '-f', default='', help='comma separated list of <class>:<function> to featurize (default=None)')
-        parser.add_argument('--groups', '-g', default='tshark', help='comma separated list of groups of functions to featurize (default=tshark)')
+        parser.add_argument('--groups', '-g', default='host', help='comma separated list of groups of functions to featurize (default=host)')
         parser.add_argument('--gzip', '-z', choices=['input', 'output', 'both', 'neither'], default='both', help='gzip the input/output file, both or neither (default=both)')
         parser.add_argument('--output', '-o', default=None, help='path to write out gzipped csv file or directory for gzipped csv files')
         parser.add_argument('--threads', '-t', default=1, type=int, help='number of async threads to use (default=1)')
@@ -161,7 +181,8 @@ class CSVToFeatures():
         for header_key, header_count in rowcounts.items():
             if header_key != 'host_key':
                 rowcompare[header_count].add(header_key)
-        assert len(rowcompare) == 1, 'inconsistent featurizer row counts: %s' % rowcompare
+        assert not len(rowcompare) == 0, 'featurizer returned no results'
+        assert len(rowcompare) == 1, 'inconsistent featurizer row counts (headers not consistently present in all rows): %s' % rowcompare
         header = list(rowcounts.keys())
 
         columns = [np.array(row) for row in rows]
