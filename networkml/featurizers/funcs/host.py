@@ -50,7 +50,9 @@ class HostBase:
         return True
 
     def _numericintset(self, nums):
-        return {int(x) for x in nums if x is not None and not np.isnan(x)}
+        if nums is not None:
+            return {int(x) for x in nums if x is not None and not np.isnan(x)}
+        return set()
 
     def _get_ip(self, row, cols):
         for col in cols:
@@ -78,8 +80,11 @@ class HostBase:
         return None
 
     def _get_flags(self, mac_df, col_name, decode_map, suffix=None, field_name=None):
-        col = mac_df[col_name]
-        unique_flags = self._numericintset(col.unique())
+        try:
+            col = mac_df[col_name]
+            unique_flags = self._numericintset(col.unique())
+        except KeyError:
+            unique_flags = [0]
         flags_counter = Counter()
         for decoded_flag in decode_map.values():  # pytype: disable=attribute-error
             flags_counter[decoded_flag] = 0
@@ -112,43 +117,59 @@ class HostBase:
         src = mac_df['%s.srcport' % ip_proto]
         dst = mac_df['%s.dstport' % ip_proto]
         if src.count() and dst.count():
-            return self._numericintset(np.minimum(
+            return self._numericintset(np.minimum(  # pylint: disable=no-member
                 mac_df['%s.srcport' % ip_proto], mac_df['%s.dstport' % ip_proto]).unique())
         return set()
 
     def _tshark_ports(self, suffix, mac_df):
         mac_row_ports = {}
+        def port_priv(port):
+            return port < 1024
         for ip_proto in ('udp', 'tcp'):
             lowest_ports = self._lowest_ip_proto_port(mac_df, ip_proto)
             for field_name, ports, wk_ports in (
-                    ('priv', {port for port in lowest_ports if port < 1024}, self.WK_PRIV_TCPUDP_PORTS),
-                    ('nonpriv', {port for port in lowest_ports if port >= 1024}, self.WK_NONPRIV_TCPUDP_PORTS),
+                    ('priv', {port for port in lowest_ports if port_priv(port)}, self.WK_PRIV_TCPUDP_PORTS),
+                    ('nonpriv', {port for port in lowest_ports if not port_priv(port)}, self.WK_NONPRIV_TCPUDP_PORTS),
                 ):
                 port_flags = {port: int(port in ports) for port in wk_ports}
-                port_flags.update({'other': int(bool(lowest_ports) and not lowest_ports.issubset(wk_ports))})
+                port_flags.update({'other': int(bool(lowest_ports) and not ports.issubset(wk_ports))})
                 mac_row_ports.update({
                     'tshark_%s_%s_port_%s_%s' % (ip_proto, field_name, port, suffix): present for port, present in port_flags.items()})
         return mac_row_ports
 
     def _tshark_ipversions(self, mac_df):
-        ip_versions = self._numericintset(mac_df['ip.version'].unique())
-        return {'IPv%u' % v: int(v in ip_versions) for v in (4, 6)}
+        try:
+            ip_versions = self._numericintset(mac_df['ip.version'].unique())
+        except AttributeError:
+            ip_versions = set()
+        return {'tshark_ipv%u' % v: int(v in ip_versions) for v in (4, 6)}
 
     def _tshark_non_ip(self, mac_df):
-        eth_types = self._numericintset(mac_df['eth.type'].unique())
+        try:
+            eth_types = self._numericintset(mac_df['eth.type'].unique())
+        except AttributeError:
+            eth_types = set()
         return {
             'tshark_ipx': int(ETH_TYPE_IPX in eth_types),
             'tshark_nonip': int(bool(eth_types - ETH_IP_TYPES)),
         }
 
     def _tshark_both_private_ip(self, mac_df):
+        try:
+            both_private_ip = int(min(self._numericintset(mac_df['_both_private_ip'])) == 1)
+        except KeyError:
+            both_private_ip = 0
         return {
-            'tshark_both_private_ip': int(min(self._numericintset(mac_df['_both_private_ip'])) == 1)
+            'tshark_both_private_ip': both_private_ip,
         }
 
     def _tshark_ipv4_multicast(self, mac_df):
+        try:
+            ipv4_multicast = int(max(self._numericintset(mac_df['_ipv4_multicast'])) == 1)
+        except KeyError:
+            ipv4_multicast = 0
         return {
-            'tshark_ipv4_multicast': int(max(self._numericintset(mac_df['_ipv4_multicast'])) == 1)
+            'tshark_ipv4_multicast': ipv4_multicast,
         }
 
     def _tshark_wk_ip_protocol(self, mac_df):
@@ -162,15 +183,20 @@ class HostBase:
     def _calc_cols(self, mac, mac_df):
         mac_row = {}
         for suffix, suffix_func in (
-                ('out', lambda x: mac_df[mac_df['eth.src'] == mac]),
-                ('in', lambda x: mac_df[mac_df['eth.src'] != mac]),
+                ('out', lambda x: mac_df[mac_df['eth.src'] == x]),
+                ('in', lambda x: mac_df[mac_df['eth.src'] != x]),
             ):
-            suffix_df = suffix_func(mac)
+            try:
+                suffix_df = suffix_func(mac)
+            except KeyError:
+                continue
             for col_name, field_name in self.CALC_COL_NAMES:
                 col = suffix_df[col_name]
                 for calc_name, calc_func in self.CALC_COL_FUNCS:
-                    calc_col = '%s_%s_%s' % (calc_name, field_name, suffix)
+                    calc_col = 'tshark_%s_%s_%s' % (calc_name, field_name, suffix)
                     val = calc_func(col)
+                    if pd.isnull(val):
+                        val = 0
                     mac_row.update({calc_col: val})
             for func in (
                     self._tshark_flags,
