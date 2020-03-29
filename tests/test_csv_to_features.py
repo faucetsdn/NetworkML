@@ -64,23 +64,12 @@ def test_CSVToFeatures_dir_output():
         instance2.main()
 
 
-def test_CSVToFeatures_generic():
-    with tempfile.TemporaryDirectory() as tmpdir:
-        foo1 = os.path.join(tmpdir, 'foo1')
-        sys.argv = ['pcap_to_csv.py', '-e', 'tshark', '-o', foo1, './tests']
-        instance = PCAPToCSV()
-        instance.main()
-        sys.argv = ['csv_to_features.py', '-z', 'input', '-f', 'Generic:all', '-g', 'None', foo1]
-        instance2 = CSVToFeatures()
-        instance2.main()
-
-
 def test_CSVToFeatures_host():
     with tempfile.TemporaryDirectory() as tmpdir:
         foo3 = os.path.join(tmpdir, 'foo3')
-        sys.argv = ['pcap_to_csv.py', '-e', 'pyshark', '-o', foo3, './tests']
+        sys.argv = ['pcap_to_csv.py', '-e', 'tshark', '-o', foo3, './tests']
         instance = PCAPToCSV()
         instance.main()
-        sys.argv = ['csv_to_features.py', '-c', '-z', 'input', '-g', 'pyshark', foo3]
+        sys.argv = ['csv_to_features.py', '-c', '-z', 'input', '-g', 'sessionhost_tshark', foo3]
         instance2 = CSVToFeatures()
         instance2.main()

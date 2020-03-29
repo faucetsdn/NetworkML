@@ -15,15 +15,6 @@ def test_PCAPToCSV_pyshark_packet():
         instance.main()
 
 
-def test_PCAPToCSV_tshark_flow():
-    with tempfile.TemporaryDirectory() as tmpdir:
-        testdata = os.path.join(tmpdir, 'test_data')
-        shutil.copytree('./tests/test_data', testdata)
-        sys.argv = ['pcap_to_csv.py', '-c', '-e', 'tshark', '-l', 'flow', '-t', '2', os.path.join(testdata, 'trace_ab12_2001-01-01_02_03-client-ip-1-2-3-4.pcap')]
-        instance = PCAPToCSV()
-        instance.main()
-
-
 def test_ispcap():
     a = 'foo.bad'
     answer = PCAPToCSV.ispcap(a)

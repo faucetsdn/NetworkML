@@ -1,69 +1,16 @@
 import argparse
 import csv
 import concurrent.futures
-import functools
-import ipaddress
 import logging
-import netaddr
 import os
 import pathlib
 from collections import defaultdict, Counter
 import numpy as np
 
-
 import networkml
 from networkml.gzipio import gzip_reader, gzip_writer
 from networkml.featurizers.main import Featurizer
-
-
-@functools.lru_cache()
-def ipaddress_packed(x):
-    return int(ipaddress.ip_address(x))
-
-@functools.lru_cache()
-def netaddr_packed(x):
-    return int(netaddr.EUI(x))
-
-def hex_str(x):
-    assert x.startswith('0x')
-    return int(x, 16)
-
-def eth_protos(x):
-    return tuple(i for i in x.split(':') if i != 'ethertype')
-
-
-WS_FIELDS = {
-    'arp.opcode': int,
-    'eth.src': netaddr_packed,
-    'eth.dst': netaddr_packed,
-    'eth.type': hex_str,
-    'frame.len': int,
-    'frame.time_epoch': float,
-    'frame.time_delta_displayed': float,
-    'frame.protocols': eth_protos,
-    'icmp.code': int,
-    'gre.proto': hex_str,
-    'ip.src': ipaddress_packed,
-    'ip.src_host': ipaddress_packed,
-    'ip.dst': ipaddress_packed,
-    'ip.dst_host': ipaddress_packed,
-    'ip.dsfield': hex_str,
-    'ip.flags': hex_str,
-    'ip.proto': int,
-    'ip.version': int,
-    'icmpv6.code': int,
-    'ipv6.src': ipaddress_packed,
-    'ipv6.src_host': ipaddress_packed,
-    'ipv6.dst': ipaddress_packed,
-    'ipv6.dst_host': ipaddress_packed,
-    'tcp.flags': hex_str,
-    'tcp.srcport': int,
-    'tcp.dstport': int,
-    'udp.srcport': int,
-    'udp.dstport': int,
-    'vlan.etype': hex_str,
-    'vlan.id': int,
-}
+from networkml.pandas_csv_importer import import_csv
 
 
 class CSVToFeatures():
@@ -138,16 +85,6 @@ class CSVToFeatures():
                 os.remove(fi)
 
     @staticmethod
-    def row_filter(row, field_casts):
-        return {field: field_cast(row[field]) for field, field_cast in WS_FIELDS.items() if len(row.get(field, ''))}
-
-    @staticmethod
-    def get_rows(in_file, use_gzip):
-        field_casts = {}
-        with CSVToFeatures.get_reader(in_file, use_gzip) as f_in:
-            return tuple(CSVToFeatures.row_filter(line, field_casts) for line in csv.DictReader(f_in))
-
-    @staticmethod
     def parse_args(raw_args=None):
         netml_path = list(networkml.__path__)
         parser = argparse.ArgumentParser()
@@ -165,12 +102,11 @@ class CSVToFeatures():
 
     def exec_features(self, features, in_file, out_file, features_path, gzip_opt):
         in_file_size = os.path.getsize(in_file)
-        self.logger.info(f'Processing {in_file} size {in_file_size}')
-        use_gzip = gzip_opt in ['input', 'both']
-        rows = CSVToFeatures.get_rows(in_file, use_gzip)
-        rows_f = lambda: rows
+        self.logger.info(f'Importing {in_file} size {in_file_size} (ignore spurious DtypeWarning)')
+        df = import_csv(in_file)
         featurizer = Featurizer()
-        rows = featurizer.main(features, rows_f, features_path)
+        self.logger.info(f'Featurizing {in_file}')
+        rows = featurizer.main(features, df, features_path)
 
         rowcounts = Counter()
         for row in rows:
@@ -302,9 +238,8 @@ class CSVToFeatures():
             self.logger.info(f'Combining CSVs into a single file: {combined_path}')
             CSVToFeatures.combine_csvs(out_paths, combined_path, gzip_opt)
             return combined_path
-        else:
-            self.logger.info(f'GZipped CSV file(s) written out to: {out_paths}')
-            return os.path.dirname(out_paths[0])
+        self.logger.info(f'GZipped CSV file(s) written out to: {out_paths}')
+        return os.path.dirname(out_paths[0])
 
 
 if __name__ == '__main__':  # pragma: no cover
