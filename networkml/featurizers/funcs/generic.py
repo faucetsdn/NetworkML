@@ -1,4 +1,4 @@
-from networkml.featurizers.csv_to_features import WS_FIELDS
+from networkml.pandas_csv_importer import WS_FIELDS
 from networkml.featurizers.features import Features
 
 
