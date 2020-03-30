@@ -180,6 +180,12 @@ class HostBase:
             'tshark_tagged_vlan': int(bool(self._numericintset(mac_df['vlan.id'])))
         }
 
+    def _tshark_unique_ips(self, mac, mac_df):
+        return {
+            'tshark_unique_srcips': len(mac_df[mac_df['eth.src']==mac]['_srcip'].unique()),
+            'tshark_unique_dstips': len(mac_df[mac_df['eth.src']==mac]['_dstip'].unique()),
+        }
+
     def _calc_cols(self, mac, mac_df):
         mac_row = {}
         for suffix, suffix_func in (
@@ -212,6 +218,7 @@ class HostBase:
                 self._tshark_vlan_id,
             ):
             mac_row.update(func(mac_df))
+        mac_row.update(self._tshark_unique_ips(mac, mac_df))
         return mac_row
 
     def _calc_mac_row(self, mac, mac_df):
@@ -242,7 +249,7 @@ class HostBase:
 
     def _tshark_all(self, df):
         print('calculating intermediates', end='', flush=True)
-        df['_host_key'], df['_both_private_ip'], df['_ipv4_multicast'], df['_protos_int'] = zip(*df.apply(self._host_key, axis=1))
+        df['_host_key'], df['_srcip'], df['_dstip'], df['_both_private_ip'], df['_ipv4_multicast'], df['_protos_int'] = zip(*df.apply(self._host_key, axis=1))
         eth_srcs = set(df['eth.src'].unique())
         eth_dsts = set(df['eth.dst'].unique())
         all_unicast_macs = {mac for mac in eth_srcs.union(eth_dsts) if self._is_unicast(mac)}
@@ -269,7 +276,7 @@ class Host(HostBase, Features):
         ip_dst = self._get_dst_ip(row)
         both_private_ip, ipv4_multicast = self._df_ip_flags(ip_src, ip_dst)
         protos_int = self._df_proto_flags(row)
-        return (0, both_private_ip, ipv4_multicast, protos_int)
+        return (0, str(ip_src), str(ip_dst), both_private_ip, ipv4_multicast, protos_int)
 
     def host_tshark_all(self, df):
         return self._tshark_all(df)
@@ -298,7 +305,7 @@ class SessionHost(HostBase, Features):
                 key = sorted([(eth_src, ip_src), (eth_dst, ip_dst)])
         else:
             key = (row['eth.type'],) + tuple(sorted((eth_src, eth_dst)))
-        return (hash('-'.join([str(x) for x in key])), both_private_ip, ipv4_multicast, protos_int)
+        return (hash('-'.join([str(x) for x in key])), str(ip_src), str(ip_dst), both_private_ip, ipv4_multicast, protos_int)
 
     def sessionhost_tshark_all(self, df):
         return self._tshark_all(df)
