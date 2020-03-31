@@ -182,8 +182,8 @@ class HostBase:
 
     def _tshark_unique_ips(self, mac, mac_df):
         return {
-            'tshark_unique_srcips': len(mac_df[mac_df['eth.src']==mac]['_srcip'].unique()),
-            'tshark_unique_dstips': len(mac_df[mac_df['eth.src']==mac]['_dstip'].unique()),
+            'tshark_unique_srcips': mac_df[mac_df['eth.src']==mac]['_srcip'].nunique(),
+            'tshark_unique_dstips': mac_df[mac_df['eth.src']==mac]['_dstip'].nunique(),
         }
 
     def _calc_cols(self, mac, mac_df):
@@ -247,7 +247,7 @@ class HostBase:
             all_protos_int += 2**index
         return all_protos_int
 
-    def _tshark_all(self, df):
+    def _tshark_all(self, df, srcmacid):
         print('calculating intermediates', end='', flush=True)
         df['_host_key'], df['_srcip'], df['_dstip'], df['_both_private_ip'], df['_ipv4_multicast'], df['_protos_int'] = zip(*df.apply(self._host_key, axis=1))
         eth_srcs = set(df['eth.src'].unique())
@@ -256,6 +256,11 @@ class HostBase:
         host_keys = df['_host_key'].unique()
         host_keys_count = len(host_keys)
         print('.%u MACs, %u sessions' % (len(all_unicast_macs), host_keys_count), end='', flush=True)
+        if srcmacid:
+            minsrcipmac = df.groupby(['eth.src'])['_srcip'].nunique().idxmin(axis=1)
+            assert minsrcipmac in all_unicast_macs
+            print('.MAC %s has minimum number of source IPs, selected as canonical source' % self._mac(minsrcipmac), end='', flush=True)
+            all_unicast_macs = {minsrcipmac}
         mac_rows = []
         for i, mac in enumerate(all_unicast_macs, start=1):
             mac_df = df[(df['eth.src'] == mac)|(df['eth.dst'] == mac)]
@@ -278,8 +283,8 @@ class Host(HostBase, Features):
         protos_int = self._df_proto_flags(row)
         return (0, str(ip_src), str(ip_dst), both_private_ip, ipv4_multicast, protos_int)
 
-    def host_tshark_all(self, df):
-        return self._tshark_all(df)
+    def host_tshark_all(self, df, srcmacid):
+        return self._tshark_all(df, srcmacid)
 
 
 class SessionHost(HostBase, Features):
@@ -307,5 +312,5 @@ class SessionHost(HostBase, Features):
             key = (row['eth.type'],) + tuple(sorted((eth_src, eth_dst)))
         return (hash('-'.join([str(x) for x in key])), str(ip_src), str(ip_dst), both_private_ip, ipv4_multicast, protos_int)
 
-    def sessionhost_tshark_all(self, df):
-        return self._tshark_all(df)
+    def sessionhost_tshark_all(self, df, srcmacid):
+        return self._tshark_all(df, srcmacid)
