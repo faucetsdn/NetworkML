@@ -264,12 +264,16 @@ class HostBase:
         mac_rows = []
         for i, mac in enumerate(all_unicast_macs, start=1):
             mac_df = df[(df['eth.src'] == mac)|(df['eth.dst'] == mac)]
-            s = 0
-            for _, key_df in mac_df.groupby('_host_key'):
-                s += 1
-                if s % 100 == 0:
-                    print('.MAC %u/%u %.1f%%' % (i, len(all_unicast_macs), s / len(host_keys) * 100), end='', flush=True)
-                mac_rows.append(self._calc_mac_row(mac, key_df))
+            # If just one MAC, don't need groupby on host key.
+            if len(all_unicast_macs) == 1:
+                mac_rows.append(self._calc_mac_row(mac, mac_df))
+            else:
+                s = 0
+                for _, key_df in mac_df.groupby('_host_key'):
+                    s += 1
+                    if s % 100 == 0:
+                        print('.MAC %u/%u %.1f%%' % (i, len(all_unicast_macs), s / len(host_keys) * 100), end='', flush=True)
+                    mac_rows.append(self._calc_mac_row(mac, key_df))
             print('.MAC %u/%u 100%%.' % (i, len(all_unicast_macs)), end='', flush=True)
         return mac_rows
 
