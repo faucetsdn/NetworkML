@@ -6,7 +6,6 @@ import os
 import pathlib
 from collections import defaultdict, Counter
 import numpy as np
-
 import networkml
 from networkml.gzipio import gzip_reader, gzip_writer
 from networkml.featurizers.main import Featurizer

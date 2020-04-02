@@ -1,5 +1,8 @@
 import ipaddress
 import functools
+import warnings
+from pandas.errors import DtypeWarning
+warnings.simplefilter(action='ignore', category=DtypeWarning)
 import pandas as pd
 import netaddr
 
@@ -69,6 +72,7 @@ WS_FIELDS = {
 }
 _WS_FIELDS_CONVERTERS = {field: field_info[0] for field, field_info in WS_FIELDS.items()}
 _WS_FIELDS_NULLABLE_INT = {field for field, field_info in WS_FIELDS.items() if field_info[1]}
+_REQUIRED_WS_FIELDS = {'eth.src', 'eth.dst', 'frame.len', 'frame.time_epoch', 'frame.time_delta_displayed'}
 
 
 def import_csv(in_file):
@@ -79,6 +83,8 @@ def import_csv(in_file):
     df = pd.read_csv(in_file, usecols=usecols, converters=_WS_FIELDS_CONVERTERS)
     for col in missingcols:
         df[col] = None
+    for col in _REQUIRED_WS_FIELDS:
+        assert df[col].count() > 0, 'required col %s is all null (not a PCAP CSV?)' % col
     # TODO: when pandas allows read_csv to infer nullable ints, we can use less memory on import.
     # https://github.com/pandas-dev/pandas/issues/2631
     # For now convert to nullable int after import.

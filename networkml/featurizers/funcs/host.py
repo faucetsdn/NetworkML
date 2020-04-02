@@ -14,6 +14,10 @@ ETH_TYPE_IPX = 0x8137
 ETH_IP_TYPES = frozenset((ETH_TYPE_ARP, ETH_TYPE_IP, ETH_TYPE_IPV6))
 WK_IP_PROTOS = ('tcp', 'udp', 'icmp', 'arp', 'icmpv6', 'gre', 'esp', 'ah')
 WK_IP_PROTOS_INDEX = {WK_IP_PROTOS.index(i): i for i in WK_IP_PROTOS}
+TCP_UDP_PROTOS = {
+  6: 'tcp',
+  17: 'udp',
+}
 
 
 
@@ -55,29 +59,24 @@ class HostBase:
         return set()
 
     def _get_ip(self, row, cols):
-        for col in cols:
-            val = row[col]
-            if not pd.isnull(val):
-                return ipaddress.ip_address(int(val))
+        ipv = row['ip.version']
+        if not pd.isnull(ipv):
+            ipv = int(ipv)
+            if ipv == 4:
+                prefix = 'ip'
+            else:
+                prefix = 'ipv6'
+            for col in cols:
+                val = row['.'.join((prefix, col))]
+                if not pd.isnull(val):
+                    return ipaddress.ip_address(int(val))
         return None
 
     def _get_src_ip(self, row):
-        ipv = row['ip.version']
-        if not pd.isnull(ipv):
-            ipv = int(ipv)
-            if ipv == 4:
-                return self._get_ip(row, ('ip.src', 'ip.src_host'))
-            return self._get_ip(row, ('ipv6.src', 'ipv6.src_host'))
-        return None
+        return self._get_ip(row, ('src', 'src_host'))
 
     def _get_dst_ip(self, row):
-        ipv = row['ip.version']
-        if not pd.isnull(ipv):
-            ipv = int(ipv)
-            if ipv == 4:
-                return self._get_ip(row, ('ip.dst', 'ip.dst_host'))
-            return self._get_ip(row, ('ipv6.dst', 'ipv6.dst_host'))
-        return None
+        return self._get_ip(row, ('dst', 'dst_host'))
 
     def _get_flags(self, mac_df, col_name, decode_map, suffix=None, field_name=None):
         try:
@@ -301,9 +300,8 @@ class SessionHost(HostBase, Features):
         both_private_ip, ipv4_multicast = self._df_ip_flags(ip_src, ip_dst)
         protos_int = self._df_proto_flags(row)
         if not pd.isnull(ip_src) and not pd.isnull(ip_dst):
-            ip_proto = {proto for proto in ('tcp', 'udp') if not pd.isnull(row['%s.srcport' % proto])}
+            ip_proto = TCP_UDP_PROTOS.get(row['ip.version'], None)
             if ip_proto:
-                ip_proto = list(ip_proto)[0]
                 src_port = row['%s.srcport' % ip_proto]
                 dst_port = row['%s.dstport' % ip_proto]
                 if ip_src > ip_dst:
