@@ -2,6 +2,7 @@ import ipaddress
 import functools
 import warnings
 from pandas.errors import DtypeWarning
+# We are using converters to fix types, so mixed type warning from read_csv() is spurious.
 warnings.simplefilter(action='ignore', category=DtypeWarning)
 import pandas as pd
 import netaddr

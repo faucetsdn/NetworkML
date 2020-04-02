@@ -102,7 +102,7 @@ class CSVToFeatures():
 
     def exec_features(self, features, in_file, out_file, features_path, gzip_opt, srcmacid):
         in_file_size = os.path.getsize(in_file)
-        self.logger.info(f'Importing {in_file} size {in_file_size} (ignore spurious DtypeWarning)')
+        self.logger.info(f'Importing {in_file} size {in_file_size}')
         df = import_csv(in_file)
         featurizer = Featurizer()
         self.logger.info(f'Featurizing {in_file}')
