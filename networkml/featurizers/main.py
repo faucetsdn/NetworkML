@@ -50,7 +50,7 @@ class Featurizer():
         return classes
 
 
-    def run_all_funcs(self, functions_orig, groups_orig, classes_orig, rows_f):
+    def run_all_funcs(self, functions_orig, groups_orig, classes_orig, rows_f, srcmacid):
         functions = copy.deepcopy(functions_orig)
         groups = copy.deepcopy(groups_orig)
         classes = copy.deepcopy(classes_orig)
@@ -79,7 +79,7 @@ class Featurizer():
             if groups:
                 methods = filter(lambda funcname: funcname.startswith(groups), dir(f[0]))
                 for method in sorted(methods, key=method_key):
-                    feature_rows.append(run_func(method, lambda: f[0].run_func(method, rows_f), f'{f[1]}/{method}'))
+                    feature_rows.append(run_func(method, lambda: f[0].run_func(method, rows_f, srcmacid), f'{f[1]}/{method}'))
                     run_methods.append((f[1], method))
 
         # run remaining extras
@@ -88,11 +88,11 @@ class Featurizer():
                 for f in classes:
                     if f[1] == function[0]:
                         method = function[1]
-                        feature_rows.append(run_func(method, lambda: f[0].run_func(method, rows_f), f'{f[1]}/{function[1]}'))
+                        feature_rows.append(run_func(method, lambda: f[0].run_func(method, rows_f, srcmacid), f'{f[1]}/{function[1]}'))
         return feature_rows
 
 
-    def main(self, feature_choices, rows, features_path):
+    def main(self, feature_choices, rows, features_path, srcmacid):
         functions = []
         groups = ('default')
         classes = []
@@ -103,4 +103,4 @@ class Featurizer():
         if 'groups' in feature_choices:
             groups = feature_choices['groups']
 
-        return self.run_all_funcs(functions, groups, classes, rows)
+        return self.run_all_funcs(functions, groups, classes, rows, srcmacid)

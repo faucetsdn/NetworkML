@@ -6,7 +6,6 @@ import os
 import pathlib
 from collections import defaultdict, Counter
 import numpy as np
-
 import networkml
 from networkml.gzipio import gzip_reader, gzip_writer
 from networkml.featurizers.main import Featurizer
@@ -97,16 +96,17 @@ class CSVToFeatures():
         parser.add_argument('--output', '-o', default=None, help='path to write out gzipped csv file or directory for gzipped csv files')
         parser.add_argument('--threads', '-t', default=1, type=int, help='number of async threads to use (default=1)')
         parser.add_argument('--verbose', '-v', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO', help='logging level (default=INFO)')
+        parser.add_argument('--srcmacid', '-s', default=True, action='store_true', help='attempt to detect canonical source MAC and featurize only that MAC')
         parsed_args = parser.parse_args(raw_args)
         return parsed_args
 
-    def exec_features(self, features, in_file, out_file, features_path, gzip_opt):
+    def exec_features(self, features, in_file, out_file, features_path, gzip_opt, srcmacid):
         in_file_size = os.path.getsize(in_file)
-        self.logger.info(f'Importing {in_file} size {in_file_size} (ignore spurious DtypeWarning)')
+        self.logger.info(f'Importing {in_file} size {in_file_size}')
         df = import_csv(in_file)
         featurizer = Featurizer()
         self.logger.info(f'Featurizing {in_file}')
-        rows = featurizer.main(features, df, features_path)
+        rows = featurizer.main(features, df, features_path, srcmacid)
 
         rowcounts = Counter()
         for row in rows:
@@ -138,7 +138,7 @@ class CSVToFeatures():
         else:
             self.logger.warning(f'No results based on {features} for {in_file}')
 
-    def process_files(self, threads, features, features_path, in_paths, out_paths, gzip_opt):
+    def process_files(self, threads, features, features_path, in_paths, out_paths, gzip_opt, srcmacid):
         num_files = len(in_paths)
         failed_paths = []
         finished_files = 0
@@ -147,14 +147,14 @@ class CSVToFeatures():
             for i in range(len(in_paths)):
                 try:
                     finished_files += 1
-                    self.exec_features(features, in_paths[i], out_paths[i], features_path, gzip_opt)
+                    self.exec_features(features, in_paths[i], out_paths[i], features_path, gzip_opt, srcmacid)
                     self.logger.info(f'Finished {in_paths[i]}. {finished_files}/{num_files} CSVs done.')
                 except Exception as e:  # pragma: no cover
                     self.logger.error(f'{in_paths[i]} generated an exception: {e}')
                     failed_paths.append(out_paths[i])
         else:
             with concurrent.futures.ProcessPoolExecutor(max_workers=threads) as executor:
-                future_to_parse = {executor.submit(self.exec_features, features, in_paths[i], out_paths[i], features_path, gzip_opt): i for i in range(len((in_paths)))}
+                future_to_parse = {executor.submit(self.exec_features, features, in_paths[i], out_paths[i], features_path, gzip_opt, srcmacid): i for i in range(len((in_paths)))}
                 for future in concurrent.futures.as_completed(future_to_parse):
                     path = future_to_parse[future]
                     try:
@@ -179,6 +179,8 @@ class CSVToFeatures():
         functions = parsed_args.functions
         groups = parsed_args.groups
         gzip_opt = parsed_args.gzip
+        srcmacid = parsed_args.srcmacid
+
         if not groups and not functions:
             self.logger.warning('No groups or functions were selected, quitting')
             return
@@ -225,7 +227,7 @@ class CSVToFeatures():
                 else:
                     out_paths.append(in_path + ".features.gz")
 
-        failed_paths = self.process_files(threads, features, features_path, in_paths, out_paths, gzip_opt)
+        failed_paths = self.process_files(threads, features, features_path, in_paths, out_paths, gzip_opt, srcmacid)
 
         for failed_path in failed_paths:  # pragma: no cover
             if failed_path in out_paths:

@@ -100,8 +100,11 @@ def test_smoke_calc_cols():
     eth_src = '0e:00:00:00:00:01'
     eth_src_int = int(netaddr.EUI(eth_src))
     test_data.update({
+        'ip.version': 4,
         'eth.src': eth_src_int,
         'eth.dst': eth_src_int,
+        '_srcip': '192.168.0.1',
+        '_dstip': '192.168.0.2',
     })
     mac_df = pd.DataFrame([test_data])
     assert instance._calc_cols(eth_src_int, mac_df)
@@ -114,6 +117,7 @@ def test_host_keys():
     src_ip = ipaddress.ip_address('192.168.0.1')
     dst_ip = ipaddress.ip_address('192.168.0.2')
     test_data.update({
+        'ip.version': 4,
         'eth.src': eth_src_int,
         'eth.dst': eth_src_int,
         'ip.src': str(int(src_ip)),
@@ -124,6 +128,6 @@ def test_host_keys():
     })
     row = nan_row_dict(test_data)
     instance = Host()
-    assert instance._host_key(row)[1:] == (0, 0, 1)
+    assert instance._host_key(row)[1:] == (str(src_ip), str(dst_ip), 1, 0, 1)
     instance = SessionHost()
-    assert instance._host_key(row)[1:] == (0, 0, 1)
+    assert instance._host_key(row)[1:] == (str(src_ip), str(dst_ip), 1, 0, 1)

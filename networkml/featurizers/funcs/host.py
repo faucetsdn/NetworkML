@@ -1,5 +1,4 @@
 import ipaddress
-from collections import Counter
 import numpy as np
 import pandas as pd
 import netaddr
@@ -14,7 +13,10 @@ ETH_TYPE_IPX = 0x8137
 ETH_IP_TYPES = frozenset((ETH_TYPE_ARP, ETH_TYPE_IP, ETH_TYPE_IPV6))
 WK_IP_PROTOS = ('tcp', 'udp', 'icmp', 'arp', 'icmpv6', 'gre', 'esp', 'ah')
 WK_IP_PROTOS_INDEX = {WK_IP_PROTOS.index(i): i for i in WK_IP_PROTOS}
-
+TCP_UDP_PROTOS = {
+  6: 'tcp',
+  17: 'udp',
+}
 
 
 class HostBase:
@@ -38,7 +40,8 @@ class HostBase:
         [22, 23, 25, 53, 67, 68, 69, 80, 88, 110, 123, 137, 138, 139, 143, 161, 443, 631])
     WK_NONPRIV_TCPUDP_PORTS = frozenset(
         [1900, 2375, 2376, 5222, 5349, 5353, 5354, 5349, 5357, 6653])
-    DROP_PROTOS = {'frame', 'data', 'eth', 'ip', 'ipv6'}
+    DROP_PROTOS = frozenset(
+        ['frame', 'data', 'eth', 'ip', 'ipv6'])
 
     def _mac(self, mac):
         return netaddr.EUI(int(mac), dialect=netaddr.mac_unix_expanded)
@@ -51,33 +54,28 @@ class HostBase:
 
     def _numericintset(self, nums):
         if nums is not None:
-            return {int(x) for x in nums if x is not None and not np.isnan(x)}
-        return set()
+            return frozenset(int(x) for x in nums if x is not None and not np.isnan(x))
+        return frozenset()
 
     def _get_ip(self, row, cols):
-        for col in cols:
-            val = row[col]
-            if not pd.isnull(val):
-                return ipaddress.ip_address(int(val))
+        ipv = row['ip.version']
+        if not pd.isnull(ipv):
+            ipv = int(ipv)
+            if ipv == 4:
+                prefix = 'ip'
+            else:
+                prefix = 'ipv6'
+            for col in cols:
+                val = row['.'.join((prefix, col))]
+                if not pd.isnull(val):
+                    return ipaddress.ip_address(int(val))
         return None
 
     def _get_src_ip(self, row):
-        ipv = row['ip.version']
-        if not pd.isnull(ipv):
-            ipv = int(ipv)
-            if ipv == 4:
-                return self._get_ip(row, ('ip.src', 'ip.src_host'))
-            return self._get_ip(row, ('ipv6.src', 'ipv6.src_host'))
-        return None
+        return self._get_ip(row, ('src', 'src_host'))
 
     def _get_dst_ip(self, row):
-        ipv = row['ip.version']
-        if not pd.isnull(ipv):
-            ipv = int(ipv)
-            if ipv == 4:
-                return self._get_ip(row, ('ip.dst', 'ip.dst_host'))
-            return self._get_ip(row, ('ipv6.dst', 'ipv6.dst_host'))
-        return None
+        return self._get_ip(row, ('dst', 'dst_host'))
 
     def _get_flags(self, mac_df, col_name, decode_map, suffix=None, field_name=None):
         try:
@@ -85,23 +83,21 @@ class HostBase:
             unique_flags = self._numericintset(col.unique())
         except KeyError:
             unique_flags = [0]
-        flags_counter = Counter()
-        for decoded_flag in decode_map.values():  # pytype: disable=attribute-error
-            flags_counter[decoded_flag] = 0
-        for flags in unique_flags:
-            if flags:
-                for bit, decoded_flag in decode_map.items():
-                    if flags & (2**bit):
-                        flags_counter[decoded_flag] += 1
+        decoded_flags = set()
+        for bit, decoded_flag in decode_map.items():
+            bitval = 2**bit
+            for flags in sorted(filter(lambda x: x >= bitval, unique_flags)):
+                if flags & bitval:
+                    decoded_flags.add(decoded_flag)
         if field_name is None:
             field_name = col_name.replace('.', '_')
         if suffix is not None:
             return {'tshark_%s_%s_%s' % (
-                field_name, decoded_flag, suffix): val
-                    for decoded_flag, val in flags_counter.items()}
+                field_name, decoded_flag, suffix): int(decoded_flag in decoded_flags)
+                    for decoded_flag in decode_map.values()}
         return {'tshark_%s_%s' % (
-            field_name, decoded_flag): val
-                for decoded_flag, val in flags_counter.items()}
+            field_name, decoded_flag): int(decoded_flag in decoded_flags)
+                for decoded_flag in decode_map.values()}
 
     def _tshark_flags(self, suffix, mac_df):
         mac_row_flags = {}
@@ -119,7 +115,7 @@ class HostBase:
         if src.count() and dst.count():
             return self._numericintset(np.minimum(  # pylint: disable=no-member
                 mac_df['%s.srcport' % ip_proto], mac_df['%s.dstport' % ip_proto]).unique())
-        return set()
+        return frozenset()
 
     def _tshark_ports(self, suffix, mac_df):
         mac_row_ports = {}
@@ -141,14 +137,14 @@ class HostBase:
         try:
             ip_versions = self._numericintset(mac_df['ip.version'].unique())
         except AttributeError:
-            ip_versions = set()
+            ip_versions = frozenset()
         return {'tshark_ipv%u' % v: int(v in ip_versions) for v in (4, 6)}
 
     def _tshark_non_ip(self, mac_df):
         try:
             eth_types = self._numericintset(mac_df['eth.type'].unique())
         except AttributeError:
-            eth_types = set()
+            eth_types = frozenset()
         return {
             'tshark_ipx': int(ETH_TYPE_IPX in eth_types),
             'tshark_nonip': int(bool(eth_types - ETH_IP_TYPES)),
@@ -178,6 +174,12 @@ class HostBase:
     def _tshark_vlan_id(self, mac_df):
         return {
             'tshark_tagged_vlan': int(bool(self._numericintset(mac_df['vlan.id'])))
+        }
+
+    def _tshark_unique_ips(self, mac, mac_df):
+        return {
+            'tshark_unique_srcips': mac_df[mac_df['eth.src']==mac]['_srcip'].nunique(),
+            'tshark_unique_dstips': mac_df[mac_df['eth.src']==mac]['_dstip'].nunique(),
         }
 
     def _calc_cols(self, mac, mac_df):
@@ -212,6 +214,7 @@ class HostBase:
                 self._tshark_vlan_id,
             ):
             mac_row.update(func(mac_df))
+        mac_row.update(self._tshark_unique_ips(mac, mac_df))
         return mac_row
 
     def _calc_mac_row(self, mac, mac_df):
@@ -230,9 +233,8 @@ class HostBase:
             ipv4_multicast = int(ip_dst.version == 4 and ip_dst.is_multicast)
         return (both_private_ip, ipv4_multicast)
 
-    def _df_proto_flags(self, row):
-        short_row_keys = set(x.split('.')[0] for x, y in row.items() if not pd.isnull(y) and not x.startswith('_'))
-        short_frame_protocols = set(row['frame.protocols'].split(':'))
+    def _encode_df_proto_flags(self, short_row_keys, frame_protocols):
+        short_frame_protocols = frozenset(frame_protocols.split(':'))
         all_protos = short_row_keys.union(short_frame_protocols) - self.DROP_PROTOS
         all_protos_int = 0
         for proto in all_protos.intersection(WK_IP_PROTOS):
@@ -240,24 +242,37 @@ class HostBase:
             all_protos_int += 2**index
         return all_protos_int
 
-    def _tshark_all(self, df):
+    def _df_proto_flags(self, row):
+        short_row_keys = frozenset(x.split('.')[0] for x, y in row.items() if not pd.isnull(y) and not x.startswith('_'))
+        return self._encode_df_proto_flags(short_row_keys, row['frame.protocols'])
+
+    def _tshark_all(self, df, srcmacid):
         print('calculating intermediates', end='', flush=True)
-        df['_host_key'], df['_both_private_ip'], df['_ipv4_multicast'], df['_protos_int'] = zip(*df.apply(self._host_key, axis=1))
-        eth_srcs = set(df['eth.src'].unique())
-        eth_dsts = set(df['eth.dst'].unique())
-        all_unicast_macs = {mac for mac in eth_srcs.union(eth_dsts) if self._is_unicast(mac)}
+        df['_host_key'], df['_srcip'], df['_dstip'], df['_both_private_ip'], df['_ipv4_multicast'], df['_protos_int'] = zip(*df.apply(self._host_key, axis=1))
+        eth_srcs = frozenset(df['eth.src'].unique())
+        eth_dsts = frozenset(df['eth.dst'].unique())
+        all_unicast_macs = frozenset(mac for mac in eth_srcs.union(eth_dsts) if self._is_unicast(mac))
         host_keys = df['_host_key'].unique()
         host_keys_count = len(host_keys)
         print('.%u MACs, %u sessions' % (len(all_unicast_macs), host_keys_count), end='', flush=True)
+        if srcmacid:
+            minsrcipmac = df.groupby(['eth.src'])['_srcip'].nunique().idxmin(axis=1)
+            assert minsrcipmac in all_unicast_macs
+            print('.MAC %s has minimum number of source IPs, selected as canonical source' % self._mac(minsrcipmac), end='', flush=True)
+            all_unicast_macs = {minsrcipmac}
         mac_rows = []
         for i, mac in enumerate(all_unicast_macs, start=1):
             mac_df = df[(df['eth.src'] == mac)|(df['eth.dst'] == mac)]
-            s = 0
-            for _, key_df in mac_df.groupby('_host_key'):
-                s += 1
-                if s % 100 == 0:
-                    print('.MAC %u/%u %.1f%%' % (i, len(all_unicast_macs), s / len(host_keys) * 100), end='', flush=True)
-                mac_rows.append(self._calc_mac_row(mac, key_df))
+            # If just one MAC, don't need groupby on host key.
+            if len(all_unicast_macs) == 1:
+                mac_rows.append(self._calc_mac_row(mac, mac_df))
+            else:
+                s = 0
+                for _, key_df in mac_df.groupby('_host_key'):
+                    s += 1
+                    if s % 100 == 0:
+                        print('.MAC %u/%u %.1f%%' % (i, len(all_unicast_macs), s / len(host_keys) * 100), end='', flush=True)
+                    mac_rows.append(self._calc_mac_row(mac, key_df))
             print('.MAC %u/%u 100%%.' % (i, len(all_unicast_macs)), end='', flush=True)
         return mac_rows
 
@@ -269,10 +284,10 @@ class Host(HostBase, Features):
         ip_dst = self._get_dst_ip(row)
         both_private_ip, ipv4_multicast = self._df_ip_flags(ip_src, ip_dst)
         protos_int = self._df_proto_flags(row)
-        return (0, both_private_ip, ipv4_multicast, protos_int)
+        return (0, str(ip_src), str(ip_dst), both_private_ip, ipv4_multicast, protos_int)
 
-    def host_tshark_all(self, df):
-        return self._tshark_all(df)
+    def host_tshark_all(self, df, srcmacid):
+        return self._tshark_all(df, srcmacid)
 
 
 class SessionHost(HostBase, Features):
@@ -285,9 +300,8 @@ class SessionHost(HostBase, Features):
         both_private_ip, ipv4_multicast = self._df_ip_flags(ip_src, ip_dst)
         protos_int = self._df_proto_flags(row)
         if not pd.isnull(ip_src) and not pd.isnull(ip_dst):
-            ip_proto = {proto for proto in ('tcp', 'udp') if not pd.isnull(row['%s.srcport' % proto])}
+            ip_proto = TCP_UDP_PROTOS.get(row['ip.version'], None)
             if ip_proto:
-                ip_proto = list(ip_proto)[0]
                 src_port = row['%s.srcport' % ip_proto]
                 dst_port = row['%s.dstport' % ip_proto]
                 if ip_src > ip_dst:
@@ -298,7 +312,7 @@ class SessionHost(HostBase, Features):
                 key = sorted([(eth_src, ip_src), (eth_dst, ip_dst)])
         else:
             key = (row['eth.type'],) + tuple(sorted((eth_src, eth_dst)))
-        return (hash('-'.join([str(x) for x in key])), both_private_ip, ipv4_multicast, protos_int)
+        return (hash('-'.join([str(x) for x in key])), str(ip_src), str(ip_dst), both_private_ip, ipv4_multicast, protos_int)
 
-    def sessionhost_tshark_all(self, df):
-        return self._tshark_all(df)
+    def sessionhost_tshark_all(self, df, srcmacid):
+        return self._tshark_all(df, srcmacid)
