@@ -44,7 +44,7 @@ WS_FIELDS = {
     'eth.src': (_netaddr_packed, None),
     'eth.dst': (_netaddr_packed, None),
     'eth.type': (_hex_str, 16),
-    'frame.len': (_safe_int, 16),
+    'frame.len': (_safe_int, 32),
     'frame.time_epoch': (float, None),
     'frame.time_delta_displayed': (float, None),
     'frame.protocols': (_eth_protos, None),
