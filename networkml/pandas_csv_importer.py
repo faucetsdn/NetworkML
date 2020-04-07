@@ -81,7 +81,10 @@ def recast_df(df):
     # https://github.com/pandas-dev/pandas/issues/2631
     # For now convert to nullable int after import.
     for col, typestr in _WS_FIELDS_NULLABLE_INT.items():
-        df[col] = df[col].astype(typestr)
+        try:
+            df[col] = df[col].astype(typestr)
+        except TypeError:
+            raise TypeError('cannot cast %s to %s: %u' % (col, typestr, df[col].max()))
     return df
 
 
