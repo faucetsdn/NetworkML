@@ -152,7 +152,7 @@ class HostBase:
 
     def _tshark_both_private_ip(self, mac_df):
         try:
-            both_private_ip = int(min(self._numericintset(mac_df['_both_private_ip'])) == 1)
+            both_private_ip = int(mac_df['_both_private_ip'].max() == 1)
         except KeyError:
             both_private_ip = 0
         return {
@@ -161,7 +161,7 @@ class HostBase:
 
     def _tshark_ipv4_multicast(self, mac_df):
         try:
-            ipv4_multicast = int(max(self._numericintset(mac_df['_ipv4_multicast'])) == 1)
+            ipv4_multicast = int(mac_df['_ipv4_multicast'].max() == 1)
         except KeyError:
             ipv4_multicast = 0
         return {
@@ -173,7 +173,7 @@ class HostBase:
 
     def _tshark_vlan_id(self, mac_df):
         return {
-            'tshark_tagged_vlan': int(bool(self._numericintset(mac_df['vlan.id'])))
+            'tshark_tagged_vlan': int(mac_df['vlan.id'].max() > 0)
         }
 
     def _tshark_unique_ips(self, mac, mac_df):
