@@ -23,7 +23,9 @@ jobs:
         find . -name test-requirements.txt -type f -exec pip3 install -r {} \; && \
         pip3 install . && \
         export PATH=/home/runner/.local/bin:$PATH && \
+        pip3 install jupyter nest_asyncio && jupyter nbconvert --ExecutePreprocessor.timeout=300 --to notebook --execute notebooks/networkml_exploration.ipynb && \
         pytype . && pytest -l -s -n 2 -v --cov=tests/ --cov=networkml/ --cov-report term-missing -c .coveragerc && coverage report && coverage xml
+
     - name: Test make
       run: |
         export POSEIDON_PUBLIC_SESSIONS=1 && \
