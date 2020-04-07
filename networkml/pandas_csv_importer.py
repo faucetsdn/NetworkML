@@ -76,6 +76,15 @@ _WS_FIELDS_NULLABLE_INT = {field: 'UInt%s' % field_info[1] for field, field_info
 _REQUIRED_WS_FIELDS = {'eth.src', 'eth.dst', 'frame.len', 'frame.time_epoch', 'frame.time_delta_displayed'}
 
 
+def recast_df(df):
+    # TODO: when pandas allows read_csv to infer nullable ints, we can use less memory on import.
+    # https://github.com/pandas-dev/pandas/issues/2631
+    # For now convert to nullable int after import.
+    for col, typestr in _WS_FIELDS_NULLABLE_INT.items():
+        df[col] = df[col].astype(typestr)
+    return df
+
+
 def import_csv(in_file):
     # We need converters, so we can't use dtypes parameter, and that results in an un-suppressable warning.
     csv_fields = set(pd.read_csv(in_file, index_col=0, nrows=0).columns.tolist())
@@ -86,9 +95,4 @@ def import_csv(in_file):
         df[col] = None
     for col in _REQUIRED_WS_FIELDS:
         assert df[col].count() > 0, 'required col %s is all null (not a PCAP CSV?)' % col
-    # TODO: when pandas allows read_csv to infer nullable ints, we can use less memory on import.
-    # https://github.com/pandas-dev/pandas/issues/2631
-    # For now convert to nullable int after import.
-    for col, typestr in _WS_FIELDS_NULLABLE_INT.items():
-        df[col] = df[col].astype(typestr)
-    return df
+    return recast_df(df)

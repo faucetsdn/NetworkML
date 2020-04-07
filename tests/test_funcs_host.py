@@ -2,7 +2,7 @@ import ipaddress
 import pandas as pd
 import netaddr
 from networkml.featurizers.funcs.host import HostBase, Host, SessionHost
-from networkml.pandas_csv_importer import WS_FIELDS
+from networkml.pandas_csv_importer import WS_FIELDS, recast_df
 
 
 def nan_row_dict(defaults):
@@ -48,7 +48,7 @@ def test_lowest_ip_proto_port():
         'tcp.srcport': 99,
         'tcp.dstport': 100,
     })
-    mac_df = pd.DataFrame([test_data])
+    mac_df = recast_df(pd.DataFrame([test_data]))
     assert instance._lowest_ip_proto_port(mac_df, 'tcp') == {99}
 
 
@@ -59,7 +59,7 @@ def test_tshark_ports():
             ({'tcp.srcport': 1025, 'tcp.dstport': 1025},  {'tshark_tcp_nonpriv_port_other_in'})):
         test_data = {field: None for field in WS_FIELDS}
         test_data.update(test_ports)
-        mac_df = pd.DataFrame([test_data])
+        mac_df = recast_df(pd.DataFrame([test_data]))
         ports = instance._tshark_ports('in', mac_df)
         assert test_output == {col for col, val in ports.items() if val == 1}
 
@@ -68,7 +68,7 @@ def test_ip_versions():
     instance = HostBase()
     test_data = {field: None for field in WS_FIELDS}
     test_data.update({'ip.version': 4})
-    mac_df = pd.DataFrame([test_data])
+    mac_df = recast_df(pd.DataFrame([test_data]))
     assert instance._tshark_ipversions(mac_df) == {'tshark_ipv4': 1, 'tshark_ipv6': 0}
 
 
@@ -80,17 +80,17 @@ def test_non_ip():
             (0x800, {'tshark_ipx': 0, 'tshark_nonip': 0})):
         test_data = {field: None for field in WS_FIELDS}
         test_data.update({'eth.type': eth_type})
-        mac_df = pd.DataFrame([test_data])
+        mac_df = recast_df(pd.DataFrame([test_data]))
         assert instance._tshark_non_ip(mac_df) == test_output
 
 
 def test_vlan_id():
     instance = HostBase()
     test_data = {field: None for field in WS_FIELDS}
-    mac_df = pd.DataFrame([test_data])
+    mac_df = recast_df(pd.DataFrame([test_data]))
     assert instance._tshark_vlan_id(mac_df) == {'tshark_tagged_vlan': 0}
     test_data.update({'vlan.id': 99})
-    mac_df = pd.DataFrame([test_data])
+    mac_df = recast_df(pd.DataFrame([test_data]))
     assert instance._tshark_vlan_id(mac_df) == {'tshark_tagged_vlan': 1}
 
 
@@ -106,7 +106,7 @@ def test_smoke_calc_cols():
         '_srcip': '192.168.0.1',
         '_dstip': '192.168.0.2',
     })
-    mac_df = pd.DataFrame([test_data])
+    mac_df = recast_df(pd.DataFrame([test_data]))
     assert instance._calc_cols(eth_src_int, mac_df)
 
 
