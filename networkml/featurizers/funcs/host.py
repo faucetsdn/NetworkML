@@ -14,8 +14,8 @@ ETH_IP_TYPES = frozenset((ETH_TYPE_ARP, ETH_TYPE_IP, ETH_TYPE_IPV6))
 WK_IP_PROTOS = ('tcp', 'udp', 'icmp', 'arp', 'icmpv6', 'gre', 'esp', 'ah')
 WK_IP_PROTOS_INDEX = {WK_IP_PROTOS.index(i): i for i in WK_IP_PROTOS}
 TCP_UDP_PROTOS = {
-  6: 'tcp',
-  17: 'udp',
+    6: 'tcp',
+    17: 'udp',
 }
 
 
@@ -113,16 +113,18 @@ class HostBase:
         src = mac_df['%s.srcport' % ip_proto]
         dst = mac_df['%s.dstport' % ip_proto]
         if src.count() and dst.count():
-            return self._numericintset(np.minimum(  # pylint: disable=no-member
-                mac_df['%s.srcport' % ip_proto], mac_df['%s.dstport' % ip_proto]).unique())
+            return self._numericintset(np.minimum(src, dst).unique())   # pylint: disable=no-member
         return frozenset()
 
     def _tshark_ports(self, suffix, mac_df):
         mac_row_ports = {}
         def port_priv(port):
             return port < 1024
-        for ip_proto in ('udp', 'tcp'):
-            lowest_ports = self._lowest_ip_proto_port(mac_df, ip_proto)
+        for ip_proto_num, proto_df in mac_df.groupby('ip.proto'):
+            ip_proto = TCP_UDP_PROTOS.get(ip_proto_num)
+            if ip_proto is None:
+                continue
+            lowest_ports = self._lowest_ip_proto_port(proto_df, ip_proto)
             for field_name, ports, wk_ports in (
                     ('priv', {port for port in lowest_ports if port_priv(port)}, self.WK_PRIV_TCPUDP_PORTS),
                     ('nonpriv', {port for port in lowest_ports if not port_priv(port)}, self.WK_NONPRIV_TCPUDP_PORTS),
@@ -131,6 +133,40 @@ class HostBase:
                 port_flags.update({'other': int(bool(lowest_ports) and not ports.issubset(wk_ports))})
                 mac_row_ports.update({
                     'tshark_%s_%s_port_%s_%s' % (ip_proto, field_name, port, suffix): present for port, present in port_flags.items()})
+        return mac_row_ports
+
+    def _tshark_ratio_ports(self, mac_df):
+        mac_row_ports = {}
+        def calc_ratio(src_count, dst_count):
+            packet_ratio = 0
+            if src_count is not None and dst_count is not None:
+                if dst_count > 0:
+                    packet_ratio = src_count / dst_count
+                elif src_count > 0:
+                    packet_ratio = 1
+            return packet_ratio
+
+        for ip_proto_num, proto_df in mac_df.groupby('ip.proto'):
+            ip_proto = TCP_UDP_PROTOS.get(ip_proto_num)
+            if ip_proto is None:
+                continue
+            src = proto_df['%s.srcport' % ip_proto]
+            dst = proto_df['%s.dstport' % ip_proto]
+            for field_name, wk_ports, port_src, port_dst in (
+                    ('priv', self.WK_PRIV_TCPUDP_PORTS, src[src<=1023], dst[dst<=1023]),
+                    ('nonpriv', self.WK_NONPRIV_TCPUDP_PORTS, src[src>1023], dst[dst>1023]),
+                ):
+                src_counts = port_src[src.isin(wk_ports)].value_counts()
+                dst_counts = port_dst[dst.isin(wk_ports)].value_counts()
+                for port in wk_ports:
+                    src_count = src_counts.get(port, None)
+                    dst_count = dst_counts.get(port, None)
+                    mac_row_ports.update({
+                        'tshark_%s_%s_packet_ratio_io_port_%s' % (ip_proto, field_name, port): calc_ratio(src_count, dst_count)})
+                src_count = port_src[~port_src.isin(wk_ports)].value_counts().sum()
+                dst_count = port_dst[~port_dst.isin(wk_ports)].value_counts().sum()
+                mac_row_ports.update({
+                    'tshark_%s_%s_packet_ratio_io_port_%s' % (ip_proto, field_name, 'other'): calc_ratio(src_count, dst_count)})
         return mac_row_ports
 
     def _tshark_ipversions(self, mac_df):
@@ -178,8 +214,8 @@ class HostBase:
 
     def _tshark_unique_ips(self, mac, mac_df):
         return {
-            'tshark_unique_srcips': mac_df[mac_df['eth.src']==mac]['_srcip'].nunique(),
-            'tshark_unique_dstips': mac_df[mac_df['eth.src']==mac]['_dstip'].nunique(),
+            'tshark_unique_srcips': mac_df[mac_df['eth.src'] == mac]['_srcip'].nunique(),
+            'tshark_unique_dstips': mac_df[mac_df['eth.src'] == mac]['_dstip'].nunique(),
         }
 
     def _calc_cols(self, mac, mac_df):
@@ -212,6 +248,7 @@ class HostBase:
                 self._tshark_ipv4_multicast,
                 self._tshark_wk_ip_protocol,
                 self._tshark_vlan_id,
+                self._tshark_ratio_ports,
             ):
             mac_row.update(func(mac_df))
         mac_row.update(self._tshark_unique_ips(mac, mac_df))
