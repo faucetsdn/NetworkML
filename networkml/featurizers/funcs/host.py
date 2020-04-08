@@ -152,19 +152,19 @@ class HostBase:
                 continue
             src = proto_df['%s.srcport' % ip_proto]
             dst = proto_df['%s.dstport' % ip_proto]
-            for field_name, wk_ports in (
-                    ('priv', self.WK_PRIV_TCPUDP_PORTS),
-                    ('nonpriv', self.WK_NONPRIV_TCPUDP_PORTS),
+            for field_name, wk_ports, port_src, port_dst in (
+                    ('priv', self.WK_PRIV_TCPUDP_PORTS, src[src<=1023], dst[dst<=1023]),
+                    ('nonpriv', self.WK_NONPRIV_TCPUDP_PORTS, src[src>1023], dst[dst>1023]),
                 ):
-                src_counts = src[src.isin(wk_ports)].value_counts()
-                dst_counts = dst[dst.isin(wk_ports)].value_counts()
+                src_counts = port_src[src.isin(wk_ports)].value_counts()
+                dst_counts = port_dst[dst.isin(wk_ports)].value_counts()
                 for port in wk_ports:
                     src_count = src_counts.get(port, None)
                     dst_count = dst_counts.get(port, None)
                     mac_row_ports.update({
                         'tshark_%s_%s_packet_ratio_io_port_%s' % (ip_proto, field_name, port): calc_ratio(src_count, dst_count)})
-                src_count = src[~src.isin(wk_ports)].value_counts().sum()
-                dst_count = dst[~dst.isin(wk_ports)].value_counts().sum()
+                src_count = port_src[~port_src.isin(wk_ports)].value_counts().sum()
+                dst_count = port_dst[~port_dst.isin(wk_ports)].value_counts().sum()
                 mac_row_ports.update({
                     'tshark_%s_%s_packet_ratio_io_port_%s' % (ip_proto, field_name, 'other'): calc_ratio(src_count, dst_count)})
         return mac_row_ports

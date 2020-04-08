@@ -55,8 +55,9 @@ def test_lowest_ip_proto_port():
 def test_tshark_ports():
     instance = HostBase()
     for test_rows, test_output, ratio_output in (
-            ([{'tcp.srcport': 22, 'tcp.dstport': 1025, 'ip.proto': 6}, {'tcp.srcport': 1025, 'tcp.dstport': 22, 'ip.proto': 6}, {'tcp.srcport': 22, 'tcp.dstport': 1025, 'ip.proto': 6}], {'tshark_tcp_priv_port_22_in'}, {'tshark_tcp_priv_packet_ratio_io_port_22': 2.0, 'tshark_tcp_nonpriv_packet_ratio_io_port_other': 1.0, 'tshark_tcp_priv_packet_ratio_io_port_other': 0.5}),
-            ([{'tcp.srcport': 1025, 'tcp.dstport': 1025, 'ip.proto': 6}], {'tshark_tcp_nonpriv_port_other_in'}, {'tshark_tcp_nonpriv_packet_ratio_io_port_other': 1.0, 'tshark_tcp_priv_packet_ratio_io_port_other': 1.0})):
+            ([{'tcp.srcport': 22, 'tcp.dstport': 1025, 'ip.proto': 6}, {'tcp.srcport': 1025, 'tcp.dstport': 22, 'ip.proto': 6}, {'tcp.srcport': 22, 'tcp.dstport': 1025, 'ip.proto': 6}], {'tshark_tcp_priv_port_22_in'}, {'tshark_tcp_priv_packet_ratio_io_port_22': 2.0, 'tshark_tcp_nonpriv_packet_ratio_io_port_other': 0.5}),
+            ([{'tcp.srcport': 1025, 'tcp.dstport': 1025, 'ip.proto': 6}], {'tshark_tcp_nonpriv_port_other_in'}, {'tshark_tcp_nonpriv_packet_ratio_io_port_other': 1.0})):
+
         test_data = []
         for test_ports in test_rows:
             row = {field: None for field in WS_FIELDS}
