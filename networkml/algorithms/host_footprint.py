@@ -132,7 +132,7 @@ class HostFootprint():
         X = self.string_feature_check(X)
 
         # Normalize X features before training
-        scaler = preprocessing.MinMaxScaler()
+        scaler = preprocessing.StandardScaler()
         scaler_fitted = scaler.fit(X)
         X = scaler_fitted.transform(X)
 
