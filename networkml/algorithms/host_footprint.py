@@ -86,7 +86,7 @@ class HostFootprint():
                             help='choose which operation task to perform, \
                             train or predict (default=predict)')
         parser.add_argument('--trained_model', '-t',
-                            default=os.path.join(netml_path[0], 
+                            default=os.path.join(netml_path[0],
                                 'trained_models/host_footprint.json'),
                             help='specify a path to load or save trained model')
         parser.add_argument('--verbose', '-v',
@@ -101,7 +101,7 @@ class HostFootprint():
         """
         This function takes a .csv file of host footprint features--i.e. each
         row is a feature vector for a given host and each column is a feature
-        --and trains a model to do business role classification. This function
+        --and trains a model to do functional role classification. This function
         saves the trained model. Because the best model is still yet to be
         determined, this method uses only a simple neural network. A future
         version of this function will use a superior model once our research
