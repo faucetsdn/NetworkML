@@ -6,13 +6,13 @@ import json
 import logging
 import os
 
-import networkml
 import numpy as np
 import pandas as pd
 import sklearn_json as skljson
 from sklearn import preprocessing
 from sklearn.neural_network import MLPClassifier
 
+import networkml
 
 class HostFootprint():
     """
