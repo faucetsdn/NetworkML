@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import sklearn_json as skljson
 from sklearn import preprocessing
+from sklearn.model_selection import GridSearchCV
 from sklearn.neural_network import MLPClassifier
 
 import networkml
@@ -146,12 +147,23 @@ class HostFootprint():
         # Calculate number of categories to predict
         num_categories = len(le.classes_)
 
-        # Instantiate and train model
-        clf = MLPClassifier(solver='sgd',
-                            hidden_layer_sizes=(64, 32, num_categories),
-                            random_state=1999)
+        # Instantiate neural network model
+        # MLP = multi-layer perceptron
+        model = MLPClassifier()
+
+        # Perform grid-search with hyperparameter optimization
+        # to find the best model
+        parameters = {'hidden_layer_sizes':[(64,32), (32,16),
+                                            (64, 32, 32),
+                                            (64, 32, 32, 16)]}
+        clf = GridSearchCV(model, parameters,
+                           cv=5, n_jobs=-1,
+                           scoring='f1_weighted')
+
         self.logger.info(f'Beginning model training')
-        self.model = clf.fit(X, y)
+        # Find best fitting model from the hyper-parameter
+        # optimization process
+        self.model = clf.fit(X, y).best_estimator_
 
         # Save model to JSON
         skljson.to_json(self.model, self.model_path)
