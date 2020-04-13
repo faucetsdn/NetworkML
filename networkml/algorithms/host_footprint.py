@@ -78,14 +78,16 @@ class HostFootprint():
         parser = argparse.ArgumentParser()
         parser.add_argument('path', help='path to a single csv file')
         parser.add_argument('--label_encoder', '-l',
-                            default=os.path.join(netml_path[0], 'trained_models/host_footprint_le.json'),
+                            default=os.path.join(netml_path[0],
+                                'trained_models/host_footprint_le.json'),
                             help='specify a path to load or save label encoder')
         parser.add_argument('--operation', '-O', choices=['train', 'predict'],
                             default='predict',
                             help='choose which operation task to perform, \
                             train or predict (default=predict)')
         parser.add_argument('--trained_model', '-t',
-                            default=os.path.join(netml_path[0], 'trained_models/host_footprint.json'),
+                            default=os.path.join(netml_path[0], 
+                                'trained_models/host_footprint.json'),
                             help='specify a path to load or save trained model')
         parser.add_argument('--verbose', '-v',
                             choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
