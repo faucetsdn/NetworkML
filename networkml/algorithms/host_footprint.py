@@ -98,7 +98,7 @@ class HostFootprint():
         return parsed_args
 
 
-    def train(self):
+    def train(self, k_folds=5):
         """
         This function takes a .csv file of host footprint features--i.e. each
         row is a feature vector for a given host and each column is a feature
@@ -157,7 +157,7 @@ class HostFootprint():
                                             (64, 32, 32),
                                             (64, 32, 32, 16)]}
         clf = GridSearchCV(model, parameters,
-                           cv=5, n_jobs=-1,
+                           cv=k_folds, n_jobs=-1,
                            scoring='f1_weighted')
 
         self.logger.info(f'Beginning model training')
