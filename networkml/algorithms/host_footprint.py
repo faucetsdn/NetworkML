@@ -78,6 +78,9 @@ class HostFootprint():
         netml_path = list(networkml.__path__)
         parser = argparse.ArgumentParser()
         parser.add_argument('path', help='path to a single csv file')
+        parser.add_argument('--kfolds', '-k',
+                            default=5,
+                            help='specify number of folds for k-fold cross validation')
         parser.add_argument('--label_encoder', '-l',
                             default=os.path.join(netml_path[0],
                                 'trained_models/host_footprint_le.json'),
@@ -98,7 +101,7 @@ class HostFootprint():
         return parsed_args
 
 
-    def train(self, k_folds=5):
+    def train(self):
         """
         This function takes a .csv file of host footprint features--i.e. each
         row is a feature vector for a given host and each column is a feature
@@ -157,7 +160,7 @@ class HostFootprint():
                                             (64, 32, 32),
                                             (64, 32, 32, 16)]}
         clf = GridSearchCV(model, parameters,
-                           cv=k_folds, n_jobs=-1,
+                           cv=self.kfolds, n_jobs=-1,
                            scoring='f1_weighted')
 
         self.logger.info(f'Beginning model training')
@@ -291,6 +294,7 @@ class HostFootprint():
         self.path = parsed_args.path
         self.model_path = parsed_args.trained_model
         self.le_path = parsed_args.label_encoder
+        self.kfolds = parsed_args.kfolds
         operation = parsed_args.operation
         log_level = parsed_args.verbose
 
