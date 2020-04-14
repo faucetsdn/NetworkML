@@ -294,7 +294,7 @@ class HostFootprint():
         self.path = parsed_args.path
         self.model_path = parsed_args.trained_model
         self.le_path = parsed_args.label_encoder
-        self.kfolds = parsed_args.kfolds
+        self.kfolds = int(parsed_args.kfolds)
         operation = parsed_args.operation
         log_level = parsed_args.verbose
 
