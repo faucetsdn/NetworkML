@@ -14,7 +14,8 @@ def test_train():
         shutil.copytree('./tests/test_data', testdata)
         input_file = os.path.join(testdata, 'combined.csv')
         operation = 'train'
-        sys.argv = ['host_footprint.py', '--operation', operation, input_file]
+        k_folds = '2'
+        sys.argv = ['host_footprint.py', '--operation', operation, '--kfolds', k_folds, input_file]
         instance = HostFootprint()
         instance.main()
 
@@ -26,7 +27,8 @@ def test_predict():
         shutil.copytree('./tests/test_data', testdata)
         input_file = os.path.join(testdata, 'combined.csv')
         operation = 'train'
-        sys.argv = ['host_footprint.py', '--operation', operation, input_file]
+        k_folds = '2'
+        sys.argv = ['host_footprint.py', '--operation', operation, '--kfolds', k_folds, input_file]
         instance = HostFootprint()
         instance.main()
         operation = 'predict'
