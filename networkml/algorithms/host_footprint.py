@@ -194,7 +194,7 @@ class HostFootprint():
         y = df.filename
 
         # Normalize X features before predicting
-        scaler = preprocessing.MinMaxScaler()
+        scaler = preprocessing.StandardScaler()
         scaler_fitted = scaler.fit(X)
         X = scaler_fitted.transform(X)
 
