@@ -6,13 +6,14 @@ import json
 import logging
 import os
 
-import networkml
 import numpy as np
 import pandas as pd
 import sklearn_json as skljson
 from sklearn import preprocessing
+from sklearn.model_selection import GridSearchCV
 from sklearn.neural_network import MLPClassifier
 
+import networkml
 
 class HostFootprint():
     """
@@ -77,15 +78,20 @@ class HostFootprint():
         netml_path = list(networkml.__path__)
         parser = argparse.ArgumentParser()
         parser.add_argument('path', help='path to a single csv file')
+        parser.add_argument('--kfolds', '-k',
+                            default=5,
+                            help='specify number of folds for k-fold cross validation')
         parser.add_argument('--label_encoder', '-l',
-                            default=os.path.join(netml_path[0], 'trained_models/host_footprint_le.json'),
+                            default=os.path.join(netml_path[0],
+                                'trained_models/host_footprint_le.json'),
                             help='specify a path to load or save label encoder')
         parser.add_argument('--operation', '-O', choices=['train', 'predict'],
                             default='predict',
                             help='choose which operation task to perform, \
                             train or predict (default=predict)')
         parser.add_argument('--trained_model', '-t',
-                            default=os.path.join(netml_path[0], 'trained_models/host_footprint.json'),
+                            default=os.path.join(netml_path[0],
+                                'trained_models/host_footprint.json'),
                             help='specify a path to load or save trained model')
         parser.add_argument('--verbose', '-v',
                             choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
@@ -99,7 +105,7 @@ class HostFootprint():
         """
         This function takes a .csv file of host footprint features--i.e. each
         row is a feature vector for a given host and each column is a feature
-        --and trains a model to do business role classification. This function
+        --and trains a model to do functional role classification. This function
         saves the trained model. Because the best model is still yet to be
         determined, this method uses only a simple neural network. A future
         version of this function will use a superior model once our research
@@ -130,7 +136,7 @@ class HostFootprint():
         X = self.string_feature_check(X)
 
         # Normalize X features before training
-        scaler = preprocessing.MinMaxScaler()
+        scaler = preprocessing.StandardScaler()
         scaler_fitted = scaler.fit(X)
         X = scaler_fitted.transform(X)
 
@@ -144,12 +150,23 @@ class HostFootprint():
         # Calculate number of categories to predict
         num_categories = len(le.classes_)
 
-        # Instantiate and train model
-        clf = MLPClassifier(solver='sgd',
-                            hidden_layer_sizes=(64, 32, num_categories),
-                            random_state=1999)
+        # Instantiate neural network model
+        # MLP = multi-layer perceptron
+        model = MLPClassifier()
+
+        # Perform grid-search with hyperparameter optimization
+        # to find the best model
+        parameters = {'hidden_layer_sizes':[(64,32), (32,16),
+                                            (64, 32, 32),
+                                            (64, 32, 32, 16)]}
+        clf = GridSearchCV(model, parameters,
+                           cv=self.kfolds, n_jobs=-1,
+                           scoring='f1_weighted')
+
         self.logger.info(f'Beginning model training')
-        self.model = clf.fit(X, y)
+        # Find best fitting model from the hyper-parameter
+        # optimization process
+        self.model = clf.fit(X, y).best_estimator_
 
         # Save model to JSON
         skljson.to_json(self.model, self.model_path)
@@ -277,6 +294,7 @@ class HostFootprint():
         self.path = parsed_args.path
         self.model_path = parsed_args.trained_model
         self.le_path = parsed_args.label_encoder
+        self.kfolds = int(parsed_args.kfolds)
         operation = parsed_args.operation
         log_level = parsed_args.verbose
 
