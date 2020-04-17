@@ -177,7 +177,7 @@ class HostFootprint():
         roles.
 
         OUTPUTS:
-        --all_prediction: top three roles for each host and the associated
+        --all_prediction: top n roles for each host and the associated
         probability of each role -- a dictionary
         """
 
@@ -205,7 +205,7 @@ class HostFootprint():
         self.model = skljson.from_json(self.model_path)
 
         # Convert coeficients to numpy arrays to enable JSON deserialization
-        # This is a hack to compensate for a potential bug in sklearn_json
+        # This is a hack to compensate for a bug in sklearn_json
         for i, x in enumerate(self.model.coefs_):
             self.model.coefs_[i] = np.array(x)
 
