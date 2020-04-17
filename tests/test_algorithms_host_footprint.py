@@ -36,6 +36,33 @@ def test_predict():
         instance = HostFootprint()
         instance.main()
 
+def test_predict_num_roles():
+    """
+    Test predict function of HostFootprint class with
+    varying number of distinct roles present
+    """
+    with tempfile.TemporaryDirectory() as tmpdir:
+        testdata = os.path.join(tmpdir, 'test_data')
+        shutil.copytree('./tests/test_data', testdata)
+        for file in ['combined_three_roles.csv', 'combined_two_roles.csv']:
+            input_file = os.path.join(testdata, file)
+            operation = 'train'
+            k_folds = '2'
+            sys.argv = ['host_footprint.py', '--operation', operation, '--kfolds', k_folds, input_file]
+            instance = HostFootprint()
+            instance.main()
+            operation = 'predict'
+            sys.argv = ['host_footprint.py', '--operation', operation, input_file]
+            instance = HostFootprint()
+            instance.main()
+
+            predictions = instance.predict()
+            assert isinstance(predictions, dict)
+            # Check if number of predictions is correct
+            if file == 'combined_three_roles.csv':
+                assert len(predictions) == 6
+            else:
+                assert len(predictions) == 4
 
 def test_train_bad_data_too_few_columns():
     """
