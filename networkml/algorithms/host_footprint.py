@@ -145,9 +145,6 @@ class HostFootprint():
         # Save label encoder
         HostFootprint.serialize_label_encoder(le, self.le_path)
 
-        # Calculate number of categories to predict
-        num_categories = len(le.classes_)
-
         # Instantiate neural network model
         # MLP = multi-layer perceptron
         model = MLPClassifier()
