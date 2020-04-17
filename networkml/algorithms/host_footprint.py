@@ -191,7 +191,7 @@ class HostFootprint():
         X = df.drop("filename", axis=1)
 
         # Get filenames to match to predictions
-        y = df.filename
+        filename = df.filename
 
         # Normalize X features before predicting
         scaler = preprocessing.StandardScaler()
@@ -214,16 +214,54 @@ class HostFootprint():
         # Make model predicton - Will return a vector of values
         predictions_rows = self.model.predict_proba(X)
 
-        # Output JSON of top three roles and probabilities for each file
+        # Dict to store JSON of top n roles and probabilities per device
+        all_predictions = self.get_individual_predictions(predictions_rows, le, filename)
+
+        return all_predictions
+
+
+    @staticmethod
+    def get_individual_predictions(predictions_rows, label_encoder, filename):
+        """ Return role predictions for given device
+
+        INPUTS:
+        predictions_rows: each device is represented as a row
+        label_encoder: a mapping of device role name to numerical category
+        filename: the filename of the pcap for which a prediction is made
+
+        OUTPUTS:
+        all_predictions: top n roles for each host and the associated
+        probability of each role -- a dictionary
+        """
+
+        # Dict to store JSON of top n roles and probabilities per device
         all_predictions = {}
+
+        # Loop thru different devices on which to make prediction
         for counter, predictions in enumerate(predictions_rows):
 
-            # These operations do NOT create a sorted list
-            # Note from the past: To change the number of roles for which you
-            # want a prediction, change the number in the argpartition code
-            ind = np.argpartition(predictions, 3)[-3:] # Index of top 3 roles
-            labels = le.inverse_transform(ind) # top three role names
-            probs = predictions[ind] # probability of top three roles
+            # total number of functional roles
+            num_roles = len(predictions)
+
+            # programmer's note: the code block below ensures that the top
+            # three roles and their probabilities are returned when there
+            # are three or more roles present in the model. The code
+            # returns two roles if only two roles are present
+
+            # top_n_roles: desired number of roles for results
+            # note: the numbers below are not intuitive but are consistent
+            # with the logic of argpartition
+            top_n_roles = min(2, num_roles-1)
+            # Get indices of top n roles
+            # note: argpartion does not sort top roles - must be done later
+            ind = np.argpartition(predictions,
+                                  top_n_roles)[-(top_n_roles+1):]
+
+            # top three role names
+            labels = label_encoder.inverse_transform(ind)
+
+            # probability of top three roles
+            probs = predictions[ind]
 
             # Put labels and probabilities into list
             role_list = [(k, v) for k, v in zip(labels, probs)]
@@ -237,7 +275,7 @@ class HostFootprint():
 
             # Create dictionary with filename as key and a json of
             # role predictions for that file
-            all_predictions[y[counter]] = role_predictions
+            all_predictions[filename[counter]] = role_predictions
 
         return all_predictions
 
