@@ -1,5 +1,6 @@
 import functools
 import ipaddress
+
 import numpy as np
 
 
@@ -25,7 +26,8 @@ class Features():
     @staticmethod
     def get_columns(fields, rows):
         # Terse but efficient.
-        new_rows = [{field: row[field] for field in fields if row.get(field, None)} for row in rows]
+        new_rows = [{field: row[field]
+                     for field in fields if row.get(field, None)} for row in rows]
         return new_rows
 
     @staticmethod

@@ -1,7 +1,8 @@
 import json
-import re
 import os
+import re
 import socket
+
 import pika
 
 
@@ -43,19 +44,20 @@ class ResultsOutput:
 
     @staticmethod
     def parse_pcap_name(base_pcap):
-        ## The parsing operation below assumes a specific file naming
-        ## convention trace_DeviceName-deviceID-time-duration-flags.pcap
-        ## Explanation: All files coming from Poseidon have trace_ at their
-        ## beginning. The device name and deviceID colums are self explanatory.
-        ## Time refers to the day of the week and time of day. Duration refers
-        ## to the length of the network traffic capture. The flags aspect
-        ## refers to an unknown characteristic.
+        # The parsing operation below assumes a specific file naming
+        # convention trace_DeviceName-deviceID-time-duration-flags.pcap
+        # Explanation: All files coming from Poseidon have trace_ at their
+        # beginning. The device name and deviceID colums are self explanatory.
+        # Time refers to the day of the week and time of day. Duration refers
+        # to the length of the network traffic capture. The flags aspect
+        # refers to an unknown characteristic.
         # TODO: tolerate tshark labels in the trace name, but do not parse them for now.
         pcap_key = None
         pcap_labels = None
         if base_pcap.startswith('trace_'):
             for pcap_re, key_pos, label_pos in (
-                    (re.compile(r'^trace_([\da-f]+)_([0-9\_\-]+)-(client|server)-(.+).pcap$'), 1, 4),
+                    (re.compile(
+                        r'^trace_([\da-f]+)_([0-9\_\-]+)-(client|server)-(.+).pcap$'), 1, 4),
                     (re.compile(r'^trace_([\da-f]+)_([0-9\_\-]+).pcap$'), 1, None)):
                 pcap_match = pcap_re.match(base_pcap)
                 if pcap_match:
@@ -89,7 +91,9 @@ class ResultsOutput:
             self.logger.error(f'Failed to send Rabbit message because: {err}')
 
     def output_invalid(self, uid, file_path):
-        self.output_msg(uid, file_path, self.results_template(file_path, False, {}))
+        self.output_msg(
+            uid, file_path, self.results_template(file_path, False, {}))
 
     def output_valid(self, uid, file_path, results):
-        self.output_msg(uid, file_path, self.results_template(file_path, True, results))
+        self.output_msg(uid, file_path, self.results_template(
+            file_path, True, results))

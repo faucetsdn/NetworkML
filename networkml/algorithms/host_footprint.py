@@ -15,6 +15,7 @@ from sklearn.neural_network import MLPClassifier
 
 import networkml
 
+
 class HostFootprint():
     """
     Perform machine learning operations on a host's network traffic
@@ -26,11 +27,9 @@ class HostFootprint():
     the origin or source.
     """
 
-
     def __init__(self, raw_args=None):
         self.logger = logging.getLogger(__name__)
         self.raw_args = raw_args
-
 
     @staticmethod
     def serialize_label_encoder(le, path):
@@ -50,7 +49,6 @@ class HostFootprint():
         with open(path, 'w') as model_json:
             json.dump(serialized_le, model_json)
 
-
     @staticmethod
     def deserialize_label_encoder(path):
         """Deserialize JSON object storing label encoder.
@@ -67,7 +65,6 @@ class HostFootprint():
         le = preprocessing.LabelEncoder()
         le.classes_ = np.array(model_dict['classes'])
         return le
-
 
     @staticmethod
     def parse_args(raw_args=None):
@@ -100,7 +97,6 @@ class HostFootprint():
         parsed_args = parser.parse_args(raw_args)
         return parsed_args
 
-
     def train(self):
         """
         This function takes a .csv file of host footprint features--i.e. each
@@ -118,7 +114,7 @@ class HostFootprint():
 
         # Split dataframe into X (the input features or predictors)
         # and y (the target or outcome or dependent variable)
-        X = df.drop("filename", axis=1)
+        X = df.drop('filename', axis=1)
         y = df.filename
 
         # Extract only role name from strings in y feature
@@ -126,8 +122,8 @@ class HostFootprint():
         # but should be only the role name
 
         # Split full filename on "-" and create a list
-        y = y.str.split("-")
-        y = y.str[0] # Extract first element of list, the role name
+        y = y.str.split('-')
+        y = y.str[0]  # Extract first element of list, the role name
 
         # Replace string features with dummy (0/1) features
         # This is "one hot encoding"
@@ -151,9 +147,9 @@ class HostFootprint():
 
         # Perform grid-search with hyperparameter optimization
         # to find the best model
-        parameters = {'hidden_layer_sizes':[(64, 32), (32, 16),
-                                            (64, 32, 32),
-                                            (64, 32, 32, 16)]}
+        parameters = {'hidden_layer_sizes': [(64, 32), (32, 16),
+                                             (64, 32, 32),
+                                             (64, 32, 32, 16)]}
         clf = GridSearchCV(model, parameters,
                            cv=self.kfolds, n_jobs=-1,
                            scoring='f1_weighted')
@@ -165,7 +161,6 @@ class HostFootprint():
 
         # Save model to JSON
         skljson.to_json(self.model, self.model_path)
-
 
     def predict(self):
         """
@@ -186,7 +181,7 @@ class HostFootprint():
         # and y (the target or outcome or dependent variable)
         # This drop function should work even if there is no column
         # named filename
-        X = df.drop("filename", axis=1)
+        X = df.drop('filename', axis=1)
 
         # Get filenames to match to predictions
         filename = df.filename
@@ -276,7 +271,7 @@ class HostFootprint():
             all_predictions[filename[counter]] = predictions_json
 
         return all_predictions
-
+ 
 
     @staticmethod
     def sorted_roles_to_json(role_list_sorted, threshold=.5):
@@ -340,7 +335,7 @@ class HostFootprint():
 
             # Check if the feature's data type is string
             # Object is the datatype pandas uses for storing strings
-            if X[col].dtype == "object":
+            if X[col].dtype == 'object':
 
                 # log warning if a string column is found
                 self.logger.info(f'String object found in column {col}')
@@ -356,7 +351,6 @@ class HostFootprint():
                 X = X.drop(col, axis=1)
 
         return X
-
 
     def main(self):
         """
@@ -389,6 +383,6 @@ class HostFootprint():
             return role_prediction
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     host_footprint = HostFootprint()
     host_footprint.main()

@@ -3,9 +3,11 @@ import inspect
 import os
 import sys
 import time
+
 from networkml.featurizers.features import Features
 
 # TODO move print statements to logging
+
 
 class Featurizer():
 
@@ -19,25 +21,25 @@ class Featurizer():
         """
         # make sure path exists
         if os.path.isdir(path) is False:
-            print("Error: path {} does not exist".format(path))
+            print('Error: path {} does not exist'.format(path))
             return classes
 
-        #add the path to the PYTHONPATH
+        # add the path to the PYTHONPATH
         sys.path.append(path)
 
-        #acquire list of files in the path
+        # acquire list of files in the path
         mod_list = os.listdir(path)
 
         for f in mod_list:
 
-            #continue if it is not a python file
+            # continue if it is not a python file
             if f[-3:] != '.py':
                 continue
 
-            #get module name by removing extension
+            # get module name by removing extension
             mod_name = os.path.basename(f)[:-3]
 
-            #import the module
+            # import the module
             module = __import__(mod_name, locals(), globals())
             for name, cls in inspect.getmembers(module):
                 if inspect.isclass(cls) and name != 'Features':
@@ -49,7 +51,6 @@ class Featurizer():
 
         return classes
 
-
     def run_all_funcs(self, functions_orig, groups_orig, classes_orig, rows_f, srcmacid):
         functions = copy.deepcopy(functions_orig)
         groups = copy.deepcopy(groups_orig)
@@ -58,9 +59,11 @@ class Featurizer():
         run_methods = []
 
         def verify_feature_row(method, feature_row):
-            assert isinstance(feature_row, list), 'method %s returned non list: %s' % (method, feature_row)
+            assert isinstance(feature_row, list), 'method %s returned non list: %s' % (
+                method, feature_row)
             non_dicts = {x for x in feature_row if not isinstance(x, dict)}
-            assert not non_dicts, 'method %s returned something not a dict: %s' % (method, non_dicts)
+            assert not non_dicts, 'method %s returned something not a dict: %s' % (
+                method, non_dicts)
 
         def run_func(method, func, descr):
             print(f'running {descr}...', end='')
@@ -77,9 +80,11 @@ class Featurizer():
 
         for f in classes:
             if groups:
-                methods = filter(lambda funcname: funcname.startswith(groups), dir(f[0]))
+                methods = filter(
+                    lambda funcname: funcname.startswith(groups), dir(f[0]))
                 for method in sorted(methods, key=method_key):
-                    feature_rows.append(run_func(method, lambda: f[0].run_func(method, rows_f, srcmacid), f'{f[1]}/{method}'))
+                    feature_rows.append(run_func(method, lambda: f[0].run_func(
+                        method, rows_f, srcmacid), f'{f[1]}/{method}'))
                     run_methods.append((f[1], method))
 
         # run remaining extras
@@ -88,9 +93,9 @@ class Featurizer():
                 for f in classes:
                     if f[1] == function[0]:
                         method = function[1]
-                        feature_rows.append(run_func(method, lambda: f[0].run_func(method, rows_f, srcmacid), f'{f[1]}/{function[1]}'))
+                        feature_rows.append(run_func(method, lambda: f[0].run_func(
+                            method, rows_f, srcmacid), f'{f[1]}/{function[1]}'))
         return feature_rows
-
 
     def main(self, feature_choices, rows, features_path, srcmacid):
         functions = []

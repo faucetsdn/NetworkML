@@ -1,5 +1,5 @@
-from networkml.featurizers.main import Featurizer
 from networkml.featurizers.features import Features
+from networkml.featurizers.main import Featurizer
 
 
 def test_no_path():
@@ -23,7 +23,6 @@ def test_run_all_funcs():
             for row in rows:
                 return [{'test2': row['test2']}]
 
-
     tc = TestClass()
 
     results = instance.run_all_funcs(
@@ -37,5 +36,3 @@ def test_run_all_funcs():
     results = instance.run_all_funcs(
         [], [], [], [{'test1': 99, 'test2': 123}], True)
     assert results == []
-
-

@@ -1,5 +1,5 @@
-from networkml.pandas_csv_importer import WS_FIELDS
 from networkml.featurizers.features import Features
+from networkml.pandas_csv_importer import WS_FIELDS
 
 
 class Generic(Features):
