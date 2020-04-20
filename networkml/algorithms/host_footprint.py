@@ -268,14 +268,54 @@ class HostFootprint():
             role_list_sorted = sorted(role_list, key=lambda x: x[1],
                                       reverse=True)
 
-            # Place roles and probabilities in json
-            role_predictions = json.dumps(role_list_sorted)
+            # Dump to JSON top role and roles-probability list
+            predictions_json = self.sorted_roles_to_json(role_list_sorted)
 
-            # Create dictionary with filename as key and a json of
-            # role predictions for that file
-            all_predictions[filename[counter]] = role_predictions
+            # Create dictionary with filename as key and a JSON
+            # of predictions as value
+            all_predictions[filename[counter]] = predictions_json
 
         return all_predictions
+
+
+    @staticmethod
+    def sorted_roles_to_json(role_list_sorted, threshold=.5):
+        """ Converted sorted role-probability list into formatted dict
+
+        This function ensures that the top role returned is unknown
+        if the top role has a probability less than the threshold
+        specified in the default input parameter.
+
+        INPUTS:
+        --role_list_sorted: a sorted list that associates the top role
+        with their probabilities
+        --threshold: probability threshold below which the top role
+        should be designated as "unknown"
+
+        OUTPUTS:
+        --predictions_json: a JSON encoding of a dict with the top role
+        and a sorted role list
+        """
+
+        # Probability associated with the most likely role
+        top_role_prob = role_list_sorted[0][1]
+
+        # Only use actual top role if probability is greater
+        # than designated threshold
+        if top_role_prob <= threshold:
+            top_role = "unknown"
+        else:
+            top_role = role_list_sorted[0][0]  # Most likely role
+
+        # Create dict to store prediction results
+        role_predictions = {}
+        role_predictions['top_role'] = top_role
+        role_predictions['role_list'] = role_list_sorted
+
+        # Dump to JSON top role and roles-probability list
+        predictions_json = json.dumps(role_predictions)
+
+        return predictions_json
 
 
     def string_feature_check(self, X):
