@@ -208,10 +208,10 @@ class HostFootprint():
         predictions_rows = self.model.predict_proba(X)
 
         # Dict to store top role and list of top roles
-        all_predictions = self.get_individual_predictions(predictions_rows, le, filename)
+        all_predictions = self.get_individual_predictions(
+            predictions_rows, le, filename)
 
         return all_predictions
-
 
     def get_individual_predictions(self, predictions_rows, label_encoder, filename):
         """ Return role predictions for given device
@@ -271,13 +271,12 @@ class HostFootprint():
             all_predictions[filename[counter]] = predictions_json
 
         return all_predictions
- 
 
     @staticmethod
     def sorted_roles_to_json(role_list_sorted, threshold=.5):
         """ Converted sorted role-probability list into formatted dict
 
-        This function ensures that the top role returned is unknown
+        This function ensures that the top role returned is Unknown
         if the top role has a probability less than the threshold
         specified in the default input parameter.
 
@@ -285,7 +284,7 @@ class HostFootprint():
         --role_list_sorted: a sorted list that associates the top role
         with their probabilities
         --threshold: probability threshold below which the top role
-        should be designated as "unknown"
+        should be designated as "Unknown"
 
         OUTPUTS:
         --predictions_json: a JSON encoding of a dict with the top role
@@ -298,7 +297,7 @@ class HostFootprint():
         # Only use actual top role if probability is greater
         # than designated threshold
         if top_role_prob <= threshold:
-            top_role = "unknown"
+            top_role = 'Unknown'
         else:
             top_role = role_list_sorted[0][0]  # Most likely role
 
@@ -311,7 +310,6 @@ class HostFootprint():
         predictions_json = json.dumps(role_predictions)
 
         return predictions_json
-
 
     def string_feature_check(self, X):
         """
