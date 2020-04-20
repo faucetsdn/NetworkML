@@ -233,7 +233,7 @@ class HostBase:
 
     def _tshark_vlan_id(self, mac_df):
         return {
-            'tshark_tagged_vlan': int(pd.notna(mac_df['vlan.id']))
+            'tshark_tagged_vlan': int(pd.notna(mac_df['vlan.id'].max()))
         }
 
     def _tshark_unique_ips(self, mac, mac_df):
