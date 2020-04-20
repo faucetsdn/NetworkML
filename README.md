@@ -31,7 +31,6 @@ NetworkML's key input is the network traffic for a single device. By network tra
 It is worth noting that networkML uses only packet header data in its models. NetworkML does not use data from the packet payload. Relying only on packet header data enables networkML to avoid some privacy-related issues associated with using payload data and to create (hopefully) more generalizable and more performant models.
 
 ## Data Processing
-FOR JOSH TO WRITE
 
 ## Algorithms
 
