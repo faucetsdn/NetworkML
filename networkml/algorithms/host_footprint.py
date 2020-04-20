@@ -174,8 +174,9 @@ class HostFootprint():
         roles.
 
         OUTPUTS:
-        --all_prediction: top n roles for each host and the associated
-        probability of each role -- a dictionary
+        --all_predictions: a dict with the filename for a key and a JSON'ified dict
+        dict for a value. see sorted_roles_to_json() for a description of
+        the value's structure.
         """
 
         # Load data from host footprint .csv
