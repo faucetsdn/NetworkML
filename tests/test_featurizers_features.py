@@ -8,4 +8,5 @@ def test_no_func():
 
 def test_get_columns():
     instance = Features()
-    assert instance.get_columns(['foo', 'bar'], [{'foo': 1, 'baz': 3}]) == [{'foo': 1}]
+    assert instance.get_columns(
+        ['foo', 'bar'], [{'foo': 1, 'baz': 3}]) == [{'foo': 1}]

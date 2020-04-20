@@ -1,5 +1,6 @@
 import logging
 import time
+
 from networkml.results_output import ResultsOutput
 
 
@@ -23,7 +24,8 @@ def test_parse_pcap_name():
 def test_rabbit_msg_template():
     logger = logging.getLogger(__name__)
     instance = ResultsOutput(logger, 'testver', True)
-    assert instance.rabbit_msg_template('x', 'y', 'z') == {'id': 'x', 'type': 'metadata', 'file_path': 'y', 'data': 'z', 'results': {'tool': 'networkml', 'version': 'testver'}}
+    assert instance.rabbit_msg_template('x', 'y', 'z') == {
+        'id': 'x', 'type': 'metadata', 'file_path': 'y', 'data': 'z', 'results': {'tool': 'networkml', 'version': 'testver'}}
 
 
 def test_results_template():

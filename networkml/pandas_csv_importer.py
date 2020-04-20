@@ -1,11 +1,12 @@
-import ipaddress
 import functools
+import ipaddress
 import warnings
+
+import netaddr
+import pandas as pd
 from pandas.errors import DtypeWarning
 # We are using converters to fix types, so mixed type warning from read_csv() is spurious.
 warnings.simplefilter(action='ignore', category=DtypeWarning)
-import pandas as pd
-import netaddr
 
 
 @functools.lru_cache()
@@ -71,9 +72,12 @@ WS_FIELDS = {
     'vlan.etype': (_hex_str, 16),
     'vlan.id': (_safe_int, 16),
 }
-_WS_FIELDS_CONVERTERS = {field: field_info[0] for field, field_info in WS_FIELDS.items()}
-_WS_FIELDS_NULLABLE_INT = {field: 'UInt%s' % field_info[1] for field, field_info in WS_FIELDS.items() if isinstance(field_info[1], int)}
-_REQUIRED_WS_FIELDS = {'eth.src', 'eth.dst', 'frame.len', 'frame.time_epoch', 'frame.time_delta_displayed'}
+_WS_FIELDS_CONVERTERS = {field: field_info[0]
+                         for field, field_info in WS_FIELDS.items()}
+_WS_FIELDS_NULLABLE_INT = {field: 'UInt%s' % field_info[1] for field, field_info in WS_FIELDS.items(
+) if isinstance(field_info[1], int)}
+_REQUIRED_WS_FIELDS = {'eth.src', 'eth.dst', 'frame.len',
+                       'frame.time_epoch', 'frame.time_delta_displayed'}
 
 
 def recast_df(df):
@@ -84,18 +88,22 @@ def recast_df(df):
         try:
             df[col] = df[col].astype(typestr)
         except TypeError:
-            raise TypeError('cannot cast %s to %s: %u' % (col, typestr, df[col].max()))
+            raise TypeError('cannot cast %s to %s: %u' %
+                            (col, typestr, df[col].max()))
     return df
 
 
 def import_csv(in_file):
     # We need converters, so we can't use dtypes parameter, and that results in an un-suppressable warning.
-    csv_fields = set(pd.read_csv(in_file, index_col=0, nrows=0).columns.tolist())
+    csv_fields = set(pd.read_csv(
+        in_file, index_col=0, nrows=0).columns.tolist())
     usecols = csv_fields.intersection(WS_FIELDS.keys())
     missingcols = set(WS_FIELDS.keys()) - csv_fields
-    df = pd.read_csv(in_file, usecols=usecols, converters=_WS_FIELDS_CONVERTERS)
+    df = pd.read_csv(in_file, usecols=usecols,
+                     converters=_WS_FIELDS_CONVERTERS)
     for col in missingcols:
         df[col] = None
     for col in _REQUIRED_WS_FIELDS:
-        assert df[col].count() > 0, 'required col %s is all null (not a PCAP CSV?)' % col
+        assert df[col].count(
+        ) > 0, 'required col %s is all null (not a PCAP CSV?)' % col
     return recast_df(df)

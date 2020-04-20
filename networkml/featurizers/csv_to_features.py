@@ -1,24 +1,26 @@
 import argparse
-import csv
 import concurrent.futures
+import csv
 import logging
 import os
 import pathlib
-from collections import defaultdict, Counter
+from collections import Counter
+from collections import defaultdict
+
 import numpy as np
+
 import networkml
-from networkml.gzipio import gzip_reader, gzip_writer
 from networkml.featurizers.main import Featurizer
+from networkml.gzipio import gzip_reader
+from networkml.gzipio import gzip_writer
 from networkml.pandas_csv_importer import import_csv
 
 
 class CSVToFeatures():
 
-
     def __init__(self, raw_args=None):
         self.logger = logging.getLogger(__name__)
         self.raw_args = raw_args
-
 
     @staticmethod
     def get_reader(in_file, use_gzip):
@@ -26,13 +28,11 @@ class CSVToFeatures():
             return gzip_reader(in_file)
         return open(in_file, 'r')
 
-
     @staticmethod
     def get_writer(out_file, use_gzip):
         if use_gzip:
             return gzip_writer(out_file)
         return open(out_file, 'w')
-
 
     @staticmethod
     def iscsv(pathfile):
@@ -41,7 +41,6 @@ class CSVToFeatures():
                 return True
         return False
 
-
     @staticmethod
     def write_features_to_csv(header, rows, out_file, gzip_opt):
         use_gzip = gzip_opt in ['output', 'both']
@@ -49,7 +48,6 @@ class CSVToFeatures():
             writer = csv.DictWriter(f_out, fieldnames=header)
             writer.writeheader()
             writer.writerows(rows)
-
 
     @staticmethod
     def combine_csvs(out_paths, combined_path, gzip_opt):
@@ -70,12 +68,13 @@ class CSVToFeatures():
                     reader = csv.DictReader(f_in)
                     for line in reader:
                         if use_gzip:
-                            line['filename'] = filename.split('/')[-1].split('.features.gz')[0]
+                            line['filename'] = filename.split(
+                                '/')[-1].split('.features.gz')[0]
                         else:
-                            line['filename'] = filename.split('/')[-1].split('.features')[0]
+                            line['filename'] = filename.split(
+                                '/')[-1].split('.features')[0]
                         writer.writerow(line)
                 CSVToFeatures.cleanup_files([filename])
-
 
     @staticmethod
     def cleanup_files(paths):
@@ -87,16 +86,26 @@ class CSVToFeatures():
     def parse_args(raw_args=None):
         netml_path = list(networkml.__path__)
         parser = argparse.ArgumentParser()
-        parser.add_argument('path', help='path to a single gzipped csv file, or a directory of gzipped csvs to parse')
-        parser.add_argument('--combined', '-c', action='store_true', help='write out all records from all csvs into a single gzipped csv file')
-        parser.add_argument('--features_path', '-p', default=os.path.join(netml_path[0], 'featurizers/funcs'), help='path to featurizer functions')
-        parser.add_argument('--functions', '-f', default='', help='comma separated list of <class>:<function> to featurize (default=None)')
-        parser.add_argument('--groups', '-g', default='host', help='comma separated list of groups of functions to featurize (default=host)')
-        parser.add_argument('--gzip', '-z', choices=['input', 'output', 'both', 'neither'], default='both', help='gzip the input/output file, both or neither (default=both)')
-        parser.add_argument('--output', '-o', default=None, help='path to write out gzipped csv file or directory for gzipped csv files')
-        parser.add_argument('--threads', '-t', default=1, type=int, help='number of async threads to use (default=1)')
-        parser.add_argument('--verbose', '-v', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO', help='logging level (default=INFO)')
-        parser.add_argument('--srcmacid', '-s', default=True, action='store_true', help='attempt to detect canonical source MAC and featurize only that MAC')
+        parser.add_argument(
+            'path', help='path to a single gzipped csv file, or a directory of gzipped csvs to parse')
+        parser.add_argument('--combined', '-c', action='store_true',
+                            help='write out all records from all csvs into a single gzipped csv file')
+        parser.add_argument('--features_path', '-p', default=os.path.join(
+            netml_path[0], 'featurizers/funcs'), help='path to featurizer functions')
+        parser.add_argument('--functions', '-f', default='',
+                            help='comma separated list of <class>:<function> to featurize (default=None)')
+        parser.add_argument('--groups', '-g', default='host',
+                            help='comma separated list of groups of functions to featurize (default=host)')
+        parser.add_argument('--gzip', '-z', choices=['input', 'output', 'both', 'neither'],
+                            default='both', help='gzip the input/output file, both or neither (default=both)')
+        parser.add_argument('--output', '-o', default=None,
+                            help='path to write out gzipped csv file or directory for gzipped csv files')
+        parser.add_argument('--threads', '-t', default=1, type=int,
+                            help='number of async threads to use (default=1)')
+        parser.add_argument('--verbose', '-v', choices=[
+                            'DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO', help='logging level (default=INFO)')
+        parser.add_argument('--srcmacid', '-s', default=True, action='store_true',
+                            help='attempt to detect canonical source MAC and featurize only that MAC')
         parsed_args = parser.parse_args(raw_args)
         return parsed_args
 
@@ -118,7 +127,8 @@ class CSVToFeatures():
             if header_key != 'host_key':
                 rowcompare[header_count].add(header_key)
         assert not len(rowcompare) == 0, 'featurizer returned no results'
-        assert len(rowcompare) == 1, 'inconsistent featurizer row counts (headers not consistently present in all rows): %s' % rowcompare
+        assert len(
+            rowcompare) == 1, 'inconsistent featurizer row counts (headers not consistently present in all rows): %s' % rowcompare
         header = list(rowcounts.keys())
 
         columns = [np.array(row) for row in rows]
@@ -134,9 +144,11 @@ class CSVToFeatures():
 
         if header and rows is not None:
             rows = rows.tolist()
-            CSVToFeatures.write_features_to_csv(header, rows, out_file, gzip_opt)
+            CSVToFeatures.write_features_to_csv(
+                header, rows, out_file, gzip_opt)
         else:
-            self.logger.warning(f'No results based on {features} for {in_file}')
+            self.logger.warning(
+                f'No results based on {features} for {in_file}')
 
     def process_files(self, threads, features, features_path, in_paths, out_paths, gzip_opt, srcmacid):
         num_files = len(in_paths)
@@ -147,26 +159,31 @@ class CSVToFeatures():
             for i in range(len(in_paths)):
                 try:
                     finished_files += 1
-                    self.exec_features(features, in_paths[i], out_paths[i], features_path, gzip_opt, srcmacid)
-                    self.logger.info(f'Finished {in_paths[i]}. {finished_files}/{num_files} CSVs done.')
+                    self.exec_features(
+                        features, in_paths[i], out_paths[i], features_path, gzip_opt, srcmacid)
+                    self.logger.info(
+                        f'Finished {in_paths[i]}. {finished_files}/{num_files} CSVs done.')
                 except Exception as e:  # pragma: no cover
-                    self.logger.error(f'{in_paths[i]} generated an exception: {e}')
+                    self.logger.error(
+                        f'{in_paths[i]} generated an exception: {e}')
                     failed_paths.append(out_paths[i])
         else:
             with concurrent.futures.ProcessPoolExecutor(max_workers=threads) as executor:
-                future_to_parse = {executor.submit(self.exec_features, features, in_paths[i], out_paths[i], features_path, gzip_opt, srcmacid): i for i in range(len((in_paths)))}
+                future_to_parse = {executor.submit(
+                    self.exec_features, features, in_paths[i], out_paths[i], features_path, gzip_opt, srcmacid): i for i in range(len((in_paths)))}
                 for future in concurrent.futures.as_completed(future_to_parse):
                     path = future_to_parse[future]
                     try:
                         finished_files += 1
                         future.result()
                     except Exception as e:  # pragma: no cover
-                        self.logger.error(f'{in_paths[path]} generated an exception: {e}')
+                        self.logger.error(
+                            f'{in_paths[path]} generated an exception: {e}')
                         failed_paths.append(out_paths[path])
                     else:
-                        self.logger.info(f'Finished {in_paths[path]}. {finished_files}/{num_files} CSVs done.')
+                        self.logger.info(
+                            f'Finished {in_paths[path]}. {finished_files}/{num_files} CSVs done.')
         return failed_paths
-
 
     def main(self):
         parsed_args = CSVToFeatures.parse_args(raw_args=self.raw_args)
@@ -182,10 +199,12 @@ class CSVToFeatures():
         srcmacid = parsed_args.srcmacid
 
         if not groups and not functions:
-            self.logger.warning('No groups or functions were selected, quitting')
+            self.logger.warning(
+                'No groups or functions were selected, quitting')
             return
 
-        log_levels = {'INFO': logging.INFO, 'DEBUG': logging.DEBUG, 'WARNING': logging.WARNING, 'ERROR': logging.ERROR}
+        log_levels = {'INFO': logging.INFO, 'DEBUG': logging.DEBUG,
+                      'WARNING': logging.WARNING, 'ERROR': logging.ERROR}
         logging.basicConfig(level=log_levels[log_level])
 
         in_paths = []
@@ -209,35 +228,42 @@ class CSVToFeatures():
                         in_paths.append(os.path.join(root, pathfile))
                         if out_path:
                             if gzip_opt in ['neither', 'input']:
-                                out_paths.append(os.path.join(out_path, pathfile) + ".features")
+                                out_paths.append(os.path.join(
+                                    out_path, pathfile) + '.features')
                             else:
-                                out_paths.append(os.path.join(out_path, pathfile) + ".features.gz")
+                                out_paths.append(os.path.join(
+                                    out_path, pathfile) + '.features.gz')
                         else:
                             if gzip_opt in ['neither', 'input']:
-                                out_paths.append(os.path.join(root, pathfile) + ".features")
+                                out_paths.append(os.path.join(
+                                    root, pathfile) + '.features')
                             else:
-                                out_paths.append(os.path.join(root, pathfile) + ".features.gz")
+                                out_paths.append(os.path.join(
+                                    root, pathfile) + '.features.gz')
         else:
             in_paths.append(in_path)
             if out_path:
                 out_paths.append(out_path)
             else:
                 if gzip_opt in ['neither', 'input']:
-                    out_paths.append(in_path + ".features")
+                    out_paths.append(in_path + '.features')
                 else:
-                    out_paths.append(in_path + ".features.gz")
+                    out_paths.append(in_path + '.features.gz')
 
-        failed_paths = self.process_files(threads, features, features_path, in_paths, out_paths, gzip_opt, srcmacid)
+        failed_paths = self.process_files(
+            threads, features, features_path, in_paths, out_paths, gzip_opt, srcmacid)
 
         for failed_path in failed_paths:  # pragma: no cover
             if failed_path in out_paths:
                 out_paths.remove(failed_path)
 
         if combined:
-            combined_path = os.path.join(os.path.dirname(out_paths[0]), "combined.csv.gz")
+            combined_path = os.path.join(
+                os.path.dirname(out_paths[0]), 'combined.csv.gz')
             if gzip_opt in ['input', 'neither']:
                 combined_path = combined_path[:-3]
-            self.logger.info(f'Combining CSVs into a single file: {combined_path}')
+            self.logger.info(
+                f'Combining CSVs into a single file: {combined_path}')
             CSVToFeatures.combine_csvs(out_paths, combined_path, gzip_opt)
             return combined_path
         self.logger.info(f'GZipped CSV file(s) written out to: {out_paths}')

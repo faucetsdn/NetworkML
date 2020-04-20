@@ -2,6 +2,7 @@ import os
 import shutil
 import sys
 import tempfile
+
 import pytest
 
 from networkml.algorithms.host_footprint import HostFootprint
@@ -41,6 +42,7 @@ def test_predict():
         instance = HostFootprint()
         instance.main()
 
+
 def test_predict_num_roles():
     """
     Test predict function of HostFootprint class with
@@ -53,11 +55,13 @@ def test_predict_num_roles():
             input_file = os.path.join(testdata, file)
             operation = 'train'
             k_folds = '2'
-            sys.argv = ['host_footprint.py', '--operation', operation, '--kfolds', k_folds, input_file]
+            sys.argv = ['host_footprint.py', '--operation',
+                        operation, '--kfolds', k_folds, input_file]
             instance = HostFootprint()
             instance.main()
             operation = 'predict'
-            sys.argv = ['host_footprint.py', '--operation', operation, input_file]
+            sys.argv = ['host_footprint.py',
+                        '--operation', operation, input_file]
             instance = HostFootprint()
             instance.main()
 
@@ -68,6 +72,7 @@ def test_predict_num_roles():
                 assert len(predictions) == 6
             else:
                 assert len(predictions) == 4
+
 
 def test_train_bad_data_too_few_columns():
     """
