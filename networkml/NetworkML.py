@@ -1,17 +1,16 @@
-from networkml.algorithms.host_footprint import HostFootprint
-from networkml.featurizers.csv_to_features import CSVToFeatures
-from networkml.parsers.pcap_to_csv import PCAPToCSV
-
 import argparse
 import datetime
-import json
 import logging
 import os
 import time
 
 import humanize
-import networkml
-import pika
+
+from networkml.algorithms.host_footprint import HostFootprint
+from networkml.featurizers.csv_to_features import CSVToFeatures
+from networkml.parsers.pcap_to_csv import PCAPToCSV
+from networkml.results_output import ResultsOutput
+from networkml import __version__
 
 
 class NetworkML():
@@ -20,25 +19,6 @@ class NetworkML():
     def __init__(self, raw_args=None):
         self.logger = logging.getLogger(__name__)
         self.main(raw_args=raw_args)
-
-
-    @staticmethod
-    def connect_rabbit(host='messenger', port=5672, queue='task_queue'):
-        params = pika.ConnectionParameters(host=host, port=port)
-        connection = pika.BlockingConnection(params)
-        channel = connection.channel()
-        channel.queue_declare(queue=queue, durable=True)
-        return channel
-
-
-    @staticmethod
-    def send_rabbit_msg(msg, channel, exchange='', routing_key='task_queue'):
-        channel.basic_publish(exchange=exchange,
-                              routing_key=routing_key,
-                              body=json.dumps(msg),
-                              properties=pika.BasicProperties(delivery_mode=2))
-        print(" [X] %s UTC %r %r" % (str(datetime.datetime.utcnow()),
-                                     str(msg['id']), str(msg['file_path'])))
 
 
     @staticmethod
@@ -94,17 +74,11 @@ class NetworkML():
             self.logger.error('Invalid first and final stage combination')
 
         if self.final_stage == 'algorithm' and self.operation == 'predict':
-            self.logger.info(f'Prediction: {result}')
-            if self.rabbit:
-                uid = os.getenv('id', 'None')
-                file_path = os.getenv('file_path', 'None')
-                try:
-                    channel = NetworkML.connect_rabbit()
-                    body = {'id': uid, 'type': 'metadata', 'file_path': file_path, 'data': result, 'results': {'tool': 'networkml', 'version': networkml.__version__}}
-                    NetworkML.send_rabbit_msg(body, channel)
-                    body = {'id': uid, 'type': 'metadata', 'file_path': file_path, 'data': '', 'results': {'tool': 'networkml', 'version': networkml.__version__}}
-                except Exception as e:  # pragma: no cover
-                    self.logger.error(f'Failed to send Rabbit message because: {e}')
+            # TODO: placeholder - does not yet send valid/invalid results.
+            uid = os.getenv('id', 'None')
+            file_path = os.getenv('file_path', 'None')
+            results_outputter = ResultsOutput(self.logger, __version__, self.rabbit)
+            results_outputter.output_msg(uid, file_path, result)
 
 
     def main(self, raw_args=None):
