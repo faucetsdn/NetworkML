@@ -1,6 +1,8 @@
 FROM networkml
 LABEL maintainer="Charlie Lewis <clewis@iqt.org>"
 
-RUN pip3 install --no-cache-dir -r test-requirements.txt
+RUN apk add rabbitmq-server --update --no-cache --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ --allow-untrusted && \
+        apk add --no-cache build-base cython gcc && \
+        pip3 install --no-cache-dir -r test-requirements.txt
 ENTRYPOINT ["pytest"]
-CMD ["-l", "-s", "-v", "-n2", "--cov=tests/", "--cov=networkml/", "--cov-report", "term-missing", "-c", ".coveragerc"]
+CMD ["-l", "-s", "-v", "-nauto", "--cov=tests/", "--cov=networkml/", "--cov-report", "term-missing", "-c", ".coveragerc", "--rabbitmq-port=5672"]
