@@ -212,24 +212,24 @@ class HostFootprint():
         # Make model predicton - Will return a vector of values
         predictions_rows = self.model.predict_proba(X)
 
-        # Dict to store JSON of top n roles and probabilities per device
+        # Dict to store top role and list of top roles
         all_predictions = self.get_individual_predictions(predictions_rows, le, filename)
 
         return all_predictions
 
 
-    @staticmethod
-    def get_individual_predictions(predictions_rows, label_encoder, filename):
+    def get_individual_predictions(self, predictions_rows, label_encoder, filename):
         """ Return role predictions for given device
 
         INPUTS:
-        predictions_rows: each device is represented as a row
-        label_encoder: a mapping of device role name to numerical category
-        filename: the filename of the pcap for which a prediction is made
+        --predictions_rows: each device is represented as a row
+        --label_encoder: a mapping of device role name to numerical category
+        --filename: the filename of the pcap for which a prediction is made
 
         OUTPUTS:
-        all_predictions: top n roles for each host and the associated
-        probability of each role -- a dictionary
+        --all_predictions: a dict with the filename for a key and a
+        JSON'ified dict for a value. see sorted_roles_to_json() for a description
+        of the value's structure.
         """
 
         # Dict to store JSON of top n roles and probabilities per device
