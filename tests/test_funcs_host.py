@@ -1,8 +1,13 @@
 import ipaddress
-import pandas as pd
+
 import netaddr
-from networkml.featurizers.funcs.host import HostBase, Host, SessionHost
-from networkml.pandas_csv_importer import WS_FIELDS, recast_df
+import pandas as pd
+
+from networkml.featurizers.funcs.host import Host
+from networkml.featurizers.funcs.host import HostBase
+from networkml.featurizers.funcs.host import SessionHost
+from networkml.pandas_csv_importer import recast_df
+from networkml.pandas_csv_importer import WS_FIELDS
 
 
 def nan_row_dict(defaults):
@@ -14,12 +19,17 @@ def nan_row_dict(defaults):
 def test_get_ips():
     instance = HostBase()
     for ipv, ipb, srcip, dstip, ip_flags in (
-             (4, 'ip', ipaddress.ip_address('192.168.0.1'), ipaddress.ip_address('192.168.0.2'), (1, 0)),
-             (6, 'ipv6', ipaddress.ip_address('fc01::1'), ipaddress.ip_address('fc01::2'), (1, 0)),
-             (4, 'ip', ipaddress.ip_address('192.168.0.1'), ipaddress.ip_address('8.8.8.8'), (0, 0)),
-             (6, 'ipv6', ipaddress.ip_address('fc01::1'), ipaddress.ip_address('2001:4860:4860::8888'), (0, 0)),
-             (4, 'ip', ipaddress.ip_address('192.168.0.1'), ipaddress.ip_address('224.0.0.1'), (0, 1))):
-        row = nan_row_dict({'ip.version': ipv, '%s.src' % ipb: str(int(srcip)), '%s.dst' % ipb: str(int(dstip))})
+        (4, 'ip', ipaddress.ip_address('192.168.0.1'),
+         ipaddress.ip_address('192.168.0.2'), (1, 0)),
+        (6, 'ipv6', ipaddress.ip_address('fc01::1'),
+         ipaddress.ip_address('fc01::2'), (1, 0)),
+        (4, 'ip', ipaddress.ip_address('192.168.0.1'),
+         ipaddress.ip_address('8.8.8.8'), (0, 0)),
+        (6, 'ipv6', ipaddress.ip_address('fc01::1'),
+         ipaddress.ip_address('2001:4860:4860::8888'), (0, 0)),
+            (4, 'ip', ipaddress.ip_address('192.168.0.1'), ipaddress.ip_address('224.0.0.1'), (0, 1))):
+        row = nan_row_dict({'ip.version': ipv, '%s.src' % ipb: str(
+            int(srcip)), '%s.dst' % ipb: str(int(dstip))})
         assert instance._get_src_ip(row) == srcip
         assert instance._get_dst_ip(row) == dstip
         assert instance._df_ip_flags(srcip, dstip) == ip_flags
@@ -55,7 +65,8 @@ def test_lowest_ip_proto_port():
 def test_tshark_ports():
     instance = HostBase()
     for test_rows, test_output, ratio_output in (
-            ([{'tcp.srcport': 22, 'tcp.dstport': 1025, 'ip.proto': 6}, {'tcp.srcport': 1025, 'tcp.dstport': 22, 'ip.proto': 6}, {'tcp.srcport': 22, 'tcp.dstport': 1025, 'ip.proto': 6}], {'tshark_tcp_priv_port_22_in'}, {'tshark_tcp_priv_packet_ratio_io_port_22': 2.0, 'tshark_tcp_nonpriv_packet_ratio_io_port_other': 0.5}),
+            ([{'tcp.srcport': 22, 'tcp.dstport': 1025, 'ip.proto': 6}, {'tcp.srcport': 1025, 'tcp.dstport': 22, 'ip.proto': 6}, {'tcp.srcport': 22, 'tcp.dstport': 1025,
+                                                                                                                                 'ip.proto': 6}], {'tshark_tcp_priv_port_22_in'}, {'tshark_tcp_priv_packet_ratio_io_port_22': 2.0, 'tshark_tcp_nonpriv_packet_ratio_io_port_other': 0.5}),
             ([{'tcp.srcport': 1025, 'tcp.dstport': 1025, 'ip.proto': 6}], {'tshark_tcp_nonpriv_port_other_in'}, {'tshark_tcp_nonpriv_packet_ratio_io_port_other': 1.0})):
 
         test_data = []
@@ -64,9 +75,11 @@ def test_tshark_ports():
             row.update(test_ports)
             test_data.append(row)
         mac_df = recast_df(pd.DataFrame(test_data))
-        ports = {col for col, val in instance._tshark_ports('in', mac_df).items() if val == 1}
+        ports = {col for col, val in instance._tshark_ports(
+            'in', mac_df).items() if val == 1}
         assert test_output == ports
-        ratios = {col: val for col, val in instance._tshark_ratio_ports(mac_df).items() if val}
+        ratios = {col: val for col,
+                  val in instance._tshark_ratio_ports(mac_df).items() if val}
         assert ratio_output == ratios, test_rows
 
 
@@ -75,7 +88,8 @@ def test_ip_versions():
     test_data = {field: None for field in WS_FIELDS}
     test_data.update({'ip.version': 4})
     mac_df = recast_df(pd.DataFrame([test_data]))
-    assert instance._tshark_ipversions(mac_df) == {'tshark_ipv4': 1, 'tshark_ipv6': 0}
+    assert instance._tshark_ipversions(
+        mac_df) == {'tshark_ipv4': 1, 'tshark_ipv6': 0}
 
 
 def test_non_ip():

@@ -13,11 +13,12 @@ import tempfile
 from copy import deepcopy
 
 import pyshark
-from networkml.gzipio import gzip_reader, gzip_writer
+
+from networkml.gzipio import gzip_reader
+from networkml.gzipio import gzip_writer
 
 
 class PCAPToCSV():
-
 
     def __init__(self, raw_args=None):
         self.logger = logging.getLogger(__name__)
@@ -35,7 +36,6 @@ class PCAPToCSV():
                           '<TLS Layer>']
         self.raw_args = raw_args
 
-
     @staticmethod
     def ispcap(pathfile):
         for ext in ('pcap', 'pcapng', 'dump', 'capture'):
@@ -43,20 +43,25 @@ class PCAPToCSV():
                 return True
         return False
 
-
     @staticmethod
     def parse_args(raw_args=None):
         parser = argparse.ArgumentParser()
-        parser.add_argument('path', help='path to a single pcap file, or a directory of pcaps to parse')
-        parser.add_argument('--combined', '-c', action='store_true', help='write out all records from all pcaps into a single gzipped csv file')
-        parser.add_argument('--engine', '-e', choices=['pyshark', 'tshark', 'host'], default='tshark', help='engine to use to process the PCAP file (default=tshark)')
-        parser.add_argument('--level', '-l', choices=['packet', 'flow', 'host'], default='packet', help='level to make the output records (default=packet)')
-        parser.add_argument('--output', '-o', default=None, help='path to write out gzipped csv file or directory for gzipped csv files')
-        parser.add_argument('--threads', '-t', default=1, type=int, help='number of async threads to use (default=1)')
-        parser.add_argument('--verbose', '-v', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO', help='logging level (default=INFO)')
+        parser.add_argument(
+            'path', help='path to a single pcap file, or a directory of pcaps to parse')
+        parser.add_argument('--combined', '-c', action='store_true',
+                            help='write out all records from all pcaps into a single gzipped csv file')
+        parser.add_argument('--engine', '-e', choices=['pyshark', 'tshark', 'host'],
+                            default='tshark', help='engine to use to process the PCAP file (default=tshark)')
+        parser.add_argument('--level', '-l', choices=['packet', 'flow', 'host'],
+                            default='packet', help='level to make the output records (default=packet)')
+        parser.add_argument('--output', '-o', default=None,
+                            help='path to write out gzipped csv file or directory for gzipped csv files')
+        parser.add_argument('--threads', '-t', default=1, type=int,
+                            help='number of async threads to use (default=1)')
+        parser.add_argument('--verbose', '-v', choices=[
+                            'DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO', help='logging level (default=INFO)')
         parsed_args = parser.parse_args(raw_args)
         return parsed_args
-
 
     @staticmethod
     def get_csv_header(dict_fp):
@@ -69,7 +74,6 @@ class PCAPToCSV():
             if key[0].isalpha() or key[0] == '_':
                 header.append(key)
         return header
-
 
     @staticmethod
     def combine_csvs(out_paths, combined_path):
@@ -88,17 +92,16 @@ class PCAPToCSV():
                 with gzip_reader(filename) as f_in:
                     reader = csv.DictReader(f_in)
                     for line in reader:
-                        line['filename'] = filename.split('/')[-1].split('csv.gz')[0]
+                        line['filename'] = filename.split(
+                            '/')[-1].split('csv.gz')[0]
                         writer.writerow(line)
                     PCAPToCSV.cleanup_files([filename])
-
 
     @staticmethod
     def cleanup_files(paths):
         for fi in paths:
             if os.path.exists(fi):
                 os.remove(fi)
-
 
     def get_pyshark_packet_data(self, pcap_file, dict_fp):
         all_protocols = set()
@@ -127,7 +130,8 @@ class PCAPToCSV():
                             all_protocols.add(str_layer)
                         # only include specified protocols due to unknown parsing for some layers
                         if str_layer in self.PROTOCOLS:
-                            layer_info = getattr(packet, str_layer.split()[0][1:].lower())._all_fields
+                            layer_info = getattr(packet, str_layer.split()[
+                                                 0][1:].lower())._all_fields
                             # check for nested dicts, one level deep
                             for key in layer_info:
                                 # DNS doesn't parse well
@@ -148,8 +152,8 @@ class PCAPToCSV():
             if protocol in all_protocols:
                 all_protocols.remove(protocol)
         if all_protocols:
-            self.logger.warning(f'Found the following other layers in {pcap_file_short} that were not added to the CSV: {all_protocols}')
-
+            self.logger.warning(
+                f'Found the following other layers in {pcap_file_short} that were not added to the CSV: {all_protocols}')
 
     def get_tshark_conv_data(self, pcap_file, dict_fp):
         # TODO (add a summary of other packets with protocols?)
@@ -157,8 +161,9 @@ class PCAPToCSV():
         try:
             # TODO perhaps more than just tcp/udp in the future
             options = '-n -q -z conv,tcp -z conv,udp'
-            output = subprocess.check_output(shlex.split(' '.join(['tshark', '-r', pcap_file, options])))
-            output = output.decode("utf-8")
+            output = subprocess.check_output(shlex.split(
+                ' '.join(['tshark', '-r', pcap_file, options])))
+            output = output.decode('utf-8')
         except Exception as e:  # pragma: no cover
             self.logger.error(f'{e}')
 
@@ -209,12 +214,10 @@ class PCAPToCSV():
                                     'Duration': duration}
                             f_out.write(json.dumps(conv) + '\n')
 
-
     @staticmethod
     @functools.lru_cache()
     def good_json_key(key):
         return (key[0].isalpha() or key[0] == '_') and ';' not in key and '(' not in key and '\\' not in key and '{' not in key and '<' not in key and '+' not in key
-
 
     def flatten_json(self, item):
         flattened_dict = {}
@@ -236,7 +239,6 @@ class PCAPToCSV():
 
         flatten('', item)
         return flattened_dict
-
 
     def json_packet_records(self, process):
         json_buffer = []
@@ -267,22 +269,20 @@ class PCAPToCSV():
                 if json_line:
                     json_buffer.append(json_line)
 
-
     def get_tshark_packet_data(self, pcap_file, dict_fp):
         options = '-n -V -Tjson'
         try:
-            process = subprocess.Popen(shlex.split(' '.join(['tshark', '-r', pcap_file, options])), stdout=subprocess.PIPE)
+            process = subprocess.Popen(shlex.split(
+                ' '.join(['tshark', '-r', pcap_file, options])), stdout=subprocess.PIPE)
             with gzip_writer(dict_fp) as f_out:
                 for item in self.json_packet_records(process):
                     f_out.write(json.dumps(self.flatten_json(item)) + '\n')
         except Exception as e:  # pragma: no cover
             self.logger.error(f'{e}')
 
-
     def get_tshark_host_data(self, pcap_file, dict_fp):
         # TODO
         raise NotImplementedError('To be implemented')
-
 
     def write_dict_to_csv(self, dict_fp, out_file):
         header = PCAPToCSV.get_csv_header(dict_fp)
@@ -295,7 +295,6 @@ class PCAPToCSV():
                         writer.writerow(json.loads(line.strip()))
             except Exception as e:  # pragma: no cover
                 self.logger.error(f'Failed to write to CSV because: {e}')
-
 
     def parse_file(self, level, in_file, out_file, engine):
         self.logger.info(f'Processing {in_file}')
@@ -317,7 +316,6 @@ class PCAPToCSV():
             self.write_dict_to_csv(dict_fp, out_file)
             PCAPToCSV.cleanup_files([dict_fp])
 
-
     def process_files(self, threads, level, in_paths, out_paths, engine):
         num_files = len(in_paths)
         failed_paths = []
@@ -328,25 +326,29 @@ class PCAPToCSV():
                 try:
                     finished_files += 1
                     self.parse_file(level, in_paths[i], out_paths[i], engine)
-                    self.logger.info(f'Finished {in_paths[i]}. {finished_files}/{num_files} PCAPs done.')
+                    self.logger.info(
+                        f'Finished {in_paths[i]}. {finished_files}/{num_files} PCAPs done.')
                 except Exception as e:  # pragma: no cover
-                    self.logger.error(f'{in_paths[i]} generated an exception: {e}')
+                    self.logger.error(
+                        f'{in_paths[i]} generated an exception: {e}')
                     failed_paths.append(out_paths[i])
         else:
             with concurrent.futures.ProcessPoolExecutor(max_workers=threads) as executor:
-                future_to_parse = {executor.submit(self.parse_file, level, in_paths[i], out_paths[i], engine): i for i in range(len(in_paths))}
+                future_to_parse = {executor.submit(
+                    self.parse_file, level, in_paths[i], out_paths[i], engine): i for i in range(len(in_paths))}
                 for future in concurrent.futures.as_completed(future_to_parse):
                     path = future_to_parse[future]
                     try:
                         finished_files += 1
                         future.result()
                     except Exception as e:  # pragma: no cover
-                        self.logger.error(f'{in_paths[path]} generated an exception: {e}')
+                        self.logger.error(
+                            f'{in_paths[path]} generated an exception: {e}')
                         failed_paths.append(out_paths[path])
                     else:
-                        self.logger.info(f'Finished {in_paths[path]}. {finished_files}/{num_files} PCAPs done.')
+                        self.logger.info(
+                            f'Finished {in_paths[path]}. {finished_files}/{num_files} PCAPs done.')
         return failed_paths
-
 
     def main(self):
         parsed_args = PCAPToCSV.parse_args(raw_args=self.raw_args)
@@ -358,7 +360,8 @@ class PCAPToCSV():
         log_level = parsed_args.verbose
         level = parsed_args.level
 
-        log_levels = {'INFO': logging.INFO, 'DEBUG': logging.DEBUG, 'WARNING': logging.WARNING, 'ERROR': logging.ERROR}
+        log_levels = {'INFO': logging.INFO, 'DEBUG': logging.DEBUG,
+                      'WARNING': logging.WARNING, 'ERROR': logging.ERROR}
         logging.basicConfig(level=log_levels[log_level])
 
         in_paths = []
@@ -373,20 +376,24 @@ class PCAPToCSV():
                     if PCAPToCSV.ispcap(pathfile):
                         in_paths.append(os.path.join(root, pathfile))
                         if out_path:
-                            out_paths.append(os.path.join(out_path, pathfile) + ".csv.gz")
+                            out_paths.append(os.path.join(
+                                out_path, pathfile) + '.csv.gz')
                         else:
-                            out_paths.append(os.path.join(root, pathfile) + ".csv.gz")
+                            out_paths.append(os.path.join(
+                                root, pathfile) + '.csv.gz')
         else:
             in_paths.append(in_path)
             if out_path:
                 out_paths.append(out_path)
             else:
-                out_paths.append(in_path + ".csv.gz")
+                out_paths.append(in_path + '.csv.gz')
 
         if level == 'packet' and engine == 'pyshark':
-            self.logger.info(f'Including the following layers in CSV (if they exist): {self.PROTOCOLS}')
+            self.logger.info(
+                f'Including the following layers in CSV (if they exist): {self.PROTOCOLS}')
 
-        failed_paths = self.process_files(threads, level, in_paths, out_paths, engine)
+        failed_paths = self.process_files(
+            threads, level, in_paths, out_paths, engine)
 
         for failed_path in failed_paths:  # pragma: no cover
             if failed_path in out_paths:
@@ -394,14 +401,17 @@ class PCAPToCSV():
 
         if combined:
             if out_paths:
-                combined_path = os.path.join(os.path.dirname(out_paths[0]), "combined.csv.gz")
+                combined_path = os.path.join(
+                    os.path.dirname(out_paths[0]), 'combined.csv.gz')
             else:
-                combined_path = "combined.csv.gz"
-            self.logger.info(f'Combining CSVs into a single file: {combined_path}')
+                combined_path = 'combined.csv.gz'
+            self.logger.info(
+                f'Combining CSVs into a single file: {combined_path}')
             PCAPToCSV.combine_csvs(out_paths, combined_path)
             return combined_path
         else:
-            self.logger.info(f'GZipped CSV file(s) written out to: {out_paths}')
+            self.logger.info(
+                f'GZipped CSV file(s) written out to: {out_paths}')
             return os.path.dirname(out_paths[0])
 
 
