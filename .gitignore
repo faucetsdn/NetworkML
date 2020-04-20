@@ -112,3 +112,6 @@ faucet.iml
 
 *gz
 erl_crash.dump
+
+# converted notebooks
+*.nbconvert.ipynb
