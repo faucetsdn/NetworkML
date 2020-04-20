@@ -5,4 +5,4 @@ RUN apk add rabbitmq-server --update --no-cache --repository http://dl-3.alpinel
         apk add --no-cache build-base cython gcc && \
         pip3 install --no-cache-dir -r test-requirements.txt
 ENTRYPOINT ["pytest"]
-CMD ["-l", "-s", "-v", "-n auto", "--cov=tests/", "--cov=networkml/", "--cov-report", "term-missing", "-c", ".coveragerc", "--rabbitmq-port=5672"]
+CMD ["-l", "-s", "-v", "-nauto", "--cov=tests/", "--cov=networkml/", "--cov-report", "term-missing", "-c", ".coveragerc", "--rabbitmq-port=5672"]
