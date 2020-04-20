@@ -111,3 +111,4 @@ faucet.iml
 *.bak
 
 *gz
+erl_crash.dump

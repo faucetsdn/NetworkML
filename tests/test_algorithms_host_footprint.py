@@ -7,6 +7,13 @@ import pytest
 from networkml.algorithms.host_footprint import HostFootprint
 
 
+def hf_args(tmpdir, operation, input_file):
+    output_json = os.path.join(tmpdir, 'out.json')
+    output_le_json = os.path.join(tmpdir, 'out_le.json')
+    return ['host_footprint.py', '-l', output_le_json, '-t', output_json,
+            '--operation', operation, '--kfolds', '2', input_file]
+
+
 def test_train():
     """Test training function of HostFootprint class"""
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -14,8 +21,7 @@ def test_train():
         shutil.copytree('./tests/test_data', testdata)
         input_file = os.path.join(testdata, 'combined.csv')
         operation = 'train'
-        k_folds = '2'
-        sys.argv = ['host_footprint.py', '--operation', operation, '--kfolds', k_folds, input_file]
+        sys.argv = hf_args(tmpdir, operation, input_file)
         instance = HostFootprint()
         instance.main()
 
@@ -27,12 +33,11 @@ def test_predict():
         shutil.copytree('./tests/test_data', testdata)
         input_file = os.path.join(testdata, 'combined.csv')
         operation = 'train'
-        k_folds = '2'
-        sys.argv = ['host_footprint.py', '--operation', operation, '--kfolds', k_folds, input_file]
+        sys.argv = hf_args(tmpdir, operation, input_file)
         instance = HostFootprint()
         instance.main()
         operation = 'predict'
-        sys.argv = ['host_footprint.py', '--operation', operation, input_file]
+        sys.argv = hf_args(tmpdir, operation, input_file)
         instance = HostFootprint()
         instance.main()
 
@@ -73,7 +78,7 @@ def test_train_bad_data_too_few_columns():
         shutil.copytree('./tests/test_data', testdata)
         input_file = os.path.join(testdata, 'bad_data_too_few_columns.csv')
         operation = 'train'
-        sys.argv = ['host_footprint.py', '--operation', operation, input_file]
+        sys.argv = hf_args(tmpdir, operation, input_file)
         instance = HostFootprint()
         with pytest.raises(Exception):
             instance.main()
