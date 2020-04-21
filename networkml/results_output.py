@@ -8,26 +8,26 @@ import pika
 
 class ResultsOutput:
 
-    HOST = 'messenger'
-    PORT = 5672
-    QUEUE = 'task_queue'
-
     def __init__(self, logger, version, use_rabbit):
         self.logger = logger
         self.version = version
         self.use_rabbit = use_rabbit
+        self.rabbit_host = os.getenv('RABBIT_HOST', 'topic-poseidon-internal')
+        self.rabbit_queue_name = os.getenv('RABBIT_QUEUE_NAME', 'topic-poseidon-internal')
+        self.rabbit_exchange = os.getenv('RABBIT_EXCHANGE', 'topic-poseidon-internal')
+        self.rabbit_port = int(os.getenv('RABBIT_PORT', '5672'))
 
     def connect_rabbit(self):
-        params = pika.ConnectionParameters(host=self.HOST, port=self.PORT)
+        params = pika.ConnectionParameters(host=self.rabbit_host, port=self.rabbit_port)
         connection = pika.BlockingConnection(params)
         channel = connection.channel()
-        channel.queue_declare(queue=self.QUEUE, durable=True)
+        channel.queue_declare(queue=self.rabbit_queue_name, durable=True)
         return channel
 
-    def send_rabbit_msg(self, msg, channel, exchange=''):
+    def send_rabbit_msg(self, msg, channel):
         body = json.dumps(msg)
-        channel.basic_publish(exchange=exchange,
-                              routing_key=self.QUEUE,
+        channel.basic_publish(exchange=self.rabbit_exchange,
+                              routing_key=self.rabbit_queue_name,
                               body=body,
                               properties=pika.BasicProperties(delivery_mode=2))
         self.logger.info('send_rabbit_msg: %s', body)

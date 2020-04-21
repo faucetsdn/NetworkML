@@ -42,15 +42,15 @@ def test_rabbit_smoke_bad():
             ('nosuchthing', 9999),
             ('127.0.0.1', 65537)):
         instance = ResultsOutput(logger, 'testver', True)
-        instance.HOST = badhost
-        instance.PORT = badport
+        instance.rabbit_host = badhost
+        instance.rabbit_port = badport
         instance.output_msg('x', 'y', 'z')
 
 
 def test_rabbit_smoke_good():
     logger = logging.getLogger(__name__)
     instance = ResultsOutput(logger, 'testver', True)
-    instance.HOST = '127.0.0.1'
+    instance.rabbit_host = '127.0.0.1'
     instance.output_msg('x', 'y', 'z')
     instance.output_invalid('1', '/some/file.pcap')
     instance.output_valid('1', '/some/file.pcap', {})
