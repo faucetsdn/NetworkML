@@ -95,7 +95,7 @@ class NetworkML():
             file_path = os.getenv('file_path', 'None')
             results_outputter = ResultsOutput(
                 self.logger, __version__, self.rabbit)
-            results_outputter.output_msg(uid, file_path, result)
+            results_outputter.output_invalid(uid, file_path)
 
     def main(self, raw_args=None):
         parsed_args = NetworkML.parse_args(raw_args=raw_args)
