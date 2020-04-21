@@ -41,7 +41,7 @@ class NetworkML():
                             help='choose which operation task to perform, train or predict (default=predict)')
         parser.add_argument('--output', '-o', default=None,
                             help='directory to write out any results files to')
-        parser.add_argument('--rabbit', '-r', default=True, action='store_true',
+        parser.add_argument('--rabbit', '-r', default=False, action='store_true',
                             help='Send prediction message to RabbitMQ')
         parser.add_argument('--threads', '-t', default=1, type=int,
                             help='number of async threads to use (default=1)')
@@ -87,7 +87,7 @@ class NetworkML():
 
         run_schedule = stages[first_stage_index:(final_stage_index+1)]
         result = self.in_path
-        self.logger.info('running stages: %s', run_schedule)
+        self.logger.info(f'running stages: {run_schedule}')
         for stage in run_schedule:
             runner = stage_runners[stage]
             result = runner(result)

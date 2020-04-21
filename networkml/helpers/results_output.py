@@ -12,9 +12,9 @@ class ResultsOutput:
         self.logger = logger
         self.version = version
         self.use_rabbit = use_rabbit
-        self.rabbit_host = os.getenv('RABBIT_HOST', 'topic-poseidon-internal')
-        self.rabbit_queue_name = os.getenv('RABBIT_QUEUE_NAME', 'topic-poseidon-internal')
-        self.rabbit_exchange = os.getenv('RABBIT_EXCHANGE', 'topic-poseidon-internal')
+        self.rabbit_host = os.getenv('RABBIT_HOST', 'messenger')
+        self.rabbit_queue_name = os.getenv('RABBIT_QUEUE_NAME', 'task_queue')
+        self.rabbit_exchange = os.getenv('RABBIT_EXCHANGE', 'task_queue')
         self.rabbit_port = int(os.getenv('RABBIT_PORT', '5672'))
 
     def connect_rabbit(self):
