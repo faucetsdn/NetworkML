@@ -6,7 +6,7 @@ import time
 
 import humanize
 
-from networkml import __version__, __path__
+from networkml import __version__
 from networkml.algorithms.host_footprint import HostFootprint
 from networkml.featurizers.csv_to_features import CSVToFeatures
 from networkml.parsers.pcap_to_csv import PCAPToCSV
@@ -21,7 +21,6 @@ class NetworkML():
 
     @staticmethod
     def parse_args(raw_args=None):
-        netml_path = list(__path__)
         parser = argparse.ArgumentParser()
         parser.add_argument('path', help='path to a single pcap file, or a directory of pcaps to parse', default='/pcaps')
         parser.add_argument('--algorithm', '-a', choices=[
@@ -49,15 +48,10 @@ class NetworkML():
         parser.add_argument('--verbose', '-v', choices=[
                             'DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO', help='logging level (default=INFO)')
         parser.add_argument('--trained_model',
-                            default=os.path.join(netml_path[0],
-                                                 'trained_models/host_footprint.json'),
                             help='specify a path to load or save trained model')
         parser.add_argument('--label_encoder',
-                            default=os.path.join(netml_path[0],
-                                                 'trained_models/host_footprint_le.json'),
                             help='specify a path to load or save label encoder')
         parser.add_argument('--kfolds',
-                            default=5,
                             help='specify number of folds for k-fold cross validation')
         parsed_args = parser.parse_args(raw_args)
         return parsed_args
@@ -75,9 +69,13 @@ class NetworkML():
         return instance.main()
 
     def run_algorithm_stage(self, in_path):
-        instance = HostFootprint(raw_args=[
-            in_path, '-O', self.operation, '-v', self.log_level,
-            '--trained_model', self.trained_model, '--label_encoder', self.label_encoder, '--kfolds', self.kfolds])
+        raw_args = [in_path, '-O', self.operation, '-v', self.log_level]
+        opt_args = ['trained_model', 'label_encoder', 'kfolds']
+        for opt_arg in opt_args:
+            val = getattr(self, opt_arg, None)
+            if val is not None:
+               raw_args.extend(['--' + opt_arg, str(val)])
+        instance = HostFootprint(raw_args=raw_args)
         return instance.main()
 
     def run_stages(self):

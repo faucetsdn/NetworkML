@@ -86,7 +86,7 @@ class HostFootprint():
                             default='predict',
                             help='choose which operation task to perform, \
                             train or predict (default=predict)')
-        parser.add_argument('--trained_model', '-t',
+        parser.add_argument('--trained_model',
                             default=os.path.join(netml_path[0],
                                                  'trained_models/host_footprint.json'),
                             help='specify a path to load or save trained model')
