@@ -388,6 +388,8 @@ class PCAPToCSV():
             if out_path:
                 if os.path.isdir(out_path):
                     out_paths.append(os.path.join(out_path, os.path.basename(default_out_path)))
+                else:
+                    out_paths.append(out_path)
             else:
                 out_paths.append(default_out_path)
 
