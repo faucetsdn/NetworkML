@@ -56,7 +56,7 @@ class HostBase:
 
     def _numericintset(self, nums):
         if nums is not None:
-            return frozenset(int(x) for x in nums if x is not None and not np.isnan(x))
+            return frozenset(int(x) for x in nums if x is not None and pd.notna(x))
         return frozenset()
 
     def _get_ip(self, row, cols):
@@ -168,17 +168,27 @@ class HostBase:
                 ('nonpriv', self.WK_NONPRIV_TCPUDP_PORTS,
                  src[src > 1023], dst[dst > 1023]),
             ):
-                src_counts = port_src[src.isin(wk_ports)].value_counts()
-                dst_counts = port_dst[dst.isin(wk_ports)].value_counts()
+                src_values = port_src[src.isin(wk_ports)]
+                dst_values = port_dst[dst.isin(wk_ports)]
+                src_counts = {}
+                if not src_values.empty:
+                    src_counts = src_values.value_counts()
+                dst_counts = {}
+                if not dst_values.empty:
+                    dst_counts = dst_values.value_counts()
                 for port in wk_ports:
                     src_count = src_counts.get(port, None)
                     dst_count = dst_counts.get(port, None)
                     mac_row_ports.update({
                         'tshark_%s_%s_packet_ratio_io_port_%s' % (ip_proto, field_name, port): calc_ratio(src_count, dst_count)})
-                src_count = port_src[~port_src.isin(
-                    wk_ports)].value_counts().sum()
-                dst_count = port_dst[~port_dst.isin(
-                    wk_ports)].value_counts().sum()
+                src_values = port_src[~port_src.isin(wk_ports)]
+                src_count = 0
+                if not src_values.empty:
+                    src_count = src_values.value_counts().sum()
+                dst_values = port_dst[~port_dst.isin(wk_ports)]
+                dst_count = 0
+                if not dst_values.empty:
+                    dst_count = dst_values.value_counts().sum()
                 mac_row_ports.update({
                     'tshark_%s_%s_packet_ratio_io_port_%s' % (ip_proto, field_name, 'other'): calc_ratio(src_count, dst_count)})
         return mac_row_ports
@@ -223,7 +233,7 @@ class HostBase:
 
     def _tshark_vlan_id(self, mac_df):
         return {
-            'tshark_tagged_vlan': int(mac_df['vlan.id'].max() > 0)
+            'tshark_tagged_vlan': int(pd.notna(mac_df['vlan.id'].max()))
         }
 
     def _tshark_unique_ips(self, mac, mac_df):
