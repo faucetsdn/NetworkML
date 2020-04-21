@@ -111,6 +111,9 @@ class HostFootprint():
 
         # Load data from host footprint .csv
         df = pd.read_csv(self.path)
+        if 'host_key' in df.columns:
+            df = df.drop(columns=['host_key'])
+        df = df.fillna(0)
 
         # Split dataframe into X (the input features or predictors)
         # and y (the target or outcome or dependent variable)
@@ -176,6 +179,8 @@ class HostFootprint():
 
         # Load data from host footprint .csv
         df = pd.read_csv(self.path)
+        if 'host_key' in df.columns:
+            df = df.drop(columns=['host_key'])
 
         # Split dataframe into X (the input features or predictors)
         # and y (the target or outcome or dependent variable)
