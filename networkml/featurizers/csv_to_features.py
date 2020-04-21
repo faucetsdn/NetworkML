@@ -242,13 +242,16 @@ class CSVToFeatures():
                                     root, pathfile) + '.features.gz')
         else:
             in_paths.append(in_path)
+            default_out_path = in_path + '.features.gz'
+            if gzip_opt in ['neither', 'input']:
+                default_out_path = in_path + '.features'
             if out_path:
-                out_paths.append(out_path)
-            else:
-                if gzip_opt in ['neither', 'input']:
-                    out_paths.append(in_path + '.features')
+                if os.path.isdir(out_path):
+                    out_paths.append(os.path.join(out_path, os.path.basename(default_out_path)))
                 else:
-                    out_paths.append(in_path + '.features.gz')
+                    out_paths.append(out_path)
+            else:
+                out_paths.append(default_out_path)
 
         failed_paths = self.process_files(
             threads, features, features_path, in_paths, out_paths, gzip_opt, srcmacid)

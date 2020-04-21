@@ -383,10 +383,13 @@ class PCAPToCSV():
                                 root, pathfile) + '.csv.gz')
         else:
             in_paths.append(in_path)
+            default_out_path = in_path + '.csv.gz'
+
             if out_path:
-                out_paths.append(out_path)
+                if os.path.isdir(out_path):
+                    out_paths.append(os.path.join(out_path, os.path.basename(default_out_path)))
             else:
-                out_paths.append(in_path + '.csv.gz')
+                out_paths.append(default_out_path)
 
         if level == 'packet' and engine == 'pyshark':
             self.logger.info(
@@ -412,7 +415,9 @@ class PCAPToCSV():
         else:
             self.logger.info(
                 f'GZipped CSV file(s) written out to: {out_paths}')
-            return os.path.dirname(out_paths[0])
+            if len(out_paths) > 1:
+                return os.path.dirname(out_paths[0])
+            return out_paths[0]
 
 
 if __name__ == '__main__':  # pragma: no cover
