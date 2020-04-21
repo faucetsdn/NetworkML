@@ -22,8 +22,7 @@ class NetworkML():
     @staticmethod
     def parse_args(raw_args=None):
         parser = argparse.ArgumentParser()
-        parser.add_argument(
-            'path', help='path to a single pcap file, or a directory of pcaps to parse')
+        parser.add_argument('--path', '-p', help='path to a single pcap file, or a directory of pcaps to parse', default='/pcaps')
         parser.add_argument('--algorithm', '-a', choices=[
                             'host_footprint'], default='host_footprint', help='choose which algorithm to use (default=host_footprint)')
         parser.add_argument('--engine', '-e', choices=['pyshark', 'tshark', 'host'],
@@ -42,7 +41,7 @@ class NetworkML():
                             help='choose which operation task to perform, train or predict (default=predict)')
         parser.add_argument('--output', '-o', default=None,
                             help='directory to write out any results files to')
-        parser.add_argument('--rabbit', '-r', action='store_true',
+        parser.add_argument('--rabbit', '-r', default=True, action='store_true',
                             help='Send prediction message to RabbitMQ')
         parser.add_argument('--threads', '-t', default=1, type=int,
                             help='number of async threads to use (default=1)')
@@ -51,46 +50,50 @@ class NetworkML():
         parsed_args = parser.parse_args(raw_args)
         return parsed_args
 
-    def run_stages(self):
-        invalid_stage_combo = False
-        if self.first_stage == 'parser':
-            instance = PCAPToCSV(raw_args=[self.in_path, '-e', self.engine, '-l', self.level,
-                                           '-o', self.output, '-t', str(self.threads), '-v', self.log_level])
-            result = instance.main()
-            if self.final_stage != 'parser':
-                instance = CSVToFeatures(raw_args=[result, '-c', '-g', self.groups, '-z', self.gzip_opt,
-                                                   '-o', self.output, '-t', str(self.threads), '-v', self.log_level])
-                result = instance.main()
-                if self.final_stage == 'algorithm':
-                    instance = HostFootprint(
-                        raw_args=[result, '-O', self.operation, '-v', self.log_level])
-                    result = instance.main()
-        elif self.first_stage == 'featurizer':
-            if self.final_stage == 'parser':
-                invalid_stage_combo = True
-            else:
-                instance = CSVToFeatures(raw_args=[self.in_path, '-c', '-g', self.groups, '-z',
-                                                   self.gzip_opt, '-o', self.output, '-t', str(self.threads), '-v', self.log_level])
-                result = instance.main()
-                if self.final_stage == 'algorithm':
-                    instance = HostFootprint(
-                        raw_args=[result, '-O', self.operation, '-v', self.log_level])
-                    result = instance.main()
-        elif self.first_stage == 'algorithm':
-            if self.final_stage == 'algorithm':
-                instance = HostFootprint(
-                    raw_args=[self.in_path, '-O', self.operation, '-v', self.log_level])
-                result = instance.main()
-            else:
-                invalid_stage_combo = True
-        else:
-            invalid_stage_combo = True
+    def run_parser_stage(self, in_path):
+        instance = PCAPToCSV(raw_args=[
+            self.in_path, '-e', self.engine, '-l', self.level,
+            '-o', self.output, '-t', str(self.threads), '-v', self.log_level])
+        return instance.main()
 
-        if invalid_stage_combo:
+    def run_featurizer_stage(self, in_path):
+        instance = CSVToFeatures(raw_args=[
+            in_path, '-c', '-g', self.groups, '-z', self.gzip_opt,
+            '-o', self.output, '-t', str(self.threads), '-v', self.log_level])
+        return instance.main()
+
+    def run_algorithm_stage(self, in_path):
+        instance = HostFootprint(raw_args=[
+            in_path, '-O', self.operation, '-v', self.log_level])
+        return instance.main()
+
+    def run_stages(self):
+        stages = ('parser', 'featurizer', 'algorithm')
+        stage_runners = {
+            'parser': self.run_parser_stage,
+            'featurizer': self.run_featurizer_stage,
+            'algorithm': self.run_algorithm_stage}
+
+        try:
+            first_stage_index = stages.index(self.first_stage)
+            final_stage_index = stages.index(self.final_stage)
+        except ValueError:
+            self.logger.error('Unknown first/final stage name')
+            return
+
+        if first_stage_index > final_stage_index:
             self.logger.error('Invalid first and final stage combination')
+            return
+
+        run_schedule = stages[first_stage_index:(final_stage_index+1)]
+        result = self.in_path
+        self.logger.info('running stages: %s', run_schedule)
+        for stage in run_schedule:
+            runner = stage_runners[stage]
+            result = runner(result)
 
         if self.final_stage == 'algorithm' and self.operation == 'predict':
-            # TODO: placeholder - does not yet send valid/invalid results.
+            # TODO: placeholder - does not yet send valid results.
             uid = os.getenv('id', 'None')
             file_path = os.getenv('file_path', 'None')
             results_outputter = ResultsOutput(
