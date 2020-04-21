@@ -22,7 +22,7 @@ class NetworkML():
     @staticmethod
     def parse_args(raw_args=None):
         parser = argparse.ArgumentParser()
-        parser.add_argument('--path', '-p', help='path to a single pcap file, or a directory of pcaps to parse', default='/pcaps')
+        parser.add_argument('path', help='path to a single pcap file, or a directory of pcaps to parse', default='/pcaps')
         parser.add_argument('--algorithm', '-a', choices=[
                             'host_footprint'], default='host_footprint', help='choose which algorithm to use (default=host_footprint)')
         parser.add_argument('--engine', '-e', choices=['pyshark', 'tshark', 'host'],
