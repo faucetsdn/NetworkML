@@ -11,9 +11,9 @@ import numpy as np
 
 import networkml
 from networkml.featurizers.main import Featurizer
-from networkml.gzipio import gzip_reader
-from networkml.gzipio import gzip_writer
-from networkml.pandas_csv_importer import import_csv
+from networkml.helpers.gzipio import gzip_reader
+from networkml.helpers.gzipio import gzip_writer
+from networkml.helpers.pandas_csv_importer import import_csv
 
 
 class CSVToFeatures():

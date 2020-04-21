@@ -6,8 +6,8 @@ import pandas as pd
 from networkml.featurizers.funcs.host import Host
 from networkml.featurizers.funcs.host import HostBase
 from networkml.featurizers.funcs.host import SessionHost
-from networkml.pandas_csv_importer import recast_df
-from networkml.pandas_csv_importer import WS_FIELDS
+from networkml.helpers.pandas_csv_importer import recast_df
+from networkml.helpers.pandas_csv_importer import WS_FIELDS
 
 
 def nan_row_dict(defaults):
