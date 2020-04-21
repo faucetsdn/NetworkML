@@ -14,8 +14,8 @@ from copy import deepcopy
 
 import pyshark
 
-from networkml.gzipio import gzip_reader
-from networkml.gzipio import gzip_writer
+from networkml.helpers.gzipio import gzip_reader
+from networkml.helpers.gzipio import gzip_writer
 
 
 class PCAPToCSV():

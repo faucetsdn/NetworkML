@@ -1,7 +1,7 @@
 import logging
 import time
 
-from networkml.results_output import ResultsOutput
+from networkml.helpers.results_output import ResultsOutput
 
 
 def test_parse_pcap_name():

@@ -10,7 +10,7 @@ from networkml import __version__
 from networkml.algorithms.host_footprint import HostFootprint
 from networkml.featurizers.csv_to_features import CSVToFeatures
 from networkml.parsers.pcap_to_csv import PCAPToCSV
-from networkml.results_output import ResultsOutput
+from networkml.helpers.results_output import ResultsOutput
 
 
 class NetworkML():
