@@ -32,6 +32,12 @@ class HostFootprint():
         self.raw_args = raw_args
 
     @staticmethod
+    def drop_cols(df):
+        # TODO: need host_key and tshark_srcips to send source_ip/source_mac to Poseidon.
+        cols = [col for col in ('host_key', 'tshark_srcips') if col in df.columns]
+        return df.drop(columns=cols)
+
+    @staticmethod
     def serialize_label_encoder(le, path):
         """Serialize label encoder to enable persistence
         without pickling the file. .pkl files are a security
@@ -111,8 +117,7 @@ class HostFootprint():
 
         # Load data from host footprint .csv
         df = pd.read_csv(self.path)
-        if 'host_key' in df.columns:
-            df = df.drop(columns=['host_key'])
+        df = self.drop_cols(df)
         df = df.fillna(0)
 
         # Split dataframe into X (the input features or predictors)
@@ -179,8 +184,7 @@ class HostFootprint():
 
         # Load data from host footprint .csv
         df = pd.read_csv(self.path)
-        if 'host_key' in df.columns:
-            df = df.drop(columns=['host_key'])
+        df = self.drop_cols(df)
 
         # Split dataframe into X (the input features or predictors)
         # and y (the target or outcome or dependent variable)
