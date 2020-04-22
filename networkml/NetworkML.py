@@ -51,6 +51,8 @@ class NetworkML():
                             help='specify a path to load or save trained model')
         parser.add_argument('--label_encoder',
                             help='specify a path to load or save label encoder')
+        parser.add_argument('--scaler',
+                            help='specify a path to load or save scaler')
         parser.add_argument('--kfolds',
                             help='specify number of folds for k-fold cross validation')
         parsed_args = parser.parse_args(raw_args)
@@ -70,7 +72,7 @@ class NetworkML():
 
     def run_algorithm_stage(self, in_path):
         raw_args = [in_path, '-O', self.operation, '-v', self.log_level]
-        opt_args = ['trained_model', 'label_encoder', 'kfolds']
+        opt_args = ['trained_model', 'label_encoder', 'kfolds', 'scaler']
         for opt_arg in opt_args:
             val = getattr(self, opt_arg, None)
             if val is not None:
@@ -128,6 +130,7 @@ class NetworkML():
         self.log_level = parsed_args.verbose
         self.trained_model = parsed_args.trained_model
         self.label_encoder = parsed_args.label_encoder
+        self.scaler = parsed_args.scaler
         self.kfolds = parsed_args.kfolds
 
         log_levels = {'INFO': logging.INFO, 'DEBUG': logging.DEBUG,
