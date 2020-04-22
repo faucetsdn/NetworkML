@@ -73,9 +73,9 @@ class ResultsOutput:
     def results_template(self, file_path, valid, results):
         base_pcap = os.path.basename(file_path)
         pcap_key, _ = self.parse_pcap_name(base_pcap)
-        base_results = {'valid': valid, 'pcap': base_pcap}
+        base_results = {'valid': valid}
         base_results.update(results)
-        return {pcap_key: base_results}
+        return {pcap_key: base_results, 'pcap': base_pcap}
 
     def output_msg(self, uid, file_path, result):
         if not self.use_rabbit:
@@ -94,6 +94,29 @@ class ResultsOutput:
         self.output_msg(
             uid, file_path, self.results_template(file_path, False, {}))
 
-    def output_valid(self, uid, file_path, results):
+    def valid_template(self, timestamp, source_ip, source_mac,
+                       behavior, investigate, labels, confidences,
+                       pcap_labels):
+        return {
+            'decisions': {
+                'behavior': behavior,
+                'investigate': investigate,
+            },
+            'classification': {
+                'labels': labels,
+                'confidences': confidences,
+            },
+            'timestamp': timestamp,
+            'source_ip': source_ip,
+            'source_mac': source_mac,
+            'pcap_labels': pcap_labels,
+        }
+
+    def output_valid(self, uid, file_path, timestamp, source_ip, source_mac,
+                     labels, confidences,
+                     behavior='normal', investigate=False, pcap_labels=None):
         self.output_msg(uid, file_path, self.results_template(
-            file_path, True, results))
+            file_path, True, self.valid_template(
+                timestamp, source_ip, source_mac,
+                behavior, investigate, labels, confidences,
+                pcap_labels)))
