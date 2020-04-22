@@ -62,6 +62,12 @@ def test_lowest_ip_proto_port():
     assert instance._lowest_ip_proto_port(mac_df, 'tcp') == {99}
 
 
+def test_no_ip_tshark_ports():
+    instance = HostBase()
+    mac_df = pd.DataFrame([{'ip.proto': 99}])
+    assert instance._tshark_ports('in', mac_df)
+
+
 def test_tshark_ports():
     instance = HostBase()
     for test_rows, test_output, ratio_output in (
