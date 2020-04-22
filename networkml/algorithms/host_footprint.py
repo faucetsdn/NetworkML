@@ -192,9 +192,10 @@ class HostFootprint():
         filename = df.filename
 
         # Normalize X features before predicting
-        scaler = preprocessing.StandardScaler()
-        scaler_fitted = scaler.fit(X)
-        X = scaler_fitted.transform(X)
+        if len(df) > 1:
+            scaler = preprocessing.StandardScaler()
+            scaler_fitted = scaler.fit(X)
+            X = scaler_fitted.transform(X)
 
         # Get label encoder
         le = HostFootprint.deserialize_label_encoder(self.le_path)
