@@ -6,6 +6,7 @@ import json
 import logging
 import os
 
+import joblib
 import numpy as np
 import pandas as pd
 import sklearn_json as skljson
@@ -88,6 +89,10 @@ class HostFootprint():
                             default=os.path.join(netml_path[0],
                                                  'trained_models/host_footprint_le.json'),
                             help='specify a path to load or save label encoder')
+        parser.add_argument('--scaler',
+                            default=os.path.join(netml_path[0],
+                                                 'trained_models/host_footprint_scaler.mod'),
+                            help='specify a path to load or save scaler')
         parser.add_argument('--operation', '-O', choices=['train', 'predict'],
                             default='predict',
                             help='choose which operation task to perform, \
@@ -169,6 +174,7 @@ class HostFootprint():
 
         # Save model to JSON
         skljson.to_json(self.model, self.model_path)
+        joblib.dump(scaler, self.scaler)
 
     def predict(self):
         """
@@ -196,9 +202,8 @@ class HostFootprint():
         filename = df.filename
 
         # Normalize X features before predicting
-        scaler = preprocessing.StandardScaler()
-        scaler_fitted = scaler.fit(X)
-        X = scaler_fitted.transform(X)
+        scaler = joblib.load(self.scaler)
+        X = scaler.transform(X)
 
         # Get label encoder
         le = HostFootprint.deserialize_label_encoder(self.le_path)
@@ -369,6 +374,7 @@ class HostFootprint():
         self.path = parsed_args.path
         self.model_path = parsed_args.trained_model
         self.le_path = parsed_args.label_encoder
+        self.scaler = parsed_args.scaler
         self.kfolds = int(parsed_args.kfolds)
         operation = parsed_args.operation
         log_level = parsed_args.verbose
