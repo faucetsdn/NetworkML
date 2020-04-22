@@ -94,7 +94,8 @@ class ResultsOutput:
         self.output_msg(
             uid, file_path, self.results_template(file_path, False, {}))
 
-    def valid_template(self, timestamp, source_ip, source_mac,
+    @staticmethod
+    def valid_template(timestamp, source_ip, source_mac,
                        behavior, investigate, labels, confidences,
                        pcap_labels):
         return {

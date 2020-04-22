@@ -31,7 +31,8 @@ class HostFootprint():
         self.logger = logging.getLogger(__name__)
         self.raw_args = raw_args
 
-    def drop_cols(self, df):
+    @staticmethod
+    def drop_cols(df):
         # TODO: need host_key and tshark_srcips to send source_ip/source_mac to Poseidon.
         cols = [col for col in ('host_key', 'tshark_srcips') if col in df.columns]
         return df.drop(columns=cols)
