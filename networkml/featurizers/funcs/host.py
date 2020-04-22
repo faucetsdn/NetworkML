@@ -241,9 +241,12 @@ class HostBase:
         }
 
     def _tshark_unique_ips(self, mac, mac_df):
+        srcips = mac_df[mac_df['eth.src'] == mac]['_srcip']
+        dstips = mac_df[mac_df['eth.src'] == mac]['_dstip']
         return {
-            'tshark_unique_srcips': mac_df[mac_df['eth.src'] == mac]['_srcip'].nunique(),
-            'tshark_unique_dstips': mac_df[mac_df['eth.src'] == mac]['_dstip'].nunique(),
+            'tshark_srcips': list(set(srcips.unique().tolist()) - {'None'}),
+            'tshark_unique_srcips': srcips.nunique(),
+            'tshark_unique_dstips': dstips.nunique(),
         }
 
     def _calc_cols(self, mac, mac_df):
