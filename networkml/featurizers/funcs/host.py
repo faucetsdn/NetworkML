@@ -156,17 +156,22 @@ class HostBase:
                     packet_ratio = 1
             return packet_ratio
 
+
         for ip_proto_num, ip_proto in TCP_UDP_PROTOS.items():
             proto_df = mac_df[mac_df['ip.proto']==ip_proto_num]
-            lowest_ports = self._lowest_ip_proto_port(proto_df, ip_proto)
-            src = proto_df['%s.srcport' % ip_proto]
-            dst = proto_df['%s.dstport' % ip_proto]
+            src = pd.DataFrame(columns=['%s.srcport' % ip_proto])
+            dst = pd.DataFrame(columns=['%s.dstport' % ip_proto])
+            if not proto_df.empty:
+                try:
+                    src = proto_df['%s.srcport' % ip_proto]
+                    dst = proto_df['%s.dstport' % ip_proto]
+                except KeyError:
+                    pass
             for field_name, wk_ports, port_src, port_dst in (
                 ('priv', self.WK_PRIV_TCPUDP_PORTS,
                  src[src <= 1023], dst[dst <= 1023]),
                 ('nonpriv', self.WK_NONPRIV_TCPUDP_PORTS,
-                 src[src > 1023], dst[dst > 1023]),
-            ):
+                 src[src > 1023], dst[dst > 1023])):
                 src_values = port_src[src.isin(wk_ports)]
                 dst_values = port_dst[dst.isin(wk_ports)]
                 src_counts = {}

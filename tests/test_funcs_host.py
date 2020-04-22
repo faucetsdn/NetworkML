@@ -66,6 +66,7 @@ def test_no_ip_tshark_ports():
     instance = HostBase()
     mac_df = pd.DataFrame([{'ip.proto': 99}])
     assert instance._tshark_ports('in', mac_df)
+    assert instance._tshark_ratio_ports(mac_df)
 
 
 def test_tshark_ports():
