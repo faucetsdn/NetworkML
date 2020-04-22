@@ -11,7 +11,8 @@ from networkml.algorithms.host_footprint import HostFootprint
 def hf_args(tmpdir, operation, input_file):
     output_json = os.path.join(tmpdir, 'out.json')
     output_le_json = os.path.join(tmpdir, 'out_le.json')
-    return ['host_footprint.py', '-l', output_le_json, '-t', output_json,
+    return ['host_footprint.py', '--label_encoder', output_le_json,
+            '--trained_model', output_json,
             '--operation', operation, '--kfolds', '2', input_file]
 
 
