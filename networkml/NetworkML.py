@@ -55,6 +55,8 @@ class NetworkML():
                             help='specify a path to load or save scaler')
         parser.add_argument('--kfolds',
                             help='specify number of folds for k-fold cross validation')
+        parser.add_argument('--test_data',
+                            help='path to test csv file, if training')
         parsed_args = parser.parse_args(raw_args)
         return parsed_args
 
@@ -72,7 +74,7 @@ class NetworkML():
 
     def run_algorithm_stage(self, in_path):
         raw_args = [in_path, '-O', self.operation, '-v', self.log_level]
-        opt_args = ['trained_model', 'label_encoder', 'kfolds', 'scaler']
+        opt_args = ['trained_model', 'label_encoder', 'kfolds', 'scaler', 'test_data']
         for opt_arg in opt_args:
             val = getattr(self, opt_arg, None)
             if val is not None:
@@ -106,6 +108,9 @@ class NetworkML():
             result = runner(result)
 
         if self.final_stage == 'algorithm' and self.operation == 'predict':
+            result_json_file = os.path.join(self.output, 'predict.json')
+            with open(result_json_file, 'w') as result_json:
+                result_json.write(result)
             # TODO: placeholder - does not yet send valid results.
             uid = os.getenv('id', 'None')
             file_path = os.getenv('file_path', 'None')
@@ -132,6 +137,7 @@ class NetworkML():
         self.label_encoder = parsed_args.label_encoder
         self.scaler = parsed_args.scaler
         self.kfolds = parsed_args.kfolds
+        self.test_data = parsed_args.test_data
 
         log_levels = {'INFO': logging.INFO, 'DEBUG': logging.DEBUG,
                       'WARNING': logging.WARNING, 'ERROR': logging.ERROR}
