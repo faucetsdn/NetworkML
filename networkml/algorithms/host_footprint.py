@@ -152,9 +152,9 @@ class HostFootprint():
         return (X, y)
 
     def compare_test_data(self, model, scaler, label_encoder, test_data):
-        X_test, y_test = self._get_test_train_csv(test_data)
+        X_test, y_true = self._get_test_train_csv(test_data)
         X_test = scaler.transform(X_test)
-        y_test = label_encoder.transform(y_test)
+        y_true = label_encoder.transform(y_true)
         y_pred = model.predict(X_test)
 
         for metric, name in (
@@ -163,13 +163,13 @@ class HostFootprint():
                 (recall_score, 'recall'),
                 (f1_score, 'f1')):
             if metric == accuracy_score:
-                val = metric(y_test, y_pred)
+                val = metric(y_true, y_pred)
             else:
-                val = metric(y_test, y_pred, average='weighted')
+                val = metric(y_true, y_pred, average='weighted')
             val = np.round(val, 4)
             self.logger.info(f'{name}: {val}')
 
-        conf_matrix = confusion_matrix(y_test, y_pred)
+        conf_matrix = confusion_matrix(y_true, y_pred)
         self.logger.info(conf_matrix)
         self.logger.info(label_encoder.classes_.tolist())
 
