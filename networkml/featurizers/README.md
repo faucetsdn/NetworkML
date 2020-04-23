@@ -1,6 +1,6 @@
 # Features in NetworkML Models
 
-Machine learning models require inputs (or "features" in the language of machine learning practitioners.) NetworkML, a machine learning model that operates on network traffic, is no different. This readme describes the features that networkML can create and can therefore be included in NetworkML's models.
+Machine learning models require inputs (or "features" in the language of machine learning practitioners.) NetworkML, a machine learning model that operates on network traffic, is no different. This readme describes the features that networkML can create and can therefore be included in NetworkML's models. All features can either be created for each host present, which therefore creates a numeric representation of all the traffic flowing into and out of a host, or for each session, which describes a particular data exchange for two hosts defined by a 5-tuple of source and destinatio IP's, source and destination ports, and protocol.
 
 A key at the bottom of this page explains the symbols associated with each feature set.
 
