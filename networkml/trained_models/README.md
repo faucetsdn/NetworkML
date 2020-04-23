@@ -24,3 +24,5 @@ Currently one model is defined, depending upon the Host() featurizer. It was gen
 ~~~~
 networkml --first_stage=algorithm --final_stage=algorithm --trained_model=networkml/trained_models/host_footprint.json --label_encoder=networkml/trained_models/host_footprint_le.json --operation train --kfolds 5 ~/tmp/combined-host-ratios-041020.gz
 ~~~~
+
+Note: Our stored model uses all available features.
