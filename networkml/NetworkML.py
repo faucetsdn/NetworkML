@@ -62,7 +62,7 @@ class NetworkML():
 
     def run_parser_stage(self, in_path):
         instance = PCAPToCSV(raw_args=[
-            self.in_path, '-e', self.engine, '-l', self.level,
+            in_path, '-e', self.engine, '-l', self.level,
             '-o', self.output, '-t', str(self.threads), '-v', self.log_level])
         return instance.main()
 
@@ -78,7 +78,7 @@ class NetworkML():
         for opt_arg in opt_args:
             val = getattr(self, opt_arg, None)
             if val is not None:
-               raw_args.extend(['--' + opt_arg, str(val)])
+                raw_args.extend(['--' + opt_arg, str(val)])
         instance = HostFootprint(raw_args=raw_args)
         return instance.main()
 
@@ -108,9 +108,10 @@ class NetworkML():
             result = runner(result)
 
         if self.final_stage == 'algorithm' and self.operation == 'predict':
-            result_json_file = os.path.join(self.output, 'predict.json')
-            with open(result_json_file, 'w') as result_json:
-                result_json.write(result)
+            if self.output and os.path.exists(self.output):
+                result_json_file = os.path.join(self.output, 'predict.json')
+                with open(result_json_file, 'w') as result_json:
+                    result_json.write(result)
             # TODO: placeholder - does not yet send valid results.
             uid = os.getenv('id', 'None')
             file_path = os.getenv('file_path', 'None')
