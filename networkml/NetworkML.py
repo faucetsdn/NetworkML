@@ -55,8 +55,8 @@ class NetworkML():
                             help='specify a path to load or save scaler')
         parser.add_argument('--kfolds',
                             help='specify number of folds for k-fold cross validation')
-        parser.add_argument('--test_data',
-                            help='path to test csv file, if training')
+        parser.add_argument('--eval_data',
+                            help='path to eval CSV file, if training')
         parser.add_argument('--train_unknown',
                             help='Train on unknown roles')
         parsed_args = parser.parse_args(raw_args)
@@ -76,7 +76,7 @@ class NetworkML():
 
     def run_algorithm_stage(self, in_path):
         raw_args = [in_path, '-O', self.operation, '-v', self.log_level]
-        opt_args = ['trained_model', 'label_encoder', 'kfolds', 'scaler', 'test_data', 'train_unknown']
+        opt_args = ['trained_model', 'label_encoder', 'kfolds', 'scaler', 'eval_data', 'train_unknown']
         for opt_arg in opt_args:
             val = getattr(self, opt_arg, None)
             if val is not None:

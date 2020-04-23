@@ -109,8 +109,8 @@ class HostFootprint():
         netml_path = list(networkml.__path__)
         parser = argparse.ArgumentParser()
         parser.add_argument('path', help='path to a single csv file')
-        parser.add_argument('--test_data',
-                            help='path to test csv file, if training')
+        parser.add_argument('--eval_data',
+                            help='path to eval CSV file, if training')
         parser.add_argument('--kfolds', '-k',
                             default=5,
                             help='specify number of folds for k-fold cross validation')
@@ -154,8 +154,8 @@ class HostFootprint():
         X = self.string_feature_check(X)
         return (X, y)
 
-    def compare_test_data(self, model, scaler, label_encoder, test_data, train_unknown):
-        X_test, y_true = self._get_test_train_csv(test_data, train_unknown)
+    def summarize_eval_data(self, model, scaler, label_encoder, eval_data, train_unknown):
+        X_test, y_true = self._get_test_train_csv(eval_data, train_unknown)
         X_test = scaler.transform(X_test)
         y_true = label_encoder.transform(y_true)
         y_pred = model.predict(X_test)
@@ -222,8 +222,8 @@ class HostFootprint():
         # optimization process
         self.model = clf.fit(X, y).best_estimator_
 
-        if self.test_data:
-            self.compare_test_data(self.model, scaler, le, self.test_data, self.train_unknown)
+        if self.eval_data:
+            self.summarize_eval_data(self.model, scaler, le, self.eval_data, self.train_unknown)
 
         # Save model to JSON
         self.serialize_model(self.model, self.model_path)
@@ -387,7 +387,7 @@ class HostFootprint():
         # Collect command line arguments
         parsed_args = HostFootprint.parse_args(raw_args=self.raw_args)
         self.path = parsed_args.path
-        self.test_data = parsed_args.test_data
+        self.eval_data = parsed_args.eval_data
         self.model_path = parsed_args.trained_model
         self.le_path = parsed_args.label_encoder
         self.scaler = parsed_args.scaler
