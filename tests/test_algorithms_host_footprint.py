@@ -1,18 +1,59 @@
+import json
 import os
 import shutil
 import sys
 import tempfile
 
 import pytest
-
+from sklearn import preprocessing
+from sklearn.preprocessing import StandardScaler
 from networkml.algorithms.host_footprint import HostFootprint
+
+
+def test_serialize_scaler():
+    instance = HostFootprint()
+    scaler = StandardScaler()
+    test_data = [[i, i] for i in range(99)]
+    scaler.fit(test_data)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        scaler_file = os.path.join(tmpdir, 'scaler.mod')
+        instance.serialize_scaler(scaler, scaler_file)
+        new_scaler = instance.deserialize_scaler(scaler_file)
+        assert len(scaler.mean_) == 2
+        assert scaler.mean_.tolist() == new_scaler.mean_.tolist()
+
+
+def test_serialize_label_encoder():
+    instance = HostFootprint()
+    le_classes = ['printer', 'workstation', 'server']
+    le = preprocessing.LabelEncoder()
+    le.fit(le_classes)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        le_file = os.path.join(tmpdir, 'le.json')
+        instance.serialize_label_encoder(le, le_file)
+        new_le = instance.deserialize_label_encoder(le_file)
+        assert le.classes_.tolist() == new_le.classes_.tolist()
+        assert new_le.inverse_transform(le.transform(le_classes)).tolist() == le_classes
+
+
+def test_get_individual_predictions():
+   le_classes = ['asomething', 'bsomething']
+   le = preprocessing.LabelEncoder()
+   le.fit(le_classes)
+   filename = ['firstfile']
+   instance = HostFootprint()
+   assert instance.get_individual_predictions([[0.6, 0.7]], le, filename) == {
+        'firstfile': {'top_role': 'bsomething', 'role_list': [('bsomething', 0.7), ('asomething', 0.6)]}}
+   assert instance.get_individual_predictions([[0.2, 0.1]], le, filename) == {
+        'firstfile': {'top_role': 'Unknown', 'role_list': [('asomething', 0.2), ('bsomething', 0.1)]}}
 
 
 def hf_args(tmpdir, operation, input_file):
     output_json = os.path.join(tmpdir, 'out.json')
     output_le_json = os.path.join(tmpdir, 'out_le.json')
+    scaler_mod = os.path.join(tmpdir, 'scaler.mod')
     return ['host_footprint.py', '--label_encoder', output_le_json,
-            '--trained_model', output_json,
+            '--trained_model', output_json, '--scaler', scaler_mod,
             '--operation', operation, '--kfolds', '2', input_file]
 
 
@@ -55,18 +96,15 @@ def test_predict_num_roles():
         for file in ['combined_three_roles.csv', 'combined_two_roles.csv']:
             input_file = os.path.join(testdata, file)
             operation = 'train'
-            k_folds = '2'
-            sys.argv = ['host_footprint.py', '--operation',
-                        operation, '--kfolds', k_folds, input_file]
+            sys.argv = hf_args(tmpdir, operation, input_file)
             instance = HostFootprint()
             instance.main()
             operation = 'predict'
-            sys.argv = ['host_footprint.py',
-                        '--operation', operation, input_file]
+            sys.argv = hf_args(tmpdir, operation, input_file)
             instance = HostFootprint()
             instance.main()
 
-            predictions = instance.predict()
+            predictions = json.loads(instance.predict())
             assert isinstance(predictions, dict)
             # Check if number of predictions is correct
             if file == 'combined_three_roles.csv':

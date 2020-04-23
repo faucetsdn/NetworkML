@@ -37,7 +37,7 @@ class NetworkML():
                             help='use gzip between stages, useful when not using all 3 stages (default=both)')
         parser.add_argument('--level', '-l', choices=['packet', 'flow', 'host'],
                             default='packet', help='level to make the output records (default=packet)')
-        parser.add_argument('--operation', '-O', choices=['train', 'predict'], default='predict',
+        parser.add_argument('--operation', '-O', choices=['train', 'predict', 'eval'], default='predict',
                             help='choose which operation task to perform, train or predict (default=predict)')
         parser.add_argument('--output', '-o', default=None,
                             help='directory to write out any results files to')
@@ -55,12 +55,16 @@ class NetworkML():
                             help='specify a path to load or save scaler')
         parser.add_argument('--kfolds',
                             help='specify number of folds for k-fold cross validation')
+        parser.add_argument('--eval_data',
+                            help='path to eval CSV file, if training')
+        parser.add_argument('--train_unknown',
+                            help='Train on unknown roles')
         parsed_args = parser.parse_args(raw_args)
         return parsed_args
 
     def run_parser_stage(self, in_path):
         instance = PCAPToCSV(raw_args=[
-            self.in_path, '-e', self.engine, '-l', self.level,
+            in_path, '-e', self.engine, '-l', self.level,
             '-o', self.output, '-t', str(self.threads), '-v', self.log_level])
         return instance.main()
 
@@ -72,11 +76,11 @@ class NetworkML():
 
     def run_algorithm_stage(self, in_path):
         raw_args = [in_path, '-O', self.operation, '-v', self.log_level]
-        opt_args = ['trained_model', 'label_encoder', 'kfolds', 'scaler']
+        opt_args = ['trained_model', 'label_encoder', 'kfolds', 'scaler', 'eval_data', 'train_unknown']
         for opt_arg in opt_args:
             val = getattr(self, opt_arg, None)
             if val is not None:
-               raw_args.extend(['--' + opt_arg, str(val)])
+                raw_args.extend(['--' + opt_arg, str(val)])
         instance = HostFootprint(raw_args=raw_args)
         return instance.main()
 
@@ -106,6 +110,13 @@ class NetworkML():
             result = runner(result)
 
         if self.final_stage == 'algorithm' and self.operation == 'predict':
+            if self.output:
+                if os.path.isdir(self.output):
+                    result_json_file = os.path.join(self.output, 'predict.json')
+                else:
+                    result_json_file = self.output
+                with open(result_json_file, 'w') as result_json:
+                    result_json.write(result)
             # TODO: placeholder - does not yet send valid results.
             uid = os.getenv('id', 'None')
             file_path = os.getenv('file_path', 'None')
@@ -132,6 +143,7 @@ class NetworkML():
         self.label_encoder = parsed_args.label_encoder
         self.scaler = parsed_args.scaler
         self.kfolds = parsed_args.kfolds
+        self.eval_data = parsed_args.eval_data
 
         log_levels = {'INFO': logging.INFO, 'DEBUG': logging.DEBUG,
                       'WARNING': logging.WARNING, 'ERROR': logging.ERROR}

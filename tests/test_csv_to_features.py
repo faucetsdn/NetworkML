@@ -54,7 +54,9 @@ def test_CSVToFeatures_no_group_or_func():
 def test_CSVToFeatures_dir():
     with tempfile.TemporaryDirectory() as tmpdir:
         foo2 = os.path.join(tmpdir, 'foo2')
-        sys.argv = P2CARGS + ['-o', foo2, './tests']
+        testsdir = os.path.join(tmpdir, 'tests')
+        shutil.copytree('tests', testsdir)
+        sys.argv = P2CARGS + ['-o', foo2, testsdir]
         instance = PCAPToCSV()
         instance.main()
         sys.argv = C2FARGS + ['-t', '2', foo2]
@@ -66,7 +68,9 @@ def test_CSVToFeatures_dir_output():
     with tempfile.TemporaryDirectory() as tmpdir:
         foo2 = os.path.join(tmpdir, 'foo2')
         foo2out = os.path.join(tmpdir, 'foo2_output')
-        sys.argv = P2CARGS + ['-o', foo2, './tests']
+        testsdir = os.path.join(tmpdir, 'tests')
+        shutil.copytree('tests', testsdir)
+        sys.argv = P2CARGS + ['-o', foo2, testsdir]
         instance = PCAPToCSV()
         instance.main()
         sys.argv = C2FARGS + ['-t', '2', '-o', foo2out, foo2]
@@ -77,7 +81,9 @@ def test_CSVToFeatures_dir_output():
 def test_CSVToFeatures_host():
     with tempfile.TemporaryDirectory() as tmpdir:
         foo3 = os.path.join(tmpdir, 'foo3')
-        sys.argv = P2CARGS + ['-o', foo3, './tests']
+        testsdir = os.path.join(tmpdir, 'tests')
+        shutil.copytree('tests', testsdir)
+        sys.argv = P2CARGS + ['-o', foo3, testsdir]
         instance = PCAPToCSV()
         instance.main()
         sys.argv = ['csv_to_features.py', '-c', '-z',
