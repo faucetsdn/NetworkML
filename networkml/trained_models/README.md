@@ -38,6 +38,13 @@ This test CSV would typically be the result of a 20/80 split of the original fea
 (20% as test_host.csv, 80% as train_host.csv).
 
 
+You can also evalulate an existing trained model without retraining:
+
+~~~~
+networkml --first_stage=algorithm --final_stage=algorithm --operation eval ~/tmp/test_host.csv
+~~~~
+
+
 A pcap prediction against an existing model in the default location can be done by:
 
 ~~~~

@@ -37,7 +37,7 @@ class NetworkML():
                             help='use gzip between stages, useful when not using all 3 stages (default=both)')
         parser.add_argument('--level', '-l', choices=['packet', 'flow', 'host'],
                             default='packet', help='level to make the output records (default=packet)')
-        parser.add_argument('--operation', '-O', choices=['train', 'predict'], default='predict',
+        parser.add_argument('--operation', '-O', choices=['train', 'predict', 'eval'], default='predict',
                             help='choose which operation task to perform, train or predict (default=predict)')
         parser.add_argument('--output', '-o', default=None,
                             help='directory to write out any results files to')
@@ -143,7 +143,7 @@ class NetworkML():
         self.label_encoder = parsed_args.label_encoder
         self.scaler = parsed_args.scaler
         self.kfolds = parsed_args.kfolds
-        self.test_data = parsed_args.test_data
+        self.eval_data = parsed_args.eval_data
 
         log_levels = {'INFO': logging.INFO, 'DEBUG': logging.DEBUG,
                       'WARNING': logging.WARNING, 'ERROR': logging.ERROR}

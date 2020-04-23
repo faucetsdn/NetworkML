@@ -122,7 +122,7 @@ class HostFootprint():
                             default=os.path.join(netml_path[0],
                                                  'trained_models/host_footprint_scaler.mod'),
                             help='specify a path to load or save scaler')
-        parser.add_argument('--operation', '-O', choices=['train', 'predict'],
+        parser.add_argument('--operation', '-O', choices=['train', 'predict', 'eval'],
                             default='predict',
                             help='choose which operation task to perform, \
                             train or predict (default=predict)')
@@ -175,6 +175,15 @@ class HostFootprint():
         conf_matrix = confusion_matrix(y_true, y_pred)
         self.logger.info(conf_matrix)
         self.logger.info(label_encoder.classes_.tolist())
+
+    def eval(self):
+        """
+        Accept CSV and summarize based on already trained model.
+        """
+        scaler = self.deserialize_scaler(self.scaler)
+        le = self.deserialize_label_encoder(self.le_path)
+        self.model = self.deserialize_model(self.model_path)
+        self.summarize_eval_data(self.model, scaler, le, self.path, self.train_unknown)
 
     def train(self):
         """
@@ -413,6 +422,8 @@ class HostFootprint():
             role_prediction = self.predict()
             self.logger.info(f'{role_prediction}')
             return role_prediction
+        if operation == 'eval':
+            return self.eval()
         return None
 
 
