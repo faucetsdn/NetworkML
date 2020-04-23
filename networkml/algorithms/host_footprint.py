@@ -176,14 +176,14 @@ class HostFootprint():
         self.logger.info(conf_matrix)
         self.logger.info(label_encoder.classes_.tolist())
 
-    def eval(self):
+    def eval(self, path, scaler_path, le_path, model_path, train_unknown):
         """
         Accept CSV and summarize based on already trained model.
         """
-        scaler = self.deserialize_scaler(self.scaler)
-        le = self.deserialize_label_encoder(self.le_path)
-        self.model = self.deserialize_model(self.model_path)
-        self.summarize_eval_data(self.model, scaler, le, self.path, self.train_unknown)
+        scaler = self.deserialize_scaler(scaler_path)
+        le = self.deserialize_label_encoder(le_path)
+        self.model = self.deserialize_model(model_path)
+        self.summarize_eval_data(self.model, scaler, le, path, train_unknown)
 
     def train(self):
         """
@@ -210,9 +210,6 @@ class HostFootprint():
         le = preprocessing.LabelEncoder()
         y = le.fit_transform(y)
 
-        # Save label encoder
-        self.serialize_label_encoder(le, self.le_path)
-
         # Instantiate neural network model
         # MLP = multi-layer perceptron
         model = MLPClassifier()
@@ -231,12 +228,14 @@ class HostFootprint():
         # optimization process
         self.model = clf.fit(X, y).best_estimator_
 
-        if self.eval_data:
-            self.summarize_eval_data(self.model, scaler, le, self.eval_data, self.train_unknown)
-
         # Save model to JSON
         self.serialize_model(self.model, self.model_path)
         self.serialize_scaler(scaler, self.scaler)
+        self.serialize_label_encoder(le, self.le_path)
+
+        if self.eval_data:
+            self.summarize_eval_data(self.model, self.scaler, self.le_path, self.eval_data, self.train_unknown)
+
 
     def predict(self):
         """
@@ -423,7 +422,7 @@ class HostFootprint():
             self.logger.info(f'{role_prediction}')
             return role_prediction
         if operation == 'eval':
-            return self.eval()
+            return self.eval(self.path, self.scaler, self.le_path, self.model_path, self.train_unknown)
         return None
 
 
