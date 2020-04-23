@@ -134,10 +134,12 @@ class HostFootprint():
                             choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
                             default='INFO',
                             help='logging level (default=INFO)')
+        parser.add_argument('--train_unknown', default=False, action='store_true',
+                            help='Train on unknown roles')
         parsed_args = parser.parse_args(raw_args)
         return parsed_args
 
-    def _get_test_train_csv(self, path):
+    def _get_test_train_csv(self, path, train_unknown):
         df = pd.read_csv(path)
         df = self.reorder_drop_cols(df)
         df = df.fillna(0)
@@ -145,14 +147,15 @@ class HostFootprint():
         # and y (the target or outcome or dependent variable)
         df['role'] = df.filename.str.split('-').str[0]
         # Drop unknown roles.
-        df = df[df['role'] != 'Unknown']
+        if not train_unknown:
+            df = df[df['role'] != 'Unknown']
         X = df.drop(['filename', 'role'], axis=1)
         y = df.role
         X = self.string_feature_check(X)
         return (X, y)
 
-    def compare_test_data(self, model, scaler, label_encoder, test_data):
-        X_test, y_true = self._get_test_train_csv(test_data)
+    def compare_test_data(self, model, scaler, label_encoder, test_data, train_unknown):
+        X_test, y_true = self._get_test_train_csv(test_data, train_unknown)
         X_test = scaler.transform(X_test)
         y_true = label_encoder.transform(y_true)
         y_pred = model.predict(X_test)
@@ -184,7 +187,7 @@ class HostFootprint():
         group has done experiments with different models and hyperparameter
         optimization.
         """
-        X, y = self._get_test_train_csv(self.path)
+        X, y = self._get_test_train_csv(self.path, self.train_unknown)
 
         unique_roles = sorted(y.unique())
         self.logger.info(f'inferring roles {unique_roles}')
@@ -220,7 +223,7 @@ class HostFootprint():
         self.model = clf.fit(X, y).best_estimator_
 
         if self.test_data:
-            self.compare_test_data(self.model, scaler, le, self.test_data)
+            self.compare_test_data(self.model, scaler, le, self.test_data, self.train_unknown)
 
         # Save model to JSON
         self.serialize_model(self.model, self.model_path)
@@ -389,6 +392,7 @@ class HostFootprint():
         self.le_path = parsed_args.label_encoder
         self.scaler = parsed_args.scaler
         self.kfolds = int(parsed_args.kfolds)
+        self.train_unknown = parsed_args.train_unknown
         operation = parsed_args.operation
         log_level = parsed_args.verbose
 
@@ -399,6 +403,8 @@ class HostFootprint():
 
         # Basic execution logic
         if operation == 'train':
+            if not self.train_unknown:
+                self.logger.info(f'Role Unknown will be dropped from training data')
             self.train()
             self.logger.info(f'Saved model to: {self.model_path}')
             self.logger.info(f'Saved label encoder to: {self.le_path}')

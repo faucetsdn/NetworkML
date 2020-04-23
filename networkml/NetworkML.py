@@ -57,6 +57,8 @@ class NetworkML():
                             help='specify number of folds for k-fold cross validation')
         parser.add_argument('--test_data',
                             help='path to test csv file, if training')
+        parser.add_argument('--train_unknown',
+                            help='Train on unknown roles')
         parsed_args = parser.parse_args(raw_args)
         return parsed_args
 
@@ -74,7 +76,7 @@ class NetworkML():
 
     def run_algorithm_stage(self, in_path):
         raw_args = [in_path, '-O', self.operation, '-v', self.log_level]
-        opt_args = ['trained_model', 'label_encoder', 'kfolds', 'scaler', 'test_data']
+        opt_args = ['trained_model', 'label_encoder', 'kfolds', 'scaler', 'test_data', 'train_unknown']
         for opt_arg in opt_args:
             val = getattr(self, opt_arg, None)
             if val is not None:
@@ -108,8 +110,11 @@ class NetworkML():
             result = runner(result)
 
         if self.final_stage == 'algorithm' and self.operation == 'predict':
-            if self.output and os.path.exists(self.output):
-                result_json_file = os.path.join(self.output, 'predict.json')
+            if self.output:
+                if os.path.isdir(self.output):
+                    result_json_file = os.path.join(self.output, 'predict.json')
+                else:
+                    result_json_file = self.output
                 with open(result_json_file, 'w') as result_json:
                     result_json.write(result)
             # TODO: placeholder - does not yet send valid results.
