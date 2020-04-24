@@ -131,7 +131,7 @@ class ResultsOutput:
             if top_role is None:
                 self.output_invalid(uid, file_path)
                 continue
-            investigate = top_role == 'Unknown':
+            investigate = top_role == 'Unknown'
             source_ip = host_result.get('source_ip', None)
             source_mac = host_result.get('source_mac', None)
             labels, confidences = zip(*host_result['role_list'])
