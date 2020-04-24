@@ -113,7 +113,7 @@ class NetworkML():
                 result = runner(result)
             run_complete = True
         except Exception as err:
-            logging.error('Could not run stage: {err}')
+            logging.error(f'Could not run stage: {err}')
 
         uid = os.getenv('id', 'None')
         file_path = os.getenv('file_path', self.in_path)
