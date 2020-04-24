@@ -83,13 +83,13 @@ class ResultsOutput:
             return
 
         try:
-            channel = self.connect_rabbit()
             msg = self.rabbit_msg_template(uid, file_path, result)
+            channel = self.connect_rabbit()
             self.send_rabbit_msg(msg, channel)
             msg = self.rabbit_msg_template(uid, file_path, '')
             self.send_rabbit_msg(msg, channel)
         except (socket.gaierror, pika.exceptions.AMQPConnectionError) as err:
-            self.logger.error(f'Failed to send Rabbit message {result} because: {err}')
+            self.logger.error(f'Failed to send Rabbit message {msg} because: {err}')
 
     def output_invalid(self, uid, file_path):
         self.output_msg(
