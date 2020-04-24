@@ -131,7 +131,7 @@ class NetworkML():
                         result_json.write(result)
             results_outputter.output_from_result_json(uid, file_path, result)
         else:
-            results_outputter.output_invalid(uid, file_path)
+            results_outputter.output_invalid(uid, file_path, file_path)
 
     def main(self, raw_args=None):
         parsed_args = NetworkML.parse_args(raw_args=raw_args)
