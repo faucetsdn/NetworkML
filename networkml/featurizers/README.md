@@ -4,7 +4,7 @@ Machine learning models require inputs (or "features" in the language of machine
 
 A key at the bottom of this page explains the symbols associated with each feature set.
 
-## Protocol-Specific Features
+## IP Protocol-Specific Features
 
 IPv4 (b)
 
