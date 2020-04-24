@@ -54,5 +54,5 @@ def test_rabbit_smoke_good():
     instance = ResultsOutput(logger, 'testver', True)
     instance.rabbit_host = '127.0.0.1'
     instance.output_msg('x', 'y', 'z')
-    instance.output_invalid('1', '/some/file.pcap')
-    instance.output_valid('1', '/some/file.pcap', 99.0, '1.2.3.4', '0e:00:00:00:00:01', ['arole'], ['1.0'])
+    instance.output_invalid('1', '/some/file.pcap', 'file.pcap')
+    instance.output_valid('1', '/some/file.pcap', 'file.pcap', 99.0, '1.2.3.4', '0e:00:00:00:00:01', ['arole'], ['1.0'])
