@@ -82,6 +82,7 @@ class ResultsOutput:
         if not self.use_rabbit:
             return
 
+        msg = result
         try:
             msg = self.rabbit_msg_template(uid, file_path, result)
             channel = self.connect_rabbit()
