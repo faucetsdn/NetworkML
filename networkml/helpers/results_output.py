@@ -6,6 +6,8 @@ import time
 
 import pika
 
+import networkml
+
 
 class ResultsOutput:
 
@@ -42,6 +44,17 @@ class ResultsOutput:
             'results': {
                 'tool': 'networkml',
                 'version': self.version}}
+
+    @staticmethod
+    def assign_labels(labels):
+        netml_path = list(networkml.__path__)
+        la = os.path.join(netml_path[0],
+                          'trained_models/label_assignments.json')
+        assignment_map = {}
+        with open(la) as f:
+            assignment_map = json.load(f)
+        labels = [assignment_map[label] if label in assignment_map else label for label in labels]
+        return labels
 
     @staticmethod
     def parse_pcap_name(base_pcap):
@@ -118,6 +131,7 @@ class ResultsOutput:
     def output_valid(self, uid, file_path, timestamp, source_ip, source_mac,
                      labels, confidences,
                      behavior='normal', investigate=False, pcap_labels=None):
+        labels = self.assign_labels(labels)
         self.output_msg(uid, file_path, self.results_template(
             file_path, True, self.valid_template(
                 timestamp, source_ip, source_mac,
