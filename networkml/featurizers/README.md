@@ -1,6 +1,6 @@
-# Features in NetworkML Models
+# Host-Related Features in NetworkML Models
 
-Machine learning models require inputs (or "features" in the language of machine learning practitioners.) NetworkML, a machine learning model that operates on network traffic, is no different. This readme describes the features that networkML can create and can therefore be included in NetworkML's models. All features can either be created for each host present, which therefore creates a numeric representation of all the traffic flowing into and out of a host, or for each session, which describes a particular data exchange for two hosts defined by a 5-tuple of source and destination IP's, source and destination ports, and protocol. These features were devised with enterprises networks as the likely site of NetworkML deployment. Additionally, these features have a focus on both IP and non-IP traffic at layer 2, which is different than many other network traffic analysis models.
+Machine learning models require inputs (or "features" in the language of machine learning practitioners.) NetworkML, a machine learning model that operates on network traffic, is no different. This readme describes the features that networkML can create and can therefore be included in NetworkML's models. All features can either be created for each host present, which therefore creates a numeric representation of all the traffic flowing into and out of a host, or for each session, which describes a particular data exchange for two hosts defined by a 5-tuple of source and destination IP's, source and destination ports, and protocol. This readme focuses on the host-related features. These features were devised with enterprise networks as the likely site of NetworkML deployment. Additionally, these features have a focus on both IP and non-IP traffic at layer 2, which is different than many other network traffic analysis models.
 
 A key at the bottom of this page explains the symbols associated with each feature set.
 
@@ -59,7 +59,7 @@ Indicates that there are versions of a feature for each statistic
 
 (S) Statistics = (min, 25th percentile, median, 75th percentile, max, mean, variance, count, sum)
 
-**Ports**
+**Well Known Ports**
 Indicates that features are port-specific
 
 \(P\) Private ports = (22, 23, 25, 53, 67, 68, 69, 80, 88, 110, 123, 137, 138, 139, 143, 161, 443, 631, other)
