@@ -20,17 +20,19 @@ TCP flags (i/o) (b) [Note: Each flag is assigned an individual boolean vector.]
 
 IP flags (i/o) (b)
 
-IP differentiated services (i/o) (b)
-
-Well-known IP protocols (b) [Note: Each protocol is assigned an individual boolean vector. See list of IP protocols at the bottom of the page.]
-
-VLAN ID (b)
-
 IPX (b)
 
 Both private IP (b)
 
 IPv4 multicast (b)
+
+IP differentiated services (i/o) (b)
+
+Well-known IP protocols (b) [Note: Each protocol is assigned an individual boolean vector. See list of IP protocols at the bottom of the page.]
+
+## Non-IP Features
+
+VLAN ID (b)
 
 Non-IP protocol (b)
 
