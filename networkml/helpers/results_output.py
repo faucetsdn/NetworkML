@@ -73,8 +73,8 @@ class ResultsOutput:
 
     def results_template(self, file_path, valid, results):
         base_pcap = os.path.basename(file_path)
-        pcap_key, _ = self.parse_pcap_name(base_pcap)
-        base_results = {'valid': valid}
+        pcap_key, pcap_labels = self.parse_pcap_name(base_pcap)
+        base_results = {'valid': valid, 'pcap_labels': pcap_labels}
         base_results.update(results)
         return {pcap_key: base_results, 'pcap': base_pcap}
 
@@ -92,14 +92,13 @@ class ResultsOutput:
         except (socket.gaierror, pika.exceptions.AMQPConnectionError) as err:
             self.logger.error(f'Failed to send Rabbit message {msg} because: {err}')
 
-    def output_invalid(self, uid, file_path):
+    def output_invalid(self, uid, file_path, filename):
         self.output_msg(
-            uid, file_path, self.results_template(file_path, False, {}))
+            uid, file_path, self.results_template(filename, False, {}))
 
     @staticmethod
     def valid_template(timestamp, source_ip, source_mac,
-                       behavior, investigate, labels, confidences,
-                       pcap_labels):
+                       behavior, investigate, labels, confidences):
         return {
             'decisions': {
                 'behavior': behavior,
@@ -112,30 +111,29 @@ class ResultsOutput:
             'timestamp': timestamp,
             'source_ip': source_ip,
             'source_mac': source_mac,
-            'pcap_labels': pcap_labels,
         }
 
-    def output_valid(self, uid, file_path, timestamp, source_ip, source_mac,
-                     labels, confidences,
-                     behavior='normal', investigate=False, pcap_labels=None):
+    def output_valid(self, uid, file_path, filename, timestamp, source_ip, source_mac,
+                     labels, confidences, behavior='normal',
+                     investigate=False):
         self.output_msg(uid, file_path, self.results_template(
-            file_path, True, self.valid_template(
+            filename, True, self.valid_template(
                 timestamp, source_ip, source_mac,
-                behavior, investigate, labels, confidences,
-                pcap_labels)))
+                behavior, investigate, labels, confidences)))
 
     def output_from_result_json(self, uid, file_path, result_json):
         result = json.loads(result_json)
         now = time.time()
-        for host_result in result.values():
+        for filename, host_result in result.items():
+            filename = filename.split('.csv.gz')[0]
             top_role = host_result.get('top_role', None)
             if top_role is None:
-                self.output_invalid(uid, file_path)
+                self.output_invalid(uid, file_path, filename)
                 continue
             investigate = top_role == 'Unknown'
             source_ip = host_result.get('source_ip', None)
             source_mac = host_result.get('source_mac', None)
             labels, confidences = zip(*host_result['role_list'])
             self.output_valid(
-                uid, file_path, now, source_ip, source_mac, labels, confidences,
+                uid, file_path, filename, now, source_ip, source_mac, labels, confidences,
                 investigate=investigate)
