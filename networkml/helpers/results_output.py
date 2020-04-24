@@ -2,6 +2,7 @@ import json
 import os
 import re
 import socket
+import time
 
 import pika
 
@@ -81,14 +82,15 @@ class ResultsOutput:
         if not self.use_rabbit:
             return
 
+        msg = result
         try:
-            channel = self.connect_rabbit()
             msg = self.rabbit_msg_template(uid, file_path, result)
+            channel = self.connect_rabbit()
             self.send_rabbit_msg(msg, channel)
             msg = self.rabbit_msg_template(uid, file_path, '')
             self.send_rabbit_msg(msg, channel)
         except (socket.gaierror, pika.exceptions.AMQPConnectionError) as err:
-            self.logger.error(f'Failed to send Rabbit message because: {err}')
+            self.logger.error(f'Failed to send Rabbit message {msg} because: {err}')
 
     def output_invalid(self, uid, file_path):
         self.output_msg(
@@ -121,3 +123,19 @@ class ResultsOutput:
                 timestamp, source_ip, source_mac,
                 behavior, investigate, labels, confidences,
                 pcap_labels)))
+
+    def output_from_result_json(self, uid, file_path, result_json):
+        result = json.loads(result_json)
+        now = time.time()
+        for host_result in result.values():
+            top_role = host_result.get('top_role', None)
+            if top_role is None:
+                self.output_invalid(uid, file_path)
+                continue
+            investigate = top_role == 'Unknown'
+            source_ip = host_result.get('source_ip', None)
+            source_mac = host_result.get('source_mac', None)
+            labels, confidences = zip(*host_result['role_list'])
+            self.output_valid(
+                uid, file_path, now, source_ip, source_mac, labels, confidences,
+                investigate=investigate)

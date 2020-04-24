@@ -105,23 +105,32 @@ class NetworkML():
         run_schedule = stages[first_stage_index:(final_stage_index+1)]
         result = self.in_path
         self.logger.info(f'running stages: {run_schedule}')
-        for stage in run_schedule:
-            runner = stage_runners[stage]
-            result = runner(result)
 
-        if self.final_stage == 'algorithm' and self.operation == 'predict':
-            if self.output:
-                if os.path.isdir(self.output):
-                    result_json_file = os.path.join(self.output, 'predict.json')
-                else:
-                    result_json_file = self.output
-                with open(result_json_file, 'w') as result_json:
-                    result_json.write(result)
-            # TODO: placeholder - does not yet send valid results.
-            uid = os.getenv('id', 'None')
-            file_path = os.getenv('file_path', 'None')
-            results_outputter = ResultsOutput(
-                self.logger, __version__, self.rabbit)
+        run_complete = False
+        try:
+            for stage in run_schedule:
+                runner = stage_runners[stage]
+                result = runner(result)
+            run_complete = True
+        except Exception as err:
+            logging.error(f'Could not run stage: {err}')
+
+        uid = os.getenv('id', 'None')
+        file_path = os.getenv('file_path', self.in_path)
+        results_outputter = ResultsOutput(
+            self.logger, __version__, self.rabbit)
+
+        if run_complete:
+            if self.final_stage == 'algorithm' and self.operation == 'predict':
+                if self.output:
+                    if os.path.isdir(self.output):
+                        result_json_file = os.path.join(self.output, 'predict.json')
+                    else:
+                        result_json_file = self.output
+                    with open(result_json_file, 'w') as result_json:
+                        result_json.write(result)
+            results_outputter.output_from_result_json(uid, file_path, result)
+        else:
             results_outputter.output_invalid(uid, file_path)
 
     def main(self, raw_args=None):
