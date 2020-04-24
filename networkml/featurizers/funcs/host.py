@@ -240,6 +240,11 @@ class HostBase:
             'tshark_tagged_vlan': int(pd.notna(mac_df['vlan.id'].max()))
         }
 
+    def _tshark_frame_epoch(self, mac_df):
+        return {
+            'tshark_frame_epoch': float(mac_df['frame.time_epoch'].max())
+        }
+
     def _tshark_unique_ips(self, mac, mac_df):
         srcips = mac_df[mac_df['eth.src'] == mac]['_srcip']
         dstips = mac_df[mac_df['eth.src'] == mac]['_dstip']
@@ -278,6 +283,7 @@ class HostBase:
                 self._tshark_ipv4_multicast,
                 self._tshark_wk_ip_protocol,
                 self._tshark_vlan_id,
+                self._tshark_frame_epoch,
                 self._tshark_ratio_ports):
             mac_row.update(func(mac_df))
         mac_row.update(self._tshark_unique_ips(mac, mac_df))

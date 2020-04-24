@@ -113,7 +113,7 @@ class NetworkML():
                 result = runner(result)
             run_complete = True
         except Exception as err:
-            logging.error(f'Could not run stage: {err}')
+            self.logger.error(f'Could not run stage: {err}')
 
         uid = os.getenv('id', 'None')
         file_path = os.getenv('file_path', self.in_path)
@@ -129,7 +129,9 @@ class NetworkML():
                         result_json_file = self.output
                     with open(result_json_file, 'w') as result_json:
                         result_json.write(result)
-            results_outputter.output_from_result_json(uid, file_path, result)
+                results_outputter.output_from_result_json(uid, file_path, result)
+            else:
+                results_outputter.output_invalid(uid, file_path, file_path)
         else:
             results_outputter.output_invalid(uid, file_path, file_path)
 
