@@ -117,12 +117,11 @@ class NetworkML():
                     result_json_file = self.output
                 with open(result_json_file, 'w') as result_json:
                     result_json.write(result)
-            # TODO: placeholder - does not yet send valid results.
             uid = os.getenv('id', 'None')
-            file_path = os.getenv('file_path', 'None')
+            file_path = os.getenv('file_path', self.in_path)
             results_outputter = ResultsOutput(
                 self.logger, __version__, self.rabbit)
-            results_outputter.output_invalid(uid, file_path)
+            results_outputter.output_from_result_json(uid, file_path, result)
 
     def main(self, raw_args=None):
         parsed_args = NetworkML.parse_args(raw_args=raw_args)
