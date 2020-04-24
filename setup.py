@@ -7,7 +7,7 @@ setup(
     include_package_data=True,
     packages=['networkml', 'networkml.algorithms', 'networkml.featurizers.funcs',
               'networkml.parsers', 'networkml.featurizers'],
-    package_data={'networkml': ['trained_models/*', 'configs/*']},
+    package_data={'networkml': ['trained_models/*']},
     install_requires=open('requirements.txt', 'r').read().splitlines(),
     scripts=['bin/networkml'],
     license='Apache License 2.0',
