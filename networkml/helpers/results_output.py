@@ -128,10 +128,13 @@ class ResultsOutput:
         now = time.time()
         for host_result in result.values():
             top_role = host_result.get('top_role', None)
+            if top_role is None:
+                self.output_invalid(uid, file_path)
+                continue
+            investigate = top_role == 'Unknown':
             source_ip = host_result.get('source_ip', None)
             source_mac = host_result.get('source_mac', None)
-            if top_role is not None and top_role != 'Unknown':
-                labels, confidences = zip(*host_result['role_list'])
-                self.output_valid(uid, file_path, now, source_ip, source_mac, labels, confidences)
-            else:
-                self.output_invalid(uid, file_path)
+            labels, confidences = zip(*host_result['role_list'])
+            self.output_valid(
+                uid, file_path, now, source_ip, source_mac, labels, confidences,
+                investigate=investigate)
