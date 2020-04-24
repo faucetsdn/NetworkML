@@ -6,10 +6,12 @@ import json
 import logging
 import os
 
+import joblib
 import numpy as np
 import pandas as pd
 import sklearn_json as skljson
 from sklearn import preprocessing
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 from sklearn.model_selection import GridSearchCV
 from sklearn.neural_network import MLPClassifier
 
@@ -30,6 +32,16 @@ class HostFootprint():
     def __init__(self, raw_args=None):
         self.logger = logging.getLogger(__name__)
         self.raw_args = raw_args
+
+    @staticmethod
+    def reorder_drop_cols(df):
+        # TODO: need host_key and tshark_srcips to send source_ip/source_mac to Poseidon.
+        cols = [col for col in ('host_key', 'tshark_srcips', 'role') if col in df.columns]
+        # TODO: remove ratio features for now for model compatibility.
+        cols.extend([col for col in df.columns if 'ratio' in col])
+        df = df.drop(columns=cols)
+        # Dataframe column order must be the same for train/predict!
+        return df.reindex(columns=sorted(df.columns))
 
     @staticmethod
     def serialize_label_encoder(le, path):
@@ -67,6 +79,28 @@ class HostFootprint():
         return le
 
     @staticmethod
+    def serialize_model(model, path):
+        skljson.to_json(model, path)
+
+    @staticmethod
+    def deserialize_model(path):
+        # Load (or deserialize) model from JSON
+        model = skljson.from_json(path)
+        # Convert coeficients to numpy arrays to enable JSON deserialization
+        # This is a hack to compensate for a bug in sklearn_json
+        for i, x in enumerate(model.coefs_):
+            model.coefs_[i] = np.array(x)
+        return model
+
+    @staticmethod
+    def serialize_scaler(scaler, path):
+        return joblib.dump(scaler, path)
+
+    @staticmethod
+    def deserialize_scaler(path):
+        return joblib.load(path)
+
+    @staticmethod
     def parse_args(raw_args=None):
         """
         Use python's argparse module to collect command line arguments
@@ -75,6 +109,8 @@ class HostFootprint():
         netml_path = list(networkml.__path__)
         parser = argparse.ArgumentParser()
         parser.add_argument('path', help='path to a single csv file')
+        parser.add_argument('--eval_data',
+                            help='path to eval CSV file, if training')
         parser.add_argument('--kfolds', '-k',
                             default=5,
                             help='specify number of folds for k-fold cross validation')
@@ -82,7 +118,11 @@ class HostFootprint():
                             default=os.path.join(netml_path[0],
                                                  'trained_models/host_footprint_le.json'),
                             help='specify a path to load or save label encoder')
-        parser.add_argument('--operation', '-O', choices=['train', 'predict'],
+        parser.add_argument('--scaler',
+                            default=os.path.join(netml_path[0],
+                                                 'trained_models/host_footprint_scaler.mod'),
+                            help='specify a path to load or save scaler')
+        parser.add_argument('--operation', '-O', choices=['train', 'predict', 'eval'],
                             default='predict',
                             help='choose which operation task to perform, \
                             train or predict (default=predict)')
@@ -94,8 +134,56 @@ class HostFootprint():
                             choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
                             default='INFO',
                             help='logging level (default=INFO)')
+        parser.add_argument('--train_unknown', default=False, action='store_true',
+                            help='Train on unknown roles')
         parsed_args = parser.parse_args(raw_args)
         return parsed_args
+
+    def _get_test_train_csv(self, path, train_unknown):
+        df = pd.read_csv(path)
+        df = self.reorder_drop_cols(df)
+        df = df.fillna(0)
+        # Split dataframe into X (the input features or predictors)
+        # and y (the target or outcome or dependent variable)
+        df['role'] = df.filename.str.split('-').str[0]
+        # Drop unknown roles.
+        if not train_unknown:
+            df = df[df['role'] != 'Unknown']
+        X = df.drop(['filename', 'role'], axis=1)
+        y = df.role
+        X = self.string_feature_check(X)
+        return (X, y)
+
+    def summarize_eval_data(self, model, scaler, label_encoder, eval_data, train_unknown):
+        X_test, y_true = self._get_test_train_csv(eval_data, train_unknown)
+        X_test = scaler.transform(X_test)
+        y_true = label_encoder.transform(y_true)
+        y_pred = model.predict(X_test)
+
+        for metric, name in (
+                (accuracy_score, 'accuracy'),
+                (precision_score, 'precision'),
+                (recall_score, 'recall'),
+                (f1_score, 'f1')):
+            if metric == accuracy_score:
+                val = metric(y_true, y_pred)
+            else:
+                val = metric(y_true, y_pred, average='weighted')
+            val = np.round(val, 4)
+            self.logger.info(f'{name}: {val}')
+
+        conf_matrix = confusion_matrix(y_true, y_pred)
+        self.logger.info(conf_matrix)
+        self.logger.info(label_encoder.classes_.tolist())
+
+    def eval(self, path, scaler_path, le_path, model_path, train_unknown):
+        """
+        Accept CSV and summarize based on already trained model.
+        """
+        scaler = self.deserialize_scaler(scaler_path)
+        le = self.deserialize_label_encoder(le_path)
+        self.model = self.deserialize_model(model_path)
+        self.summarize_eval_data(self.model, scaler, le, path, train_unknown)
 
     def train(self):
         """
@@ -108,41 +196,19 @@ class HostFootprint():
         group has done experiments with different models and hyperparameter
         optimization.
         """
+        X, y = self._get_test_train_csv(self.path, self.train_unknown)
 
-        # Load data from host footprint .csv
-        df = pd.read_csv(self.path)
-        if 'host_key' in df.columns:
-            df = df.drop(columns=['host_key'])
-        df = df.fillna(0)
-
-        # Split dataframe into X (the input features or predictors)
-        # and y (the target or outcome or dependent variable)
-        X = df.drop('filename', axis=1)
-        y = df.filename
-
-        # Extract only role name from strings in y feature
-        # Y feature is the full filename of the .pcap file
-        # but should be only the role name
-
-        # Split full filename on "-" and create a list
-        y = y.str.split('-')
-        y = y.str[0]  # Extract first element of list, the role name
-
-        # Replace string features with dummy (0/1) features
-        # This is "one hot encoding"
-        X = self.string_feature_check(X)
+        unique_roles = sorted(y.unique())
+        self.logger.info(f'inferring roles {unique_roles}')
 
         # Normalize X features before training
         scaler = preprocessing.StandardScaler()
-        scaler_fitted = scaler.fit(X)
-        X = scaler_fitted.transform(X)
+        scaler.fit(X)
+        X = scaler.transform(X)
 
         # Convert y into categorical/numerical feature
         le = preprocessing.LabelEncoder()
         y = le.fit_transform(y)
-
-        # Save label encoder
-        HostFootprint.serialize_label_encoder(le, self.le_path)
 
         # Instantiate neural network model
         # MLP = multi-layer perceptron
@@ -163,7 +229,13 @@ class HostFootprint():
         self.model = clf.fit(X, y).best_estimator_
 
         # Save model to JSON
-        skljson.to_json(self.model, self.model_path)
+        self.serialize_model(self.model, self.model_path)
+        self.serialize_scaler(scaler, self.scaler)
+        self.serialize_label_encoder(le, self.le_path)
+
+        if self.eval_data:
+            self.summarize_eval_data(self.model, self.scaler, self.le_path, self.eval_data, self.train_unknown)
+
 
     def predict(self):
         """
@@ -176,11 +248,15 @@ class HostFootprint():
         dict for a value. see sorted_roles_to_json() for a description of
         the value's structure.
         """
+        scaler = self.deserialize_scaler(self.scaler)
+        # Get label encoder
+        le = self.deserialize_label_encoder(self.le_path)
+        # Load (or deserialize) model from JSON
+        self.model = self.deserialize_model(self.model_path)
 
         # Load data from host footprint .csv
         df = pd.read_csv(self.path)
-        if 'host_key' in df.columns:
-            df = df.drop(columns=['host_key'])
+        df = self.reorder_drop_cols(df)
 
         # Split dataframe into X (the input features or predictors)
         # and y (the target or outcome or dependent variable)
@@ -192,23 +268,9 @@ class HostFootprint():
         filename = df.filename
 
         # Normalize X features before predicting
-        scaler = preprocessing.StandardScaler()
-        scaler_fitted = scaler.fit(X)
-        X = scaler_fitted.transform(X)
-
-        # Get label encoder
-        le = HostFootprint.deserialize_label_encoder(self.le_path)
-
-        # Load (or deserialize) model from JSON
-        self.model = skljson.from_json(self.model_path)
-
-        # Convert coeficients to numpy arrays to enable JSON deserialization
-        # This is a hack to compensate for a bug in sklearn_json
-        for i, x in enumerate(self.model.coefs_):
-            self.model.coefs_[i] = np.array(x)
+        X = scaler.transform(X)
 
         self.logger.info(f'Executing model inference')
-
         # Make model predicton - Will return a vector of values
         predictions_rows = self.model.predict_proba(X)
 
@@ -216,9 +278,9 @@ class HostFootprint():
         all_predictions = self.get_individual_predictions(
             predictions_rows, le, filename)
 
-        return all_predictions
+        return json.dumps(all_predictions)
 
-    def get_individual_predictions(self, predictions_rows, label_encoder, filename):
+    def get_individual_predictions(self, predictions_rows, label_encoder, filename, top_n_roles=3):
         """ Return role predictions for given device
 
         INPUTS:
@@ -234,51 +296,24 @@ class HostFootprint():
 
         # Dict to store JSON of top n roles and probabilities per device
         all_predictions = {}
+        num_roles = len(label_encoder.classes_)
+        labels = label_encoder.inverse_transform([i for i in range(num_roles)])
 
         # Loop thru different devices on which to make prediction
         for counter, predictions in enumerate(predictions_rows):
-
-            # total number of functional roles
-            num_roles = len(predictions)
-
-            # programmer's note: the code block below ensures that the top
-            # three roles and their probabilities are returned when there
-            # are three or more roles present in the model. The code
-            # returns two roles if only two roles are present
-
-            # top_n_roles: desired number of roles for results
-            # note: the numbers below are not intuitive but are consistent
-            # with the logic of argpartition
-            top_n_roles = min(2, num_roles-1)
-            # Get indices of top n roles
-            # note: argpartion does not sort top roles - must be done later
-            ind = np.argpartition(predictions,
-                                  top_n_roles)[-(top_n_roles+1):]
-
-            # top three role names
-            labels = label_encoder.inverse_transform(ind)
-
-            # probability of top three roles
-            probs = predictions[ind]
-
-            # Put labels and probabilities into list
-            role_list = [(k, v) for k, v in zip(labels, probs)]
-
+            role_list = [(k, v) for k, v in zip(labels, predictions)]
             # Sort role list by probabilities
-            role_list_sorted = sorted(role_list, key=lambda x: x[1],
-                                      reverse=True)
-
-            # Dump to JSON top role and roles-probability list
-            predictions_json = self.sorted_roles_to_json(role_list_sorted)
-
-            # Create dictionary with filename as key and a JSON
+            role_list_sorted = sorted(role_list, key=lambda x: x[1], reverse=True)[:top_n_roles]
+            # Dump top role and roles-probability list
+            role_predictions = self.sorted_roles_to_dict(role_list_sorted)
+            # Create dictionary with filename as key and a dict
             # of predictions as value
-            all_predictions[filename[counter]] = predictions_json
+            all_predictions[filename[counter]] = role_predictions
 
         return all_predictions
 
     @staticmethod
-    def sorted_roles_to_json(role_list_sorted, threshold=.5):
+    def sorted_roles_to_dict(role_list_sorted, threshold=.5):
         """ Converted sorted role-probability list into formatted dict
 
         This function ensures that the top role returned is Unknown
@@ -292,8 +327,7 @@ class HostFootprint():
         should be designated as "Unknown"
 
         OUTPUTS:
-        --predictions_json: a JSON encoding of a dict with the top role
-        and a sorted role list
+        --predictions: a dict with the top role and a sorted role list
         """
 
         # Probability associated with the most likely role
@@ -307,14 +341,12 @@ class HostFootprint():
             top_role = role_list_sorted[0][0]  # Most likely role
 
         # Create dict to store prediction results
-        role_predictions = {}
-        role_predictions['top_role'] = top_role
-        role_predictions['role_list'] = role_list_sorted
+        role_predictions = {
+            'top_role': top_role,
+            'role_list': role_list_sorted,
+        }
 
-        # Dump to JSON top role and roles-probability list
-        predictions_json = json.dumps(role_predictions)
-
-        return predictions_json
+        return role_predictions
 
     def string_feature_check(self, X):
         """
@@ -363,9 +395,12 @@ class HostFootprint():
         # Collect command line arguments
         parsed_args = HostFootprint.parse_args(raw_args=self.raw_args)
         self.path = parsed_args.path
+        self.eval_data = parsed_args.eval_data
         self.model_path = parsed_args.trained_model
         self.le_path = parsed_args.label_encoder
+        self.scaler = parsed_args.scaler
         self.kfolds = int(parsed_args.kfolds)
+        self.train_unknown = parsed_args.train_unknown
         operation = parsed_args.operation
         log_level = parsed_args.verbose
 
@@ -376,14 +411,19 @@ class HostFootprint():
 
         # Basic execution logic
         if operation == 'train':
+            if not self.train_unknown:
+                self.logger.info(f'Role Unknown will be dropped from training data')
             self.train()
             self.logger.info(f'Saved model to: {self.model_path}')
             self.logger.info(f'Saved label encoder to: {self.le_path}')
             return self.model_path
-        elif operation == 'predict':
+        if operation == 'predict':
             role_prediction = self.predict()
             self.logger.info(f'{role_prediction}')
             return role_prediction
+        if operation == 'eval':
+            return self.eval(self.path, self.scaler, self.le_path, self.model_path, self.train_unknown)
+        return None
 
 
 if __name__ == '__main__':

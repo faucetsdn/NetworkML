@@ -115,10 +115,11 @@ class HostBase:
         return mac_row_flags
 
     def _lowest_ip_proto_port(self, mac_df, ip_proto):
-        src = mac_df['%s.srcport' % ip_proto]
-        dst = mac_df['%s.dstport' % ip_proto]
-        if src.count() and dst.count():
-            return self._numericintset(np.minimum(src, dst).unique())   # pylint: disable=no-member
+        if not mac_df.empty:
+            src = mac_df['%s.srcport' % ip_proto]
+            dst = mac_df['%s.dstport' % ip_proto]
+            if src.count() and dst.count():
+                return self._numericintset(np.minimum(src, dst).unique())   # pylint: disable=no-member
         return frozenset()
 
     def _tshark_ports(self, suffix, mac_df):
@@ -126,10 +127,9 @@ class HostBase:
 
         def port_priv(port):
             return port < 1024
-        for ip_proto_num, proto_df in mac_df.groupby('ip.proto'):
-            ip_proto = TCP_UDP_PROTOS.get(ip_proto_num)
-            if ip_proto is None:
-                continue
+
+        for ip_proto_num, ip_proto in TCP_UDP_PROTOS.items():
+            proto_df = mac_df[mac_df['ip.proto']==ip_proto_num]
             lowest_ports = self._lowest_ip_proto_port(proto_df, ip_proto)
             for field_name, ports, wk_ports in (
                 ('priv', {port for port in lowest_ports if port_priv(
@@ -156,18 +156,22 @@ class HostBase:
                     packet_ratio = 1
             return packet_ratio
 
-        for ip_proto_num, proto_df in mac_df.groupby('ip.proto'):
-            ip_proto = TCP_UDP_PROTOS.get(ip_proto_num)
-            if ip_proto is None:
-                continue
-            src = proto_df['%s.srcport' % ip_proto]
-            dst = proto_df['%s.dstport' % ip_proto]
+
+        for ip_proto_num, ip_proto in TCP_UDP_PROTOS.items():
+            proto_df = mac_df[mac_df['ip.proto']==ip_proto_num]
+            src = pd.DataFrame(columns=['%s.srcport' % ip_proto])
+            dst = pd.DataFrame(columns=['%s.dstport' % ip_proto])
+            if not proto_df.empty:
+                try:
+                    src = proto_df['%s.srcport' % ip_proto]
+                    dst = proto_df['%s.dstport' % ip_proto]
+                except KeyError:
+                    pass
             for field_name, wk_ports, port_src, port_dst in (
                 ('priv', self.WK_PRIV_TCPUDP_PORTS,
                  src[src <= 1023], dst[dst <= 1023]),
                 ('nonpriv', self.WK_NONPRIV_TCPUDP_PORTS,
-                 src[src > 1023], dst[dst > 1023]),
-            ):
+                 src[src > 1023], dst[dst > 1023])):
                 src_values = port_src[src.isin(wk_ports)]
                 dst_values = port_dst[dst.isin(wk_ports)]
                 src_counts = {}
@@ -237,17 +241,19 @@ class HostBase:
         }
 
     def _tshark_unique_ips(self, mac, mac_df):
+        srcips = mac_df[mac_df['eth.src'] == mac]['_srcip']
+        dstips = mac_df[mac_df['eth.src'] == mac]['_dstip']
         return {
-            'tshark_unique_srcips': mac_df[mac_df['eth.src'] == mac]['_srcip'].nunique(),
-            'tshark_unique_dstips': mac_df[mac_df['eth.src'] == mac]['_dstip'].nunique(),
+            'tshark_srcips': list(set(srcips.unique().tolist()) - {'None'}),
+            'tshark_unique_srcips': srcips.nunique(),
+            'tshark_unique_dstips': dstips.nunique(),
         }
 
     def _calc_cols(self, mac, mac_df):
         mac_row = {}
         for suffix, suffix_func in (
             ('out', lambda x: mac_df[mac_df['eth.src'] == x]),
-            ('in', lambda x: mac_df[mac_df['eth.src'] != x]),
-        ):
+            ('in', lambda x: mac_df[mac_df['eth.src'] != x])):
             try:
                 suffix_df = suffix_func(mac)
             except KeyError:
@@ -262,19 +268,17 @@ class HostBase:
                         val = 0
                     mac_row.update({calc_col: val})
             for func in (
-                self._tshark_flags,
-                self._tshark_ports,
-            ):
+                    self._tshark_flags,
+                    self._tshark_ports):
                 mac_row.update(func(suffix, suffix_df))
         for func in (
-            self._tshark_ipversions,
-            self._tshark_non_ip,
-            self._tshark_both_private_ip,
-            self._tshark_ipv4_multicast,
-            self._tshark_wk_ip_protocol,
-            self._tshark_vlan_id,
-            self._tshark_ratio_ports,
-        ):
+                self._tshark_ipversions,
+                self._tshark_non_ip,
+                self._tshark_both_private_ip,
+                self._tshark_ipv4_multicast,
+                self._tshark_wk_ip_protocol,
+                self._tshark_vlan_id,
+                self._tshark_ratio_ports):
             mac_row.update(func(mac_df))
         mac_row.update(self._tshark_unique_ips(mac, mac_df))
         return mac_row
@@ -296,7 +300,10 @@ class HostBase:
         return (both_private_ip, ipv4_multicast)
 
     def _encode_df_proto_flags(self, short_row_keys, frame_protocols):
-        short_frame_protocols = frozenset(frame_protocols.split(':'))
+        if frame_protocols:
+            short_frame_protocols = frozenset(frame_protocols.split(':'))
+        else:
+            short_frame_protocols = {}
         all_protos = short_row_keys.union(
             short_frame_protocols) - self.DROP_PROTOS
         all_protos_int = 0
