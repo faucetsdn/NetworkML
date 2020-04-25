@@ -36,16 +36,18 @@ class HostFootprint():
 
     @staticmethod
     def regularize_df(df):
-        # TODO: need host_key and tshark_srcips to send source_ip/source_mac to Poseidon.
-        cols = [col for col in ('host_key', 'tshark_srcips', 'role') if col in df.columns]
+        # need host_key, tshark_srcips, and frame_epoch to send
+        # source_ip/source_mac to Poseidon.
+        cols = [col for col in ('host_key', 'tshark_srcips', 'tshark_frame_epoch', 'role') if col in df.columns]
         # TODO: remove ratio features for now for model compatibility.
         cols.extend([col for col in df.columns if 'ratio' in col])
         host_key = df.get('host_key', None)
         tshark_srcips = df.get('tshark_srcips', None)
+        frame_epoch = df.get('tshark_frame_epoch', None)
         df = df.drop(columns=cols)
         # Dataframe column order must be the same for train/predict!
         df = df.reindex(columns=sorted(df.columns))
-        return df, host_key, tshark_srcips
+        return df, host_key, tshark_srcips, frame_epoch
 
     @staticmethod
     def serialize_label_encoder(le, path):
@@ -144,7 +146,7 @@ class HostFootprint():
         return parsed_args
 
     def _get_test_train_csv(self, path, train_unknown):
-        df, _, _ = self.regularize_df(pd.read_csv(path))
+        df, _, _, _ = self.regularize_df(pd.read_csv(path))
         df = df.fillna(0)
         # Split dataframe into X (the input features or predictors)
         # and y (the target or outcome or dependent variable)
@@ -257,7 +259,7 @@ class HostFootprint():
         self.model = self.deserialize_model(self.model_path)
 
         # Load data from host footprint .csv
-        df, host_key, tshark_srcips = self.regularize_df(pd.read_csv(self.path))
+        df, host_key, tshark_srcips, frame_epoch = self.regularize_df(pd.read_csv(self.path))
 
         # Split dataframe into X (the input features or predictors)
         # and y (the target or outcome or dependent variable)
@@ -277,12 +279,13 @@ class HostFootprint():
 
         # Dict to store top role and list of top roles
         all_predictions = self.get_individual_predictions(
-            predictions_rows, le, filename, host_key, tshark_srcips)
+            predictions_rows, le, filename, host_key, tshark_srcips, frame_epoch)
 
         return json.dumps(all_predictions)
 
-    def get_individual_predictions(self, predictions_rows, label_encoder, filename,
-                                   host_key, tshark_srcips, top_n_roles=3):
+    def get_individual_predictions(self, predictions_rows, label_encoder,
+                                   filename, host_key, tshark_srcips,
+                                   frame_epoch, top_n_roles=3):
         """ Return role predictions for given device
 
         INPUTS:
@@ -291,6 +294,7 @@ class HostFootprint():
         --filename: the filename of the pcap for which a prediction is made
         --host_key: canonical source MAC for this pcap.
         --tshark_srcips: canonical source IPs for this pcap.
+        --frame_epoch: the timestamp of the packet.
 
         OUTPUTS:
         --all_predictions: a dict with the filename for a key and a
@@ -319,6 +323,8 @@ class HostFootprint():
                 else:
                     source_ip = None
                 host_results.update({'source_ip': source_ip})
+            if frame_epoch is not None:
+                host_results.update({'timestamp': frame_epoch[i]})
             all_predictions[filename[i]] = host_results
 
         return all_predictions

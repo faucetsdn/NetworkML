@@ -2,7 +2,6 @@ import json
 import os
 import re
 import socket
-import time
 
 import pika
 
@@ -137,7 +136,6 @@ class ResultsOutput:
 
     def output_from_result_json(self, uid, file_path, result_json):
         result = json.loads(result_json)
-        now = time.time()
         for filename, host_result in result.items():
             filename = filename.split('.csv.gz')[0]
             top_role = host_result.get('top_role', None)
@@ -147,7 +145,8 @@ class ResultsOutput:
             investigate = top_role == 'Unknown'
             source_ip = host_result.get('source_ip', None)
             source_mac = host_result.get('source_mac', None)
+            timestamp = host_result.get('timestamp', None)
             labels, confidences = zip(*host_result['role_list'])
             self.output_valid(
-                uid, file_path, filename, now, source_ip, source_mac, labels, confidences,
-                investigate=investigate)
+                uid, file_path, filename, timestamp, source_ip, source_mac,
+                labels, confidences, investigate=investigate)
