@@ -2,7 +2,6 @@ import json
 import os
 import re
 import socket
-import time
 
 import pika
 
