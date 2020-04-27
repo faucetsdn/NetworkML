@@ -32,9 +32,9 @@ def test_results_template():
     logger = logging.getLogger(__name__)
     instance = ResultsOutput(logger, 'testver', True)
     assert instance.results_template(
-        '/some/dir/trace_ab34_2001-01-01_02_03-client-ip-1-2-3-4.pcap', False, {}) == {'ab34': {'valid': False}, 'pcap': 'trace_ab34_2001-01-01_02_03-client-ip-1-2-3-4.pcap'}
+        '/some/dir/trace_ab34_2001-01-01_02_03-client-ip-1-2-3-4.pcap', False, {}) == {'ab34': {'pcap_labels': 'ip-1-2-3-4', 'valid': False}, 'pcap': 'trace_ab34_2001-01-01_02_03-client-ip-1-2-3-4.pcap'}
     assert instance.valid_template(
-        99.0, '192.168.1.1', '0e:00:00:00:00:01', 'normal', False, ['arole'], ['1.0'], None) == {'decisions': {'behavior': 'normal', 'investigate': False}, 'classification': {'labels': ['arole'], 'confidences': ['1.0']}, 'timestamp': 99.0, 'source_ip': '192.168.1.1', 'source_mac': '0e:00:00:00:00:01', 'pcap_labels': None}
+        99.0, '192.168.1.1', '0e:00:00:00:00:01', 'normal', False, ['arole'], ['1.0']) == {'decisions': {'behavior': 'normal', 'investigate': False}, 'classification': {'labels': ['arole'], 'confidences': ['1.0']}, 'timestamp': 99.0, 'source_ip': '192.168.1.1', 'source_mac': '0e:00:00:00:00:01'}
 
 
 def test_rabbit_smoke_bad():
@@ -54,5 +54,5 @@ def test_rabbit_smoke_good():
     instance = ResultsOutput(logger, 'testver', True)
     instance.rabbit_host = '127.0.0.1'
     instance.output_msg('x', 'y', 'z')
-    instance.output_invalid('1', '/some/file.pcap')
-    instance.output_valid('1', '/some/file.pcap', 99.0, '1.2.3.4', '0e:00:00:00:00:01', ['arole'], ['1.0'])
+    instance.output_invalid('1', '/some/file.pcap', 'file.pcap')
+    instance.output_valid('1', '/some/file.pcap', 'file.pcap', 99.0, '1.2.3.4', '0e:00:00:00:00:01', ['arole'], ['1.0'])

@@ -5,6 +5,7 @@ import sys
 import tempfile
 
 import pytest
+import numpy as np
 from sklearn import preprocessing
 from sklearn.preprocessing import StandardScaler
 from networkml.algorithms.host_footprint import HostFootprint
@@ -41,11 +42,14 @@ def test_get_individual_predictions():
    le = preprocessing.LabelEncoder()
    le.fit(le_classes)
    filename = ['firstfile']
+   host_key = np.array(['mac1'])
+   tshark_srcips = np.array(["['1.1.1.1']"])
+   frame_epoch = None
    instance = HostFootprint()
-   assert instance.get_individual_predictions([[0.6, 0.7]], le, filename) == {
-        'firstfile': {'top_role': 'bsomething', 'role_list': [('bsomething', 0.7), ('asomething', 0.6)]}}
-   assert instance.get_individual_predictions([[0.2, 0.1]], le, filename) == {
-        'firstfile': {'top_role': 'Unknown', 'role_list': [('asomething', 0.2), ('bsomething', 0.1)]}}
+   assert instance.get_individual_predictions([[0.6, 0.7]], le, filename, host_key, tshark_srcips, frame_epoch) == {
+        'firstfile': {'top_role': 'bsomething', 'role_list': [('bsomething', 0.7), ('asomething', 0.6)], 'source_ip': '1.1.1.1', 'source_mac': 'mac1'}}
+   assert instance.get_individual_predictions([[0.2, 0.1]], le, filename, host_key, tshark_srcips, frame_epoch) == {
+        'firstfile': {'top_role': 'Unknown', 'role_list': [('asomething', 0.2), ('bsomething', 0.1)], 'source_ip': '1.1.1.1', 'source_mac': 'mac1'}}
 
 
 def hf_args(tmpdir, operation, input_file):

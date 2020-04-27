@@ -1,6 +1,7 @@
 """
 A class to perform machine learning operations on computer network traffic
 """
+import ast
 import argparse
 import json
 import logging
@@ -34,14 +35,19 @@ class HostFootprint():
         self.raw_args = raw_args
 
     @staticmethod
-    def reorder_drop_cols(df):
-        # TODO: need host_key and tshark_srcips to send source_ip/source_mac to Poseidon.
-        cols = [col for col in ('host_key', 'tshark_srcips', 'role') if col in df.columns]
+    def regularize_df(df):
+        # need host_key, tshark_srcips, and frame_epoch to send
+        # source_ip/source_mac to Poseidon.
+        cols = [col for col in ('host_key', 'tshark_srcips', 'tshark_frame_epoch', 'role') if col in df.columns]
         # TODO: remove ratio features for now for model compatibility.
         cols.extend([col for col in df.columns if 'ratio' in col])
+        host_key = df.get('host_key', None)
+        tshark_srcips = df.get('tshark_srcips', None)
+        frame_epoch = df.get('tshark_frame_epoch', None)
         df = df.drop(columns=cols)
         # Dataframe column order must be the same for train/predict!
-        return df.reindex(columns=sorted(df.columns))
+        df = df.reindex(columns=sorted(df.columns))
+        return df, host_key, tshark_srcips, frame_epoch
 
     @staticmethod
     def serialize_label_encoder(le, path):
@@ -140,8 +146,7 @@ class HostFootprint():
         return parsed_args
 
     def _get_test_train_csv(self, path, train_unknown):
-        df = pd.read_csv(path)
-        df = self.reorder_drop_cols(df)
+        df, _, _, _ = self.regularize_df(pd.read_csv(path))
         df = df.fillna(0)
         # Split dataframe into X (the input features or predictors)
         # and y (the target or outcome or dependent variable)
@@ -236,7 +241,6 @@ class HostFootprint():
         if self.eval_data:
             self.summarize_eval_data(self.model, self.scaler, self.le_path, self.eval_data, self.train_unknown)
 
-
     def predict(self):
         """
         This function takes a csv of features at the host footprint level and
@@ -255,8 +259,7 @@ class HostFootprint():
         self.model = self.deserialize_model(self.model_path)
 
         # Load data from host footprint .csv
-        df = pd.read_csv(self.path)
-        df = self.reorder_drop_cols(df)
+        df, host_key, tshark_srcips, frame_epoch = self.regularize_df(pd.read_csv(self.path))
 
         # Split dataframe into X (the input features or predictors)
         # and y (the target or outcome or dependent variable)
@@ -276,17 +279,22 @@ class HostFootprint():
 
         # Dict to store top role and list of top roles
         all_predictions = self.get_individual_predictions(
-            predictions_rows, le, filename)
+            predictions_rows, le, filename, host_key, tshark_srcips, frame_epoch)
 
         return json.dumps(all_predictions)
 
-    def get_individual_predictions(self, predictions_rows, label_encoder, filename, top_n_roles=3):
+    def get_individual_predictions(self, predictions_rows, label_encoder,
+                                   filename, host_key, tshark_srcips,
+                                   frame_epoch, top_n_roles=3):
         """ Return role predictions for given device
 
         INPUTS:
         --predictions_rows: each device is represented as a row
         --label_encoder: a mapping of device role name to numerical category
         --filename: the filename of the pcap for which a prediction is made
+        --host_key: canonical source MAC for this pcap.
+        --tshark_srcips: canonical source IPs for this pcap.
+        --frame_epoch: the timestamp of the packet.
 
         OUTPUTS:
         --all_predictions: a dict with the filename for a key and a
@@ -300,15 +308,24 @@ class HostFootprint():
         labels = label_encoder.inverse_transform([i for i in range(num_roles)])
 
         # Loop thru different devices on which to make prediction
-        for counter, predictions in enumerate(predictions_rows):
+        for i, predictions in enumerate(predictions_rows):
             role_list = [(k, v) for k, v in zip(labels, predictions)]
             # Sort role list by probabilities
             role_list_sorted = sorted(role_list, key=lambda x: x[1], reverse=True)[:top_n_roles]
             # Dump top role and roles-probability list
-            role_predictions = self.sorted_roles_to_dict(role_list_sorted)
-            # Create dictionary with filename as key and a dict
-            # of predictions as value
-            all_predictions[filename[counter]] = role_predictions
+            host_results = self.sorted_roles_to_dict(role_list_sorted)
+            if host_key is not None:
+                host_results.update({'source_mac': host_key[i]})
+            if tshark_srcips is not None:
+                source_ip = ast.literal_eval(tshark_srcips[i])
+                if source_ip:
+                    source_ip = source_ip[0]
+                else:
+                    source_ip = None
+                host_results.update({'source_ip': source_ip})
+            if frame_epoch is not None:
+                host_results.update({'timestamp': frame_epoch[i]})
+            all_predictions[filename[i]] = host_results
 
         return all_predictions
 
