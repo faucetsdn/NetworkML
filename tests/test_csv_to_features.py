@@ -30,9 +30,10 @@ def test_CSVToFeatures_no_output():
     with tempfile.TemporaryDirectory() as tmpdir:
         testdata = os.path.join(tmpdir, 'test_data')
         shutil.copytree('./tests/test_data', testdata)
+        foox = os.path.join(tmpdir, 'foo-x.csv.gz')
         trace = os.path.join(
             testdata, 'trace_ab12_2001-01-01_02_03-client-ip6-1-2-3-4.pcap')
-        sys.argv = P2CARGS + [trace]
+        sys.argv = P2CARGS + ['-o', foox, trace]
         instance = PCAPToCSV()
         instance.main()
         sys.argv = C2FARGS + [trace + '.csv.gz']
