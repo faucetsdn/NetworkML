@@ -18,18 +18,19 @@ class ResultsOutput:
         self.rabbit_queue_name = os.getenv('RABBIT_QUEUE_NAME', 'task_queue')
         self.rabbit_exchange = os.getenv('RABBIT_EXCHANGE', 'task_queue')
         self.rabbit_port = int(os.getenv('RABBIT_PORT', '5672'))
+        self.rabbit_routing_key = os.getenv('RABBIT_ROUTING_KEY', 'task_queue')
 
     def connect_rabbit(self):
         params = pika.ConnectionParameters(host=self.rabbit_host, port=self.rabbit_port)
         connection = pika.BlockingConnection(params)
         channel = connection.channel()
         channel.queue_declare(queue=self.rabbit_queue_name, durable=True)
-        return channel
+        return (connection, channel)
 
     def send_rabbit_msg(self, msg, channel):
         body = json.dumps(msg)
         channel.basic_publish(exchange=self.rabbit_exchange,
-                              routing_key=self.rabbit_queue_name,
+                              routing_key=self.rabbit_routing_key,
                               body=body,
                               properties=pika.BasicProperties(delivery_mode=2))
         self.logger.info('send_rabbit_msg: %s', body)
@@ -97,10 +98,11 @@ class ResultsOutput:
         msg = result
         try:
             msg = self.rabbit_msg_template(uid, file_path, result)
-            channel = self.connect_rabbit()
+            (connection, channel) = self.connect_rabbit()
             self.send_rabbit_msg(msg, channel)
             msg = self.rabbit_msg_template(uid, file_path, '')
             self.send_rabbit_msg(msg, channel)
+            connection.close()
         except (socket.gaierror, pika.exceptions.AMQPConnectionError) as err:
             self.logger.error(f'Failed to send Rabbit message {msg} because: {err}')
 
