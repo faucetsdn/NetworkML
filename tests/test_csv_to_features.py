@@ -36,7 +36,8 @@ def test_CSVToFeatures_no_output():
         sys.argv = P2CARGS + ['-o', foox, trace]
         instance = PCAPToCSV()
         instance.main()
-        sys.argv = C2FARGS + [trace + '.csv.gz']
+        sys.argv = C2FARGS + \
+            ['-o', os.path.join(tmpdir, 'combined.csv.gz'), foox]
         instance2 = CSVToFeatures()
         instance2.main()
 
