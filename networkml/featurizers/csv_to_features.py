@@ -260,7 +260,7 @@ class CSVToFeatures():
             if failed_path in out_paths:
                 out_paths.remove(failed_path)
 
-        if combined:
+        if combined and out_paths:
             combined_path = os.path.join(
                 os.path.dirname(out_paths[0]), 'combined.csv.gz')
             if gzip_opt in ['input', 'neither']:
@@ -269,8 +269,12 @@ class CSVToFeatures():
                 f'Combining CSVs into a single file: {combined_path}')
             CSVToFeatures.combine_csvs(out_paths, combined_path, gzip_opt)
             return combined_path
-        self.logger.info(f'GZipped CSV file(s) written out to: {out_paths}')
-        return os.path.dirname(out_paths[0])
+        if out_paths:
+            self.logger.info(f'GZipped CSV file(s) written out to: {out_paths}')
+            return os.path.dirname(out_paths[0])
+        else:
+            self.logger.error(f'No CSV file(s) written out because the following paths failed: {failed_paths}')
+            return
 
 
 if __name__ == '__main__':  # pragma: no cover
