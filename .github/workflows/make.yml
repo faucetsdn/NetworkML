@@ -1,0 +1,14 @@
+name: make
+
+on: [push, pull_request]
+
+jobs:
+  make:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Test make
+      run: |
+        make test

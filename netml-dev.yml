@@ -1,0 +1,6 @@
+name: netml-dev
+channels:
+  - defaults
+dependencies:
+  - pip=20.0
+  - python=3.7.6

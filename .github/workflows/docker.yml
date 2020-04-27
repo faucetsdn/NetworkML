@@ -20,7 +20,7 @@ jobs:
       run: if [ "${{ steps.get_version.outputs.VERSION }}" == "master" ]; then echo ::set-output name=VERSION::latest; else echo ::set-output name=VERSION::${{ steps.get_version.outputs.VERSION }}; fi
     - name: Set up Docker Buildx
       id: buildx
-      uses: crazy-max/ghaction-docker-buildx@v1.0.5
+      uses: crazy-max/ghaction-docker-buildx@v1.4.0
       with:
         version: latest
     - name: Docker Login
@@ -35,7 +35,7 @@ jobs:
         DOCKER_CLI_EXPERIMENTAL: enabled
       run: |
         docker buildx build \
-          --platform linux/amd64 \
+          --platform linux/amd64,linux/arm/v7,linux/arm64 \
           --push \
           -t cyberreboot/networkml:${{ steps.change_version.outputs.VERSION }} .
       if: github.repository == 'cyberreboot/networkml' && github.event_name == 'push'

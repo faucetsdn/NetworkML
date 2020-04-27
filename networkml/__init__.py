@@ -1,1 +1,2 @@
-__version__ = open('VERSION', 'r').read().strip()
+import pkg_resources
+__version__ = pkg_resources.get_distribution('networkml').version
