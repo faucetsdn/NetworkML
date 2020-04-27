@@ -1,5 +1,5 @@
 humanize==2.4.0
-joblib==0.14.0
+joblib==0.14.1
 netaddr==0.7.19
 numpy==1.18.3
 pandas==1.0.3
