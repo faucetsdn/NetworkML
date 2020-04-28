@@ -1,229 +1,172 @@
 import argparse
-import fnmatch
-import hashlib
-import json
+import datetime
 import logging
 import os
+import time
 
-from pathlib import Path
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.neural_network import MLPClassifier
+import humanize
 
-from networkml.algorithms.base import BaseAlgorithm
-from networkml.utils.common import Common
-from networkml.utils.model import Model
+from networkml import __version__
+from networkml.algorithms.host_footprint import HostFootprint
+from networkml.featurizers.csv_to_features import CSVToFeatures
+from networkml.parsers.pcap_to_csv import PCAPToCSV
+from networkml.helpers.results_output import ResultsOutput
 
 
 class NetworkML():
-    """'
-    Main class that instantiates prediction models of the types of devices found
-    in computer network traffic and whether that device is acting normal
-    given its type (also based on network traffic). The three model types
-    built in to this class are random forests, neural networks, and stochastic
-    outlier selection (SOS).
-    """
 
-    def __init__(self):
-
-        ## Set logging information for instance
+    def __init__(self, raw_args=None):
         self.logger = logging.getLogger(__name__)
-        logging.basicConfig(level=logging.INFO)
+        self.main(raw_args=raw_args)
 
-        ## Take arguments from command line
-        self.args = None
-        self.read_args()
-
-        ## Take input from configuration file
-        self.get_config()
-        self.common = Common(config=self.config)
-
-        ## Instantiate a logger to to leg messages to aid debugging
-        self.logger = Common().setup_logger(self.logger)
-
-        ## Add network traffic files for parsing
-        self.get_files()
-        self.model_hash = None
-        self.model = Model(duration=self.duration, hidden_size=None,
-                           model_type=self.args.algorithm, threshold_time=self.threshold)
-
-        def create_base_alg():
-            return BaseAlgorithm(
-                files=self.files, config=self.config,
-                model=self.model, model_hash=self.model_hash,
-                model_path=self.args.trained_model,
-                sos_model=self.args.sos_model)
-
-        ## Check whether operation is evaluation, train, or test
-        ## Evaluation returns predictions that are useful for the deployment
-        ## of networkml in an operational environment.
-        if self.args.operation == 'eval':
-            self.load_model()
-
-            if (self.args.algorithm == 'onelayer' or self.args.algorithm == 'randomforest'):
-                base_alg = create_base_alg()
-                base_alg.eval(self.args.algorithm)
-
-            ## SOS refers to statistical outlier selection model
-            elif self.args.algorithm == 'sos':
-                from networkml.algorithms.sos.eval_SoSModel import eval_pcap
-                eval_pcap(self.args.path, self.args.sos_model, self.conf_labels, self.time_const)
-
-        ## Train entails training a new model on specific packet captures
-        elif self.args.operation == 'train':
-
-            ## Check for model type specified
-            ## onelayer refers to a one-layer neural network
-            if self.args.algorithm == 'onelayer':
-                m = MLPClassifier(
-                    (self.state_size),
-                    alpha=0.1,
-                    activation='relu',
-                    max_iter=1000
-                )
-                base_alg = create_base_alg()
-                base_alg.train(self.args.path, self.args.save, m, self.args.algorithm)
-
-            ## Random forests refers to a decision tree-based model
-            elif self.args.algorithm == 'randomforest':
-                m = RandomForestClassifier(
-                    n_estimators=100,
-                    min_samples_split=5,
-                    class_weight='balanced'
-                )
-                base_alg = create_base_alg()
-                base_alg.train(self.args.path, self.args.save, m, self.args.algorithm)
-
-            ## SOS refers to statistical outlier selection model
-            elif self.args.algorithm == 'sos':
-                from networkml.algorithms.sos.train_SoSModel import train
-                train(self.args.path, self.args.sos_model, self.time_const, self.rnn_size,
-                      self.conf_labels, self.args.save)
-
-        ## Test is for checking overall performance of networkML models for
-        ## the device classification task. It is a benchmarking operation.
-        elif self.args.operation == 'test':
-            self.load_model()
-
-            ## Check for model type specified
-            ## onelayer refers to a one-layer neural network
-            ## Random forests refers to a decision tree-based model
-            if (self.args.algorithm == 'onelayer' or self.args.algorithm == 'randomforest'):
-                base_alg = create_base_alg()
-                base_alg.test(self.args.path, self.args.save)
-
-            ## SOS refers to statistical outlier selection model
-            elif self.args.algorithm == 'sos':
-                self.logger.info('There is no testing operation for the SoSModel.')
-
-    def read_args(self):
-        """
-        Read arguments from command line to determine what operations to
-        implement.
-        """
+    @staticmethod
+    def parse_args(raw_args=None):
         parser = argparse.ArgumentParser()
-        parser.add_argument('--algorithm', '-a', default='onelayer',
-                            choices=['onelayer', 'randomforest', 'sos'],
-                            help='which algorithm to run')
-        parser.add_argument('--format', '-f', default='pcap',
-                            choices=['netflow', 'pcap'],
-                            help='which format are the files to process in')
-        parser.add_argument('--operation', '-o', default='eval',
-                            choices=['eval', 'train', 'test'],
-                            help='which operation to run')
-        parser.add_argument('--sos_model', '-s', default='networkml/trained_models/sos/SoSmodel',
-                            help='path to SoSmodel')
-        parser.add_argument('--trained_model', '-m', default='networkml/trained_models/onelayer/OneLayerModel.pkl',
-                            help='path to the trained model file')
-        parser.add_argument('--path', '-p', default='/pcaps',
-                            help='path to file or directory of files to process')
-        parser.add_argument('--save', '-w', default='networkml/trained_models/onelayer/OneLayerModel.pkl',
-                            help='path to save the trained model, if training')
+        parser.add_argument('path', help='path to a single pcap file, or a directory of pcaps to parse', default='/pcaps')
+        parser.add_argument('--algorithm', '-a', choices=[
+                            'host_footprint'], default='host_footprint', help='choose which algorithm to use (default=host_footprint)')
+        parser.add_argument('--engine', '-e', choices=['pyshark', 'tshark', 'host'],
+                            default='tshark', help='engine to use to process the PCAP file (default=tshark)')
+        parser.add_argument('--first_stage', '-f', choices=['parser', 'featurizer', 'algorithm'], default='parser',
+                            help='choose which stage to start at, `path` arg is relative to stage (default=parser)')
+        parser.add_argument('--final_stage', choices=['parser', 'featurizer', 'algorithm'],
+                            default='algorithm', help='choose which stage to finish at (default=algorithm)')
+        parser.add_argument('--groups', '-g', default='host',
+                            help='groups of comma separated features to use (default=host)')
+        parser.add_argument('--gzip', '-z', choices=['input', 'output', 'both'], default='both',
+                            help='use gzip between stages, useful when not using all 3 stages (default=both)')
+        parser.add_argument('--level', '-l', choices=['packet', 'flow', 'host'],
+                            default='packet', help='level to make the output records (default=packet)')
+        parser.add_argument('--operation', '-O', choices=['train', 'predict', 'eval'], default='predict',
+                            help='choose which operation task to perform, train or predict (default=predict)')
+        parser.add_argument('--output', '-o', default=None,
+                            help='directory to write out any results files to')
+        parser.add_argument('--rabbit', '-r', default=False, action='store_true',
+                            help='Send prediction message to RabbitMQ')
+        parser.add_argument('--threads', '-t', default=1, type=int,
+                            help='number of async threads to use (default=1)')
+        parser.add_argument('--verbose', '-v', choices=[
+                            'DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO', help='logging level (default=INFO)')
+        parser.add_argument('--trained_model',
+                            help='specify a path to load or save trained model')
+        parser.add_argument('--label_encoder',
+                            help='specify a path to load or save label encoder')
+        parser.add_argument('--scaler',
+                            help='specify a path to load or save scaler')
+        parser.add_argument('--kfolds',
+                            help='specify number of folds for k-fold cross validation')
+        parser.add_argument('--eval_data',
+                            help='path to eval CSV file, if training')
+        parser.add_argument('--train_unknown',
+                            help='Train on unknown roles')
+        parsed_args = parser.parse_args(raw_args)
+        return parsed_args
 
-        self.args = parser.parse_args()
-        return
+    def run_parser_stage(self, in_path):
+        instance = PCAPToCSV(raw_args=[
+            in_path, '-e', self.engine, '-l', self.level,
+            '-o', self.output, '-t', str(self.threads), '-v', self.log_level])
+        return instance.main()
 
-    def get_files(self):
-        """
-        Add directory of files or file for parsing.
-        """
-        # TODO checking extensions here should be moved to parsers, and it should
-        # probably use 'magic' rather than extensions. See Python magic library
+    def run_featurizer_stage(self, in_path):
+        instance = CSVToFeatures(raw_args=[
+            in_path, '-c', '-g', self.groups, '-z', self.gzip_opt,
+            '-o', self.output, '-t', str(self.threads), '-v', self.log_level])
+        return instance.main()
 
-        self.files = []
-        if Path(self.args.path).is_dir():
-            for root, dirnames, filenames in os.walk(self.args.path):
-                for extension in ['pcap', 'dump', 'cap']:
-                    for filename in fnmatch.filter(filenames, '*.' + extension):
-                        self.files.append(os.path.join(root, filename))
-        elif Path(self.args.path).is_file() and \
-                os.path.split(str(self.args.path))[-1].split('.')[-1] in {'pcap', 'dump', 'cap'}:
-            self.files.append(str(self.args.path))
-        else:
-            self.logger.error(
-                'Input \'%s\' was neither a file nor a directory.', str(self.args.path))
+    def run_algorithm_stage(self, in_path):
+        raw_args = [in_path, '-O', self.operation, '-v', self.log_level]
+        opt_args = ['trained_model', 'label_encoder', 'kfolds', 'scaler', 'eval_data', 'train_unknown']
+        for opt_arg in opt_args:
+            val = getattr(self, opt_arg, None)
+            if val is not None:
+                raw_args.extend(['--' + opt_arg, str(val)])
+        instance = HostFootprint(raw_args=raw_args)
+        return instance.main()
 
-        if not self.files:
-            self.logger.error(
-                'Did not find file(s) from \'%s\'.', str(self.args.path))
-        return
+    def run_stages(self):
+        stages = ('parser', 'featurizer', 'algorithm')
+        stage_runners = {
+            'parser': self.run_parser_stage,
+            'featurizer': self.run_featurizer_stage,
+            'algorithm': self.run_algorithm_stage}
 
-    def get_config(self, cfg_file='networkml/configs/config.json',
-                   labels_file='networkml/configs/label_assignments.json'):
-        """
-        Load values from configuration file.
-
-        Args:
-            cfg_file: path to configuration file
-            labels_file: path to labels (or the types of devices predicted)
-        """
         try:
-            with open(cfg_file, 'r') as config_file:
-                self.config = json.load(config_file)
+            first_stage_index = stages.index(self.first_stage)
+            final_stage_index = stages.index(self.final_stage)
+        except ValueError:
+            self.logger.error('Unknown first/final stage name')
+            return
 
-            ## Time constant is used for creating a moving average
-            self.time_const = self.config['time constant']
+        if first_stage_index > final_stage_index:
+            self.logger.error('Invalid first and final stage combination')
+            return
 
-            ## State size sets the number of nodes in the neural network
-            self.state_size = self.config['state size']
+        run_schedule = stages[first_stage_index:(final_stage_index+1)]
+        result = self.in_path
+        self.logger.info(f'running stages: {run_schedule}')
 
-            ## An amount of time set between investigations of a potentially
-            ## suspicious device
-            self.look_time = self.config['look time'] ## time in seconds
+        run_complete = False
+        try:
+            for stage in run_schedule:
+                runner = stage_runners[stage]
+                result = runner(result)
+            run_complete = True
+        except Exception as err:
+            self.logger.error(f'Could not run stage: {err}')
 
-            ## Threshold sets the confidence needed to identify abnormal
-            ## behavior
-            self.threshold = self.config['threshold']
+        uid = os.getenv('id', 'None')
+        file_path = os.getenv('file_path', self.in_path)
+        results_outputter = ResultsOutput(
+            self.logger, __version__, self.rabbit)
 
-            ## Set parameter for SOS model
-            self.rnn_size = self.config['rnn size']
+        if run_complete:
+            if self.final_stage == 'algorithm' and self.operation == 'predict':
+                if self.output:
+                    if os.path.isdir(self.output):
+                        result_json_file = os.path.join(self.output, 'predict.json')
+                    else:
+                        result_json_file = self.output
+                    with open(result_json_file, 'w') as result_json:
+                        result_json.write(result)
+                results_outputter.output_from_result_json(uid, file_path, result)
+            else:
+                results_outputter.output_invalid(uid, file_path, file_path)
+        else:
+            results_outputter.output_invalid(uid, file_path, file_path)
 
-            ## Duration for time window of network traffic for which to computer
-            ## information on features
-            self.duration = self.config['duration']
+    def main(self, raw_args=None):
+        parsed_args = NetworkML.parse_args(raw_args=raw_args)
+        self.in_path = parsed_args.path
+        self.algorithm = parsed_args.algorithm
+        self.engine = parsed_args.engine
+        self.first_stage = parsed_args.first_stage
+        self.final_stage = parsed_args.final_stage
+        self.groups = parsed_args.groups
+        self.gzip_opt = parsed_args.gzip
+        self.level = parsed_args.level
+        self.operation = parsed_args.operation
+        self.output = parsed_args.output
+        self.rabbit = parsed_args.rabbit
+        self.threads = parsed_args.threads
+        self.log_level = parsed_args.verbose
+        self.trained_model = parsed_args.trained_model
+        self.label_encoder = parsed_args.label_encoder
+        self.scaler = parsed_args.scaler
+        self.kfolds = parsed_args.kfolds
+        self.eval_data = parsed_args.eval_data
 
-            #self.batch_size = self.config['batch size']
+        log_levels = {'INFO': logging.INFO, 'DEBUG': logging.DEBUG,
+                      'WARNING': logging.WARNING, 'ERROR': logging.ERROR}
+        logging.basicConfig(level=log_levels[self.log_level])
 
-            ## Import device label typology
-            with open(labels_file, 'r') as label_file:
-                labels = json.load(label_file)
-            self.conf_labels = []
-            for label in labels:
-                self.conf_labels.append(labels[label])
-            self.conf_labels.append('Unknown')
-            self.config['conf labels'] = self.conf_labels
+        self.run_stages()
 
-        except Exception as e:  # pragma: no cover
-            self.logger.error(
-                "Unable to read '%s' properly because: %s", cfg_file, str(e))
-        return
 
-    def load_model(self):
-        """
-        Load trained machine learning model.
-        """
-        with open(self.args.trained_model, 'rb') as handle:
-            self.model_hash = hashlib.sha224(handle.read()).hexdigest()
-
-        self.model.load(self.args.trained_model)
-        self.logger.debug('Loaded model from %s', self.args.trained_model)
-        return
+if __name__ == '__main__':
+    start = time.time()
+    NetworkML()
+    end = time.time()
+    elapsed = end - start
+    human_elapsed = humanize.naturaldelta(datetime.timedelta(seconds=elapsed))
+    logging.info(f'Elapsed Time: {elapsed} seconds ({human_elapsed})')

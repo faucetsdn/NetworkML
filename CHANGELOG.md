@@ -1,3 +1,11 @@
+# v0.5.0 (2020-04-23)
+
+- Rewrote Networkml entirely
+- Now only does classification, no longer behavior
+- Flexible stages for processing PCAPs into CSVs of features
+- No longer uses tensorflow
+- Now supports running on ARM
+
 # v0.4.8 (2020-02-20)
 
 - Fixed local dev python version to be 3.7

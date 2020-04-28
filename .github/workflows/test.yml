@@ -20,22 +20,16 @@ jobs:
         pip3 install -U pip && \
         pip3 install codecov pytype && \
         find . -name requirements.txt -type f -exec pip3 install -r {} \; && \
+        find . -name test-requirements.txt -type f -exec pip3 install -r {} \; && \
         pip3 install . && \
         export PATH=/home/runner/.local/bin:$PATH && \
-        pytype . && pytest -l -s -n 2 -v --cov=tests/ --cov=networkml/ --cov-report term-missing -c .coveragerc && coverage report && coverage xml
-    - name: Test make
-      run: |
-        export REDIS_HOST=localhost && \
-        export POSEIDON_PUBLIC_SESSIONS=1 && \
-        export PCAP=test
-        make test
+        pytype . && \
+        jupyter nbconvert --ExecutePreprocessor.timeout=300 --to notebook --execute notebooks/networkml_exploration.ipynb && \
+        pytest -l -s -n auto -v --cov=tests/ --cov=networkml/ --cov-report term-missing -c .coveragerc --rabbitmq-port=5672 && coverage report && coverage xml
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v1.0.5
+      uses: codecov/codecov-action@v1.0.6
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
       if: github.repository == 'cyberreboot/networkml'
-    - name: docker-test
-      run: |
-        docker build -f Dockerfile -t cyberreboot/networkml .

@@ -5,4 +5,4 @@ include LICENSE
 include requirements.txt
 include bin/networkml
 include VERSION
-recursive-include networkml *.py *.pkl *.json *.index *.meta SoSmodel.data-00000-of-00001 checkpoint
+recursive-include networkml *.py

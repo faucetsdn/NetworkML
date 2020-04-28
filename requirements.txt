@@ -1,12 +1,9 @@
+humanize==2.4.0
+joblib==0.14.1
 netaddr==0.7.19
-numpy==1.18.1
+numpy==1.18.3
+pandas==1.0.3
 pika==1.1.0
-py-cpuinfo==5.0.0
 pyshark @ git+https://github.com/KimiNewt/pyshark.git#egg=pyshark&subdirectory=src
-pytest==5.3.5
-pytest-cov==2.8.1
-pytest-xdist==1.31.0
-redis==3.4.1
-scapy==2.4.3
-scikit-learn==0.22.1
-tensorflow==2.1.0
+scikit-learn==0.22.2.post1
+sklearn-json==0.1.0

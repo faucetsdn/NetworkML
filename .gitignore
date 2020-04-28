@@ -111,3 +111,7 @@ faucet.iml
 *.bak
 
 *gz
+erl_crash.dump
+
+# converted notebooks
+*.nbconvert.ipynb
