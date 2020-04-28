@@ -41,7 +41,7 @@ NetworkML uses a feedforward neural network from the scikit-learn package. The m
 
 Our models can be executed via Docker and in a standalone manner on a Linux host. We recommend deployment via Poseidon if you are running an SDN (software-defined network). Otherwise, we recommend using Docker.
 
-See the [README](https://github.com/CyberReboot/NetworkML/blob/master/networkml/algorithms/README.md) file included in the `networkml/algorithms` folder for specific instructions on deployment.
+See the [README](https://github.com/CyberReboot/NetworkML/tree/master/networkml/trained_models) file included in the `networkml/trained_models` folder for specific instructions on deployment.
 
 # Develop/Standalone Installation
 
