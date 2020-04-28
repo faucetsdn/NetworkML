@@ -1,3 +1,7 @@
+# v0.5.3 (2020-04-27)
+
+- Actually fix manifest to properly include models for PyPi Package.
+
 # v0.5.2 (2020-04-27)
 
 - Added missing files to manifest for PyPi package.
