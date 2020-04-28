@@ -5,4 +5,5 @@ include LICENSE
 include requirements.txt
 include bin/networkml
 include VERSION
+inlcude networkml/trained_models/*.*
 recursive-include networkml *.py
