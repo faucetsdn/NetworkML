@@ -1,3 +1,7 @@
+# v0.5.1 (2020-04-27)
+
+- Rolling back to latest published version of pyshark - for issues see commented version in requirements.txt, which is unfortunately not supported for dependency install from PyPi with pip.
+
 # v0.5.0 (2020-04-23)
 
 - Rewrote Networkml entirely
