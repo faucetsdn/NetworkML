@@ -323,7 +323,7 @@ class HostBase:
         ) if not pd.isnull(y) and not x.startswith('_'))
         return self._encode_df_proto_flags(short_row_keys, row['frame.protocols'])
 
-    def _tshark_all(self, df, srcmacid):
+    def _tshark_all(self, df, srcmacid, canonical_source_mac):
         print('calculating intermediates', end='', flush=True)
         df['_host_key'], df['_srcip'], df['_dstip'], df['_both_private_ip'], df['_ipv4_multicast'], df['_protos_int'] = zip(
             *df.apply(self._host_key, axis=1))
@@ -335,7 +335,7 @@ class HostBase:
         host_keys_count = len(host_keys)
         print('.%u MACs, %u sessions' %
               (len(all_unicast_macs), host_keys_count), end='', flush=True)
-        if srcmacid:
+        if srcmacid and canonical_source_mac:
             minsrcipmac = df.groupby(['eth.src'])[
                 '_srcip'].nunique().idxmin(axis=1)
             assert minsrcipmac in all_unicast_macs
@@ -363,6 +363,8 @@ class HostBase:
 
 class Host(HostBase, Features):
 
+    CLI_FLAGS = ['canonical_source_mac']
+
     def _host_key(self, row):
         ip_src = self._get_src_ip(row)
         ip_dst = self._get_dst_ip(row)
@@ -370,11 +372,13 @@ class Host(HostBase, Features):
         protos_int = self._df_proto_flags(row)
         return (0, str(ip_src), str(ip_dst), both_private_ip, ipv4_multicast, protos_int)
 
-    def host_tshark_all(self, df, srcmacid):
-        return self._tshark_all(df, srcmacid)
+    def host_tshark_all(self, df, srcmacid, canonical_source_mac=True):
+        return self._tshark_all(df, srcmacid, canonical_source_mac)
 
 
 class SessionHost(HostBase, Features):
+
+    CLI_FLAGS = ['canonical_source_mac']
 
     def _host_key(self, row):
         eth_src = row['eth.src']
@@ -400,5 +404,5 @@ class SessionHost(HostBase, Features):
             key = (row['eth.type'],) + tuple(sorted((eth_src, eth_dst)))
         return (hash('-'.join([str(x) for x in key])), str(ip_src), str(ip_dst), both_private_ip, ipv4_multicast, protos_int)
 
-    def sessionhost_tshark_all(self, df, srcmacid):
-        return self._tshark_all(df, srcmacid)
+    def sessionhost_tshark_all(self, df, srcmacid, canonical_source_mac=True):
+        return self._tshark_all(df, srcmacid, canonical_source_mac)
