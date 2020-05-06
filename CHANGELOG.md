@@ -1,3 +1,8 @@
+# v0.5.4 (2020-05-06)
+
+- Updated pytest-xdist, nest-asyncio, and numpy
+- Added flag --no-srcmacid to make predictions on all MACs found
+
 # v0.5.3 (2020-04-27)
 
 - Actually fix manifest to properly include models for PyPi Package.
