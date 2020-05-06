@@ -50,7 +50,7 @@ class NetworkML():
         self.rabbit = parsed_args.rabbit
         self.threads = parsed_args.threads
         self.log_level = parsed_args.verbose
-        for stage, args in self.stage_args.items():
+        for args in self.stage_args.values():
             for arg in args:
                 val = getattr(parsed_args, arg, None)
                 if val is not None:
@@ -87,9 +87,9 @@ class NetworkML():
                             'DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO', help='logging level (default=INFO)')
         for stage, args in self.stage_args.items():
             for arg, arg_parms in args.items():
-                help = '%s (%s)' % (arg_parms['help'], stage)
+                arg_help = '%s (%s)' % (arg_parms['help'], stage)
                 action = arg_parms.get('action', None)
-                parser.add_argument('--' + arg, help=help, default=None, dest=arg, action=action)
+                parser.add_argument('--' + arg, help=arg_help, default=None, dest=arg, action=action)
         parsed_args = parser.parse_args(raw_args)
         return parsed_args
 
