@@ -88,6 +88,6 @@ def test_CSVToFeatures_host():
                 sys.argv = P2CARGS + ['-o', foo3, testsdir]
                 instance = PCAPToCSV()
                 instance.main()
-                sys.argv = ['csv_to_features.py', '-c', '-z', 'input', '-g', featurizer, foo3]
+                sys.argv = ['csv_to_features.py', '-c', '-z', 'input', '-g', featurizer, srcidflag, foo3]
                 instance2 = CSVToFeatures()
                 instance2.main()
