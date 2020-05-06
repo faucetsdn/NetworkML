@@ -104,18 +104,20 @@ class CSVToFeatures():
                             help='number of async threads to use (default=1)')
         parser.add_argument('--verbose', '-v', choices=[
                             'DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO', help='logging level (default=INFO)')
-        parser.add_argument('--srcmacid', '-s', default=True, action='store_true',
-                            help='attempt to detect canonical source MAC and featurize only that MAC')
+        srcmacid_parser = parser.add_mutually_exclusive_group(required=False)
+        srcmacid_parser.add_argument('--srcmacid', dest='srcmacid', action='store_true', help='attempt to detect canonical source MAC and featurize only that MAC')
+        srcmacid_parser.add_argument('--no-srcmacid', dest='srcmacid', action='store_false', help='featurize all MACs')
+        parser.set_defaults(srcmacid=True)
         parsed_args = parser.parse_args(raw_args)
         return parsed_args
 
-    def exec_features(self, features, in_file, out_file, features_path, gzip_opt, srcmacid):
+    def exec_features(self, features, in_file, out_file, features_path, gzip_opt, parsed_args):
         in_file_size = os.path.getsize(in_file)
         self.logger.info(f'Importing {in_file} size {in_file_size}')
         df = import_csv(in_file)
         featurizer = Featurizer()
         self.logger.info(f'Featurizing {in_file}')
-        rows = featurizer.main(features, df, features_path, srcmacid)
+        rows = featurizer.main(features, df, features_path, parsed_args)
 
         rowcounts = Counter()
         for row in rows:
@@ -150,7 +152,7 @@ class CSVToFeatures():
             self.logger.warning(
                 f'No results based on {features} for {in_file}')
 
-    def process_files(self, threads, features, features_path, in_paths, out_paths, gzip_opt, srcmacid):
+    def process_files(self, threads, features, features_path, in_paths, out_paths, gzip_opt, parsed_args):
         num_files = len(in_paths)
         failed_paths = []
         finished_files = 0
@@ -160,7 +162,7 @@ class CSVToFeatures():
                 try:
                     finished_files += 1
                     self.exec_features(
-                        features, in_paths[i], out_paths[i], features_path, gzip_opt, srcmacid)
+                        features, in_paths[i], out_paths[i], features_path, gzip_opt, parsed_args)
                     self.logger.info(
                         f'Finished {in_paths[i]}. {finished_files}/{num_files} CSVs done.')
                 except Exception as e:  # pragma: no cover
@@ -170,7 +172,7 @@ class CSVToFeatures():
         else:
             with concurrent.futures.ProcessPoolExecutor(max_workers=threads) as executor:
                 future_to_parse = {executor.submit(
-                    self.exec_features, features, in_paths[i], out_paths[i], features_path, gzip_opt, srcmacid): i for i in range(len((in_paths)))}
+                    self.exec_features, features, in_paths[i], out_paths[i], features_path, gzip_opt, parsed_args): i for i in range(len((in_paths)))}
                 for future in concurrent.futures.as_completed(future_to_parse):
                     path = future_to_parse[future]
                     try:
@@ -196,7 +198,6 @@ class CSVToFeatures():
         functions = parsed_args.functions
         groups = parsed_args.groups
         gzip_opt = parsed_args.gzip
-        srcmacid = parsed_args.srcmacid
 
         if not groups and not functions:
             self.logger.warning(
@@ -254,7 +255,7 @@ class CSVToFeatures():
                 out_paths.append(default_out_path)
 
         failed_paths = self.process_files(
-            threads, features, features_path, in_paths, out_paths, gzip_opt, srcmacid)
+            threads, features, features_path, in_paths, out_paths, gzip_opt, parsed_args)
 
         for failed_path in failed_paths:  # pragma: no cover
             if failed_path in out_paths:

@@ -17,10 +17,48 @@ class NetworkML():
 
     def __init__(self, raw_args=None):
         self.logger = logging.getLogger(__name__)
-        self.main(raw_args=raw_args)
+        log_levels = {'INFO': logging.INFO, 'DEBUG': logging.DEBUG,
+                      'WARNING': logging.WARNING, 'ERROR': logging.ERROR}
 
-    @staticmethod
-    def parse_args(raw_args=None):
+        # TODO: migrate stage-specific flags here.
+        self.stage_args = {
+            'parser': {},
+            'featurizer': {
+                'srcmacid': {'help': 'attempt to detect canonical source MAC and featurize only that MAC', 'action': 'store_true'},
+                'no-srcmacid': {'help': 'featurize all MACs', 'action': 'store_true'},
+            },
+            'algorithm': {
+                'trained_model': {'help': 'specify a path to load or save trained model'},
+                'label_encoder': {'help': 'specify a path to load or save label encoder'},
+                'scaler': {'help': 'specify a path to load or save scaler'},
+                'kfolds': {'help': 'specify number of folds for k-fold cross validation'},
+                'eval_data': {'help': 'path to eval CSV file, if training'},
+                'train_unknown': {'help': 'Train on unknown roles'},
+            },
+        }
+        parsed_args = self.parse_args(raw_args=raw_args)
+        self.in_path = parsed_args.path
+        self.algorithm = parsed_args.algorithm
+        self.engine = parsed_args.engine
+        self.first_stage = parsed_args.first_stage
+        self.final_stage = parsed_args.final_stage
+        self.groups = parsed_args.groups
+        self.gzip_opt = parsed_args.gzip
+        self.level = parsed_args.level
+        self.operation = parsed_args.operation
+        self.output = parsed_args.output
+        self.rabbit = parsed_args.rabbit
+        self.threads = parsed_args.threads
+        self.log_level = parsed_args.verbose
+        for stage, args in self.stage_args.items():
+            for arg in args:
+                val = getattr(parsed_args, arg, None)
+                if val is not None:
+                    setattr(self, arg, val)
+        logging.basicConfig(level=log_levels[self.log_level])
+        self.main()
+
+    def parse_args(self, raw_args=None):
         parser = argparse.ArgumentParser()
         parser.add_argument('path', help='path to a single pcap file, or a directory of pcaps to parse', default='/pcaps')
         parser.add_argument('--algorithm', '-a', choices=[
@@ -47,40 +85,41 @@ class NetworkML():
                             help='number of async threads to use (default=1)')
         parser.add_argument('--verbose', '-v', choices=[
                             'DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO', help='logging level (default=INFO)')
-        parser.add_argument('--trained_model',
-                            help='specify a path to load or save trained model')
-        parser.add_argument('--label_encoder',
-                            help='specify a path to load or save label encoder')
-        parser.add_argument('--scaler',
-                            help='specify a path to load or save scaler')
-        parser.add_argument('--kfolds',
-                            help='specify number of folds for k-fold cross validation')
-        parser.add_argument('--eval_data',
-                            help='path to eval CSV file, if training')
-        parser.add_argument('--train_unknown',
-                            help='Train on unknown roles')
+        for stage, args in self.stage_args.items():
+            for arg, arg_parms in args.items():
+                help = '%s (%s)' % (arg_parms['help'], stage)
+                action = arg_parms.get('action', None)
+                parser.add_argument('--' + arg, help=help, default=None, dest=arg, action=action)
         parsed_args = parser.parse_args(raw_args)
         return parsed_args
 
+    def add_opt_args(self, opt_args):
+        raw_args = []
+        for arg, arg_parms in opt_args.items():
+            val = getattr(self, arg, None)
+            if val is not None:
+                raw_args.append('--' + arg)
+                if arg_parms.get('action', None) != 'store_true':
+                    raw_args.append(str(val))
+        return raw_args
+
     def run_parser_stage(self, in_path):
-        instance = PCAPToCSV(raw_args=[
-            in_path, '-e', self.engine, '-l', self.level,
-            '-o', self.output, '-t', str(self.threads), '-v', self.log_level])
+        raw_args = self.add_opt_args(self.stage_args['parser'])
+        raw_args.extend(['-e', self.engine, '-l', self.level,
+            '-o', self.output, '-t', str(self.threads), '-v', self.log_level, in_path])
+        instance = PCAPToCSV(raw_args=raw_args)
         return instance.main()
 
     def run_featurizer_stage(self, in_path):
-        instance = CSVToFeatures(raw_args=[
-            in_path, '-c', '-g', self.groups, '-z', self.gzip_opt,
-            '-o', self.output, '-t', str(self.threads), '-v', self.log_level])
+        raw_args = self.add_opt_args(self.stage_args['featurizer'])
+        raw_args.extend(['-c', '-g', self.groups, '-z', self.gzip_opt,
+            '-o', self.output, '-t', str(self.threads), '-v', self.log_level, in_path])
+        instance = CSVToFeatures(raw_args=raw_args)
         return instance.main()
 
     def run_algorithm_stage(self, in_path):
-        raw_args = [in_path, '-O', self.operation, '-v', self.log_level]
-        opt_args = ['trained_model', 'label_encoder', 'kfolds', 'scaler', 'eval_data', 'train_unknown']
-        for opt_arg in opt_args:
-            val = getattr(self, opt_arg, None)
-            if val is not None:
-                raw_args.extend(['--' + opt_arg, str(val)])
+        raw_args = self.add_opt_args(self.stage_args['algorithm'])
+        raw_args.extend(['-O', self.operation, '-v', self.log_level, in_path])
         instance = HostFootprint(raw_args=raw_args)
         return instance.main()
 
@@ -135,31 +174,7 @@ class NetworkML():
         else:
             results_outputter.output_invalid(uid, file_path, file_path)
 
-    def main(self, raw_args=None):
-        parsed_args = NetworkML.parse_args(raw_args=raw_args)
-        self.in_path = parsed_args.path
-        self.algorithm = parsed_args.algorithm
-        self.engine = parsed_args.engine
-        self.first_stage = parsed_args.first_stage
-        self.final_stage = parsed_args.final_stage
-        self.groups = parsed_args.groups
-        self.gzip_opt = parsed_args.gzip
-        self.level = parsed_args.level
-        self.operation = parsed_args.operation
-        self.output = parsed_args.output
-        self.rabbit = parsed_args.rabbit
-        self.threads = parsed_args.threads
-        self.log_level = parsed_args.verbose
-        self.trained_model = parsed_args.trained_model
-        self.label_encoder = parsed_args.label_encoder
-        self.scaler = parsed_args.scaler
-        self.kfolds = parsed_args.kfolds
-        self.eval_data = parsed_args.eval_data
-
-        log_levels = {'INFO': logging.INFO, 'DEBUG': logging.DEBUG,
-                      'WARNING': logging.WARNING, 'ERROR': logging.ERROR}
-        logging.basicConfig(level=log_levels[self.log_level])
-
+    def main(self):
         self.run_stages()
 
 

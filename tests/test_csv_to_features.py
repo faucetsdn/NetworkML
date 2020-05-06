@@ -20,8 +20,7 @@ def test_CSVToFeatures():
         sys.argv = P2CARGS + ['-o', foo1, trace]
         instance = PCAPToCSV()
         instance.main()
-        sys.argv = C2FARGS + \
-            ['-o', os.path.join(tmpdir, 'combined.csv.gz'), foo1]
+        sys.argv = C2FARGS + ['-o', os.path.join(tmpdir, 'combined.csv.gz'), foo1]
         instance2 = CSVToFeatures()
         instance2.main()
 
@@ -36,8 +35,7 @@ def test_CSVToFeatures_no_output():
         sys.argv = P2CARGS + ['-o', foox, trace]
         instance = PCAPToCSV()
         instance.main()
-        sys.argv = C2FARGS + \
-            ['-o', os.path.join(tmpdir, 'combined.csv.gz'), foox]
+        sys.argv = C2FARGS + ['-o', os.path.join(tmpdir, 'combined.csv.gz'), foox]
         instance2 = CSVToFeatures()
         instance2.main()
 
@@ -81,14 +79,15 @@ def test_CSVToFeatures_dir_output():
 
 
 def test_CSVToFeatures_host():
-    with tempfile.TemporaryDirectory() as tmpdir:
-        foo3 = os.path.join(tmpdir, 'foo3')
-        testsdir = os.path.join(tmpdir, 'tests')
-        shutil.copytree('tests', testsdir)
-        sys.argv = P2CARGS + ['-o', foo3, testsdir]
-        instance = PCAPToCSV()
-        instance.main()
-        sys.argv = ['csv_to_features.py', '-c', '-z',
-                    'input', '-g', 'sessionhost_tshark', foo3]
-        instance2 = CSVToFeatures()
-        instance2.main()
+    for srcidflag in ('--srcmacid', '--no-srcmacid'):
+        for featurizer in ('sessionhost_tshark', 'host_tshark'):
+            with tempfile.TemporaryDirectory() as tmpdir:
+                foo3 = os.path.join(tmpdir, 'foo3')
+                testsdir = os.path.join(tmpdir, 'tests')
+                shutil.copytree('tests', testsdir)
+                sys.argv = P2CARGS + ['-o', foo3, testsdir]
+                instance = PCAPToCSV()
+                instance.main()
+                sys.argv = ['csv_to_features.py', '-c', '-z', 'input', '-g', featurizer, foo3]
+                instance2 = CSVToFeatures()
+                instance2.main()
