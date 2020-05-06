@@ -6,8 +6,6 @@ import numpy as np
 
 class Features():
 
-    CLI_FLAGS = []
-
     def __init__(self):
         self.nonempty_generators = set()
 
