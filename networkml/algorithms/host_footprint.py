@@ -1,6 +1,7 @@
 """
 A class to perform machine learning operations on computer network traffic
 """
+from collections import defaultdict
 import ast
 import argparse
 import json
@@ -259,8 +260,8 @@ class HostFootprint():
         self.model = self.deserialize_model(self.model_path)
 
         # Load data from host footprint .csv
-        df, host_key, tshark_srcips, frame_epoch = self.regularize_df(pd.read_csv(self.path))
-
+        csv_df = pd.read_csv(self.path)
+        df, host_key, tshark_srcips, frame_epoch = self.regularize_df(csv_df)
         # Split dataframe into X (the input features or predictors)
         # and y (the target or outcome or dependent variable)
         # This drop function should work even if there is no column
@@ -303,7 +304,7 @@ class HostFootprint():
         """
 
         # Dict to store JSON of top n roles and probabilities per device
-        all_predictions = {}
+        all_predictions = defaultdict(list)
         num_roles = len(label_encoder.classes_)
         labels = label_encoder.inverse_transform([i for i in range(num_roles)])
 
@@ -325,7 +326,7 @@ class HostFootprint():
                 host_results.update({'source_ip': source_ip})
             if frame_epoch is not None:
                 host_results.update({'timestamp': frame_epoch[i]})
-            all_predictions[filename[i]] = host_results
+            all_predictions[filename[i]].append(host_results)
 
         return all_predictions
 

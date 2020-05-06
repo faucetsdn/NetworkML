@@ -47,9 +47,9 @@ def test_get_individual_predictions():
    frame_epoch = None
    instance = HostFootprint()
    assert instance.get_individual_predictions([[0.6, 0.7]], le, filename, host_key, tshark_srcips, frame_epoch) == {
-        'firstfile': {'top_role': 'bsomething', 'role_list': [('bsomething', 0.7), ('asomething', 0.6)], 'source_ip': '1.1.1.1', 'source_mac': 'mac1'}}
+        'firstfile': [{'top_role': 'bsomething', 'role_list': [('bsomething', 0.7), ('asomething', 0.6)], 'source_ip': '1.1.1.1', 'source_mac': 'mac1'}]}
    assert instance.get_individual_predictions([[0.2, 0.1]], le, filename, host_key, tshark_srcips, frame_epoch) == {
-        'firstfile': {'top_role': 'Unknown', 'role_list': [('asomething', 0.2), ('bsomething', 0.1)], 'source_ip': '1.1.1.1', 'source_mac': 'mac1'}}
+        'firstfile': [{'top_role': 'Unknown', 'role_list': [('asomething', 0.2), ('bsomething', 0.1)], 'source_ip': '1.1.1.1', 'source_mac': 'mac1'}]}
 
 
 def hf_args(tmpdir, operation, input_file):
@@ -86,7 +86,7 @@ def test_predict():
         operation = 'predict'
         sys.argv = hf_args(tmpdir, operation, input_file)
         instance = HostFootprint()
-        instance.main()
+        json.loads(instance.main())
 
 
 def test_predict_num_roles():
