@@ -1,4 +1,5 @@
 import logging
+import json
 import time
 
 from networkml.helpers.results_output import ResultsOutput
@@ -56,3 +57,13 @@ def test_rabbit_smoke_good():
     instance.output_msg('x', 'y', 'z')
     instance.output_invalid('1', '/some/file.pcap', 'file.pcap')
     instance.output_valid('1', '/some/file.pcap', 'file.pcap', 99.0, '1.2.3.4', '0e:00:00:00:00:01', ['arole'], ['1.0'])
+
+
+def test_results_output():
+    logger = logging.getLogger(__name__)
+    instance = ResultsOutput(logger, 'testver', True)
+    instance.rabbit_host = '127.0.0.1'
+    results_json = json.dumps({
+        "filename1": [{"top_role": "role1", "role_list": [["role1", 0.9], ["role2", 0.8], ["role3", 0.7]]}],
+        "filename2": [{"top_role": "Unknown", "role_list": [["role1", 0.2], ["role2", 0.1], ["role3", 0.01]]}]})
+    instance.output_from_result_json('1', '/some/file.pcap', results_json)

@@ -138,17 +138,18 @@ class ResultsOutput:
 
     def output_from_result_json(self, uid, file_path, result_json):
         result = json.loads(result_json)
-        for filename, host_result in result.items():
+        for filename, host_results in result.items():
             filename = filename.split('.csv.gz')[0]
-            top_role = host_result.get('top_role', None)
-            if top_role is None:
-                self.output_invalid(uid, file_path, filename)
-                continue
-            investigate = top_role == 'Unknown'
-            source_ip = host_result.get('source_ip', None)
-            source_mac = host_result.get('source_mac', None)
-            timestamp = host_result.get('timestamp', None)
-            labels, confidences = zip(*host_result['role_list'])
-            self.output_valid(
-                uid, file_path, filename, timestamp, source_ip, source_mac,
-                labels, confidences, investigate=investigate)
+            for host_result in host_results:
+                top_role = host_result.get('top_role', None)
+                if top_role is None:
+                    self.output_invalid(uid, file_path, filename)
+                    continue
+                investigate = top_role == 'Unknown'
+                source_ip = host_result.get('source_ip', None)
+                source_mac = host_result.get('source_mac', None)
+                timestamp = host_result.get('timestamp', None)
+                labels, confidences = zip(*host_result['role_list'])
+                self.output_valid(
+                    uid, file_path, filename, timestamp, source_ip, source_mac,
+                    labels, confidences, investigate=investigate)

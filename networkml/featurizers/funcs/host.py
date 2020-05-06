@@ -370,8 +370,8 @@ class Host(HostBase, Features):
         protos_int = self._df_proto_flags(row)
         return (0, str(ip_src), str(ip_dst), both_private_ip, ipv4_multicast, protos_int)
 
-    def host_tshark_all(self, df, srcmacid):
-        return self._tshark_all(df, srcmacid)
+    def host_tshark_all(self, df, parsed_args):
+        return self._tshark_all(df, parsed_args.srcmacid)
 
 
 class SessionHost(HostBase, Features):
@@ -400,5 +400,5 @@ class SessionHost(HostBase, Features):
             key = (row['eth.type'],) + tuple(sorted((eth_src, eth_dst)))
         return (hash('-'.join([str(x) for x in key])), str(ip_src), str(ip_dst), both_private_ip, ipv4_multicast, protos_int)
 
-    def sessionhost_tshark_all(self, df, srcmacid):
-        return self._tshark_all(df, srcmacid)
+    def sessionhost_tshark_all(self, df, parsed_args):
+        return self._tshark_all(df, parsed_args.srcmacid)
