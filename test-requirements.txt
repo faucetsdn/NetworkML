@@ -1,5 +1,5 @@
 -r requirements.txt
-pytest==5.3.5
+pytest==5.4.2
 pytest-cov==2.8.1
 pytest-xdist==1.32.0
 pytest-rabbitmq==2.0.1
