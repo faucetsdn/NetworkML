@@ -5,6 +5,6 @@ numpy==1.18.4
 pandas==1.0.3
 pika==1.1.0
 #pyshark @ git+https://github.com/KimiNewt/pyshark.git#egg=pyshark&subdirectory=src
-pyshark==0.4.2.9
+pyshark==0.4.2.11
 scikit-learn==0.22.2.post1
 sklearn-json==0.1.0
