@@ -45,8 +45,14 @@ See the [README](https://github.com/CyberReboot/NetworkML/tree/master/networkml/
 
 # Develop/Standalone Installation
 
+Note: This project uses absolute paths for imports, meaning you'll either need to modify your `PYTHONPATH` to something like this from the project directory:
+```
+export PYTHONPATH=$PWD/networkml:$PYTHONPATH
+```
+Alternatively, simply running `pip3 install .` from the project directory after making changes will update the package to test or debug against.
+
 This package is set up for anaconda/miniconda to be used for package and environment
-management. Assuming you have the latest install (as of this writing, we have been using
+management if desired. Assuming you have the latest install (as of this writing, we have been using
 conda 4.5.12), set up the environment by performing the following:
  1. Ensure that the CONDA_EXE environment variable has been set. If `echo $CONDA_EXE`
 returns empty, resolve this by `export CONDA_EXE=$_CONDA_EXE` in your bash shell.
