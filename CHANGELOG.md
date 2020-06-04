@@ -1,3 +1,8 @@
+# v0.5.5 (2020-06-03)
+
+- Updated joblib, pandas, pytest, pytest-cov, and pyshark
+- Updated documentation for developers
+
 # v0.5.4 (2020-05-06)
 
 - Updated pytest-xdist, nest-asyncio, and numpy
