@@ -1,4 +1,6 @@
+Dockerfile
 Dockerfile.base
+Dockerfile.test
 .gitignore
 .git
 AUTHORS

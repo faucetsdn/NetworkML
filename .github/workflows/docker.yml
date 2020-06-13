@@ -30,8 +30,16 @@ jobs:
       run: |
         echo "${DOCKER_PASSWORD}" | docker login --username "${{ secrets.DOCKER_USERNAME }}" --password-stdin
       if: github.repository == 'cyberreboot/networkml' && github.event_name == 'push'
-
-    - name: Build and push platforms
+    - name: Build and push platforms for base image
+      env:
+        DOCKER_CLI_EXPERIMENTAL: enabled
+      run: |
+        docker buildx build \
+          --platform linux/amd64,linux/arm/v7,linux/arm64 \
+          --push \
+          -t cyberreboot/networkml:base -f Dockerfile.base .
+      if: github.repository == 'cyberreboot/networkml' && github.event_name == 'push'
+    - name: Build and push platforms for final image
       env:
         DOCKER_CLI_EXPERIMENTAL: enabled
       run: |
