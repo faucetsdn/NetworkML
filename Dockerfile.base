@@ -22,9 +22,6 @@ RUN apk upgrade --no-cache && \
     apk del build-base \
     cython \
     gcc \
-    git \
-    libxml2-dev \
-    libxslt-dev \
-    python3-dev && \
+    git && \
     rm -rf /var/cache/* && \
     rm -rf /root/.cache/*
