@@ -19,9 +19,5 @@ RUN apk upgrade --no-cache && \
     py3-setuptools \
     tshark && \
     pip3 install --no-cache-dir --upgrade -r base-requirements.txt && \
-    apk del build-base \
-    cython \
-    gcc \
-    git && \
     rm -rf /var/cache/* && \
     rm -rf /root/.cache/*
