@@ -2,4 +2,7 @@ humanize==2.4.0
 joblib==0.15.1
 netaddr==0.7.19
 pika==1.1.0
+pyshark==0.4.2.11
+scikit-learn==0.22.2.post1
 sklearn-json==0.1.0
+
