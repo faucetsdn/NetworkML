@@ -1,3 +1,8 @@
+# v0.5.6 (2020-06-18)
+
+- Updated pandas, pytest-cov
+- Broke up Docker into two images for build times across architectures
+
 # v0.5.5 (2020-06-03)
 
 - Updated joblib, pandas, pytest, pytest-cov, and pyshark
