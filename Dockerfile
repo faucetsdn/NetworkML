@@ -5,7 +5,7 @@ ENV PYTHONUNBUFFERED 1
 COPY requirements.txt requirements.txt
 
 RUN apt-get update && apt-get install -y tshark && \
-    pip3 install --no-cache-dir --upgrade -r base-requirements.txt && \
+    pip3 install --no-cache-dir --upgrade -r requirements.txt && \
     rm -rf /var/cache/* && \
     rm -rf /root/.cache/*
 
