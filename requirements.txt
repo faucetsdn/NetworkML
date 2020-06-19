@@ -1,6 +1,8 @@
 humanize==2.4.0
 joblib==0.15.1
-netaddr==0.7.19
+netaddr==0.7.20
+numpy==1.18.5
+pandas==1.0.5
 pika==1.1.0
 pyshark==0.4.2.11
 scikit-learn==0.22.2.post1
