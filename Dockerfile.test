@@ -1,7 +1,7 @@
 FROM networkml
 LABEL maintainer="Charlie Lewis <clewis@iqt.org>"
 
-RUN apt-get update && apt-get install --no-install-recommends -y gcc rabbitmq-server && \
+RUN apt-get update && apt-get install -y gcc rabbitmq-server && \
     rm -rf /var/cache && \
     pip3 install --no-cache-dir -r test-requirements.txt
 ENTRYPOINT ["pytest"]
