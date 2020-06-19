@@ -7,4 +7,3 @@ pika==1.1.0
 pyshark==0.4.2.11
 scikit-learn==0.22.2.post1
 sklearn-json==0.1.0
-
