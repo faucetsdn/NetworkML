@@ -1,12 +1,8 @@
 FROM networkml
 LABEL maintainer="Charlie Lewis <clewis@iqt.org>"
 
-# Needed for erlang dependencies
-RUN echo "http://dl-cdn.alpinelinux.org/alpine/v3.11/community" >> /etc/apk/repositories
-
-RUN apk add build-base cython gcc linux-headers libxml2-dev libxslt-dev --update --no-cache && \
-    apk add rabbitmq-server --update --no-cache --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ --allow-untrusted && \
-    rm -rf /var/cache/apk && \
+RUN apt-get update && apt-get install -y gcc rabbitmq-server && \
+    rm -rf /var/cache && \
     pip3 install --no-cache-dir -r test-requirements.txt
 ENTRYPOINT ["pytest"]
 CMD ["-l", "-s", "-v", "-nauto", "--cov=tests/", "--cov=networkml/", "--cov-report", "term-missing", "-c", ".coveragerc", "--rabbitmq-port=5672"]

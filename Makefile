@@ -25,7 +25,6 @@ test: build
 	@docker build -t networkml-test -f Dockerfile.test .
 	@docker run --rm networkml-test
 build:
-	@docker build -t cyberreboot/networkml:base -f Dockerfile.base .
 	@docker build -t networkml .
 install:
 	pip3 install .
