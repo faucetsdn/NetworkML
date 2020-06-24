@@ -1,7 +1,8 @@
+cython==0.29.20
 humanize==2.4.0
 joblib==0.15.1
 netaddr==0.7.20
-numpy==1.18.5
+numpy==1.19.0
 pandas==1.0.5
 pika==1.1.0
 pyshark==0.4.2.11
