@@ -1,6 +1,6 @@
 cython==0.29.20
 humanize==2.4.1
-joblib==0.15.1
+joblib==0.16.0
 netaddr==0.7.20
 numpy==1.19.0
 pandas==1.0.5
