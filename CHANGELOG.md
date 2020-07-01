@@ -1,3 +1,8 @@
+# v0.5.7 (2020-07-01)
+
+- Updated pandas, numpy, netaddr, and humanize
+- Moved Docker base image to python:3.8-slim (debian based instead of alpine)
+
 # v0.5.6 (2020-06-18)
 
 - Updated pandas, pytest-cov
