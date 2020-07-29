@@ -1,3 +1,7 @@
+# v0.5.8 (2020-07-29)
+
+- Updated cython, humanize, netaddr, numpy, pandas, pytest, pytest-xdist, and nest_asyncio
+
 # v0.5.7 (2020-07-01)
 
 - Updated joblib, pandas, numpy, netaddr, and humanize
