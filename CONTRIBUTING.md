@@ -24,7 +24,7 @@ that feature *on top of* NetworkML.
 ### Create issues...
 
 Any significant improvement should be documented as [a github
-issue](https://github.com/CyberReboot/NetworkML/issues) before anybody
+issue](https://github.com/IQTLabs/NetworkML/issues) before anybody
 starts working on it.
 
 ### ...but check for existing issues first!
@@ -45,7 +45,7 @@ generic feature extraction and processing from raw pcap files, and can be
 reused by any of the models within the collection.
 
 Take the `DeviceClassifier` as an archetype example of one such model.
-Our [Poseidon project](https://github.com/CyberReboot/Poseidon) uses this
+Our [Poseidon project](https://github.com/IQTLabs/Poseidon) uses this
 to identify device roles on the network based on their behavior on the
 network. In fact, this classifier contains two different models that can
 be used depending on the amount of data available for training -- `OneLayer`

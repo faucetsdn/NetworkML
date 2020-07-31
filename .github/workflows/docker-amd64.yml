@@ -29,7 +29,7 @@ jobs:
         DOCKER_PASSWORD: ${{ secrets.DOCKER_TOKEN }}
       run: |
         echo "${DOCKER_PASSWORD}" | docker login --username "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-      if: github.repository == 'cyberreboot/networkml' && github.event_name == 'push'
+      if: github.repository == 'iqtlabs/networkml' && github.event_name == 'push'
     - name: Build and push platforms for final image
       env:
         DOCKER_CLI_EXPERIMENTAL: enabled
@@ -37,5 +37,5 @@ jobs:
         docker buildx build \
           --platform linux/amd64 \
           --push \
-          -t cyberreboot/networkml:${{ steps.change_version.outputs.VERSION }} .
-      if: github.repository == 'cyberreboot/networkml' && github.event_name == 'push'
+          -t iqtlabs/networkml:${{ steps.change_version.outputs.VERSION }} .
+      if: github.repository == 'iqtlabs/networkml' && github.event_name == 'push'

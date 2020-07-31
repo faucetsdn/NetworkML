@@ -33,4 +33,4 @@ jobs:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-      if: github.repository == 'cyberreboot/networkml'
+      if: github.repository == 'iqtlabs/networkml'
