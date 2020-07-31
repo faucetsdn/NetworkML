@@ -1,20 +1,19 @@
 # Device Functional Role ID via Machine Learning and Network Traffic Analysis
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-![Build Status](https://github.com/cyberreboot/networkml/workflows/test/badge.svg)
+![Build Status](https://github.com/iqtlabs/networkml/workflows/test/badge.svg)
 [![PyPI version](https://badge.fury.io/py/networkml.svg)](https://badge.fury.io/py/networkml)
-[![codecov](https://codecov.io/gh/CyberReboot/NetworkML/branch/master/graph/badge.svg)](https://codecov.io/gh/CyberReboot/NetworkML)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/28bb6ce9fa154134b8dda35c5d5d7010)](https://www.codacy.com/app/CyberReboot/NetworkML?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=CyberReboot/NetworkML&amp;utm_campaign=Badge_Grade)
-[![Docker Hub Downloads](https://img.shields.io/docker/pulls/cyberreboot/networkml.svg)](https://hub.docker.com/r/cyberreboot/networkml/)
+[![codecov](https://codecov.io/gh/IQTLabs/NetworkML/branch/master/graph/badge.svg)](https://codecov.io/gh/IQTLabs/IQTLabs)
+[![Docker Hub Downloads](https://img.shields.io/docker/pulls/iqtlabs/networkml.svg)](https://hub.docker.com/r/iqtlabs/networkml/)
 
 ## Overview
-NetworkML is the machine learning portion of our [Poseidon](https://github.com/CyberReboot/poseidon) project. The model in networkML classifies each device into a functional role via machine learning models trained on features derived from network traffic. "Functional role" refers to the authorized administrative purpose of the device on the network and includes roles such as printer, mail server, and others typically found in an IT environment. Our internal analysis suggests networkML can achieve accuracy, precision, recall, and F1 scores in the high 90's when trained on devices from your own network. Whether this performance can transfer from IT environment to IT environment is an active area of our research.
+NetworkML is the machine learning portion of our [Poseidon](https://github.com/IQTLabs/poseidon) project. The model in networkML classifies each device into a functional role via machine learning models trained on features derived from network traffic. "Functional role" refers to the authorized administrative purpose of the device on the network and includes roles such as printer, mail server, and others typically found in an IT environment. Our internal analysis suggests networkML can achieve accuracy, precision, recall, and F1 scores in the high 90's when trained on devices from your own network. Whether this performance can transfer from IT environment to IT environment is an active area of our research.
 
 NetworkML can be used in a "standalone" mode from the command line interface. For more background and context on the macro project, please check out [the Poseidon project](https://www.cyberreboot.org/projects/poseidon/) page on our website. This repository specifically covers the output, inputs, data processing, and machine learning models we deploy in networkML.
 
-While this repository and resulting docker container can be used completely independently, the code was written to support the Cyber Reboot Poseidon project. See:
+While this repository and resulting docker container can be used completely independently, the code was written to support the IQT Labs Poseidon project. See:
 
-- [Poseidon](https://github.com/CyberReboot/poseidon) SDN project.
+- [Poseidon](https://github.com/IQTLabs/poseidon) SDN project.
 
 This repository contains the components necessary to build a docker container that can be used for training a number of ML models using network packet captures (PCAPs). The repository includes scripts necessary to do training, testing, and evaluation. These can be run from a shell once `networkml` is installed as a package or run in a Docker container using the `networkml` script.
 
@@ -41,7 +40,7 @@ NetworkML uses a feedforward neural network from the scikit-learn package. The m
 
 Our models can be executed via Docker and in a standalone manner on a Linux host. We recommend deployment via Poseidon if you are running an SDN (software-defined network). Otherwise, we recommend using Docker.
 
-See the [README](https://github.com/CyberReboot/NetworkML/tree/master/networkml/trained_models) file included in the `networkml/trained_models` folder for specific instructions on deployment.
+See the [README](https://github.com/IQTLabs/NetworkML/tree/master/networkml/trained_models) file included in the `networkml/trained_models` folder for specific instructions on deployment.
 
 # Develop/Standalone Installation
 

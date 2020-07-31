@@ -16,5 +16,5 @@ setup(
     description=(
         'A utility package for extracting and analyzing features in network traffic.'),
     keywords='machine learning network analysis utilities',
-    url='https://github.com/CyberReboot/NetworkML',
+    url='https://github.com/IQTLabs/NetworkML',
 )
