@@ -1,3 +1,7 @@
+# v0.6.0 (2020-08-05)
+
+- Retrained models for updated version of scikit-learn
+
 # v0.5.9 (2020-08-05)
 
 - Udpated scikit-learn and pytest
