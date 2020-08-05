@@ -1,3 +1,8 @@
+# v0.5.9 (2020-08-05)
+
+- Udpated scikit-learn and pytest
+- Moved from CyberReboot to new IQTLabs brand
+
 # v0.5.8 (2020-07-29)
 
 - Updated cython, humanize, netaddr, numpy, pandas, pytest, pytest-xdist, and nest_asyncio
