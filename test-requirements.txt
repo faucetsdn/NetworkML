@@ -1,6 +1,6 @@
 pytest==6.0.1
 pytest-cov==2.10.1
-pytest-xdist==1.34.0
+pytest-xdist==2.0.0
 pytest-rabbitmq==2.0.1
 nest_asyncio==1.4.0
 jupyter==1.0.0
