@@ -1,3 +1,7 @@
+# v0.6.1 (2020-08-26)
+
+- Updated humanize, pytest-cov, pytest-xdist, and pandas
+
 # v0.6.0 (2020-08-05)
 
 - Retrained models for updated version of scikit-learn
