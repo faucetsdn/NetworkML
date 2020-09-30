@@ -1,5 +1,5 @@
 cython==0.29.21
-humanize==2.6.0
+humanize==3.0.0
 joblib==0.16.0
 netaddr==0.8.0
 numpy==1.19.1
