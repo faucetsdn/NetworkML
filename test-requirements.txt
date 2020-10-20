@@ -1,7 +1,7 @@
-pygments==2.4.1
-pytest==6.0.2
+pygments==2.7.1
+pytest==6.1.1
 pytest-cov==2.10.1
 pytest-xdist==2.1.0
 pytest-rabbitmq==2.0.1
-nest_asyncio==1.4.0
+nest_asyncio==1.4.1
 jupyter==1.0.0
