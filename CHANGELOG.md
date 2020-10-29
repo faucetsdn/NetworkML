@@ -1,3 +1,7 @@
+# v0.6.3 (2020-10-29)
+
+- Updated numpy, pygments, pytest, and nest_asyncio
+
 # v0.6.2 (2020-10-20)
 
 - Updated buildx, codecov, humanize, joblib, pandas, pygments, pytest, and nest_asyncio
