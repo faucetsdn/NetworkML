@@ -1,3 +1,7 @@
+# v0.6.4 (2020-11-19)
+
+- Updated numpy, pandas, and nest_asyncio
+
 # v0.6.3 (2020-10-29)
 
 - Updated numpy, pygments, pytest, and nest_asyncio
