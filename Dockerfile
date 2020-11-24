@@ -17,4 +17,3 @@ WORKDIR /networkml
 
 RUN pip3 install .
 ENTRYPOINT ["networkml"]
-

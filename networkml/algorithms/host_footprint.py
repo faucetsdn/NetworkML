@@ -1,19 +1,23 @@
 """
 A class to perform machine learning operations on computer network traffic
 """
-from collections import defaultdict
-import ast
 import argparse
+import ast
 import json
 import logging
 import os
+from collections import defaultdict
 
 import joblib
 import numpy as np
 import pandas as pd
 import sklearn_json as skljson
 from sklearn import preprocessing
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import f1_score
+from sklearn.metrics import precision_score
+from sklearn.metrics import recall_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.neural_network import MLPClassifier
 
