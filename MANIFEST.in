@@ -1,7 +1,3 @@
-include *.md
-include Dockerfile
-include Makefile
-include LICENSE
 include requirements.txt
 include bin/networkml
 include VERSION
