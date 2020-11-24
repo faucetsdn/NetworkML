@@ -1,3 +1,9 @@
+# v0.6.5 (2020-11-24)
+
+- Rollback numpy as it doesn't properly handle confidence values on ARM64
+- Updated pre-commit versions
+- Cleaned up formatting/style
+
 # v0.6.4 (2020-11-19)
 
 - Updated numpy, pandas, and nest_asyncio
