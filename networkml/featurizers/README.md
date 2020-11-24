@@ -77,4 +77,3 @@ Example: Frame length (D) (S) \(r\) indicates that there are versions of this fe
 
 Ethernet protocols: Well-known ethernet protocols include ethernet, IPv6, IP, TCP, ARP, ICMP, GRE, ESP.
 IP protocols: Well-known IP protocols include TCP, UDP, ICMP, ICMPv6, ARP, and an other category.
-

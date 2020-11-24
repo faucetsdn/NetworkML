@@ -1,5 +1,5 @@
-import logging
 import json
+import logging
 import time
 
 from networkml.helpers.results_output import ResultsOutput
@@ -64,6 +64,6 @@ def test_results_output():
     instance = ResultsOutput(logger, 'testver', True)
     instance.rabbit_host = '127.0.0.1'
     results_json = json.dumps({
-        "filename1": [{"top_role": "role1", "role_list": [["role1", 0.9], ["role2", 0.8], ["role3", 0.7]]}],
-        "filename2": [{"top_role": "Unknown", "role_list": [["role1", 0.2], ["role2", 0.1], ["role3", 0.01]]}]})
+        'filename1': [{'top_role': 'role1', 'role_list': [['role1', 0.9], ['role2', 0.8], ['role3', 0.7]]}],
+        'filename2': [{'top_role': 'Unknown', 'role_list': [['role1', 0.2], ['role2', 0.1], ['role3', 0.01]]}]})
     instance.output_from_result_json('1', '/some/file.pcap', results_json)

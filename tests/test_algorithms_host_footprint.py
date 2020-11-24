@@ -4,10 +4,11 @@ import shutil
 import sys
 import tempfile
 
-import pytest
 import numpy as np
+import pytest
 from sklearn import preprocessing
 from sklearn.preprocessing import StandardScaler
+
 from networkml.algorithms.host_footprint import HostFootprint
 
 
