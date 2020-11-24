@@ -112,10 +112,9 @@ class ResultsOutput:
 
     @staticmethod
     def valid_template(timestamp, source_ip, source_mac,
-                       behavior, investigate, labels, confidences):
+                       investigate, labels, confidences):
         return {
             'decisions': {
-                'behavior': behavior,
                 'investigate': investigate,
             },
             'classification': {
@@ -128,13 +127,13 @@ class ResultsOutput:
         }
 
     def output_valid(self, uid, file_path, filename, timestamp, source_ip, source_mac,
-                     labels, confidences, behavior='normal',
+                     labels, confidences,
                      investigate=False):
         labels = self.assign_labels(labels)
         self.output_msg(uid, file_path, self.results_template(
             filename, True, self.valid_template(
                 timestamp, source_ip, source_mac,
-                behavior, investigate, labels, confidences)))
+                investigate, labels, confidences)))
 
     def output_from_result_json(self, uid, file_path, result_json):
         result = json.loads(result_json)
