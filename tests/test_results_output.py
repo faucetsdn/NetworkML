@@ -35,7 +35,7 @@ def test_results_template():
     assert instance.results_template(
         '/some/dir/trace_ab34_2001-01-01_02_03-client-ip-1-2-3-4.pcap', False, {}) == {'ab34': {'pcap_labels': 'ip-1-2-3-4', 'valid': False}, 'pcap': 'trace_ab34_2001-01-01_02_03-client-ip-1-2-3-4.pcap'}
     assert instance.valid_template(
-        99.0, '192.168.1.1', '0e:00:00:00:00:01', 'normal', False, ['arole'], ['1.0']) == {'decisions': {'behavior': 'normal', 'investigate': False}, 'classification': {'labels': ['arole'], 'confidences': ['1.0']}, 'timestamp': 99.0, 'source_ip': '192.168.1.1', 'source_mac': '0e:00:00:00:00:01'}
+        99.0, '192.168.1.1', '0e:00:00:00:00:01', False, ['arole'], ['1.0']) == {'decisions': {'investigate': False}, 'classification': {'labels': ['arole'], 'confidences': ['1.0']}, 'timestamp': 99.0, 'source_ip': '192.168.1.1', 'source_mac': '0e:00:00:00:00:01'}
 
 
 def test_rabbit_smoke_bad():
