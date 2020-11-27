@@ -60,7 +60,7 @@ class NetworkML:
         self.main()
 
     def parse_args(self, raw_args=None):
-        parser = argparse.ArgumentParser()
+        parser = argparse.ArgumentParser(description='networkml %s' % version())
         parser.add_argument('path', help='path to a single pcap file, or a directory of pcaps to parse', default='/pcaps')
         parser.add_argument('--algorithm', '-a', choices=[
                             'host_footprint'], default='host_footprint', help='choose which algorithm to use (default=host_footprint)')
