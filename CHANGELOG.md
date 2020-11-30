@@ -1,3 +1,8 @@
+# v0.6.6 (2020-12-01)
+
+- Move to PBR
+- fix test for 'behavior'
+
 # v0.6.5 (2020-11-24)
 
 - Rollback numpy as it doesn't properly handle confidence values on ARM64
