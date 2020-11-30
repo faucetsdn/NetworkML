@@ -2,16 +2,11 @@ import argparse
 import logging
 import os
 
-from pbr.version import VersionInfo
-
+from networkml import __version__
 from networkml.algorithms.host_footprint import HostFootprint
 from networkml.featurizers.csv_to_features import CSVToFeatures
 from networkml.helpers.results_output import ResultsOutput
 from networkml.parsers.pcap_to_csv import PCAPToCSV
-
-
-def version():
-    return VersionInfo('networkml').semantic_version().release_string()
 
 
 class NetworkML:
@@ -60,7 +55,7 @@ class NetworkML:
         self.main()
 
     def parse_args(self, raw_args=None):
-        parser = argparse.ArgumentParser(description='networkml %s' % version())
+        parser = argparse.ArgumentParser(description='networkml %s' % __version__)
         parser.add_argument('path', help='path to a single pcap file, or a directory of pcaps to parse', default='/pcaps')
         parser.add_argument('--algorithm', '-a', choices=[
                             'host_footprint'], default='host_footprint', help='choose which algorithm to use (default=host_footprint)')
@@ -158,7 +153,7 @@ class NetworkML:
         uid = os.getenv('id', 'None')
         file_path = os.getenv('file_path', self.in_path)
         results_outputter = ResultsOutput(
-            self.logger, version(), self.rabbit)
+            self.logger, __version__, self.rabbit)
 
         if run_complete:
             if self.final_stage == 'algorithm' and self.operation == 'predict':
