@@ -2,7 +2,6 @@ Dockerfile
 Dockerfile.base
 Dockerfile.test
 .gitignore
-.git
 AUTHORS
 CHANGELOG.md
 CODE_OF_CONDUCT.md

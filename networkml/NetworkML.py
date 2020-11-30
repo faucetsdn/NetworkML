@@ -1,19 +1,20 @@
 import argparse
-import datetime
 import logging
 import os
-import time
 
-import humanize
+from pbr.version import VersionInfo
 
-from networkml import __version__
 from networkml.algorithms.host_footprint import HostFootprint
 from networkml.featurizers.csv_to_features import CSVToFeatures
 from networkml.helpers.results_output import ResultsOutput
 from networkml.parsers.pcap_to_csv import PCAPToCSV
 
 
-class NetworkML():
+def version():
+    return VersionInfo('networkml').semantic_version().release_string()
+
+
+class NetworkML:
 
     def __init__(self, raw_args=None):
         self.logger = logging.getLogger(__name__)
@@ -157,7 +158,7 @@ class NetworkML():
         uid = os.getenv('id', 'None')
         file_path = os.getenv('file_path', self.in_path)
         results_outputter = ResultsOutput(
-            self.logger, __version__, self.rabbit)
+            self.logger, version(), self.rabbit)
 
         if run_complete:
             if self.final_stage == 'algorithm' and self.operation == 'predict':
@@ -176,12 +177,3 @@ class NetworkML():
 
     def main(self):
         self.run_stages()
-
-
-if __name__ == '__main__':
-    start = time.time()
-    NetworkML()
-    end = time.time()
-    elapsed = end - start
-    human_elapsed = humanize.naturaldelta(datetime.timedelta(seconds=elapsed))
-    logging.info(f'Elapsed Time: {elapsed} seconds ({human_elapsed})')

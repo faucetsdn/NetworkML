@@ -1,5 +1,3 @@
 include requirements.txt
-include bin/networkml
-include VERSION
 include networkml/trained_models/*.*
 recursive-include networkml *.py
