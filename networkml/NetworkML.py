@@ -1,10 +1,6 @@
 import argparse
-import datetime
 import logging
 import os
-import time
-
-import humanize
 
 from networkml import __version__
 from networkml.algorithms.host_footprint import HostFootprint
@@ -13,7 +9,7 @@ from networkml.helpers.results_output import ResultsOutput
 from networkml.parsers.pcap_to_csv import PCAPToCSV
 
 
-class NetworkML():
+class NetworkML:
 
     def __init__(self, raw_args=None):
         self.logger = logging.getLogger(__name__)
@@ -59,7 +55,7 @@ class NetworkML():
         self.main()
 
     def parse_args(self, raw_args=None):
-        parser = argparse.ArgumentParser()
+        parser = argparse.ArgumentParser(description='networkml %s' % __version__)
         parser.add_argument('path', help='path to a single pcap file, or a directory of pcaps to parse', default='/pcaps')
         parser.add_argument('--algorithm', '-a', choices=[
                             'host_footprint'], default='host_footprint', help='choose which algorithm to use (default=host_footprint)')
@@ -176,12 +172,3 @@ class NetworkML():
 
     def main(self):
         self.run_stages()
-
-
-if __name__ == '__main__':
-    start = time.time()
-    NetworkML()
-    end = time.time()
-    elapsed = end - start
-    human_elapsed = humanize.naturaldelta(datetime.timedelta(seconds=elapsed))
-    logging.info(f'Elapsed Time: {elapsed} seconds ({human_elapsed})')

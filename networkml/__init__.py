@@ -1,2 +1,4 @@
-import pkg_resources
-__version__ = pkg_resources.get_distribution('networkml').version
+from pbr.version import VersionInfo
+
+# TODO: 3.8+ and later, use importlib: https://pypi.org/project/importlib-metadata/
+__version__ = VersionInfo('networkml').semantic_version().release_string()
