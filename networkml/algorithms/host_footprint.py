@@ -244,7 +244,7 @@ class HostFootprint():
         return (X, y, column_list)
 
     def summarize_eval_data(self, model, scaler, label_encoder, eval_data, train_unknown):
-        X_test, y_true = self._get_test_train_csv(eval_data, train_unknown)
+        X_test, y_true, _ = self._get_test_train_csv(eval_data, train_unknown)
         X_test = scaler.transform(X_test)
         y_true = label_encoder.transform(y_true)
         y_pred = model.predict(X_test)
