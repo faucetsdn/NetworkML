@@ -10,7 +10,6 @@ from sklearn import preprocessing
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import GridSearchCV
 from sklearn.neural_network import MLPClassifier
-from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import LabelBinarizer
 
 from networkml.algorithms.host_footprint import HostFootprint
@@ -54,10 +53,10 @@ def test_serialize_model():
     label_binarizer.classes_ = np.array([0])
 
     parameters = {'hidden_layer_sizes': [(64, 32)]}
-    clf = GridSearchCV(model, parameters,
+    GridSearchCV(model, parameters,
                        cv=5, n_jobs=-1,
                        scoring='f1_weighted')
-    
+
     model.coefs_ = np.array([[1],[2]])
     model.loss_ = 42
     model.intercepts_ = np.array([[3],[4]])
