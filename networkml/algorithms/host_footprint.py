@@ -164,9 +164,9 @@ class HostFootprint():
 
         model = MLPClassifier(**model_dict['params'])
 
-        model.coefs_ = np.array(model_dict['coefs_'])
+        model.coefs_ = np.array(model_dict['coefs_'], dtype=object)
         model.loss_ = model_dict['loss_']
-        model.intercepts_ = np.array(model_dict['intercepts_'])
+        model.intercepts_ = np.array(model_dict['intercepts_'], dtype=object)
         model.n_iter_ = model_dict['n_iter_']
         model.n_layers_ = model_dict['n_layers_']
         model.n_outputs_ = model_dict['n_outputs_']
