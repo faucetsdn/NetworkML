@@ -8,4 +8,3 @@ pbr==5.5.1
 pika==1.1.0
 pyshark==0.4.2.11
 scikit-learn==0.23.2
-sklearn-json==0.1.0
