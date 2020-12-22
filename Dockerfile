@@ -1,6 +1,4 @@
-# TODO remove after network-tools release
-# hadolint ignore=DL3007
-FROM iqtlabs/rbqwrapper:latest 
+FROM python:3.8-slim
 LABEL maintainer="Charlie Lewis <clewis@iqt.org>"
 
 ENV DEBIAN_FRONTEND = "noninteractive"
@@ -19,4 +17,4 @@ COPY . /networkml
 WORKDIR /networkml
 
 RUN pip3 install .
-ENTRYPOINT ["/rbqwrapper.py", "networkml"]
+ENTRYPOINT ["networkml"]
