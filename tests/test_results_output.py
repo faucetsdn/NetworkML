@@ -1,13 +1,14 @@
 import json
 import logging
 import time
+import os
 
 from networkml.helpers.results_output import ResultsOutput
 
 
 def test_parse_pcap_name():
     logger = logging.getLogger(__name__)
-    instance = ResultsOutput(logger, 'testver', True)
+    instance = ResultsOutput(logger, 'uid', '/path')
     assert instance.parse_pcap_name('notaposeidontracefile.pcap') == (
         'notaposeidontracefile', None)
     assert instance.parse_pcap_name('trace_but_invalid') == (
@@ -21,49 +22,17 @@ def test_parse_pcap_name():
     assert instance.parse_pcap_name('trace_ab12_2001-01-01_02_03-miscellaneous-stuff.pcap') == (
         None, None)
 
-
-def test_rabbit_msg_template():
+def test_output_from_result_json():
     logger = logging.getLogger(__name__)
-    instance = ResultsOutput(logger, 'testver', True)
-    assert instance.rabbit_msg_template('x', 'y', 'z') == {
-        'id': 'x', 'type': 'metadata', 'file_path': 'y', 'data': 'z', 'results': {'tool': 'networkml', 'version': 'testver'}}
-
-
-def test_results_template():
-    logger = logging.getLogger(__name__)
-    instance = ResultsOutput(logger, 'testver', True)
-    assert instance.results_template(
-        '/some/dir/trace_ab34_2001-01-01_02_03-client-ip-1-2-3-4.pcap', False, {}) == {'ab34': {'pcap_labels': 'ip-1-2-3-4', 'valid': False}, 'pcap': 'trace_ab34_2001-01-01_02_03-client-ip-1-2-3-4.pcap'}
-    assert instance.valid_template(
-        99.0, '192.168.1.1', '0e:00:00:00:00:01', False, ['arole'], ['1.0']) == {'decisions': {'investigate': False}, 'classification': {'labels': ['arole'], 'confidences': ['1.0']}, 'timestamp': 99.0, 'source_ip': '192.168.1.1', 'source_mac': '0e:00:00:00:00:01'}
-
-
-def test_rabbit_smoke_bad():
-    logger = logging.getLogger(__name__)
-    instance = ResultsOutput(logger, 'testver', True)
-    for badhost, badport in (
-            ('nosuchthing', 9999),
-            ('127.0.0.1', 65537)):
-        instance = ResultsOutput(logger, 'testver', True)
-        instance.rabbit_host = badhost
-        instance.rabbit_port = badport
-        instance.output_msg('x', 'y', 'z')
-
-
-def test_rabbit_smoke_good():
-    logger = logging.getLogger(__name__)
-    instance = ResultsOutput(logger, 'testver', True)
-    instance.rabbit_host = '127.0.0.1'
-    instance.output_msg('x', 'y', 'z')
-    instance.output_invalid('1', '/some/file.pcap', 'file.pcap')
-    instance.output_valid('1', '/some/file.pcap', 'file.pcap', 99.0, '1.2.3.4', '0e:00:00:00:00:01', ['arole'], ['1.0'])
-
-
-def test_results_output():
-    logger = logging.getLogger(__name__)
-    instance = ResultsOutput(logger, 'testver', True)
-    instance.rabbit_host = '127.0.0.1'
-    results_json = json.dumps({
-        'filename1': [{'top_role': 'role1', 'role_list': [['role1', 0.9], ['role2', 0.8], ['role3', 0.7]]}],
-        'filename2': [{'top_role': 'Unknown', 'role_list': [['role1', 0.2], ['role2', 0.1], ['role3', 0.01]]}]})
-    instance.output_from_result_json('1', '/some/file.pcap', results_json)
+    instance = ResultsOutput(logger, 'testver', 'path/')
+    result_json = {
+        '/dir/trace_ab12_2001-01-01_02_03-client-ip-1-2-3-4.pcap': [{
+            'top_role': 'foo',
+            'source_ip': '1.2.3.4',
+            'source_mac': '01:02:03:04:05:06',
+            'timestamp': 999,
+            'role_list': [('bsomething', 0.7), ('asomething', 0.6), ('csomething', 0.5)]}],
+    }
+    reformatted_result_json_file = os.devnull
+    reformatted_json = instance.output_from_result_json(json.dumps(result_json), reformatted_result_json_file)
+    assert reformatted_json == {'tool': 'networkml', 'data': {'mac_addresses': {'01:02:03:04:05:06': {'uid': 'testver', 'file_path': 'path/', 'pcap': '', 'pcap_key': '', 'pcap_labels': None, 'timestamp': 999, 'source_ip': '1.2.3.4', 'decisions': {'investigate': False}, 'classification': {'labels': ['bsomething', 'asomething', 'csomething'], 'confidences': (0.7, 0.6, 0.5)}}}}}  # nosec - fine in a test.
