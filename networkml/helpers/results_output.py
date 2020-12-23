@@ -71,9 +71,10 @@ class ResultsOutput:
             },
         }
 
-    def output_from_result_json(self, result_json, reformatted_result_json_file):
+    def output_from_result_json(self, result_json_str, reformatted_result_json_file_name):
         base_pcap = os.path.basename(self.file_path)
         pcap_key, pcap_labels = self.parse_pcap_name(base_pcap)
+        result_json = json.loads(result_json_str)
 
         mac_metadata = {}
         for filename, host_results in result_json.items():
@@ -96,6 +97,6 @@ class ResultsOutput:
             'data': {
                 'mac_addresses': mac_metadata,
             }}
-        with open(reformatted_result_json_file, 'w') as reformatted_result:
+        with open(reformatted_result_json_file_name, 'w') as reformatted_result:
             reformatted_result.write(json.dumps(reformatted_json))
         return reformatted_json

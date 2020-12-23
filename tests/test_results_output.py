@@ -1,3 +1,4 @@
+import json
 import logging
 import time
 import os
@@ -33,5 +34,5 @@ def test_output_from_result_json():
             'role_list': [('bsomething', 0.7), ('asomething', 0.6), ('csomething', 0.5)]}],
     }
     reformatted_result_json_file = os.devnull
-    reformatted_json = instance.output_from_result_json(result_json, reformatted_result_json_file)
+    reformatted_json = instance.output_from_result_json(json.dumps(result_json), reformatted_result_json_file)
     assert reformatted_json == {'tool': 'networkml', 'data': {'mac_addresses': {'01:02:03:04:05:06': {'uid': 'testver', 'file_path': 'path/', 'pcap': '', 'pcap_key': '', 'pcap_labels': None, 'timestamp': 999, 'source_ip': '1.2.3.4', 'decisions': {'investigate': False}, 'classification': {'labels': ['bsomething', 'asomething', 'csomething'], 'confidences': (0.7, 0.6, 0.5)}}}}}  # nosec - fine in a test.
