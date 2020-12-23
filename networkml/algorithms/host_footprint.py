@@ -38,6 +38,8 @@ class HostFootprint():
     def __init__(self, raw_args=None):
         self.logger = logging.getLogger(__name__)
         self.raw_args = raw_args
+        self.list = None
+        self.model_path = None
 
     @staticmethod
     def regularize_df(df):
@@ -418,6 +420,7 @@ class HostFootprint():
 
         return all_predictions
 
+
     @staticmethod
     def sorted_roles_to_dict(role_list_sorted, threshold=.5):
         """ Converted sorted role-probability list into formatted dict
@@ -453,6 +456,7 @@ class HostFootprint():
         }
 
         return role_predictions
+
 
     def string_feature_check(self, X):
         """
@@ -492,6 +496,7 @@ class HostFootprint():
                 X = X.drop(col, axis=1)
 
         return X
+
 
     def list_model(self):
         model = self.deserialize_model(self.model_path)
