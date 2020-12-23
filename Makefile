@@ -19,7 +19,7 @@ train: build train_nobuild
 train_nobuild:
 	@echo
 	@echo "Running Train on PCAP files $(PCAP)"
-	@docker run -it --rm -v "$(PCAP):/pcaps$(PCAP)" -v "$(PWD)/networkml/trained_models:/usr/lib/python3.7/site-packages/networkml/networkml/trained_models" networkml -O train /pcaps
+	@docker run -it --rm -v "$(PCAP):/pcaps$(PCAP)" -v "$(PWD)/networkml/trained_models:/usr/local/lib/python3.8/site-packages/networkml/trained_models/" networkml -O train /pcaps
 	@echo
 test: build
 	@docker build -t networkml-test -f Dockerfile.test .

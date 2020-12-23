@@ -11,7 +11,6 @@ from collections import defaultdict
 import joblib
 import numpy as np
 import pandas as pd
-import sklearn_json as skljson
 from sklearn import preprocessing
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix
@@ -20,6 +19,7 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.neural_network import MLPClassifier
+from sklearn.preprocessing import LabelBinarizer
 
 import networkml
 
@@ -91,12 +91,90 @@ class HostFootprint():
 
     @staticmethod
     def serialize_model(model, path):
-        skljson.to_json(model, path)
+        """Serialize lmodel to enable persistence
+        without pickling the file. .pkl files are a security
+        risk and should be avoided
+        Model is saved as a JSON object.
+        INPUT:
+        --model: the model object (an MLPClassifier from sklearn) to be saved
+        --path: filepath for saving the object
+        OUTPUT:
+        --Does not return anything
+        """
+        def serialize_label_binarizer(label_binarizer):
+            serialized_label_binarizer = {
+                'neg_label': label_binarizer.neg_label,
+                'pos_label': label_binarizer.pos_label,
+                'sparse_output': label_binarizer.sparse_output,
+                'y_type_': label_binarizer.y_type_,
+                'sparse_input_': label_binarizer.sparse_input_,
+                'classes_': label_binarizer.classes_.tolist()
+            }
+
+            return serialized_label_binarizer
+
+        serialized_model = {
+            'meta': 'mlp',
+            'coefs_': [array.tolist() for array in model.coefs_],
+            'loss_': model.loss_,
+            'intercepts_': [array.tolist() for array in model.intercepts_],
+            'n_iter_': model.n_iter_,
+            'n_layers_': model.n_layers_,
+            'n_outputs_': model.n_outputs_,
+            'out_activation_': model.out_activation_,
+            '_label_binarizer': serialize_label_binarizer(model._label_binarizer),
+            'params': model.get_params(),
+            'features':model.features,
+        }
+
+        if isinstance(model.classes_, list):
+            serialized_model['classes_'] = [array.tolist() for array in model.classes_]
+        else:
+            serialized_model['classes_'] = model.classes_.tolist()
+
+        with open(path, 'w') as out_file:
+            json.dump(serialized_model, out_file, indent=2)
+        #skljson.to_json(model, path)
 
     @staticmethod
     def deserialize_model(path):
+        """Deserialize JSON object storing the ml model.
+        Model (an MLPClassifier from sklearn) is re-instantiated
+        with proper values.
+        INPUT:
+        --path: filepath for loading the JSON object
+        OUTPUT:
+        --model: Returns an MLPClassifier (sklearn) object
+        """
+        def deserialize_label_binarizer(label_binarizer_dict):
+            label_binarizer = LabelBinarizer()
+            label_binarizer.neg_label = label_binarizer_dict['neg_label']
+            label_binarizer.pos_label = label_binarizer_dict['pos_label']
+            label_binarizer.sparse_output = label_binarizer_dict['sparse_output']
+            label_binarizer.y_type_ = label_binarizer_dict['y_type_']
+            label_binarizer.sparse_input_ = label_binarizer_dict['sparse_input_']
+            label_binarizer.classes_ = np.array(label_binarizer_dict['classes_'])
+
+            return label_binarizer
+
         # Load (or deserialize) model from JSON
-        model = skljson.from_json(path)
+        model_dict = {}
+        with open(path, 'r') as in_file:
+            model_dict = json.load(in_file)
+
+        model = MLPClassifier(**model_dict['params'])
+
+        model.coefs_ = np.array(model_dict['coefs_'], dtype=object)
+        model.loss_ = model_dict['loss_']
+        model.intercepts_ = np.array(model_dict['intercepts_'], dtype=object)
+        model.n_iter_ = model_dict['n_iter_']
+        model.n_layers_ = model_dict['n_layers_']
+        model.n_outputs_ = model_dict['n_outputs_']
+        model.out_activation_ = model_dict['out_activation_']
+        model._label_binarizer = deserialize_label_binarizer(model_dict['_label_binarizer'])
+        model.features = list(model_dict['features'])
+
+        model.classes_ = np.array(model_dict['classes_'])
         # Convert coeficients to numpy arrays to enable JSON deserialization
         # This is a hack to compensate for a bug in sklearn_json
         for i, x in enumerate(model.coefs_):
@@ -161,11 +239,12 @@ class HostFootprint():
             df = df[df['role'] != 'Unknown']
         X = df.drop(['filename', 'role'], axis=1)
         y = df.role
+        column_list = list(X.columns.values)
         X = self.string_feature_check(X)
-        return (X, y)
+        return (X, y, column_list)
 
     def summarize_eval_data(self, model, scaler, label_encoder, eval_data, train_unknown):
-        X_test, y_true = self._get_test_train_csv(eval_data, train_unknown)
+        X_test, y_true, _ = self._get_test_train_csv(eval_data, train_unknown)
         X_test = scaler.transform(X_test)
         y_true = label_encoder.transform(y_true)
         y_pred = model.predict(X_test)
@@ -206,7 +285,7 @@ class HostFootprint():
         group has done experiments with different models and hyperparameter
         optimization.
         """
-        X, y = self._get_test_train_csv(self.path, self.train_unknown)
+        X, y, cols = self._get_test_train_csv(self.path, self.train_unknown)
 
         unique_roles = sorted(y.unique())
         self.logger.info(f'inferring roles {unique_roles}')
@@ -237,6 +316,7 @@ class HostFootprint():
         # Find best fitting model from the hyper-parameter
         # optimization process
         self.model = clf.fit(X, y).best_estimator_
+        self.model.features = cols
 
         # Save model to JSON
         self.serialize_model(self.model, self.model_path)

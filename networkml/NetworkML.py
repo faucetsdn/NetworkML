@@ -43,7 +43,6 @@ class NetworkML:
         self.level = parsed_args.level
         self.operation = parsed_args.operation
         self.output = parsed_args.output
-        self.rabbit = parsed_args.rabbit
         self.threads = parsed_args.threads
         self.log_level = parsed_args.verbose
         for args in self.stage_args.values():
@@ -75,8 +74,6 @@ class NetworkML:
                             help='choose which operation task to perform, train or predict (default=predict)')
         parser.add_argument('--output', '-o', default=None,
                             help='directory to write out any results files to')
-        parser.add_argument('--rabbit', '-r', default=False, action='store_true',
-                            help='Send prediction message to RabbitMQ')
         parser.add_argument('--threads', '-t', default=1, type=int,
                             help='number of async threads to use (default=1)')
         parser.add_argument('--verbose', '-v', choices=[
@@ -119,6 +116,16 @@ class NetworkML:
         instance = HostFootprint(raw_args=raw_args)
         return instance.main()
 
+    def output_results(self, result_json_str, run_complete):
+        if run_complete:
+            if self.final_stage == 'algorithm' and self.operation == 'predict':
+                if self.output and os.path.isdir(self.output):
+                    uid = os.getenv('id', 'None')
+                    file_path = os.getenv('file_path', self.in_path)
+                    results_outputter = ResultsOutput(self.logger, uid, file_path)
+                    result_json_file_name = os.path.join(self.output, 'predict.json')
+                    results_outputter.output_from_result_json(result_json_str, result_json_file_name)
+
     def run_stages(self):
         stages = ('parser', 'featurizer', 'algorithm')
         stage_runners = {
@@ -150,25 +157,7 @@ class NetworkML:
         except Exception as err:
             self.logger.error(f'Could not run stage: {err}')
 
-        uid = os.getenv('id', 'None')
-        file_path = os.getenv('file_path', self.in_path)
-        results_outputter = ResultsOutput(
-            self.logger, __version__, self.rabbit)
-
-        if run_complete:
-            if self.final_stage == 'algorithm' and self.operation == 'predict':
-                if self.output:
-                    if os.path.isdir(self.output):
-                        result_json_file = os.path.join(self.output, 'predict.json')
-                    else:
-                        result_json_file = self.output
-                    with open(result_json_file, 'w') as result_json:
-                        result_json.write(result)
-                results_outputter.output_from_result_json(uid, file_path, result)
-            else:
-                results_outputter.output_invalid(uid, file_path, file_path)
-        else:
-            results_outputter.output_invalid(uid, file_path, file_path)
+        self.output_results(result, run_complete)
 
     def main(self):
         self.run_stages()

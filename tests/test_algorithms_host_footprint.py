@@ -8,6 +8,9 @@ import numpy as np
 import pytest
 from sklearn import preprocessing
 from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import GridSearchCV
+from sklearn.neural_network import MLPClassifier
+from sklearn.preprocessing import LabelBinarizer
 
 from networkml.algorithms.host_footprint import HostFootprint
 
@@ -36,6 +39,47 @@ def test_serialize_label_encoder():
         new_le = instance.deserialize_label_encoder(le_file)
         assert le.classes_.tolist() == new_le.classes_.tolist()
         assert new_le.inverse_transform(le.transform(le_classes)).tolist() == le_classes
+
+
+def test_serialize_model():
+    instance = HostFootprint()
+    model = MLPClassifier()
+    label_binarizer = LabelBinarizer()
+    label_binarizer.neg_label = 0
+    label_binarizer.pos_label = 1
+    label_binarizer.sparse_output = False
+    label_binarizer.y_type_ = "binary"
+    label_binarizer.sparse_input_ = False
+    label_binarizer.classes_ = np.array([0])
+
+    parameters = {'hidden_layer_sizes': [(64, 32)]}
+    GridSearchCV(model, parameters,
+                       cv=5, n_jobs=-1,
+                       scoring='f1_weighted')
+
+    model.coefs_ = np.array([[1],[2]])
+    model.loss_ = 42
+    model.intercepts_ = np.array([[3],[4]])
+    model.classes_ = np.array([[5],[6]])
+    model.n_iter_ = 42
+    model.n_layers_ = 2
+    model.n_outputs_ = 1
+    model.out_activation_ = "logistic"
+    model._label_binarizer =label_binarizer
+    model.features = ['test_1', 'test_2', 'test_3']
+
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        model_file = os.path.join(tmpdir, 'host_footprint.json')
+        instance.serialize_model(model, model_file)
+        new_model = instance.deserialize_model(model_file)
+        assert model.features == new_model.features
+        print(f"model params: {model.get_params()}")
+        print(f"new_model params: {new_model.get_params()}")
+        assert len(model.get_params()['hidden_layer_sizes']) == len(new_model.get_params()['hidden_layer_sizes'])
+        assert model._label_binarizer.y_type_ == new_model._label_binarizer.y_type_
+        assert len(model.coefs_) == len(new_model.coefs_)
+        assert len(model.intercepts_) == len(new_model.intercepts_)
 
 
 def test_get_individual_predictions():
