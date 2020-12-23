@@ -38,6 +38,8 @@ class HostFootprint():
     def __init__(self, raw_args=None):
         self.logger = logging.getLogger(__name__)
         self.raw_args = raw_args
+        self.list = None
+        self.model_path = None
 
     @staticmethod
     def regularize_df(df):
@@ -219,6 +221,10 @@ class HostFootprint():
                             default=os.path.join(netml_path[0],
                                                  'trained_models/host_footprint.json'),
                             help='specify a path to load or save trained model')
+        parser.add_argument('--list', '-L',
+                            choices=['features'],
+                            default=None,
+                            help='list information contained within model defined by --trained_model')
         parser.add_argument('--verbose', '-v',
                             choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
                             default='INFO',
@@ -414,6 +420,7 @@ class HostFootprint():
 
         return all_predictions
 
+
     @staticmethod
     def sorted_roles_to_dict(role_list_sorted, threshold=.5):
         """ Converted sorted role-probability list into formatted dict
@@ -449,6 +456,7 @@ class HostFootprint():
         }
 
         return role_predictions
+
 
     def string_feature_check(self, X):
         """
@@ -489,6 +497,13 @@ class HostFootprint():
 
         return X
 
+
+    def list_model(self):
+        model = self.deserialize_model(self.model_path)
+        if self.list == 'features':
+            return model.features
+
+
     def main(self):
         """
         Collect and parse command line arguments for using this class
@@ -503,6 +518,7 @@ class HostFootprint():
         self.scaler = parsed_args.scaler
         self.kfolds = int(parsed_args.kfolds)
         self.train_unknown = parsed_args.train_unknown
+        self.list = parsed_args.list
         operation = parsed_args.operation
         log_level = parsed_args.verbose
 
@@ -510,6 +526,15 @@ class HostFootprint():
         log_levels = {'INFO': logging.INFO, 'DEBUG': logging.DEBUG,
                       'WARNING': logging.WARNING, 'ERROR': logging.ERROR}
         logging.basicConfig(level=log_levels[log_level])
+
+        self.logger.debug(f'hostfootprint.main list: {self.list}')
+        if self.list:
+            model_list = self.list_model()
+            if model_list and len(model_list) > 0:
+                result = f'Listing {self.list} for model at {self.model_path}:\n{model_list}'
+                return result
+            else:
+                return f'model found at {self.model_path} contains no {self.list}'
 
         # Basic execution logic
         if operation == 'train':

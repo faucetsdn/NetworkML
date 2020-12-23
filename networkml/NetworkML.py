@@ -30,6 +30,10 @@ class NetworkML:
                 'kfolds': {'help': 'specify number of folds for k-fold cross validation'},
                 'eval_data': {'help': 'path to eval CSV file, if training'},
                 'train_unknown': {'help': 'Train on unknown roles'},
+                'list':{'choices':['features'],
+                        'default':None,
+                        'help':'list information contained within model defined by --trained_model'
+                        }
             },
         }
         parsed_args = self.parse_args(raw_args=raw_args)
@@ -44,6 +48,7 @@ class NetworkML:
         self.operation = parsed_args.operation
         self.output = parsed_args.output
         self.threads = parsed_args.threads
+        self.list = parsed_args.list
         self.log_level = parsed_args.verbose
         for args in self.stage_args.values():
             for arg in args:
@@ -81,8 +86,13 @@ class NetworkML:
         for stage, args in self.stage_args.items():
             for arg, arg_parms in args.items():
                 arg_help = '%s (%s)' % (arg_parms['help'], stage)
+                arg_choices = arg_parms['choices'] if 'choices' in arg_parms else None
+                arg_default = arg_parms['default'] if 'default' in arg_parms else None
                 action = arg_parms.get('action', None)
-                parser.add_argument('--' + arg, help=arg_help, default=None, dest=arg, action=action)
+                if not arg_choices:
+                    parser.add_argument('--' + arg, help=arg_help, default=arg_default, dest=arg, action=action)
+                else:
+                    parser.add_argument('--' + arg, help=arg_help, choices=arg_choices, default=arg_default, dest=arg, action=action)
         parsed_args = parser.parse_args(raw_args)
         return parsed_args
 
@@ -118,6 +128,8 @@ class NetworkML:
 
     def output_results(self, result_json_str, run_complete):
         if run_complete:
+            if self.list:
+                print(f'{result_json_str}')
             if self.final_stage == 'algorithm' and self.operation == 'predict':
                 if self.output and os.path.isdir(self.output):
                     uid = os.getenv('id', 'None')
