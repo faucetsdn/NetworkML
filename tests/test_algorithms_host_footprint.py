@@ -82,6 +82,18 @@ def test_serialize_model():
         assert len(model.intercepts_) == len(new_model.intercepts_)
 
 
+def test_list_model():
+    expected = [
+        "foo",
+        "bar",
+        "baz",
+    ]
+    instance = HostFootprint()
+    instance.model_path = './tests/test_data/list_test.json'
+    instance.list = 'features'
+    actual = instance.list_model()
+    assert actual == expected
+
 def test_get_individual_predictions():
    le_classes = ['asomething', 'bsomething']
    le = preprocessing.LabelEncoder()
