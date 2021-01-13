@@ -1,3 +1,11 @@
+# v0.6.7 (2020-01-13)
+
+- Updated codecov, pygments, pytest, pytest-xdist, pytest-rabbitmq
+- Moved base image to rbqwrapper, abstracting away RabbitMQ
+- Added a new feature for listing out features in the model
+- Rewrote the model serializer removing the need for sklearn_json
+- Add end-to-end tests
+
 # v0.6.6 (2020-12-01)
 
 - Move to PBR
