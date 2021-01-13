@@ -1,6 +1,4 @@
-# TODO remove after network-tools release
-# hadolint ignore=DL3007
-FROM iqtlabs/rbqwrapper:latest
+FROM iqtlabs/rbqwrapper:v0.11.18
 LABEL maintainer="Charlie Lewis <clewis@iqt.org>"
 
 ENV DEBIAN_FRONTEND = "noninteractive"
