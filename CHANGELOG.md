@@ -1,3 +1,7 @@
+# v0.6.8 (2020-01-26)
+
+- Updated pytest, pytest-cov, scikit-learn, pandas, nest_asyncio
+
 # v0.6.7 (2020-01-13)
 
 - Updated codecov, pygments, pytest, pytest-xdist, pytest-rabbitmq
