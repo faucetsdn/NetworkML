@@ -3,5 +3,5 @@ pytest==6.2.2
 pytest-cov==2.11.1
 pytest-xdist==2.2.0
 pytest-rabbitmq==2.1.0
-nest_asyncio==1.4.3
+nest_asyncio==1.5.0
 jupyter==1.0.0
