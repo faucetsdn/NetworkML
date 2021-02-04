@@ -2,8 +2,8 @@ cython==0.29.21
 humanize==3.2.0
 joblib==1.0.0
 netaddr==0.8.0
-numpy==1.19.5
-pandas==1.2.0
+numpy==1.20.0
+pandas==1.2.1
 pbr==5.5.1
 pyshark==0.4.2.11
-scikit-learn==0.24.0
+scikit-learn==0.24.1
