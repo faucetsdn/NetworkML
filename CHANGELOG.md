@@ -1,3 +1,7 @@
+# v0.6.9 (2020-02-11)
+
+- Updated reorder_python_imports, rbqwrapper, joblib, numpy, pandas, pyshark, and pytest-xdist
+
 # v0.6.8 (2020-01-26)
 
 - Updated pytest, pytest-cov, scikit-learn, pandas, nest_asyncio
