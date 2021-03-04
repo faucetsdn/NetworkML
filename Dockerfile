@@ -1,4 +1,4 @@
-FROM iqtlabs/rbqwrapper:v0.11.20
+FROM iqtlabs/rbqwrapper:v0.11.21
 LABEL maintainer="Charlie Lewis <clewis@iqt.org>"
 
 ENV DEBIAN_FRONTEND = "noninteractive"
