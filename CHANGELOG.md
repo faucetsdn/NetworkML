@@ -1,12 +1,16 @@
-# v0.6.9 (2020-02-11)
+# v0.6.10 (2021-03-04)
+
+- Updated rbqwrapper, cython, pandas, and pygments
+
+# v0.6.9 (2021-02-11)
 
 - Updated reorder_python_imports, rbqwrapper, joblib, numpy, pandas, pyshark, and pytest-xdist
 
-# v0.6.8 (2020-01-26)
+# v0.6.8 (2021-01-26)
 
 - Updated pytest, pytest-cov, scikit-learn, pandas, nest_asyncio
 
-# v0.6.7 (2020-01-13)
+# v0.6.7 (2021-01-13)
 
 - Updated codecov, pygments, pytest, pytest-xdist, pytest-rabbitmq
 - Moved base image to rbqwrapper, abstracting away RabbitMQ
