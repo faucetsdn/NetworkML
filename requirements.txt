@@ -3,7 +3,7 @@ humanize==3.4.1
 joblib==1.0.1
 netaddr==0.8.0
 numpy==1.20.2
-pandas==1.2.3
+pandas==1.2.4
 pbr==5.5.1
 pyshark==0.4.3
 scikit-learn==0.24.1
