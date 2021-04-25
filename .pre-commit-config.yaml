@@ -12,6 +12,6 @@ repos:
     -   id: double-quote-string-fixer
     -   id: check-yaml
 -   repo: git@github.com:asottile/reorder_python_imports
-    rev: v2.4.0
+    rev: v2.5.0
     hooks:
     -   id: reorder-python-imports
