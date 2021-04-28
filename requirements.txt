@@ -6,4 +6,4 @@ numpy==1.20.2
 pandas==1.2.4
 pbr==5.6.0
 pyshark==0.4.3
-scikit-learn==0.24.1
+scikit-learn==0.24.2
