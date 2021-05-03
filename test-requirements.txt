@@ -1,4 +1,4 @@
-pygments==2.8.1
+pygments==2.9.0
 pytest==6.2.3
 pytest-cov==2.11.1
 pytest-xdist==2.2.1
