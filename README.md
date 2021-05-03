@@ -3,7 +3,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 ![Build Status](https://github.com/iqtlabs/networkml/workflows/test/badge.svg)
 [![PyPI version](https://badge.fury.io/py/networkml.svg)](https://badge.fury.io/py/networkml)
-[![codecov](https://codecov.io/gh/IQTLabs/NetworkML/branch/master/graph/badge.svg)](https://codecov.io/gh/IQTLabs/IQTLabs)
+[![codecov](https://codecov.io/gh/IQTLabs/NetworkML/branch/main/graph/badge.svg)](https://codecov.io/gh/IQTLabs/IQTLabs)
 [![Docker Hub Downloads](https://img.shields.io/docker/pulls/iqtlabs/networkml.svg)](https://hub.docker.com/r/iqtlabs/networkml/)
 
 ## Overview
@@ -40,7 +40,7 @@ NetworkML uses a feedforward neural network from the scikit-learn package. The m
 
 Our models can be executed via Docker and in a standalone manner on a Linux host. We recommend deployment via Poseidon if you are running an SDN (software-defined network). Otherwise, we recommend using Docker.
 
-See the [README](https://github.com/IQTLabs/NetworkML/tree/master/networkml/trained_models) file included in the `networkml/trained_models` folder for specific instructions on deployment.
+See the [README](https://github.com/IQTLabs/NetworkML/tree/main/networkml/trained_models) file included in the `networkml/trained_models` folder for specific instructions on deployment.
 
 # Develop/Standalone Installation
 
