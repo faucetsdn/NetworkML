@@ -1,5 +1,5 @@
 pygments==2.9.0
-pytest==6.2.3
+pytest==6.2.4
 pytest-cov==2.11.1
 pytest-xdist==2.2.1
 pytest-rabbitmq==2.1.0
