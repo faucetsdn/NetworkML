@@ -1,3 +1,7 @@
+# v0.6.11 (2021-05-10)
+
+- Updated codecov, reorder_python_imports, cython, humanize, numpy, pandas, pbr, scikit-learn, pygments, and pytest
+
 # v0.6.10 (2021-03-04)
 
 - Updated rbqwrapper, cython, pandas, and pygments
