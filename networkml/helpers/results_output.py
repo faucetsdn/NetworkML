@@ -4,6 +4,8 @@ import re
 
 import networkml
 
+from networkml import __version__
+
 
 class ResultsOutput:
 
@@ -92,11 +94,25 @@ class ResultsOutput:
                         self.uid, self.file_path, timestamp, source_ip,
                         investigate, labels, confidences,
                         pcap_labels, base_pcap, pcap_key)
-        reformatted_json = {
+        reformatted_json = [{
             'tool': 'networkml',
+            'version': __version__,
+            'id': os.environ.get('id', ''),
+            'type': 'metadata',
+            'file_path': self.file_path,
+            'results': {'tool': 'networkml', 'version': __version__},
             'data': {
                 'mac_addresses': mac_metadata,
-            }}
+            }
+        },
+        {
+            'tool': 'networkml',
+            'id': os.environ.get('id', ''),
+            'type': 'metadata',
+            'file_path': self.file_path,
+            'data': '',
+            'results': {'tool': 'networkml', 'version': __version__}
+        }]
         with open(reformatted_result_json_file_name, 'w') as reformatted_result:
             reformatted_result.write(json.dumps(reformatted_json))
         return reformatted_json
