@@ -1,3 +1,8 @@
+# v0.6.12 (2021-05-20)
+
+- Updated pre-commit, rbqwrapper, and pytest-cov
+- Fixed output for Packet Cafe consumption
+
 # v0.6.11 (2021-05-10)
 
 - Updated codecov, reorder_python_imports, cython, humanize, numpy, pandas, pbr, scikit-learn, pygments, and pytest
