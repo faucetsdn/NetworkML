@@ -1,3 +1,7 @@
+# v0.6.13 (2021-06-15)
+
+- Updated humanize, pytest-cov, pytest-rabbitmq, codecov-action
+
 # v0.6.12 (2021-05-20)
 
 - Updated pre-commit, rbqwrapper, and pytest-cov
