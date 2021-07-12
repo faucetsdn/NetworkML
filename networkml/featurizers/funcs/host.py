@@ -337,7 +337,7 @@ class HostBase:
               (len(all_unicast_macs), host_keys_count), end='', flush=True)
         if srcmacid:
             minsrcipmac = df.groupby(['eth.src'])[
-                '_srcip'].nunique().idxmin(axis=1)
+                '_srcip'].nunique().idxmin(axis=0)
             assert minsrcipmac in all_unicast_macs
             print('.MAC %s has minimum number of source IPs, selected as canonical source' %
                   self._mac(minsrcipmac), end='', flush=True)

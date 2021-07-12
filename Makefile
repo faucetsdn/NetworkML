@@ -30,10 +30,10 @@ install:
 	pip3 install .
 
 dev:
-	${CONDA_EXE} env create --force -f $(CONDA_DEV).yml python=3.7
+	${CONDA_EXE} env create --force -f $(CONDA_DEV).yml python=3.9
 	source $(CONDAROOT)/activate $(CONDA_DEV) ; \
-	$(CONDA_ENV)/pip install --upgrade pip ; \
-	$(CONDA_ENV)/pip install .
+	$(CONDA_ENV)/python3 -m pip install --upgrade pip ; \
+	$(CONDA_ENV)/pip3 install .
 
 rmdev:
 	${CONDA_EXE} env remove -y -n $(CONDA_DEV)
