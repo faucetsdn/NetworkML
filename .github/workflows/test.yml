@@ -22,9 +22,9 @@ jobs:
         export PATH=/home/runner/.local/bin:$PATH && \
         PYTHONPATH=. pytype . && \
         pip3 install . && \
+        ./tests/test_e2e.sh && \
         jupyter nbconvert --ExecutePreprocessor.timeout=300 --to notebook --execute notebooks/networkml_exploration.ipynb && \
-        pytest -l -s -n auto -v --cov=tests/ --cov=networkml/ --cov-report term-missing -c .coveragerc && coverage report && coverage xml && \
-        ./tests/test_e2e.sh
+        pytest -l -s -n auto -v --cov=tests/ --cov=networkml/ --cov-report term-missing -c .coveragerc && coverage report && coverage xml
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1.5.0
       env:
