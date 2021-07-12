@@ -21,14 +21,10 @@ jobs:
         find . -name test-requirements.txt -type f -exec pip3 install -r {} \; && \
         export PATH=/home/runner/.local/bin:$PATH && \
         PYTHONPATH=. pytype . && \
+        PYTHONPATH=. pytest -l -s -n auto -v --cov=tests/ --cov=networkml/ --cov-report term-missing -c .coveragerc && coverage report && coverage xml && \
         pip3 install . && \
         jupyter nbconvert --ExecutePreprocessor.timeout=300 --to notebook --execute notebooks/networkml_exploration.ipynb && \
-        pytest -l -s -n auto -v --cov=tests/ --cov=networkml/ --cov-report term-missing -c .coveragerc && coverage report && coverage xml && \
         ./tests/test_e2e.sh
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1.5.2
-      env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
       if: github.repository == 'iqtlabs/networkml'
