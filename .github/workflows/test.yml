@@ -23,9 +23,9 @@ jobs:
         find . -name test-requirements.txt -type f -exec pip3 install -r {} \; && \
         export PATH=/home/runner/.local/bin:$PATH && \
         PYTHONPATH=. pytype . && \
-        PYTHONPATH=. pytest -l -s -n auto -v --cov=tests/ --cov=networkml/ --cov-report term-missing -c .coveragerc && coverage report && coverage xml && \
+        PYTHONPATH=. pytest -l -s -n auto -v --cov=tests/ --cov=networkml/ --cov-report term-missing -c .coveragerc --rabbitmq-port=5672 && coverage report && coverage xml && \
         pip3 install . && \
-        cd notebooks && jupyter nbconvert --ExecutePreprocessor.timeout=300 --to notebook --execute networkml_exploration.ipynb && cd .. && \
+        jupyter nbconvert --ExecutePreprocessor.timeout=300 --to notebook --execute notebooks/networkml_exploration.ipynb && \
         ./tests/test_e2e.sh
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1.5.2
