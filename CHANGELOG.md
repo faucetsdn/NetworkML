@@ -1,3 +1,7 @@
+# v0.6.14 (2021-07-14)
+
+- Updated humanize, pytest-xdist, NumPy, Pandas, python, pip, cython
+
 # v0.6.13 (2021-06-15)
 
 - Updated humanize, pytest-cov, pytest-rabbitmq, codecov-action
