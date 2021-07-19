@@ -17,10 +17,8 @@ jobs:
       env:
         VDB_HOME: ${{ github.workspace }}/vdb
         WORKSPACE: https://github.com/${{ github.repository }}/blob/${{ github.sha }}
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SCAN_AUTO_BUILD: true
       with:
-        type: "credscan, python, dockerfile, yaml, depscan"
         output: reports
     - name: Upload scan reports
       uses: actions/upload-artifact@v1.0.0
