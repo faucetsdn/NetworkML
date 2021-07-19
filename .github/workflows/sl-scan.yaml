@@ -1,0 +1,26 @@
+name: sl-scan
+
+on: [push, pull_request]
+
+jobs:
+- name: Cache vdb
+  uses: actions/cache@v2
+  with:
+    path: |
+      ${{ github.workspace }}/vdb
+    key: ${{ runner.os }}
+- name: Scan
+  uses: ShiftLeftSecurity/scan-action@master
+  env:
+    VDB_HOME: ${{ github.workspace }}/vdb
+    WORKSPACE: https://github.com/${{ github.repository }}/blob/${{ github.sha }}
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    SCAN_AUTO_BUILD: true
+  with:
+    type: "credscan, python, dockerfile, yaml, depscan"
+    output: reports
+- name: Upload scan reports
+  uses: actions/upload-artifact@v1.0.0
+  with:
+    name: shiftleft-scan-reports
+    path: reports
