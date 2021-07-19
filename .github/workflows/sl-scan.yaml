@@ -1,0 +1,27 @@
+name: sl-scan
+
+on: [push, pull_request]
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Cache vdb
+      uses: actions/cache@v2
+      with:
+        path: |
+          ${{ github.workspace }}/vdb
+        key: ${{ runner.os }}
+    - name: Scan
+      uses: ShiftLeftSecurity/scan-action@master
+      env:
+        VDB_HOME: ${{ github.workspace }}/vdb
+        WORKSPACE: https://github.com/${{ github.repository }}/blob/${{ github.sha }}
+        SCAN_AUTO_BUILD: true
+      with:
+        output: reports
+    - name: Upload scan reports
+      uses: actions/upload-artifact@v1.0.0
+      with:
+        name: shiftleft-scan-reports
+        path: reports

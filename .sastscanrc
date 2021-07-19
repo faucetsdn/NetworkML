@@ -1,0 +1,4 @@
+{
+  "SCAN_ANNOTATE_PR": True
+  "PR_COMMENT_TEMPLATE": "## Scan Summary\n%(summary)s\n## Recommendation\n%(recommendation)s\n"
+}

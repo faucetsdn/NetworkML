@@ -115,3 +115,6 @@ erl_crash.dump
 
 # converted notebooks
 *.nbconvert.ipynb
+
+#scan stuff
+reports/
