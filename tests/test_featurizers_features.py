@@ -1,4 +1,11 @@
+import pandas as pd
 from networkml.featurizers.features import Features
+
+
+def test_quantile_nullable_int():
+    # TODO: https://github.com/pandas-dev/pandas/issues/42626
+    df = pd.DataFrame([{'x': 1}, {'x': 0}], dtype=pd.Int64Dtype())
+    assert df['x'].quantile(0.75)
 
 
 def test_no_func():
