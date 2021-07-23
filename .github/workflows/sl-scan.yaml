@@ -21,7 +21,7 @@ jobs:
       with:
         output: reports
     - name: Upload scan reports
-      uses: actions/upload-artifact@v1.0.0
+      uses: actions/upload-artifact@v2.2.4
       with:
         name: shiftleft-scan-reports
         path: reports
