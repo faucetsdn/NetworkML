@@ -1,3 +1,9 @@
+# v0.6.15 (2021-07-29)
+
+- Updated NumPy, codecov-action, reorder_python_imports, upload-artifact
+- Pinned Pandas to v1.2.5 due to #871
+- Added Shift-Left SAAST Scan on push and PR
+
 # v0.6.14 (2021-07-14)
 
 - Updated humanize, pytest-xdist, NumPy, Pandas, python, pip, cython
