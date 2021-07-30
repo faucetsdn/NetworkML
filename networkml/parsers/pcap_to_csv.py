@@ -272,11 +272,11 @@ class PCAPToCSV():
     def get_tshark_packet_data(self, pcap_file, dict_fp):
         options = '-n -V -Tjson'
         try:
-            process = subprocess.Popen(shlex.split(
-                ' '.join(['tshark', '-r', pcap_file, options])), stdout=subprocess.PIPE)
-            with gzip_writer(dict_fp) as f_out:
-                for item in self.json_packet_records(process):
-                    f_out.write(json.dumps(self.flatten_json(item)) + '\n')
+            with subprocess.Popen(shlex.split(
+                ' '.join(['tshark', '-r', pcap_file, options])), stdout=subprocess.PIPE) as process:
+                with gzip_writer(dict_fp) as f_out:
+                    for item in self.json_packet_records(process):
+                        f_out.write(json.dumps(self.flatten_json(item)) + '\n')
         except Exception as e:  # pragma: no cover
             self.logger.error(f'{e}')
 
