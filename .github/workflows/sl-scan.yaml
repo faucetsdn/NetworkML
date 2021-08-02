@@ -20,6 +20,7 @@ jobs:
         SCAN_AUTO_BUILD: true
         SCAN_ANNOTATE_PR: true
         PR_COMMENT_TEMPLATE: "## Scan Summary\n%(summary)s\n## Recommendation\n%(recommendation)s\n"
+        PR_COMMENT_BASIC_TEMPLATE: "## Scan Summary\n%(summary)s\n## Recommendation\n%(recommendation)s\n"
       with:
         output: reports
         type: "credscan, python, dockerfile, yaml"
