@@ -1,4 +1,5 @@
 {
-  "SCAN_ANNOTATE_PR": True
+  "type": "credscan, python, dockerfile, yaml"
+  "SCAN_ANNOTATE_PR": 1
   "PR_COMMENT_TEMPLATE": "## Scan Summary\n%(summary)s\n## Recommendation\n%(recommendation)s\n"
 }
