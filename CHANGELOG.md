@@ -1,3 +1,10 @@
+# v0.6.16 (2021-08-19)
+
+- Updated humanize, numpy, pandas, and pygments
+- Updated rbqwrapper base image
+- Fixed an issue where tshark could exit and not write out buffer
+- Improved SAAST scanning
+
 # v0.6.15 (2021-07-29)
 
 - Updated NumPy, codecov-action, reorder_python_imports, upload-artifact
