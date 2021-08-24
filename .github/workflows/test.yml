@@ -28,5 +28,5 @@ jobs:
         jupyter nbconvert --ExecutePreprocessor.timeout=300 --to notebook --execute notebooks/networkml_exploration.ipynb && \
         ./tests/test_e2e.sh
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v2.0.2
+      uses: codecov/codecov-action@v2.0.3
       if: github.repository == 'iqtlabs/networkml'
