@@ -61,7 +61,7 @@ class CSVToFeatures():
 
         # Then copy the data
         with CSVToFeatures.get_writer(combined_path, use_gzip) as f_out:
-            writer = csv.DictWriter(f_out, fieldnames=fieldnames)
+            writer = csv.DictWriter(f_out, fieldnames=list(fieldnames))
             writer.writeheader()
             for filename in out_paths:
                 with CSVToFeatures.get_reader(filename, use_gzip) as f_in:
