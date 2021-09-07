@@ -1,7 +1,7 @@
 FROM iqtlabs/rbqwrapper:v0.11.29
 LABEL maintainer="Charlie Lewis <clewis@iqt.org>"
 
-ENV DEBIAN_FRONTEND = "noninteractive"
+ENV DEBIAN_FRONTEND "noninteractive"
 ENV PYTHONUNBUFFERED 1
 COPY requirements.txt requirements.txt
 
