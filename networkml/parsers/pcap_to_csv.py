@@ -86,7 +86,7 @@ class PCAPToCSV():
 
         # Then copy the data
         with gzip_writer(combined_path) as f_out:
-            writer = csv.DictWriter(f_out, fieldnames=fieldnames)
+            writer = csv.DictWriter(f_out, fieldnames=list(fieldnames))
             writer.writeheader()
             for filename in out_paths:
                 with gzip_reader(filename) as f_in:
