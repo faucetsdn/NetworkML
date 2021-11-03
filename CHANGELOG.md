@@ -1,3 +1,17 @@
+# v0.6.17 (2021-08-19)
+
+- Update dependency numpy to v1.21.3
+- Update dependency pandas to v1.3.4
+- Update dependency scikit-learn to v1.0.1
+- Update dependency joblib to v1.1.0
+- Update dependency humanize to v3.12.0
+- Update dependency pytest-cov to v3
+- Update dependency pytest-xdist to v2.4.0
+- Update codecov/codecov-action action to v2.1.0
+- Allow pcap to features to read a pcap CSV with pre-cast int types (for future drop in replacement for tshark/pyshark parsers). If hex int fields, are detected as strings, fall back to current behavior (use python conversion)
+- Update iqtlabs/rbqwrapper Docker tag to v0.11.29
+- pytype observes that csv.DictWriter fields, should be an indexable Sequence
+
 # v0.6.16 (2021-08-19)
 
 - Updated humanize, numpy, pandas, and pygments
