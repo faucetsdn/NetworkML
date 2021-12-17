@@ -1,4 +1,4 @@
-cython==0.29.25
+cython==0.29.26
 humanize==3.13.1
 joblib==1.1.0
 netaddr==0.8.0
