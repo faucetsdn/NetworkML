@@ -1,3 +1,16 @@
+# v0.6.18 (2022-01-11)
+
+- Update dependency pbr to v5.8.0
+- Update iqtlabs/rbqwrapper Docker tag to v0.11.31
+- Update dependency humanize to v3.13.1
+- Update dependency nest_asyncio to v1.5.4
+- Update dependency cython to v0.29.26
+- Update dependency pytest-xdist to v2.5.0
+- Update dependency pygments to v2.11.2
+- Update dependency numpy to v1.22.0
+- Update dependency pandas to v1.3.5
+- Update dependency scikit-learn to v1.0.2
+
 # v0.6.17 (2021-08-19)
 
 - Update dependency numpy to v1.21.3
