@@ -88,9 +88,9 @@ class NetworkML:
                 arg_help = '%s (%s)' % (arg_parms['help'], stage)
                 arg_choices = arg_parms['choices'] if 'choices' in arg_parms else None
                 arg_default = arg_parms['default'] if 'default' in arg_parms else None
-                action = arg_parms.get('action', None)
+                action = arg_parms.get('action', 'store')
                 if not arg_choices:
-                    parser.add_argument('--' + arg, help=arg_help, default=arg_default, dest=arg, action=action)
+                    parser.add_argument('--' + arg, action=action, help=arg_help, default=arg_default, dest=arg)
                 else:
                     parser.add_argument('--' + arg, help=arg_help, choices=arg_choices, default=arg_default, dest=arg, action=action)
         parsed_args = parser.parse_args(raw_args)
