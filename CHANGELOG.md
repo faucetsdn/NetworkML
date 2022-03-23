@@ -1,3 +1,15 @@
+# v0.6.19 (2022-03-23)
+
+- Update dependency pyshark to v0.4.5
+- Update dependency cython to v0.29.28
+- Update dependency humanize to v4.0.0
+- Update dependency pytest to v7.1.1
+- Update dependency pbr to v5.8.1
+- Update dependency numpy to v1.22.3
+- Update dependency pandas to v1.4.1
+- Update dependency pytest-rabbitmq to v2.2.1
+- Update iqtlabs/rbqwrapper Docker tag to v0.11.32
+
 # v0.6.18 (2022-01-11)
 
 - Update dependency pbr to v5.8.0
