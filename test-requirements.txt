@@ -4,5 +4,5 @@ pytest-cov==3.0.0
 pytest-xdist==2.5.0
 pytest-rabbitmq==2.2.1
 nest_asyncio==1.5.4
-MarkupSafe==2.0.1
+MarkupSafe==2.1.1
 notebook==6.4.10
