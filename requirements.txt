@@ -4,6 +4,6 @@ joblib==1.1.0
 netaddr==0.8.0
 numpy==1.22.3
 pandas==1.4.2
-pbr==5.8.1
+pbr==5.9.0
 pyshark==0.4.5
 scikit-learn==1.0.2
