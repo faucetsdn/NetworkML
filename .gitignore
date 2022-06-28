@@ -118,3 +118,5 @@ erl_crash.dump
 
 #scan stuff
 reports/
+
+semgrep.out
