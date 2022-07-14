@@ -5,5 +5,5 @@ netaddr==0.8.0
 numpy==1.23.0
 pandas==1.4.3
 pbr==5.9.0
-pyshark==0.5.2
+pyshark==0.5.3
 scikit-learn==1.1.1
