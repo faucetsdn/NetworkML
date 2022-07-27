@@ -1,0 +1,43 @@
+[tool.poetry]
+name = "networkml"
+version = "0.1.0"
+description = "Machine Learning model for use in determining device classes based on packet headers."
+authors = ["Ryan <rashley@iqt.org>"]
+license = "Apache 2.0"
+include = [
+    "networkml/trained_models/*.*",
+    "networkml/*.py",
+]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+cython = "0.29.30"
+humanize = "4.2.3"
+joblib = "1.1.0"
+netaddr = "0.8.0"
+numpy = "1.23.0"
+pandas = "1.4.3"
+pbr = "5.9.0"
+pyshark = "0.5.3"
+scikit-learn = "1.1.1"
+
+[tool.poetry.extras]
+test = [
+"pygments==2.12.0",
+"pytest==7.1.2",
+"pytest-cov==3.0.0",
+"pytest-xdist==2.5.0",
+"pytest-rabbitmq==2.2.1",
+"nest_asyncio==1.5.5",
+"MarkupSafe==2.1.1",
+"notebook==6.4.12",
+]
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["setuptools", "poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+networkml = 'networkml.__main__:main'
