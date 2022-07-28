@@ -18,13 +18,10 @@ jobs:
         sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 1 && \
         sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.9 2 && \
         python3 -m pip install --upgrade pip && \
-        pip3 install codecov pytype && \
-        find . -name requirements.txt -type f -exec pip3 install -r {} \; && \
-        find . -name test-requirements.txt -type f -exec pip3 install -r {} \; && \
+        poetry install -E test && \
         export PATH=/home/runner/.local/bin:$PATH && \
         PYTHONPATH=. pytype . && \
         PYTHONPATH=. pytest -l -s -n auto -v --cov=tests/ --cov=networkml/ --cov-report term-missing -c .coveragerc --rabbitmq-port=5672 && coverage report && coverage xml && \
-        pip3 install . && \
         jupyter nbconvert --ExecutePreprocessor.timeout=300 --to notebook --execute notebooks/networkml_exploration.ipynb && \
         ./tests/test_e2e.sh
     - name: Upload coverage to Codecov
