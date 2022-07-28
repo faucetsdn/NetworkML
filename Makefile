@@ -27,7 +27,7 @@ test: build
 build:
 	@docker build -t networkml .
 install:
-	pip3 install .
+	poetry install
 
 dev:
 	${CONDA_EXE} env create --force -f $(CONDA_DEV).yml python=3.9
