@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "networkml"
-version = "0.1.1"
+version = "0.7.0"
 description = "Machine Learning model for use in determining device classes based on packet headers."
 authors = ["Ryan <rashley@iqt.org>"]
 license = "Apache 2.0"
