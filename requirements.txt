@@ -2,7 +2,7 @@ cython==0.29.30
 humanize==4.2.3
 joblib==1.1.0
 netaddr==0.8.0
-numpy==1.23.0
+numpy==1.23.1
 pandas==1.4.3
 pbr==5.9.0
 pyshark==0.5.3
