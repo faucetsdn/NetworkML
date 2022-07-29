@@ -17,6 +17,6 @@ RUN apt-get update && apt-get install -y git python3-numpy python3-scipy gfortra
     pip install -U pip
 
 COPY . /networkml
-
+WORKDIR /networkml
 RUN poetry install
 ENTRYPOINT ["/rbqwrapper.py", "networkml"]
