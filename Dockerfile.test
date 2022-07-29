@@ -1,8 +1,7 @@
 FROM networkml
 LABEL maintainer="Charlie Lewis <clewis@iqt.org>"
-COPY ./networkml ./networkml
-COPY ./notebooks ./notebooks
-COPY ./tests ./tests
+COPY . /networkml
+WORKDIR /networkml
 ENV PATH="${PATH}:/root/.local/bin"
 RUN apt-get update && apt-get install -y gcc rabbitmq-server && \
     rm -rf /var/cache && \
