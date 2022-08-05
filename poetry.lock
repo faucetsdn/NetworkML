@@ -225,7 +225,7 @@ devel = ["colorama", "jsonschema", "json-spec", "pylint", "pytest", "pytest-benc
 
 [[package]]
 name = "humanize"
-version = "4.2.3"
+version = "4.3.0"
 description = "Python humanize utilities"
 category = "main"
 optional = false
@@ -1284,7 +1284,7 @@ test = ["pygments", "pytest", "pytest-cov", "pytest-xdist", "pytest-rabbitmq", "
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8 <3.11"
-content-hash = "b7c1f67e5e41023bbef5c650dffee5585ab652730cb3c847fb1d647c20812755"
+content-hash = "556461e8d2cf012d831d0f973edc4a341b332388866881853409e0fa847ff7d9"
 
 [metadata.files]
 appdirs = [
@@ -1545,8 +1545,8 @@ fastjsonschema = [
     {file = "fastjsonschema-2.16.1.tar.gz", hash = "sha256:d6fa3ffbe719768d70e298b9fb847484e2bdfdb7241ed052b8d57a9294a8c334"},
 ]
 humanize = [
-    {file = "humanize-4.2.3-py3-none-any.whl", hash = "sha256:bed628920d45cd5018abb095710f0c03a8336d6ac0790e7647c6a328f3880b81"},
-    {file = "humanize-4.2.3.tar.gz", hash = "sha256:2bc1fdd831cd00557d3010abdd84d3e41b4a96703a3eaf6c24ee290b26b75a44"},
+    {file = "humanize-4.3.0-py3-none-any.whl", hash = "sha256:5dd159c9910cd57b94072e4d7decae097f0eb84c4645153706929a7f127cb2ef"},
+    {file = "humanize-4.3.0.tar.gz", hash = "sha256:0dfac79fe8c1c0c734c14177b07b857bad9ae30dd50daa0a14e2c3d8054ee0c4"},
 ]
 importlab = [
     {file = "importlab-0.7.tar.gz", hash = "sha256:744bd75d4410744962d203bd1eb71a950b19e8fb8eb5f0b805461dc0a2da329b"},
@@ -2008,6 +2008,18 @@ python-dateutil = [
     {file = "python_dateutil-2.8.2-py2.py3-none-any.whl", hash = "sha256:961d03dc3453ebbc59dbdea9e4e11c5651520a876d0f4db161e8674aae935da9"},
 ]
 pytype = [
+    {file = "pytype-2022.8.3-cp310-cp310-macosx_10_15_x86_64.whl", hash = "sha256:5a863dff6280b86f1a5f7f58acef9d77d86adff52866a25b893bbd8be3e9d103"},
+    {file = "pytype-2022.8.3-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:602ad4fde8f6ac5031787f82caa6f7dffa04c66a00ef5543e3657b98803a47a1"},
+    {file = "pytype-2022.8.3-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:22c57bf362e2fa4aa7d443f3e0b723ed0fba07d984c90a3304e867a0c2372cc4"},
+    {file = "pytype-2022.8.3-cp37-cp37m-macosx_10_15_x86_64.whl", hash = "sha256:ab9e4186e4060c0e2dc3e8495592c5af0ef2ef4a4a760004fe286d26da233405"},
+    {file = "pytype-2022.8.3-cp37-cp37m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:779805511943f17cb84a4516b08057943188e4934820fecdbe9e25eb1d3e6af1"},
+    {file = "pytype-2022.8.3-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6b45e4bb290904702c1b23ffd9345696432d6e2a8abe330e2077442e745d2359"},
+    {file = "pytype-2022.8.3-cp38-cp38-macosx_10_15_x86_64.whl", hash = "sha256:34b98bb1b4fd876d40c4eab99881780b9d88b1057766031a3bcc8dc8517d26be"},
+    {file = "pytype-2022.8.3-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:02fde02909ddcfe96ca1779bde10a126eb96eabb4fa8f2a428454bb1d9e359e9"},
+    {file = "pytype-2022.8.3-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6d5c72c3110a2642d42c2324f78c7200fe791b52079152e85eea266361403025"},
+    {file = "pytype-2022.8.3-cp39-cp39-macosx_10_15_x86_64.whl", hash = "sha256:7b1c8d5080e5e2990699d39cbab8abf99694f61a634fed8bfeaa7d2f78942db6"},
+    {file = "pytype-2022.8.3-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:9930a837920fcb947be551cb0534678f8ada3817ca8680d18f71c8620687b662"},
+    {file = "pytype-2022.8.3-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:de3e18e1274d8751734ead631a2cb0ade869470f58d394498f01293ccd7f576b"},
     {file = "pytype-2022.8.3.tar.gz", hash = "sha256:4746f39aa25063990d207a159e5143adffd3be112ee057116180b9dc4ad7f4fc"},
 ]
 pytz = [
