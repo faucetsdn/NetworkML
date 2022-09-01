@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y git python3-numpy python3-scipy gfortra
     apt-get autoremove -y && \
     rm -rf /var/cache/* && \
     rm -rf /root/.cache/* && \
-    curl -sSL https://install.python-poetry.org | python3 - && \
+    curl -sSL https://install.python-poetry.org | python3 - --version 1.1.15 && \
     poetry config virtualenvs.create false && \
     pip install -U pip
 
