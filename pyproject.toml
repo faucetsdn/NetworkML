@@ -13,7 +13,7 @@ include = [
 python = ">=3.8 <3.11"
 cython = "0.29.32"
 humanize = "4.3.0"
-joblib = "1.1.0"
+joblib = "1.2.0"
 netaddr = "0.8.0"
 numpy = "1.23.2"
 pandas = "1.4.4"
