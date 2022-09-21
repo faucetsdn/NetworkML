@@ -12,7 +12,7 @@ include = [
 [tool.poetry.dependencies]
 python = ">=3.8 <3.11"
 cython = "0.29.32"
-humanize = "4.3.0"
+humanize = "4.4.0"
 joblib = "1.2.0"
 netaddr = "0.8.0"
 numpy = "1.23.3"
