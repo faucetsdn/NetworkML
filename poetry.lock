@@ -595,7 +595,7 @@ test = ["check-manifest", "pre-commit", "pytest", "testpath"]
 
 [[package]]
 name = "nest-asyncio"
-version = "1.5.5"
+version = "1.5.6"
 description = "Patch asyncio to allow nested event loops"
 category = "main"
 optional = true
@@ -1302,7 +1302,7 @@ test = ["pygments", "pytest", "pytest-cov", "pytest-xdist", "pytest-rabbitmq", "
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8 <3.11"
-content-hash = "b63b8cd3febcf137e666c79bc0bdc1925f68dd92074dea59edba1d9b42ddae66"
+content-hash = "d335a6bfb9fe3ec2153a785c2cc79462e7561454ec03d7447592e3b99dd5a596"
 
 [metadata.files]
 appdirs = [
@@ -1797,8 +1797,8 @@ nbformat = [
     {file = "nbformat-5.4.0.tar.gz", hash = "sha256:44ba5ca6acb80c5d5a500f1e5b83ede8cbe364d5a495c4c8cf60aaf1ba656501"},
 ]
 nest-asyncio = [
-    {file = "nest_asyncio-1.5.5-py3-none-any.whl", hash = "sha256:b98e3ec1b246135e4642eceffa5a6c23a3ab12c82ff816a92c612d68205813b2"},
-    {file = "nest_asyncio-1.5.5.tar.gz", hash = "sha256:e442291cd942698be619823a17a86a5759eabe1f8613084790de189fe9e16d65"},
+    {file = "nest_asyncio-1.5.6-py3-none-any.whl", hash = "sha256:b9a953fb40dceaa587d109609098db21900182b16440652454a146cffb06e8b8"},
+    {file = "nest_asyncio-1.5.6.tar.gz", hash = "sha256:d267cc1ff794403f7df692964d1d2a3fa9418ffea2a3f6859a439ff482fef290"},
 ]
 netaddr = [
     {file = "netaddr-0.8.0-py2.py3-none-any.whl", hash = "sha256:9666d0232c32d2656e5e5f8d735f58fd6c7457ce52fc21c98d45f2af78f990ac"},
