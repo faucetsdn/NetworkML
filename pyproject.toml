@@ -19,7 +19,7 @@ numpy = "1.23.4"
 pandas = "1.5.1"
 pyshark = "0.5.3"
 scikit-learn = "1.1.2"
-scipy = "1.9.2"
+scipy = "1.9.3"
 
 #optional dependencies
 pygments = { version = "2.13.0", optional = true }
