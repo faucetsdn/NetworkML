@@ -34,7 +34,7 @@ jobs:
         echo "::set-output name=found-count::$(cat /home/runner/reports/semgrep.out | jq '.results | length')"
     - name: Fail if found
       if: steps.d_scan.outputs.found-count != 0
-      uses: actions/github-script@v3
+      uses: actions/github-script@v6
       with:
         script: |
           const fs = require('fs')
