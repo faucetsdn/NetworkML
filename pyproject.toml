@@ -29,7 +29,7 @@ pytest-xdist = { version = "3.0.2", optional = true }
 pytest-rabbitmq = { version = "2.2.1", optional = true }
 nest_asyncio = { version = "1.5.6", optional = true }
 MarkupSafe = { version = "2.1.1", optional = true }
-notebook = { version = "6.5.1", optional = true }
+notebook = { version = "6.5.2", optional = true }
 pytype = { version = "2022.10.26", optional = true }
 
 [tool.poetry.extras]
