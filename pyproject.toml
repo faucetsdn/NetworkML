@@ -22,7 +22,7 @@ scikit-learn = "1.2.0"
 scipy = "1.9.3"
 
 #optional dependencies
-pygments = { version = "2.13.0", optional = true }
+pygments = { version = "2.15.0", optional = true }
 pytest = { version = "7.2.0", optional = true }
 pytest-cov = { version = "4.0.0", optional = true }
 pytest-xdist = { version = "3.1.0", optional = true }
